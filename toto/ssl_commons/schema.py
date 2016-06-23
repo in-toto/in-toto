@@ -53,7 +53,7 @@ from __future__ import unicode_literals
 import re
 import sys
 
-import ssl_crypto
+import ..ssl_crypto
 import six
 
 class Schema:
