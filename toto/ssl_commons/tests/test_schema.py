@@ -29,8 +29,8 @@ import unittest
 import re
 import logging
 
-import ssl_commons.exceptions
-import ssl_commons.schema
+from .. import exceptions as ssl_commons__exceptions
+from .. import schema as ssl_commons__schema
 
 logger = logging.getLogger('ssl_commons.test_schema')
 
@@ -49,7 +49,7 @@ class TestSchema(unittest.TestCase):
   def test_Schema(self):
     # Test conditions for the instantation of classes that inherit
     # from class Schema().
-    class NewSchema(ssl_commons.schema.Schema): 
+    class NewSchema(ssl_commons__schema.Schema): 
       def __init__(self):
         pass
 
@@ -57,24 +57,24 @@ class TestSchema(unittest.TestCase):
     self.assertRaises(NotImplementedError, new_schema.matches, 'test')
    
     # Define a new schema.
-    class NewSchema2(ssl_commons.schema.Schema):
+    class NewSchema2(ssl_commons__schema.Schema):
       def __init__(self, string):
         self._string = string
 
       def check_match(self, object):
         if self._string != object:
           message = 'Expected: '+repr(self._string)
-          raise ssl_commons.exceptions.FormatError(message)
+          raise ssl_commons__exceptions.FormatError(message)
 
     new_schema2 = NewSchema2('test')
-    self.assertRaises(ssl_commons.exceptions.FormatError, new_schema2.check_match, 'bad')
+    self.assertRaises(ssl_commons__exceptions.FormatError, new_schema2.check_match, 'bad')
     self.assertFalse(new_schema2.matches('bad'))
     self.assertTrue(new_schema2.matches('test'))
    
     # Test conditions for invalid arguments.
-    self.assertRaises(ssl_commons.exceptions.FormatError, new_schema2.check_match, True)
-    self.assertRaises(ssl_commons.exceptions.FormatError, new_schema2.check_match, NewSchema2)
-    self.assertRaises(ssl_commons.exceptions.FormatError, new_schema2.check_match, 123)
+    self.assertRaises(ssl_commons__exceptions.FormatError, new_schema2.check_match, True)
+    self.assertRaises(ssl_commons__exceptions.FormatError, new_schema2.check_match, NewSchema2)
+    self.assertRaises(ssl_commons__exceptions.FormatError, new_schema2.check_match, 123)
 
     self.assertFalse(new_schema2.matches(True))
     self.assertFalse(new_schema2.matches(NewSchema2))
@@ -84,7 +84,7 @@ class TestSchema(unittest.TestCase):
 
   def test_Any(self):
     # Test conditions for valid arguments. 
-    any_schema = ssl_commons.schema.Any() 
+    any_schema = ssl_commons__schema.Any() 
 
     self.assertTrue(any_schema.matches('test'))
     self.assertTrue(any_schema.matches(123))
@@ -96,25 +96,25 @@ class TestSchema(unittest.TestCase):
 
   def test_String(self):
     # Test conditions for valid arguments. 
-    string_schema = ssl_commons.schema.String('test')
+    string_schema = ssl_commons__schema.String('test')
 
     self.assertTrue(string_schema.matches('test'))
 
     # Test conditions for invalid arguments. 
     self.assertFalse(string_schema.matches(True))
     self.assertFalse(string_schema.matches(['test']))
-    self.assertFalse(string_schema.matches(ssl_commons.schema.Schema))
+    self.assertFalse(string_schema.matches(ssl_commons__schema.Schema))
 
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.String, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.String, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.String, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.String, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.String, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.String, {'a': 1})
 
 
 
   def test_AnyString(self):
     # Test conditions for valid arguments. 
-    anystring_schema = ssl_commons.schema.AnyString()
+    anystring_schema = ssl_commons__schema.AnyString()
     
     self.assertTrue(anystring_schema.matches(''))
     self.assertTrue(anystring_schema.matches('a string'))
@@ -128,9 +128,9 @@ class TestSchema(unittest.TestCase):
 
   def test_OneOf(self):
     # Test conditions for valid arguments. 
-    oneof_schema = ssl_commons.schema.OneOf([ssl_commons.schema.ListOf(ssl_commons.schema.Integer()),
-                                     ssl_commons.schema.String('Hello'),
-                                     ssl_commons.schema.String('bye')])
+    oneof_schema = ssl_commons__schema.OneOf([ssl_commons__schema.ListOf(ssl_commons__schema.Integer()),
+                                     ssl_commons__schema.String('Hello'),
+                                     ssl_commons__schema.String('bye')])
     
     self.assertTrue(oneof_schema.matches([]))
     self.assertTrue(oneof_schema.matches('bye'))
@@ -141,18 +141,18 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(oneof_schema.matches(['Hi']))
     
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.OneOf, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.OneOf, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.OneOf, {'a': 1})
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.OneOf, [ssl_commons.schema.AnyString(), 1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.OneOf, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.OneOf, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.OneOf, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.OneOf, [ssl_commons__schema.AnyString(), 1])
 
 
 
   def test_AllOf(self):
     # Test conditions for valid arguments. 
-    allof_schema = ssl_commons.schema.AllOf([ssl_commons.schema.Any(),
-                                     ssl_commons.schema.AnyString(),
-                                     ssl_commons.schema.String('a')])
+    allof_schema = ssl_commons__schema.AllOf([ssl_commons__schema.Any(),
+                                     ssl_commons__schema.AnyString(),
+                                     ssl_commons__schema.String('a')])
     
     self.assertTrue(allof_schema.matches('a'))
     
@@ -160,15 +160,15 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(allof_schema.matches('b'))
    
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.AllOf, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.AllOf, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.AllOf, {'a': 1})
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.AllOf, [ssl_commons.schema.AnyString(), 1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.AllOf, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.AllOf, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.AllOf, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.AllOf, [ssl_commons__schema.AnyString(), 1])
 
 
   def test_Boolean(self):
     # Test conditions for valid arguments. 
-    boolean_schema = ssl_commons.schema.Boolean()
+    boolean_schema = ssl_commons__schema.Boolean()
     
     self.assertTrue(boolean_schema.matches(True) and
                     boolean_schema.matches(False))
@@ -180,8 +180,8 @@ class TestSchema(unittest.TestCase):
 
   def test_ListOf(self):
     # Test conditions for valid arguments. 
-    listof_schema = ssl_commons.schema.ListOf(ssl_commons.schema.RegularExpression('(?:..)*'))
-    listof2_schema = ssl_commons.schema.ListOf(ssl_commons.schema.Integer(),
+    listof_schema = ssl_commons__schema.ListOf(ssl_commons__schema.RegularExpression('(?:..)*'))
+    listof2_schema = ssl_commons__schema.ListOf(ssl_commons__schema.Integer(),
                                        min_count=3, max_count=10)
 
     self.assertTrue(listof_schema.matches([]))
@@ -200,31 +200,31 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(listof2_schema.matches(([3]*11)))
 
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.ListOf, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.ListOf, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.ListOf, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.ListOf, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.ListOf, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.ListOf, {'a': 1})
 
 
 
   def test_Integer(self):
     # Test conditions for valid arguments. 
-    integer_schema = ssl_commons.schema.Integer()
+    integer_schema = ssl_commons__schema.Integer()
 
     self.assertTrue(integer_schema.matches(99))
-    self.assertTrue(ssl_commons.schema.Integer(lo=10, hi=30).matches(25))
+    self.assertTrue(ssl_commons__schema.Integer(lo=10, hi=30).matches(25))
     
     # Test conditions for invalid arguments.
     self.assertFalse(integer_schema.matches(False))
     self.assertFalse(integer_schema.matches('a string'))
-    self.assertFalse(ssl_commons.schema.Integer(lo=10, hi=30).matches(5))
+    self.assertFalse(ssl_commons__schema.Integer(lo=10, hi=30).matches(5))
 
 
 
   def test_DictOf(self):
     # Test conditions for valid arguments. 
-    dictof_schema = ssl_commons.schema.DictOf(ssl_commons.schema.RegularExpression(r'[aeiou]+'),
-                                      ssl_commons.schema.Struct([ssl_commons.schema.AnyString(),
-                                                         ssl_commons.schema.AnyString()]))
+    dictof_schema = ssl_commons__schema.DictOf(ssl_commons__schema.RegularExpression(r'[aeiou]+'),
+                                      ssl_commons__schema.Struct([ssl_commons__schema.AnyString(),
+                                                         ssl_commons__schema.AnyString()]))
 
     self.assertTrue(dictof_schema.matches({}))
     self.assertTrue(dictof_schema.matches({'a': ['x', 'y'], 'e' : ['', '']}))
@@ -236,17 +236,17 @@ class TestSchema(unittest.TestCase):
                                             'd' : ['a', 'b']}))
 
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.DictOf, 1, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.DictOf, [1], [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.DictOf, {'a': 1}, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.DictOf, ssl_commons.schema.AnyString(), 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.DictOf, 1, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.DictOf, [1], [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.DictOf, {'a': 1}, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.DictOf, ssl_commons__schema.AnyString(), 1)
 
 
 
   def test_Optional(self):
     # Test conditions for valid arguments. 
-    optional_schema = ssl_commons.schema.Object(k1=ssl_commons.schema.String('X'), 
-                                k2=ssl_commons.schema.Optional(ssl_commons.schema.String('Y')))
+    optional_schema = ssl_commons__schema.Object(k1=ssl_commons__schema.String('X'), 
+                                k2=ssl_commons__schema.Optional(ssl_commons__schema.String('Y')))
 
     self.assertTrue(optional_schema.matches({'k1': 'X', 'k2': 'Y'}))
     self.assertTrue(optional_schema.matches({'k1': 'X'}))
@@ -255,17 +255,17 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(optional_schema.matches({'k1': 'X', 'k2': 'Z'}))
   
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Optional, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Optional, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Optional, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Optional, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Optional, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Optional, {'a': 1})
  
 
 
   def test_Object(self):
     # Test conditions for valid arguments. 
-    object_schema = ssl_commons.schema.Object(a=ssl_commons.schema.AnyString(),
-                                      bc=ssl_commons.schema.Struct([ssl_commons.schema.Integer(),
-                                                            ssl_commons.schema.Integer()]))
+    object_schema = ssl_commons__schema.Object(a=ssl_commons__schema.AnyString(),
+                                      bc=ssl_commons__schema.Struct([ssl_commons__schema.Integer(),
+                                                            ssl_commons__schema.Integer()]))
 
     self.assertTrue(object_schema.matches({'a':'ZYYY', 'bc':[5,9]}))
     self.assertTrue(object_schema.matches({'a':'ZYYY', 'bc':[5,9], 'xx':5}))
@@ -275,9 +275,9 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(object_schema.matches({'a':'ZYYY'}))
 
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Object, a='a')
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Object, a=[1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Object, a=ssl_commons.schema.AnyString(),
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Object, a='a')
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Object, a=[1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Object, a=ssl_commons__schema.AnyString(),
                                                           b=1)
 
     # Test condition for invalid non-dict arguments.
@@ -288,12 +288,12 @@ class TestSchema(unittest.TestCase):
 
   def test_Struct(self):
     # Test conditions for valid arguments. 
-    struct_schema = ssl_commons.schema.Struct([ssl_commons.schema.ListOf(ssl_commons.schema.AnyString()),
-                                                         ssl_commons.schema.AnyString(),
-                                                         ssl_commons.schema.String('X')])
-    struct2_schema = ssl_commons.schema.Struct([ssl_commons.schema.String('X')], allow_more=True)
-    struct3_schema = ssl_commons.schema.Struct([ssl_commons.schema.String('X'),
-                     ssl_commons.schema.Integer()], [ssl_commons.schema.Integer()])
+    struct_schema = ssl_commons__schema.Struct([ssl_commons__schema.ListOf(ssl_commons__schema.AnyString()),
+                                                         ssl_commons__schema.AnyString(),
+                                                         ssl_commons__schema.String('X')])
+    struct2_schema = ssl_commons__schema.Struct([ssl_commons__schema.String('X')], allow_more=True)
+    struct3_schema = ssl_commons__schema.Struct([ssl_commons__schema.String('X'),
+                     ssl_commons__schema.Integer()], [ssl_commons__schema.Integer()])
 
     self.assertTrue(struct_schema.matches([[], 'Q', 'X']))
     
@@ -321,23 +321,23 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(struct3_schema.matches(['X', 3, 'A']))
 
     # Test conditions for invalid arguments in a schema definition.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Struct, 1)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Struct, [1])
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Struct, {'a': 1})
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.Struct,
-                      [ssl_commons.schema.AnyString(), 1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Struct, 1)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Struct, [1])
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Struct, {'a': 1})
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.Struct,
+                      [ssl_commons__schema.AnyString(), 1])
 
 
 
   def test_RegularExpression(self):
     # Test conditions for valid arguments.
     # RegularExpression(pattern, modifiers, re_object, re_name).
-    re_schema = ssl_commons.schema.RegularExpression('h.*d')
+    re_schema = ssl_commons__schema.RegularExpression('h.*d')
 
     self.assertTrue(re_schema.matches('hello world'))
     
     # Provide a pattern that contains the trailing '$'
-    re_schema_2 = ssl_commons.schema.RegularExpression(pattern='abc$',
+    re_schema_2 = ssl_commons__schema.RegularExpression(pattern='abc$',
                                                modifiers=0,
                                                re_object=None,
                                                re_name='my_re')
@@ -346,7 +346,7 @@ class TestSchema(unittest.TestCase):
    
     # Test for valid optional arguments.
     compiled_re = re.compile('^[a-z].*')
-    re_schema_optional = ssl_commons.schema.RegularExpression(pattern='abc',
+    re_schema_optional = ssl_commons__schema.RegularExpression(pattern='abc',
                                                       modifiers=0,
                                                       re_object=compiled_re,
                                                       re_name='my_re')
@@ -354,12 +354,12 @@ class TestSchema(unittest.TestCase):
    
     # Valid arguments, but the 'pattern' argument is unset (required if the 
     # 're_object' is 'None'.)
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.RegularExpression, None, 0,
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.RegularExpression, None, 0,
                                                       None, None)
     
     # Valid arguments, 're_name' is unset, and 'pattern' is None.  An exception
     # is not raised, but 're_name' is set to 'pattern'.
-    re_schema_optional = ssl_commons.schema.RegularExpression(pattern=None,
+    re_schema_optional = ssl_commons__schema.RegularExpression(pattern=None,
                                                       modifiers=0,
                                                       re_object=compiled_re,
                                                       re_name=None)
@@ -372,19 +372,19 @@ class TestSchema(unittest.TestCase):
     self.assertFalse(re_schema.matches('hello world!'))
     self.assertFalse(re_schema.matches([33, 'Hello']))
 
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.RegularExpression, 8)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.RegularExpression, 8)
 
 
 
   def test_LengthString(self):
     # Test conditions for valid arguments.
-    length_string = ssl_commons.schema.LengthString(11)
+    length_string = ssl_commons__schema.LengthString(11)
 
     self.assertTrue(length_string.matches('Hello World'))
     self.assertTrue(length_string.matches('Hello Marty'))
 
     # Test conditions for invalid arguments.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.LengthString, 'hello')
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.LengthString, 'hello')
  
     self.assertFalse(length_string.matches('hello'))
     self.assertFalse(length_string.matches(8))
@@ -393,14 +393,14 @@ class TestSchema(unittest.TestCase):
   
   def test_LengthBytes(self):
     # Test conditions for valid arguments.
-    length_bytes = ssl_commons.schema.LengthBytes(11)
+    length_bytes = ssl_commons__schema.LengthBytes(11)
 
     self.assertTrue(length_bytes.matches(b'Hello World'))
     self.assertTrue(length_bytes.matches(b'Hello Marty'))
 
     # Test conditions for invalid arguments.
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.LengthBytes, 'hello')
-    self.assertRaises(ssl_commons.exceptions.FormatError, ssl_commons.schema.LengthBytes, True)
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.LengthBytes, 'hello')
+    self.assertRaises(ssl_commons__exceptions.FormatError, ssl_commons__schema.LengthBytes, True)
  
     self.assertFalse(length_bytes.matches(b'hello'))
     self.assertFalse(length_bytes.matches(8))
@@ -409,7 +409,7 @@ class TestSchema(unittest.TestCase):
   
   def test_AnyBytes(self):
     # Test conditions for valid arguments. 
-    anybytes_schema = ssl_commons.schema.AnyBytes()
+    anybytes_schema = ssl_commons__schema.AnyBytes()
     
     self.assertTrue(anybytes_schema.matches(b''))
     self.assertTrue(anybytes_schema.matches(b'a string'))

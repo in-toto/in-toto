@@ -33,10 +33,6 @@ import six
 import logging
 logger = logging.getLogger('ssl_commons.exceptions')
 
-# Import 'ssl_commons.exceptions.formats' if a module tries to import the
-# entire tuf package (i.e., from tuf import *). 
-__all__ = ['formats']
-
 
 class Error(Exception):
   """Indicate a generic error."""
