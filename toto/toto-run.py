@@ -60,6 +60,9 @@ def main():
 
   # Option group for link command to be executed
   link_args = parser.add_argument_group("Link command")
+
+  # XXX: This is not yet ideal. 
+  # What should we do with tokens like > or ;
   link_args.add_argument('link_cmd', nargs="+", 
     help="link command to be executed with options and arguments")
 
