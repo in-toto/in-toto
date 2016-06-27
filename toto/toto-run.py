@@ -6,14 +6,15 @@
   Lukas Puehringer <lukas.puehringer@nyu.edu>
 
 <Started>
-  June 27, 2013 
+  June 27, 2016
 
 <Copyright>
   See LICENSE for licensing information.
 
 <Purpose>
-  Provide a command line interface which wraps toto metadata recording
-  around any command of the software supply chain.
+  Provide a command line interface which takes any link command of the software 
+  supply chain as input and wraps toto metadata recording around it. 
+
   Toto run options are separated from the command to be executed by 
   a double dash.
 
@@ -23,14 +24,7 @@
     <command-to-execute> <command-options-and-arguments>
   ```
 
-  The program is wrapped around the following taks (implemented in runlib):
-    * Record state of material (files the command is executed on)
-    * Execute command
-    * Capture stdout/stdin/return value of the executed command
-    * Record state of product (files after the command was executed)
-    * Create metadata file
-    * Sign metadata file
-
+  The actual wrapper and the tasks it performs are implemented in runlib.
 
   TODO
     * Material/Product
@@ -39,20 +33,42 @@
     * Missing options:
       - Unique identifier to assign to link definition in layout
       - Key (for now uses a default key)
-    * Write metadata to place
-      We need to decide on the format
-
 
 """
 
+import os
+import sys
 import argparse
 
-import toto.util
 import toto.runlib
 
 
+
 def main():
-  pass
+  # Create new parser with custom usage message
+  parser = argparse.ArgumentParser(
+      description="Executes link command and records metadata",
+      usage="python -m %s -m DIR -p DIR -- CMD [args]" % 
+      (os.path.basename(__file__), ))
+
+  # Option group for toto specific options, e.g. material and product
+  toto_args = parser.add_argument_group("Toto options")
+  toto_args.add_argument("-m", "--material", type=str, required=True,
+      help="directory before link command execution")
+  toto_args.add_argument("-p", "--product", type=str, required=True,
+      help="directory after link command execution")
+
+  # Option group for link command to be executed
+  link_args = parser.add_argument_group("Link command")
+  link_args.add_argument('link_cmd', nargs="+", 
+    help="link command to be executed with options and arguments")
+
+  args = parser.parse_args()
+
+  try:
+      toto.runlib.run_link(args.material, args.link_cmd, args.product)
+  except Exception, e:
+    raise e
 
 
 if __name__ == '__main__':
