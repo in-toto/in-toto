@@ -36,7 +36,9 @@ import sys
 import os
 import tempfile
 
-# XXX LP: POSIX users (Linux, BSD, etc.) are strongly encouraged to 
+import toto.util
+
+# POSIX users (Linux, BSD, etc.) are strongly encouraged to 
 # install and use the much more recent subprocess32
 if os.name == 'posix' and sys.version_info[0] < 3:
   import subprocess32 as subprocess
@@ -44,6 +46,8 @@ else:
   import subprocess
 
 import toto.ssl_crypto.hash
+import toto.ssl_crypto.keys
+import toto.ssl_crypto.formats
 
 
 
@@ -57,7 +61,7 @@ def record_file_state(link_files):
     for name in files:
       digest_object = toto.ssl_crypto.hash.digest_filename(
           os.path.join(root, name))
-      hash_list.append(digest_object.digest())
+      hash_list.append(digest_object.hexdigest())
 
   return hash_list
 
@@ -83,20 +87,31 @@ def execute_link(link_cmd_args):
   return (stdout_str, stderr_str, ret_val)
 
 
-
 def create_link_metadata(material_hash, product_hash, by_products):
   """Takes the state of the material (before link command execution), the state
   of the product (after link command execution) and the by-products of the link
   command execution and creates the link metadata according to the specified 
   metadata format."""
-  print by_products
-  pass
+
+  return {
+      "material" : material_hash,
+      "product" : product_hash,
+      "by_product" : by_products 
+  }
 
 
-def sign_link_metadata(link_metdata, functionary_key):
+def sign_link_metadata(link_metadata, functionary_key):
   """Takes link metadata and the key of the functionary who executed the 
   according link command and signs the metadata."""
-  pass
+
+  
+  signable = toto.ssl_crypto.formats.make_signable(link_metadata)
+  sig = toto.ssl_crypto.keys.create_signature(functionary_key, link_metadata)
+
+  signable['signatures'].append(sig)
+
+  return signable
+
 
 def store_link_metadata(signed_link_metadata):
   """Store link metadata to a file."""
@@ -113,6 +128,7 @@ def run_link(material, toto_cmd_args, product):
 
   product_hashes = record_file_state(product)
 
+  # XXX: This is not going to happen here
   if (material_hashes == product_hashes):
     print "This was of type report"
   else:
@@ -120,9 +136,12 @@ def run_link(material, toto_cmd_args, product):
 
   link_metadata = create_link_metadata(material_hashes, product_hashes, by_products)
 
-  # XXX Where do we get the key from? Use a default one for now
-  some_key = "XXXXXXX"
+  # XXX: This is not going to happen here, we need some PKI
+  some_key = toto.util.get_key()
   signed_link_metadata = sign_link_metadata(link_metadata, some_key)
+
+  print signed_link_metadata
+
   store_link_metadata(signed_link_metadata)
 
 
