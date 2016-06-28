@@ -35,6 +35,7 @@
 import sys
 import os
 import tempfile
+import toto.verifylib
 
 import toto.util
 
@@ -137,10 +138,15 @@ def run_link(material, toto_cmd_args, product):
   link_metadata = create_link_metadata(material_hashes, product_hashes, by_products)
 
   # XXX: This is not going to happen here, we need some PKI
-  some_key = toto.util.get_key()
-  signed_link_metadata = sign_link_metadata(link_metadata, some_key)
+  test_key = toto.util.get_key()
 
-  print signed_link_metadata
+  signed_link_metadata = sign_link_metadata(link_metadata, test_key)
+
+  # XXX: This is not going to happen here!!!!
+  print toto.verifylib._verify_metadata_signature(
+    test_key,
+    signed_link_metadata["signatures"][0],
+    )
 
   store_link_metadata(signed_link_metadata)
 
