@@ -68,10 +68,10 @@ def main():
 
   args = parser.parse_args()
 
-  try:
-      toto.runlib.run_link(args.material, args.link_cmd, args.product)
-  except Exception, e:
-    raise e
+  # try:
+  toto.runlib.run_link(args.material, args.link_cmd, args.product)
+  # except Exception, e:
+  #   raise e
 
 
 if __name__ == '__main__':
