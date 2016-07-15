@@ -29,8 +29,6 @@
     * Decide on metadata format
     * Decide on metadata location
 
-
-
 """
 import sys
 import os
