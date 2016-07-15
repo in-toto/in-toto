@@ -44,25 +44,34 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
   import subprocess
 
+import toto.formats
+
 import toto.ssl_crypto.hash
 import toto.ssl_crypto.keys
 import toto.ssl_crypto.formats
 
 
+def record_link_state(link_files):
+  """Takes a directory or file names as input and creates a list of 
+  dictionaries with filepaths as keys and file hashes as key.
 
-def record_file_state(link_files):
-  """Takes a directory or file names as input and creates a hash. 
   The dir/files a link command is executed on are called material. The dir/files
   the result form a link command execution are called product."""
 
-  hash_list = []
+  link_state_list = []
   for root, dirs, files in os.walk(link_files):
     for name in files:
-      digest_object = toto.ssl_crypto.hash.digest_filename(
-          os.path.join(root, name))
-      hash_list.append(digest_object.hexdigest())
+      filename = os.path.join(root, name)
 
-  return hash_list
+      # Create new digest object for each file
+      digest_object = toto.ssl_crypto.hash.digest_filename(filename)
+      link_state_entry = {filename : digest_object.hexdigest()}
+      link_state_list.append(link_state_entry)
+
+  # XXX: Should we do checking here?
+  toto.formats.LINK_STATE_SCHEMA
+
+  return link_state_list
 
 
 def execute_link(link_cmd_args):
@@ -86,16 +95,24 @@ def execute_link(link_cmd_args):
   return (stdout_str, stderr_str, ret_val)
 
 
-def create_link_metadata(material_hash, product_hash, by_products):
+def create_link_metadata(command, materials_hash, transformations, 
+    transformations_hash, report):
   """Takes the state of the material (before link command execution), the state
   of the product (after link command execution) and the by-products of the link
   command execution and creates the link metadata according to the specified 
-  metadata format."""
+  metadata format.
+
+  XXX: Maybe we want to define a class for this
+  toto/models.py would be a good place"""
 
   return {
-      "material" : material_hash,
-      "product" : product_hash,
-      "by_product" : by_products 
+    "_type" : "link",
+    # "version" : 
+    "command" : command
+    "materials-hash" : material_hash,
+    "transformations" : transformations,
+    "transformations-hash" : transformations_hash,
+    "report" : report
   }
 
 
@@ -117,23 +134,71 @@ def store_link_metadata(signed_link_metadata):
   pass
 
 
+def create_transformations(materials_state, products_state):
+  """Creates transformations list, which lists the subset of the union of
+  materials and in case they were added, transformed or removed.
+  The format is:
+  [ {PATH: [ACTION, HASH]}, ...] 
+  If ACTION is "add" or "transform" then HASH is the hash of the product
+  If ACTION is "remove" then HASH is the hash of the material
+  """
+
+  materials_paths = set(materials_state.keys())
+  products_paths = set(products_state.keys())
+
+  transformations = []
+
+  # Removed files
+  for path in materials_paths - products_paths:
+    transformations.append({path : ["remove", materials_state[path]]})
+
+  # Added files
+  for path in products_paths - materials_paths:
+    transformations.append({path : ["add", products_state[path]]})
+
+  # Transformed files
+  for path in materials_paths.intersection(products_paths):
+    if materials_state[path] != products_state[path]:
+      transformations.append({path : ["transform", products_state[path]]})
+
+  return transformations
+
+
+def create_hash_from_link_state(link_state):
+  """Creates hash from link state python object string representation"""
+
+  link_state_repr = repr(link_state)
+  digest_object = toto.ssl_crypto.hash.digest()
+  digest_object.update(link_state_repr)
+  link_state_hash = digest_object.hexdigest()
+
+  return link_state_hash
+
+
+
+
 def run_link(material, toto_cmd_args, product):
-  """ Performs all actions associated with toto run-link.
+  """Performs all actions associated with toto run-link.
   XXX: This should probably be atomic, i.e. all or nothing"""
 
-  material_hashes = record_file_state(material)
+  # Perform arguments schema checking
+  toto_cmd_args.check_match()
 
-  by_products = execute_link(toto_cmd_args)
+  # Record - Run - Record
+  materials_state = record_link_state(material)
+  report = execute_link(toto_cmd_args)
+  products_state = record_link_state(product)
 
-  product_hashes = record_file_state(product)
+  # Create one hash from all material hashes 
+  materials_hash = create_hash_from_link_state(materials_state)
 
-  # XXX: This is not going to happen here
-  if (material_hashes == product_hashes):
-    print "This was of type report"
-  else:
-    print "This was of type transform"
+  # XXX: I think transfomrations_hash should rather be called products_hash
+  transformations_hash = create_hash_from_link_state(products_state)
 
-  link_metadata = create_link_metadata(material_hashes, product_hashes, by_products)
+  transformations = create_transformations(materials_state, products_state)
+
+  link_metadata = create_link_metadata(toto_cmd_args, materials_hash, 
+      transformations, transformations_hash, report)
 
   # XXX: This is not going to happen here, we need some PKI
   test_key = toto.util.get_key()
