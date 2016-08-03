@@ -12,8 +12,8 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provide a command line interface which takes any link command of the software 
-  supply chain as input and wraps toto metadata recording around it. 
+  Provides a command line interface which takes any link command of the software 
+  supply chain as input and wraps toto metadata recording. 
 
   Toto run options are separated from the command to be executed by 
   a double dash.
@@ -29,7 +29,8 @@
   TODO
     * Material/Product
       For now we specify --material and --product explicitly. Later we can think
-      of more sophisticate/secure ways to find out which files are being
+      of more sophisticate/secure ways to find out which files are being 
+      transformed
     * Missing options:
       - Unique identifier to assign to link definition in layout
       - Key (for now uses a default key)
@@ -41,7 +42,6 @@ import sys
 import argparse
 
 import toto.runlib
-
 
 
 def main():

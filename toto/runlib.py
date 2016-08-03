@@ -12,14 +12,14 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provide a wrapper for any command of the software supply chain.
+  Provides a wrapper for any command of the software supply chain.
 
-  The wrapper performs the following tasks which are also implementes in this
+  The wrapper performs the following tasks which are implemented in this
   library.
 
     * Record state of material (files the command is executed on)
     * Execute command
-    * Capture stdout/stderr/return value of the executed command
+      * Capture stdout/stderr/return value of the executed command
     * Record state of product (files after the command was executed)
     * Create metadata file
     * Sign metadata file
@@ -69,14 +69,14 @@ def record_link_state(link_files):
       link_state_list.append(link_state_entry)
 
   # XXX: Should we do checking here?
-  toto.formats.LINK_STATE_SCHEMA
+  # toto.formats.LINK_STATE_SCHEMA
 
   return link_state_list
 
 
 def execute_link(link_cmd_args):
   """Takes a command and its options and arguments of the software supply 
-  chain as input, runs the command in a suprocess, records the stdout and 
+  chain as input, runs the command in a suprocess, records the stdout, 
   stderr and return value of the command and returns them. Stdout, stderr and 
   return value are called by_products."""
 
@@ -84,7 +84,8 @@ def execute_link(link_cmd_args):
   stdout_file = tempfile.TemporaryFile()
   stderr_file = tempfile.TemporaryFile()
 
-  ret_val = subprocess.call(link_cmd_args, stdout=stdout_file, stderr=stderr_file)
+  ret_val = subprocess.call(link_cmd_args, 
+      stdout=stdout_file, stderr=stderr_file)
 
   stdout_file.seek(0)
   stderr_file.seek(0)
@@ -119,7 +120,6 @@ def create_link_metadata(command, materials_hash, transformations,
 def sign_link_metadata(link_metadata, functionary_key):
   """Takes link metadata and the key of the functionary who executed the 
   according link command and signs the metadata."""
-
   
   signable = toto.ssl_crypto.formats.make_signable(link_metadata)
   sig = toto.ssl_crypto.keys.create_signature(functionary_key, link_metadata)
@@ -130,23 +130,25 @@ def sign_link_metadata(link_metadata, functionary_key):
 
 
 def store_link_metadata(signed_link_metadata):
-  """Store link metadata to a file."""
+  """Store link metadata to a file where the verification routines can 
+  find it."""
   pass
 
 
 def create_transformations(materials_state, products_state):
-  """Creates transformations list, which lists the subset of the union of
-  materials and in case they were added, transformed or removed.
+  """Creates a transformations list, which lists a subset of the union of
+  materials and products in case they were added, transformed or removed.
+
   The format is:
   [ {PATH: [ACTION, HASH]}, ...] 
   If ACTION is "add" or "transform" then HASH is the hash of the product
-  If ACTION is "remove" then HASH is the hash of the material
-  """
-
-  materials_paths = set(materials_state.keys())
-  products_paths = set(products_state.keys())
+  If ACTION is "remove" then HASH is the hash of the material"""
 
   transformations = []
+
+  # Create set of materials and products paths, to leverage set operations
+  materials_paths = set(materials_state.keys())
+  products_paths = set(products_state.keys())
 
   # Removed files
   for path in materials_paths - products_paths:
@@ -157,6 +159,7 @@ def create_transformations(materials_state, products_state):
     transformations.append({path : ["add", products_state[path]]})
 
   # Transformed files
+  # Files that appear in both state lists, but have different file hashes
   for path in materials_paths.intersection(products_paths):
     if materials_state[path] != products_state[path]:
       transformations.append({path : ["transform", products_state[path]]})
@@ -165,7 +168,10 @@ def create_transformations(materials_state, products_state):
 
 
 def create_hash_from_link_state(link_state):
-  """Creates hash from link state python object string representation"""
+  """Creates hash from link state python object string representation.
+
+  XXX: Maybe we want to hash something more platform-independent, e.g. 
+  a JSON Object."""
 
   link_state_repr = repr(link_state)
   digest_object = toto.ssl_crypto.hash.digest()
@@ -175,10 +181,9 @@ def create_hash_from_link_state(link_state):
   return link_state_hash
 
 
-
-
 def run_link(material, toto_cmd_args, product):
   """Performs all actions associated with toto run-link.
+
   XXX: This should probably be atomic, i.e. all or nothing"""
 
   # Perform arguments schema checking
@@ -192,10 +197,15 @@ def run_link(material, toto_cmd_args, product):
   # Create one hash from all material hashes 
   materials_hash = create_hash_from_link_state(materials_state)
 
-  # XXX: I think transfomrations_hash should rather be called products_hash
+  transformations = create_transformations(materials_state, products_state)
+
+  # XXX: The latest specs say that we should store the transformations_hash
+  # in the link metadata
+  # I am pretty positive though that we will want to store the products_hash
+  # instead, to be able to verify that the supply chain is properly linked 
+  # I.e.: materials_hash_i != products_hash_i-1
   transformations_hash = create_hash_from_link_state(products_state)
 
-  transformations = create_transformations(materials_state, products_state)
 
   link_metadata = create_link_metadata(toto_cmd_args, materials_hash, 
       transformations, transformations_hash, report)
@@ -206,10 +216,10 @@ def run_link(material, toto_cmd_args, product):
   signed_link_metadata = sign_link_metadata(link_metadata, test_key)
 
   # XXX: This is not going to happen here!!!!
-  print toto.verifylib._verify_metadata_signature(
-    test_key,
-    signed_link_metadata["signatures"][0],
-    )
+  # print toto.verifylib._verify_metadata_signature(
+  #   test_key,
+  #   signed_link_metadata["signatures"][0],
+  #   )
 
   store_link_metadata(signed_link_metadata)
 
