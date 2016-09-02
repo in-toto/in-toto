@@ -9,7 +9,7 @@ if __name__:
                         pubkeys=["PUBKEY"])
 
     debianize = Link(name="debianize",  
-                     materials=["match orig.tar.gz from upstream"], 
+                     materials=["match product orig.tar.gz from upstream"], 
                      products=["pin diff.tar.gz"], 
                      pubkeys=["PUBKEY"])
 

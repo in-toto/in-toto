@@ -9,13 +9,13 @@ if __name__:
                         pubkeys=["PUBKEY"])
 
     build_test = Subchain(name="build-test",  
-                     materials=["match * from pre-release"], 
+                     materials=["match product * from pre-release"], 
                      products=["pin files.tar.gz",
                                "drop *"], 
                      pubkeys=["PUBKEY"])
 
     package = Link("pypi-package", 
-                   materials=["match files.tar.gz from build-test"], 
+                   materials=["match product files.tar.gz from build-test"], 
                    products=["pin django.python27.egg"],
                    pubkeys=["PUBKEY"])
 

@@ -9,7 +9,7 @@ if __name__:
                         pubkeys=["PUBKEY"])
 
     configure_lb= Link(name="configure_lb",  
-                     materials=["match * from pre-release"], 
+                     materials=["match product * from pre-release"], 
                      products=["pin lb_config"], 
                      pubkeys=["PUBKEY"])
 
@@ -19,9 +19,9 @@ if __name__:
                    pubkeys=["PUBKEY"])
 
     build = Link(name="build",  
-                     materials=["match * from clone_lb",
-                                "match lb_conig from configure_lb",
-                                "match * from pre_release"], 
+                     materials=["match product * from clone_lb",
+                                "match product lb_conig from configure_lb",
+                                "match product * from pre_release"], 
                      products=["pin *"], 
                      pubkeys=["PUBKEY"])
 

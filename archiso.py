@@ -15,14 +15,14 @@ if __name__:
 
     bootloader_config = Link(name="bootloader_config",  
                      materials=["match product folders.tar.gz from"
-                                "edit_folder_structure"], 
+                                " edit_folder_structure"], 
                      products=["update folders.tar.gz"], 
                      pubkeys=["PUBKEY"])
 
 
     login_config = Link(name="login_config",  
                      materials=["match product folders.tar.gz from"
-                                "bootloader_config"], 
+                                " bootloader_config"], 
                      products=["update folders.tar.gz"], 
                      pubkeys=["PUBKEY"])
 
@@ -31,20 +31,20 @@ if __name__:
                         pubkeys=["PUBKEY"])
 
     versioning = Link("versioning", 
-                   materials=["match clone.sh from upstream"], 
+                   materials=["match product clone.sh from upstream"], 
                         products=["pin build.sh"],
                         pubkeys=["PUBKEY"])
 
     build = Link(name="build", 
-                     materials=["match build.sh from versioning",
-                                "match folders.tar.gz from login_config"], 
-                        products=["archlinux-multiarch.iso"], 
+                     materials=["match product build.sh from versioning",
+                                "match product folders.tar.gz from login_config"], 
+                        products=["create archlinux-multiarch.iso"], 
                         pubkeys=["PUBKEY"])
 
     verify_rsl = Validation(name="verify_rsl", run="toto-link",
                             flags=["validate_rsl", "-p", "PUBKEYS"],
                             materials=[],
-                            products=["match bulid.sh * from upstream",])
+                            products=["match product bulid.sh from upstream",])
 
     layout = Layout([profile, edit_folder_structure, bootloader_config,
                      login_config, upstream, versioning, build, verify_rsl], 

@@ -6,7 +6,7 @@ if __name__:
 
     git = Link(name="git", materials=[], products=["pin *"], pubkeys=["PUBKEY"])
 
-    comp = Link(name="compile",  materials=["match * from git"], 
+    comp = Link(name="compile",  materials=["match product * from git"], 
                 products=["pin foo.exe"], pubkeys=["PUBKEY"])
 
     tar = Link("pack", materials=["match product * from comp",
@@ -22,7 +22,7 @@ if __name__:
 
     verify_rsl = Validation(name="verify_rsl", run="toto-link",
                             flags=["validate_rsl", "-p", "PUBKEYS"],
-                            materials=["match * from git",],
+                            materials=["match product * from git",],
                             products=[])
 
     layout = Layout([git, comp, tar, untar, verify_rsl],

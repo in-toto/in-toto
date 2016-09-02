@@ -9,7 +9,7 @@ if __name__:
                         pubkeys=["PUBKEY"])
 
     buildbot = Link(name="buildbot",  
-                     materials=["match * from upstream"], 
+                     materials=["match product * from upstream"], 
                      products=[], 
                      pubkeys=["PUBKEY"])
 
