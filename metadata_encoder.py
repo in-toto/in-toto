@@ -4,15 +4,15 @@ VALID_TYPES={"step", "validation", "subchain"}
 import json
 import attr
 
-# from validators import validate_steps TODO: later
+from validators import validate_materials, validate_products
 
 @attr.s(repr=False)
 class Step(object):
 
     _type=attr.ib(default="Step", init=False)
     _name=attr.ib(validator=attr.validators.instance_of(str))
-    materials=attr.ib([], attr.validators.instance_of(list))
-    products=attr.ib([], attr.validators.instance_of(list))
+    materials=attr.ib([], validator=validate_materials)
+    products=attr.ib([], validator=validate_products)
 
 
 @attr.s()
@@ -37,19 +37,19 @@ class Validation(Step):
 
 def validate_steps(self, Attribute, steps):
 
-    names_seen = set()
+    self.steps_seen = set()
     if not isinstance(steps, list):
         raise TypeError("steps expects a list of Step objects!")
 
     for step in steps:
 
-        if step._name in names_seen:
+        if step._name in self.steps_seen:
             raise TypeError("steps can't have a repeated name!")
 
         if not isinstance(step, Step):
             raise TypeError("steps can only contain Step instances!")
 
-        names_seen.add(step._name)
+        self.steps_seen.add(step._name)
 
 
 
