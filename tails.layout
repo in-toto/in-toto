@@ -1,0 +1,81 @@
+{
+  "_type": "Layout", 
+  "keys": [
+    {
+      "key1": {
+        "pubkey": "stuff"
+      }
+    }, 
+    {
+      "key2": {
+        "pubkey": "stuff"
+      }
+    }
+  ], 
+  "steps": [
+    {
+      "_name": "pre-release", 
+      "_type": "Subchain", 
+      "materials": [], 
+      "products": [
+        "pin *"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "configure_lb", 
+      "_type": "Link", 
+      "materials": [
+        "match * from pre-release"
+      ], 
+      "products": [
+        "pin lb_config"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "clone_lb", 
+      "_type": "Subchain", 
+      "materials": [], 
+      "products": [
+        "pin *"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "build", 
+      "_type": "Link", 
+      "materials": [
+        "match * from clone_lb", 
+        "match lb_conig from configure_lb", 
+        "match * from pre_release"
+      ], 
+      "products": [
+        "pin *"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "verify_rsl", 
+      "_type": "Validation", 
+      "flags": [
+        "validate_rsl", 
+        "-p", 
+        "PUBKEYS"
+      ], 
+      "materials": [], 
+      "products": [
+        "pin tails.iso"
+      ], 
+      "run": "toto-link"
+    }
+  ]
+}

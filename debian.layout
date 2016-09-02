@@ -1,0 +1,86 @@
+{
+  "_type": "Layout", 
+  "keys": [
+    {
+      "key1": {
+        "pubkey": "stuff"
+      }
+    }, 
+    {
+      "key2": {
+        "pubkey": "stuff"
+      }
+    }
+  ], 
+  "steps": [
+    {
+      "_name": "upstream", 
+      "_type": "Subchain", 
+      "materials": [
+        "pin *"
+      ], 
+      "products": [
+        "pin orig.tar.gz"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "debianize", 
+      "_type": "Link", 
+      "materials": [
+        "match orig.tar.gz from upstream"
+      ], 
+      "products": [
+        "pin diff.tar.gz"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "package", 
+      "_type": "Link", 
+      "materials": [
+        "match product orig.tar.gz from upstream", 
+        "match product diff.tar.gz from debianize"
+      ], 
+      "products": [
+        "pin package.deb"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "dpkgg", 
+      "_type": "Validation", 
+      "flags": [
+        "-i", 
+        "package.deb"
+      ], 
+      "materials": [
+        "match product package.deb from package"
+      ], 
+      "products": [
+        "match material * from upstream"
+      ], 
+      "run": "dpkg"
+    }, 
+    {
+      "_name": "verify_rsl", 
+      "_type": "Validation", 
+      "flags": [
+        "validate_rsl", 
+        "-p", 
+        "PUBKEYS"
+      ], 
+      "materials": [], 
+      "products": [
+        "match material * from upstream"
+      ], 
+      "run": "toto-link"
+    }
+  ]
+}

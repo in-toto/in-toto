@@ -1,0 +1,39 @@
+{
+  "_type": "Layout", 
+  "keys": [
+    {
+      "key1": {
+        "pubkey": "stuff"
+      }
+    }, 
+    {
+      "key2": {
+        "pubkey": "stuff"
+      }
+    }
+  ], 
+  "steps": [
+    {
+      "_name": "upstream", 
+      "_type": "Link", 
+      "materials": [], 
+      "products": [
+        "pin *"
+      ], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }, 
+    {
+      "_name": "buildbot", 
+      "_type": "Link", 
+      "materials": [
+        "match * from upstream"
+      ], 
+      "products": [], 
+      "pubkeys": [
+        "PUBKEY"
+      ]
+    }
+  ]
+}
