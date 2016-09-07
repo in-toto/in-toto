@@ -5,46 +5,61 @@ from metadata_encoder import Layout, Link, Validation, Subchain
 if __name__:
 
     profile = Link(name="profiling", materials=[], 
-                        products=["pin profile_file"], 
-                        pubkeys=["PUBKEY"])
+                        expected_command={'run': "",
+                                'flags': []},
+                        products=[["CREATE", "profile_file"]], 
+                        pubkeys=["key1"])
 
     edit_folder_structure = Link(name="edit_folder_structure",  
+                    expected_command={'run': "",
+                                       'flags': []},
                      materials=[], 
-                     products=["update folders.tar.gz"], 
-                     pubkeys=["PUBKEY"])
+                     products=[["MODIFY", "folders.tar.gz"]], 
+                     pubkeys=["key1"])
 
     bootloader_config = Link(name="bootloader_config",  
-                     materials=["match product folders.tar.gz from"
-                                " edit_folder_structure"], 
-                     products=["update folders.tar.gz"], 
-                     pubkeys=["PUBKEY"])
+                     materials=[["MATCH", "PRODUCT", "folders.tar.gz", "FROM",
+                                " edit_folder_structure"]], 
+                    expected_command={'run': "",
+                                       'flags': []},
+                     products=[["MODIFY", "folders.tar.gz"]], 
+                     pubkeys=["key2"])
 
 
     login_config = Link(name="login_config",  
-                     materials=["match product folders.tar.gz from"
-                                " bootloader_config"], 
-                     products=["update folders.tar.gz"], 
-                     pubkeys=["PUBKEY"])
+                     materials=[["MATCH", "PRODUCT",  "folders.tar.gz", "FROM",
+                                " bootloader_config"]], 
+                    expected_command={'run': "",
+                                       'flags': []},
+                     products=[["MODIFY",  "folders.tar.gz"]], 
+                     pubkeys=["key2"])
 
     upstream = Subchain(name="upstream", materials=[], 
-                        products=["update clone.sh"], 
-                        pubkeys=["PUBKEY"])
+                        products=[["MODIFY", "clone.sh"]], 
+                        pubkeys=["key2"])
 
     versioning = Link("versioning", 
-                   materials=["match product clone.sh from upstream"], 
-                        products=["pin build.sh"],
-                        pubkeys=["PUBKEY"])
+                    expected_command={'run': "",
+                                       'flags': []},
+                   materials=[["MATCH", "PRODUCT", "clone.sh", "FROM", 
+                              "upstream"]], 
+                        products=[["CREATE", "build.sh"]],
+                        pubkeys=["key1"])
 
     build = Link(name="build", 
-                     materials=["match product build.sh from versioning",
-                                "match product folders.tar.gz from login_config"], 
-                        products=["create archlinux-multiarch.iso"], 
-                        pubkeys=["PUBKEY"])
+                    expected_command={'run': "",
+                                       'flags': []},
+            materials=[["MATCH", "PRODUCT", "build.sh", "FROM", "versioning"],
+                       ["MATCH", "PRODUCT", "folders.tar.gz", "FROM", "login_config"]], 
+                        products=[["CREATE", "archlinux-multiarch.iso"]], 
+                        pubkeys=["key1"])
 
-    verify_rsl = Validation(name="verify_rsl", run="toto-link",
-                            flags=["validate_rsl", "-p", "PUBKEYS"],
+    verify_rsl = Validation(name="verify_rsl", 
+                            command={"run":"validate_rsl",
+                                "flags":["-p", "GPG_KEYRING"],},
                             materials=[],
-                            products=["match product bulid.sh from upstream",])
+                            products=[["MATCH", "PRODUCT", "bulid.sh",
+                                "FROM","upstream",]])
 
     layout = Layout([profile, edit_folder_structure, bootloader_config,
                      login_config, upstream, versioning, build, verify_rsl], 

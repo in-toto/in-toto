@@ -9,28 +9,34 @@ def validate_products(self, Attribute, products):
 
 def validate_match_operation(self, keywords):
 
-    MATERIAL_OR_PRODUCT = {'product', 'material'}
+    MATERIAL_OR_PRODUCT = {'PRODUCT', 'MATERIAL'}
 
     if not isinstance(keywords, list):
         raise TypeError("this matching rule is not a list")
 
     if len(keywords) != 5:
         raise TypeError("Wrong operation format, should be: "
-                        "match <target> from <step> (material/product).\n\t"
+                        "MATCH (MATERIAL/PRODUCT) <target> FROM <step>.\n\t"
                         "Got: {}".format(" ".join(keywords)))
 
-    operation, material_or_product, target, _, step = keywords
+    operation, material_or_product, target, from_keyword, step = keywords
 
-    if operation != "match":
+    if operation != "MATCH":
         raise TypeError("Wrong operation to verify! {}".format(operation))
+
+    if from_keyword != "FROM":
+        raise TypeError("FROM should come before step")
 
     if material_or_product not in MATERIAL_OR_PRODUCT:
         raise TypeError("Wrong target! Target should be "
-                        "either material or product")
+                        "either MATERIAL or PRODUCT")
+
+
+
 
 def validate_generic_operation(self, keywords):
 
-    VALID_OPERATIONS = {'create', 'update', 'drop', 'pin'}
+    VALID_OPERATIONS = {'CREATE', 'MODIFY', 'DROP',}
 
     if not isinstance(keywords, list):
         raise TypeError("this matching rule is not a list")
@@ -44,16 +50,17 @@ def validate_generic_operation(self, keywords):
     if operation not in VALID_OPERATIONS:
         raise TypeError("Wrong operation to verify! {}".format(operation))
 
-def validate_individual_product(self, product):
+def validate_individual_product(self, keywords):
 
-    OPERATION_KEYWORDS = {'match': validate_match_operation,
-            'create': validate_generic_operation, 
-            'update': validate_generic_operation,
-            'pin': validate_generic_operation,
-            'drop': validate_generic_operation
+    OPERATION_KEYWORDS = {'MATCH': validate_match_operation,
+            'CREATE': validate_generic_operation, 
+            'MODIFY': validate_generic_operation,
+            'DROP': validate_generic_operation
             }
 
-    keywords = product.split(" ")
+    if not isinstance(keywords, list):
+        raise TypeError("Product and Material matchers should be a list!")
+
     operation = keywords[0]
     if operation not in OPERATION_KEYWORDS:
         raise TypeError("error in {}.\n\t"

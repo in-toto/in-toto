@@ -5,33 +5,38 @@ from metadata_encoder import Layout, Link, Validation, Subchain
 if __name__:
 
     pre_release= Subchain(name="pre-release", materials=[], 
-                        products=["pin *"], 
-                        pubkeys=["PUBKEY"])
+                        products=[["CREATE", "*"]],
+                        pubkeys=["key1"])
 
     configure_lb= Link(name="configure_lb",  
-                     materials=["match product * from pre-release"], 
-                     products=["pin lb_config"], 
-                     pubkeys=["PUBKEY"])
+                     materials=[["MATCH", "PRODUCT", "*", "FROM", "pre-release"]], 
+                     expected_command={"run": "toto_vi",
+                                        "flags": []},
+                     products=[["CREATE", "lb_config"]], 
+                     pubkeys=["key2"])
 
     clone_lb = Subchain("clone_lb", 
                    materials=[], 
-                   products=["pin *"],
-                   pubkeys=["PUBKEY"])
+                   products=[["MODIFY", "*"]],
+                   pubkeys=["key2"])
 
     build = Link(name="build",  
-                     materials=["match product * from clone_lb",
-                                "match product lb_conig from configure_lb",
-                                "match product * from pre_release"], 
-                     products=["pin *"], 
-                     pubkeys=["PUBKEY"])
+                     materials=[["MATCH", "PRODUCT", "*", "FROM", "clone_lb"],
+                                ["MATCH", "PRODUCT", "lb_conig", "FROM",
+                                "configure_lb"],
+                                ["MATCH", "PRODUCT", "*", "FROM", "pre_release"]], 
+                     expected_command = {"run": "lb_build",
+                                         "flags": []},
+                     products=[["MODIFY", "*"]], 
+                     pubkeys=["key2"])
 
-    verify_rsl = Validation(name="verify_rsl", run="toto-link",
-                            flags=["validate_rsl", "-p", "PUBKEYS"],
+    verify_rsl = Validation(name="verify_rsl", command={'run':"toto-link",
+                            'flags':["validate_rsl", "-p", "PUBKEYS"]},
                             materials=[],
-                            products=["pin tails.iso"])
+                            products=[["CREATE", "tails.iso"]])
 
     layout = Layout([pre_release, configure_lb, clone_lb, build, verify_rsl],
-            [{'key1':{'pubkey':"stuff"}}, 
-             {'key2': {'pubkey': "stuff"}}])
+            [{'KEYID1':{'pubkey':"stuff"}}, 
+             {'KEYID2': {'pubkey': "stuff"}}])
 
     print("{}".format(layout))

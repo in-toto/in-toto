@@ -4,25 +4,38 @@ from metadata_encoder import Layout, Link, Validation
 
 if __name__:
 
-    git = Link(name="git", materials=[], products=["pin *"], pubkeys=["PUBKEY"])
+    git = Link(name="git", 
+               expected_command={'run':'git',
+                                 'flags':['tag']},
+               materials=[], 
+               products=[["CREATE", "*"]], pubkeys=["key1"])
 
-    comp = Link(name="compile",  materials=["match product * from git"], 
-                products=["pin foo.exe"], pubkeys=["PUBKEY"])
+    comp = Link(name="compile",  
+                expected_command={'run': 'gcc',
+                                  'flags':['-O3', '-Wall', '--gnu-source']},
+                materials=[["MATCH", "PRODUCT", "*", "FROM", "git"]], 
+                products=[["CREATE", "foo.exe"]], pubkeys=["key2"])
 
-    tar = Link("pack", materials=["match product * from comp",
-                                         "match product LICENSE from git",
-                                         "drop *"], 
-                        products=["pin pkg.tar.gz"],
-                        pubkeys=["PUBKEY"])
+    tar = Link(name="pack", 
+                expected_command={'run': 'tar',
+                                  'flags': ['-zcvf', 'foo.exe']},
+                materials=[["MATCH", "PRODUCT", "*", "FROM", "comp"],
+                           ["MATCH", "PRODUCT", "LICENSE", "FROM", "git"],
+                           ["DROP", "*"]], 
+                        products=[["CREATE", "pkg.tar.gz"]],
+                        pubkeys=["key2"])
 
-    untar = Validation(name="untar", run="toto-link", 
-                 flags=["tar", "-zxvf", "pkg.tar.gz"],
-                 materials=["match product pkg.tar.gz from pack"],
-                 products=["match product * from comp"])
+    untar = Validation(name="untar", 
+                 command={'run':"toto-link", 
+                     'flags':["tar", "-zxvf", "pkg.tar.gz"]},
+                 materials=[["MATCH", "PRODUCT", "pkg.tar.gz", "FROM", "pack"]],
+                 products=[["MATCH", "PRODUCT", "*", "FROM", "comp"]])
 
-    verify_rsl = Validation(name="verify_rsl", run="toto-link",
-                            flags=["validate_rsl", "-p", "PUBKEYS"],
-                            materials=["match product * from git",],
+    verify_rsl = Validation(name="verify_rsl", 
+                            command={'run':"validate_rsl",
+                                "flags":["rsl", "-p", "PUBKEYS"]},
+                            materials=[["MATCH", "PRODUCT", "*", "FROM",
+                                        "git"]],
                             products=[])
 
     layout = Layout([git, comp, tar, untar, verify_rsl],

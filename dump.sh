@@ -5,5 +5,5 @@ do
     python ${i}.py > $i.layout
 done
 
-a2ps -R -f 7 *.layout -o layouts.ps
+a2ps -R -f 6 *.layout -o layouts.ps
 ps2pdf layouts.ps metadata_sketches.pdf

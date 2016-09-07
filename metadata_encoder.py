@@ -20,6 +20,7 @@ class Link(Step):
 
     _type=attr.ib(default="Link", init=False)
     pubkeys=attr.ib([], attr.validators.instance_of(list))
+    expected_command=attr.ib([], attr.validators.instance_of(dict))
 
 @attr.s()
 class Subchain(Step):
@@ -31,8 +32,7 @@ class Subchain(Step):
 class Validation(Step):
 
     _type=attr.ib(default="Validation", init=False)
-    run=attr.ib([], attr.validators.instance_of(str))
-    flags=attr.ib([], attr.validators.instance_of(list))
+    command=attr.ib([], attr.validators.instance_of(dict))
 
 
 def validate_steps(self, Attribute, steps):
