@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation, Subchain
+from layout import Layout, Link, Validation, Subchain
 
 if __name__:
 
@@ -40,8 +40,8 @@ if __name__:
                             products=[["MATCH", "MATERIAL", "*", "FROM",
                                 "upstream"]])
 
-    layout = Layout([upstream, debianize, package, dpkg, verify_rsl],
+    l = Layout([upstream, debianize, package, dpkg, verify_rsl],
             [{'key1':{'pubkey':"stuff"}}, 
              {'key2': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))

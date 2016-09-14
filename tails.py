@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation, Subchain
+from layout import Layout, Link, Validation, Subchain
 
 if __name__:
 
@@ -35,8 +35,8 @@ if __name__:
                             materials=[],
                             products=[["CREATE", "tails.iso"]])
 
-    layout = Layout([pre_release, configure_lb, clone_lb, build, verify_rsl],
+    l = Layout([pre_release, configure_lb, clone_lb, build, verify_rsl],
             [{'KEYID1':{'pubkey':"stuff"}}, 
              {'KEYID2': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))

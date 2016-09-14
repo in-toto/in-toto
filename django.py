@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation, Subchain
+from layout import Layout, Link, Validation, Subchain
 
 if __name__:
 
@@ -29,9 +29,9 @@ if __name__:
                             products=[["MATCH", "MATERIAL", "*", "FROM",
                                 "pre-release",]])
 
-    layout = Layout([pre_release, build_test, package, verify_rsl],
+    l = Layout([pre_release, build_test, package, verify_rsl],
             [{'key1':{'pubkey':"stuff"}}, 
              {'key2': {'pubkey': "stuff"}},
              {'key3': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))

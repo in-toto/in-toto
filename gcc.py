@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation, Subchain
+from layout import Layout, Link, Validation, Subchain
 
 if __name__:
 
@@ -17,8 +17,8 @@ if __name__:
                      products=[], 
                      pubkeys=["key2"])
 
-    layout = Layout([upstream, buildbot],
+    l = Layout([upstream, buildbot],
             [{'key1':{'pubkey':"stuff"}}, 
              {'key2': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))

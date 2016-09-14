@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation
+from layout import Layout, Link, Validation
 
 if __name__:
 
@@ -38,8 +38,8 @@ if __name__:
                                         "git"]],
                             products=[])
 
-    layout = Layout([git, comp, tar, untar, verify_rsl],
+    l = Layout([git, comp, tar, untar, verify_rsl],
             [{'key1':{'pubkey':"stuff"}}, 
              {'key2': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from metadata_encoder import Layout, Link, Validation, Subchain
+from layout import Layout, Link, Validation, Subchain
 
 if __name__:
 
@@ -61,9 +61,9 @@ if __name__:
                             products=[["MATCH", "PRODUCT", "bulid.sh",
                                 "FROM","upstream",]])
 
-    layout = Layout([profile, edit_folder_structure, bootloader_config,
+    l = Layout([profile, edit_folder_structure, bootloader_config,
                      login_config, upstream, versioning, build, verify_rsl], 
             [{'key1':{'pubkey':"stuff"}}, 
              {'key2': {'pubkey': "stuff"}}])
 
-    print("{}".format(layout))
+    print("{}".format(l))
