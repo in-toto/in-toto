@@ -23,9 +23,9 @@ class Link(Step):
     expected_command=attr.ib([], attr.validators.instance_of(dict))
 
 @attr.s()
-class Subchain(Step):
+class Delegation(Step):
 
-    _type=attr.ib(default="Subchain", init=False)
+    _type=attr.ib(default="Delegation", init=False)
     pubkeys=attr.ib([], attr.validators.instance_of(list))
 
 @attr.s()
@@ -59,6 +59,7 @@ class Layout(object):
     _type=attr.ib(default="Layout", init=False)
     steps=attr.ib(validator=validate_steps)
     keys=attr.ib(validator=attr.validators.instance_of(list))
+    expires=attr.ib(validator=attr.validators.instance_of(str))
 
     def __repr__(self):
         return json.dumps(attr.asdict(self), sort_keys=True, indent=2)
