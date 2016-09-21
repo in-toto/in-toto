@@ -31,9 +31,6 @@ def validate_match_operation(self, keywords):
         raise TypeError("Wrong target! Target should be "
                         "either MATERIAL or PRODUCT")
 
-
-
-
 def validate_generic_operation(self, keywords):
 
     VALID_OPERATIONS = {'CREATE', 'MODIFY', 'DROP',}
