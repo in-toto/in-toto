@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 
-from layout import Layout, Link, Validation, Subchain
+from layout import Layout, Step, Validation
+from matchrules import Create, Match
 
 if __name__:
 
-    upstream = Link(name="upstream", materials=[], 
+    upstream = Step(name="upstream", materials=[], 
                     expected_command={'run':"git",
                                 "flags":["tag"]},
-                        products=[["CREATE", "*"]], 
+                        products=[Create("*").encode()], 
                         pubkeys=["key1"])
 
-    buildbot = Link(name="buildbot",  
+    buildbot = Step(name="buildbot",  
                     expected_command={'run':"buildbot",
                                 "flags":["run"]},
-                     materials=[["MATCH", "PRODUCT", "*", "FROM", "upstream"]], 
+                     materials=[Match("PRODUCT", "*", upstream._name).encode()], 
                      products=[], 
                      pubkeys=["key2"])
 
     l = Layout([upstream, buildbot],
             [{'key1':{'pubkey':"stuff"}}, 
-             {'key2': {'pubkey': "stuff"}}])
+             {'key2': {'pubkey': "stuff"}}],
+             "now")
 
     print("{}".format(l))
