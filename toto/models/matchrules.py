@@ -5,19 +5,23 @@ import canonicaljson
 
 @attr.s(repr=False)
 class Matchrule(object):
-    pass
 
     def encode(self):
         return self.__repr__()
 
+    def read(data):
+        """ Expects data in the form of:
+         """
+         pass
+
 @attr.s(repr=False)
 class Match(Matchrule): 
-    material_or_product=attr.ib([], attr.validators.instance_of(str))
-    path=attr.ib([], attr.validators.instance_of(str))
-    step=attr.ib([], attr.validators.instance_of(str))
+
+    material_or_product = attr.ib([])
+    path = attr.ib([])
+    step = attr.ib([])
 
     def __repr__(self):
-        print("calling repr")
         return ["MATCH", "{}".format(self.material_or_product),
                 "{}".format(self.path), "FROM", "{}".format(self.step)]
 
@@ -29,7 +33,7 @@ class Match(Matchrule):
 @attr.s(repr=False)
 class Create(Matchrule): 
 
-    path=attr.ib([], attr.validators.instance_of(str))
+    path = attr.ib([])
 
     def __repr__(self):
         return ["CREATE", "{}".format(self.path)]
@@ -37,7 +41,7 @@ class Create(Matchrule):
 @attr.s(repr=False)
 class Delete(Matchrule): 
 
-    path=attr.ib([], attr.validators.instance_of(str))
+    path = attr.ib([])
 
     def __repr__(self):
         return ["DELETE", "{}".format(self.path)]
@@ -45,7 +49,7 @@ class Delete(Matchrule):
 @attr.s(repr=False)
 class Modify(Matchrule): 
 
-    path=attr.ib([], attr.validators.instance_of(str))
+    path = attr.ib([])
 
     def __repr__(self):
         return ["MODIFY", "{}".format(self.path)]
