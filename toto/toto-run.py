@@ -28,19 +28,15 @@
 
   TODO
     * Material/Product
-      For now we specify --material and --product explicitly. Later we can think
+      For now we specify --materials and --products explicitly. Later we can think
       of more sophisticate/secure ways to find out which files are being 
       transformed
-    * Missing options:
-      - Unique identifier to assign to link definition in layout
-      - Key (for now uses a default key)
-
 """
 
 import os
 import sys
 import argparse
-
+import toto.util
 import toto.runlib
 
 
@@ -48,15 +44,31 @@ def main():
   # Create new parser with custom usage message
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata",
-      usage="python -m %s -m DIR -p DIR -- CMD [args]" % 
-      (os.path.basename(__file__), ))
+      usage="python -m %s --name <unique name>\n" \
+            "            [--materials <filepath>[,<filepath> ...]]\n" \
+            "             --products <filepath>[,<filepath> ...]\n" \
+            "             --key <filepath>\n" \
+            "             -- <cmd> [args]" % (os.path.basename(__file__), ))
 
   # Option group for toto specific options, e.g. material and product
   toto_args = parser.add_argument_group("Toto options")
-  toto_args.add_argument("-m", "--material", type=str, required=True,
-      help="directory before link command execution")
-  toto_args.add_argument("-p", "--product", type=str, required=True,
-      help="directory after link command execution")
+
+  # XXX LP: Name has to be unique!!! Where will we check this?
+  # XXX LP: Do we limit the allowed characters for the name?
+  # XXX LP: Should it be possible to add a path?
+  toto_args.add_argument("-n", "--name", type=str, required=True,
+      help="Unique name for link metadata")
+
+  # XXX LP: We should allow path wildcards here and sanitze them
+  toto_args.add_argument("-m", "--materials", type=str, required=True,
+      help="Files to recorded before link command execution")
+  toto_args.add_argument("-p", "--products", type=str, required=True,
+      help="Files to record after link command execution")
+
+  # XXX LP: Specifiy a format or choice of formats to use,
+  # For now it is "ssl_crypto.formats.RSAKEY_SCHEMA"
+  toto_args.add_argument("-k", "--key", type=str, required=True,
+      help="Path to private key (<FORMAT>) to sign link metadata")
 
   # Option group for link command to be executed
   link_args = parser.add_argument_group("Link command")
@@ -68,11 +80,24 @@ def main():
 
   args = parser.parse_args()
 
+  # XXX LP: Sanitze more?
+  name = args.name
+  materials = args.materials
+  products = args.products
+  link_cmd = args.link_cmd
+
+  ## XXX LP: This will be changed
+  key = toto.util.create_and_persist_or_load_key(args.key)
+
+  if materials:
+    materials = materials.split(",")
+  if products:
+    products = products.split(",")
+
   # try:
-  toto.runlib.run_link(args.material, args.link_cmd, args.product)
+  toto.runlib.run_link(name, materials, products, link_cmd, key)
   # except Exception, e:
   #   raise e
-
 
 if __name__ == '__main__':
   main()
