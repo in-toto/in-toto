@@ -2,104 +2,94 @@
 
 import json
 import attr
-import canonicaljson
 
-import validators
+# import validators
 
 from common import Signable
-from matchrules import Matchrule
-
-@attr.s(repr=None)
-class Layout(Signable):
-
-    _type = attr.ib(default="layout", init=False)
-    steps = attr.ib([])
-    validations = attr.ib([])
-    keys = attr.ib([])
-    expires = attr.ib()
-
-    def __repr__(self):
-        return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
-
-    def dump(self, filename='root.layout'):
-        with open(filename, 'wt') as fp:
-            fp.write("{}".format(self))
-
-    @staticmethod
-    def read(filename):
-
-        with open(filename, 'r') as fp:
-            layout = Layout()
-            layout_data = json.load(fp)
-            layout.expires = layout_data.expires
-
-            for step_data in layout_data.steps:
-                step = Step()
-                step._name = step_data._name
-
-                for data in step_data.expected_materials:
-                    step.expected_materials.append(
-                            Matchrule.read(data))
-
-                for data in step_data.expected_products:
-                    step.expected_products.append(
-                            Matchrule.read(data))
-
-                for data in step_data.pubkeys:
-                    # create pubkey data
-                    step.pubkeys.append(pubkey)
-
-                step.expected_command.append(step_data.expected_command)
-
-                layout.steps.append(step)
-
-
-            for validation_data in layout_data.validations:
-                validation = Validation()
-                validation._name = validation_data._name
-
-                for data in validation_data.expected_materials:
-                    validation.expected_materials.append(
-                            Matchrule.read(data))
-
-                for data in validation_data.expected_products:
-                    validation.expected_products.append(
-                            Matchrule.read(data))
-
-                validation.run = validation_data.run
-
-                layout.validations.append(validation)
-
-
-            for data in layout_data.keys:
-                layout.keys.append(
-                    # Create new TUF key from key
-                    )
-
-            return layout
-
+from common import Metablock
+from matchrule import Matchrule
 
 @attr.s(repr=False)
-class Step(object):
+class Layout(Signable):
 
-    _type = attr.ib(default="step", init=False)
-    _name = attr.ib()
-    expected_materials = attr.ib([])
-    expected_products = attr.ib([])
-    pubkeys = attr.ib([])
-    expected_command = attr.ib()
+  _type = attr.ib("layout", init=False)
+  steps = attr.ib([])
+  inspect = attr.ib([])
+  keys = attr.ib([])
+  expires = attr.ib("")
 
-    def __repr__(self):
-        return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
+  def dump(self, filename='root.layout'):
+    super(Layout, self).dump(filename)
 
-@attr.s()
-class Validation(object):
+  @staticmethod
+  def read_from_file(filename):
+    with open(filename, 'r') as fp: 
+      return Layout.read(json.load(fp))
 
-    _type = attr.ib(default="validation", init=False)
-    _name = attr.ib()
-    expected_materials = attr.ib([])
-    expected_products = attr.ib([])
-    run = attr.ib()
+  @staticmethod
+  def read(data):
+    layout = Layout()
+    tmp_steps = []
+    tmp_inspect = []
 
-    def __repr__(self):
-        return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
+    for step_data in data.get("steps"):
+      tmp_steps.append(Step.read(step_data))
+    for inspect_data in data.get("inspect"):
+      tmp_inspect.append(Inspection.read(inspect_data))
+
+    return Layout(steps=tmp_steps, inspect=tmp_inspect,
+        keys=data.get("keys"), expires=data.get("expires"),
+        signatures=data.get("signatures"))
+
+@attr.s(repr=False)
+class Step(Metablock):
+
+  _type = attr.ib("step", init=False)
+  name = attr.ib()
+  material_matchrules = attr.ib([])
+  product_matchrules = attr.ib([])
+  pubkeys = attr.ib([])
+  expected_command = attr.ib("")
+
+  @staticmethod
+  def read(data):
+    tmp_material_matchrules = []
+    tmp_product_matchrules = []
+
+    # We just store the list representation of Matchrules because it makes
+    # serialization/deserialization easier.
+    for matchrule in data.get("material_matchrules"):
+      tmp_material_matchrules.append(list(Matchrule.read(matchrule)))
+    for matchrule in data.get("product_matchrules"):
+      tmp_product_matchrules.append(list(Matchrule.read(matchrule)))
+
+    return Step(name=data.get("name"),
+        material_matchrules=tmp_material_matchrules,
+        product_matchrules=tmp_product_matchrules,
+        pubkeys=data.get("pubkeys"),
+        expected_command=data.get("expected_command"))
+
+@attr.s(repr=False)
+class Inspection(Metablock):
+
+  _type = attr.ib("inspection", init=False)
+  name = attr.ib()
+  material_matchrules = attr.ib([])
+  product_matchrules = attr.ib([])
+  run = attr.ib("")
+
+  @staticmethod
+  def read(data):
+    tmp_material_matchrules = []
+    tmp_product_matchrules = []
+
+    # We just store the list representation of Matchrules because it makes
+    # serialization/deserialization easier.
+    for matchrule in data.get("material_matchrules"):
+      tmp_material_matchrules.append(list(Matchrule.read(matchrule)))
+    for matchrule in data.get("product_matchrules"):
+      tmp_product_matchrules.append(list(Matchrule.read(matchrule)))
+
+    return Inspection(name=data.get("name"), run=data.get("run"),
+        material_matchrules=tmp_material_matchrules,
+        product_matchrules=tmp_product_matchrules)
