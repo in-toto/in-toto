@@ -1,7 +1,5 @@
-
 import attr
 import canonicaljson
-import matchrule
 
 from ..ssl_crypto import keys as ssl_crypto__keys
 

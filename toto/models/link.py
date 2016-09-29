@@ -1,7 +1,8 @@
-from common import Signable
+import attr
+from . import common as models__common
 
 @attr.s(repr=False)
-class Link(Signable):
+class Link(models__common.Signable):
 
   _type = attr.ib("Link", init=False)
   name = attr.ib("")
@@ -11,9 +12,9 @@ class Link(Signable):
   ran_command = attr.ib("")
   return_value = attr.ib(None)
 
-  def dump(self, filename):
+  def dump(self, filename=False):
     # Magic: short circuiting and string formatting
-    super(Layout, self).dump(filename or "%s.link" % self._name)
+    super(Link, self).dump(filename or "%s.link" % self.name)
 
   @staticmethod
   def read_from_file(filename):
@@ -21,5 +22,5 @@ class Link(Signable):
       return Link.read(json.load(fp))
 
   @staticmethod
-  def read(data)
-    return Link(**link_data)
+  def read(data):
+    return Link(**data)

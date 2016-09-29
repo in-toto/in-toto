@@ -4,13 +4,11 @@ import json
 import attr
 
 # import validators
-
-from common import Signable
-from common import Metablock
-from matchrule import Matchrule
+from . import models.common as models__common
+from . import models.matchrule as models__matchrule
 
 @attr.s(repr=False)
-class Layout(Signable):
+class Layout(models__common.Signable):
 
   _type = attr.ib("layout", init=False)
   steps = attr.ib([])
@@ -42,7 +40,7 @@ class Layout(Signable):
         signatures=data.get("signatures"))
 
 @attr.s(repr=False)
-class Step(Metablock):
+class Step(models__common.Metablock):
 
   _type = attr.ib("step", init=False)
   name = attr.ib()
@@ -59,9 +57,11 @@ class Step(Metablock):
     # We just store the list representation of Matchrules because it makes
     # serialization/deserialization easier.
     for matchrule in data.get("material_matchrules"):
-      tmp_material_matchrules.append(list(Matchrule.read(matchrule)))
+      tmp_material_matchrules.append(
+          list(models__matchrule.Matchrule.read(matchrule)))
     for matchrule in data.get("product_matchrules"):
-      tmp_product_matchrules.append(list(Matchrule.read(matchrule)))
+      tmp_product_matchrules.append(
+          list(models__matchrule.Matchrule.read(matchrule)))
 
     return Step(name=data.get("name"),
         material_matchrules=tmp_material_matchrules,
@@ -70,7 +70,7 @@ class Step(Metablock):
         expected_command=data.get("expected_command"))
 
 @attr.s(repr=False)
-class Inspection(Metablock):
+class Inspection(models__common.Metablock):
 
   _type = attr.ib("inspection", init=False)
   name = attr.ib()
@@ -86,9 +86,11 @@ class Inspection(Metablock):
     # We just store the list representation of Matchrules because it makes
     # serialization/deserialization easier.
     for matchrule in data.get("material_matchrules"):
-      tmp_material_matchrules.append(list(Matchrule.read(matchrule)))
+      tmp_material_matchrules.append(
+          list(models__matchrule.Matchrule.read(matchrule)))
     for matchrule in data.get("product_matchrules"):
-      tmp_product_matchrules.append(list(Matchrule.read(matchrule)))
+      tmp_product_matchrules.append(
+          list(models__matchrule.Matchrule.read(matchrule)))
 
     return Inspection(name=data.get("name"), run=data.get("run"),
         material_matchrules=tmp_material_matchrules,
