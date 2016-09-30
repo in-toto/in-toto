@@ -71,17 +71,34 @@ def record_artifacts_as_dict(artifacts):
   if not artifacts:
     return artifacts_dict
 
+  def _hash_artifact(filepath, hash_algorithms=['sha256']):
+    """Takes filenames and hashes the respective file's contents
+    using the passed hash_algorithms. Returns a HASHDICT
+
+    XXX LP: Maybe this should live in the link model. Or in
+    a not yet existent artifact model. """
+
+    toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
+    hash_dict = {}
+
+    for algorithm in hash_algorithms:
+      digest_object = toto.ssl_crypto.hash.digest_filename(filepath, algorithm)
+      hash_dict.update({algorithm: digest_object.hexdigest()})
+
+    toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+
+    return hash_dict
+
   for artifact in artifacts:
     if os.path.isfile(artifact):
-      digest_object = toto.ssl_crypto.hash.digest_filename(artifact)
-      artifacts_dict[artifact] = digest_object.hexdigest()
+      artifacts_dict[artifact] = _hash_artifact(artifact)
 
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact):
         for name in files:
-          filename = os.path.join(root, name)
-          digest_object = toto.ssl_crypto.hash.digest_filename(filename)
-          artifacts_dict[filename] = digest_object.hexdigest()
+          filepath = os.path.join(root, name)
+          _hash_artifact(filepath)
+
 
   return artifacts_dict
 
