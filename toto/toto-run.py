@@ -48,6 +48,7 @@ def main():
             "            [--materials <filepath>[,<filepath> ...]]\n" \
             "             --products <filepath>[,<filepath> ...]\n" \
             "             --key <filepath>\n" \
+            "             --key <filepath>\n" \
             "             -- <cmd> [args]" % (os.path.basename(__file__), ))
 
   # Option group for toto specific options, e.g. material and product
@@ -60,7 +61,7 @@ def main():
       help="Unique name for link metadata")
 
   # XXX LP: We should allow path wildcards here and sanitze them
-  toto_args.add_argument("-m", "--materials", type=str, required=True,
+  toto_args.add_argument("-m", "--materials", type=str, required=False,
       help="Files to recorded before link command execution")
   toto_args.add_argument("-p", "--products", type=str, required=True,
       help="Files to record after link command execution")
@@ -70,13 +71,17 @@ def main():
   toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key (<FORMAT>) to sign link metadata")
 
+  toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
+      help="If set redirects stdout/stderr and stores to link metadata",
+      default=False, action='store_true')
+
   # Option group for link command to be executed
   link_args = parser.add_argument_group("Link command")
 
   # XXX: This is not yet ideal. 
   # What should we do with tokens like > or ;
-  link_args.add_argument('link_cmd', nargs="+", 
-    help="link command to be executed with options and arguments")
+  link_args.add_argument("link_cmd", nargs="+",
+    help="Link command to be executed with options and arguments")
 
   args = parser.parse_args()
 
@@ -85,8 +90,9 @@ def main():
   materials = args.materials
   products = args.products
   link_cmd = args.link_cmd
+  record_byproducts = args.record_byproducts
 
-  ## XXX LP: This will be changed
+  # XXX LP: This will be changed
   key = toto.util.create_and_persist_or_load_key(args.key)
 
   if materials:
@@ -95,7 +101,11 @@ def main():
     products = products.split(",")
 
   # try:
-  toto.runlib.run_link(name, materials, products, link_cmd, key)
+  link = toto.runlib.run_link(name, materials, products, link_cmd,
+      record_byproducts)
+  link.sign(key)
+  link.dump()
+
   # except Exception, e:
   #   raise e
 

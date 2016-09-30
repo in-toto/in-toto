@@ -21,12 +21,16 @@
     * Execute command
       * Capture stdout/stderr/return value of the executed command
     * Record state of product (files after the command was executed)
-    * Create metadata file
-    * Sign metadata file
-    * Store medata file as "[name].link"
+    * Return link object
+        can be used to sign and dump
+
+
+    (* Sign metadata file (moved to toto-run.py))
+    (* Store medata file as "[name].link" (moved to toto-run.py))
 
   TODO
     * Decide on metadata location
+    * Properly duplicate stdout/stderr
 
 """
 import sys
@@ -49,7 +53,6 @@ else:
 import toto.models.link
 
 import toto.ssl_crypto.hash
-import toto.ssl_crypto.keys
 import toto.ssl_crypto.formats
 
 
@@ -62,7 +65,11 @@ def record_artifacts_as_dict(artifacts):
 
   XXX Todo: Needs revision!
   """
+
   artifacts_dict = {}
+
+  if not artifacts:
+    return artifacts_dict
 
   for artifact in artifacts:
     if os.path.isfile(artifact):
@@ -79,27 +86,42 @@ def record_artifacts_as_dict(artifacts):
   return artifacts_dict
 
 
-def execute_link(link_cmd_args):
+def execute_link(link_cmd_args, record_byproducts):
   """Takes a command and its options and arguments of the software supply 
   chain as input, runs the command in a suprocess, records the stdout, 
   stderr and return value of the command and returns them. Stdout and stderr
   are called byproducts."""
 
-  # XXX: Use SpooledTemporaryFile if we expect very large outputs
-  stdout_file = tempfile.TemporaryFile()
-  stderr_file = tempfile.TemporaryFile()
+  # XXX: The first approach only redirects the stdout/stderr to a tempfile
+  # but we actually want to duplicate it, ideas
+  #  - Using a pipe won't work because processes like vi will complain
+  #  - Wrapping stdout/sterr in Python does not work because the suprocess
+  #    will only take the fd and then uses it natively
+  #  - Reading from /dev/stdout|stderr, /dev/tty is *NIX specific
 
-  return_value = subprocess.call(link_cmd_args,
-      stdout=stdout_file, stderr=stderr_file)
+  # Until we come up with a proper solution we use a flag and let the user
+  # decide if s/he wants to see or store stdout/stderr
+  # btw: we ignore them in the layout anyway
 
-  stdout_file.seek(0)
-  stderr_file.seek(0)
+  if record_byproducts:
+    # XXX: Use SpooledTemporaryFile if we expect very large outputs
+    stdout_file = tempfile.TemporaryFile()
+    stderr_file = tempfile.TemporaryFile()
 
-  stdout_str = stdout_file.read()
-  stderr_str = stderr_file.read()
+    return_value = subprocess.call(link_cmd_args,
+        stdout=stdout_file, stderr=stderr_file)
+
+    stdout_file.seek(0)
+    stderr_file.seek(0)
+
+    stdout_str = stdout_file.read()
+    stderr_str = stderr_file.read()
+
+  else:
+      return_value = subprocess.call(link_cmd_args)
+      stdout_str = stderr_str = ""
 
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
-
 
 def create_link_metadata(name, materials, products, byproducts,
     ran_command, return_value):
@@ -120,19 +142,16 @@ def create_link_metadata(name, materials, products, byproducts,
   return  toto.models.link.Link.read(link_dict)
 
 
-def run_link(name, materials, products, toto_cmd_args, key):
+def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
   """Performs all actions associated with toto run-link.
   XXX: This should probably be atomic, i.e. all or nothing"""
 
   # Record - Run - Record
   materials_dict = record_artifacts_as_dict(materials)
-  byproducts, return_value = execute_link(toto_cmd_args)
+  byproducts, return_value = execute_link(toto_cmd_args, record_byproducts)
   products_dict = record_artifacts_as_dict(products)
 
   link = create_link_metadata(name, materials_dict, products_dict, byproducts,
     toto_cmd_args, return_value)
 
-  link.sign(key)
-  link.dump()
-
-  
+  return link
