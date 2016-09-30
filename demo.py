@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 import toto.ssl_crypto.keys
 import toto.models.layout as m
@@ -6,6 +7,11 @@ import toto.util
 
 
 def main():
+
+
+  #############################################################################
+  # Define the supply chain
+  #############################################################################
 
   # Get keys
   alice_key = toto.util.create_and_persist_or_load_key("alice")
@@ -28,7 +34,7 @@ def main():
         "expected_command": "vi",
       },
       {
-        "_name": "package",
+        "name": "package",
         "material_matchrules": [
             ["MATCH", "PRODUCT", "foo.py", "FROM", "write-code"],
         ],
@@ -55,12 +61,30 @@ def main():
   layout.sign(alice_key)
   layout.dump()
 
-  # Load layout
-  m.Layout.read_from_file("root.layout")
-  # #(Verify signature)
 
-  # Dump again with different name 
-  layout.dump(filename="same.layout")
+  # Check if dumping - reading - dumping produces the same layout
+  # layout_same = m.Layout.read_from_file("root.layout")
+  # if repr(layout) != repr(layout_same):
+  #   print "There is something wrong with layout de-/serialization"
+
+
+  #############################################################################
+  # Do the supply chain
+  #############################################################################
+
+  write_code_cmd = "python -m toto.toto-run "\
+                   "--name write-code --products foo.py "\
+                   "--key alice -- vi foo.py"
+  subprocess.call(write_code_cmd.split())
+
+  package_cmd = "python -m toto.toto-run "\
+                "--name package --material foo.py --products foo.tar.gz "\
+                "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
+  subprocess.call(package_cmd.split())
+
+  #############################################################################
+  # Verify the supply chain
+  #############################################################################
 
 
 if __name__ == '__main__':
