@@ -4,8 +4,8 @@ import json
 import attr
 
 # import validators
-from . import models.common as models__common
-from . import models.matchrule as models__matchrule
+from . import common as models__common
+from . import matchrule as models__matchrule
 
 @attr.s(repr=False)
 class Layout(models__common.Signable):

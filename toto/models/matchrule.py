@@ -10,9 +10,9 @@ class Matchrule(object):
     # XXX LP: needs some better checking
     # e.g. move checking to validator altogether
     if len(data) == 5 and data[0] == "MATCH" and data[1] == "MATERIAL":
-      return MatchProduct(path=data[2], step=data[4])
-    elif len(data) == 5 and data[0] == "MATCH" and data[1] == "PRODUCT":
       return MatchMaterial(path=data[2], step=data[4])
+    elif len(data) == 5 and data[0] == "MATCH" and data[1] == "PRODUCT":
+      return MatchProduct(path=data[2], step=data[4])
     elif len(data) >= 2 and data[0] == "CREATE":
       return Create(path=data[1])
     elif len(data) >= 2 and data[0] == "DELETE":
