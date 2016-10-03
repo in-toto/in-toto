@@ -20,7 +20,7 @@ class Layout(models__common.Signable):
     super(Layout, self).dump(filename)
 
   @staticmethod
-  def read_from_file(filename):
+  def read_from_file(filename='root.layout'):
     with open(filename, 'r') as fp: 
       return Layout.read(json.load(fp))
 
