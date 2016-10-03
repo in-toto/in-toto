@@ -23,14 +23,36 @@ class Signable(Metablock):
   """
   signatures = attr.ib([])
 
+  @property
+  def payload():
+    payload = attr.asdict(self)
+    payload.pop("signatures")
+    return canonicaljson.encode_pretty_printed_json(payload)
+
   def sign(self, key):
     """ Signs the canonical JSON repr of itself (without the signatures property)
     and adds the signatures to its signature properties. """
 
-    payload = attr.asdict(self)
-    payload.pop("signatures")
-    payload = canonicaljson.encode_pretty_printed_json(payload)
+    # XXX LP: Todo: Verify key format
 
-    signature = ssl_crypto__keys.create_signature(key, payload)
+    signature = ssl_crypto__keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
+  def verify_signature(self, key):
+    """ Verifies if the object contains a signature matching the keyid of the
+    passed key, and if the signature is valid.
+
+    Exceptions
+      Invalid key format Exception
+      Signature not found Exception
+    """
+
+    # XXX LP: Todo: Verify key format
+
+    for signature in self.sigantures:
+      if key["keyid"] == signature["keyid"]:
+        return toto.ssl_crypto.keys.verify_signature(key, signature,
+            self.payload)
+    else:
+      # XXX LP: Replace exception (or return false?)
+      raise Exception("Signature with keyid not found")
