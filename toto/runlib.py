@@ -172,3 +172,14 @@ def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
     toto_cmd_args, return_value)
 
   return link
+
+def toto_run(name, materials, products, key, toto_cmd_args,
+    record_byproducts=False):
+
+  link = toto.runlib.run_link(name, materials, products, toto_cmd_args,
+        record_byproducts)
+
+  # XXX LP: Change key load
+  key_dict = toto.util.create_and_persist_or_load_key(key)
+  link.sign(key_dict)
+  link.dump()

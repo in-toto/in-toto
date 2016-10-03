@@ -66,6 +66,7 @@ def main():
   toto_args.add_argument("-p", "--products", type=str, required=True,
       help="Files to record after link command execution")
 
+  # XXX LP: Could be more than one key
   # XXX LP: Specifiy a format or choice of formats to use,
   # For now it is "ssl_crypto.formats.RSAKEY_SCHEMA"
   toto_args.add_argument("-k", "--key", type=str, required=True,
@@ -89,25 +90,18 @@ def main():
   name = args.name
   materials = args.materials
   products = args.products
+  key = args.key
   link_cmd = args.link_cmd
   record_byproducts = args.record_byproducts
-
-  # XXX LP: This will be changed
-  key = toto.util.create_and_persist_or_load_key(args.key)
 
   if materials:
     materials = materials.split(",")
   if products:
     products = products.split(",")
 
-  # try:
-  link = toto.runlib.run_link(name, materials, products, link_cmd,
+  toto.runlib.run_link(name, materials, products, key, link_cmd,
       record_byproducts)
-  link.sign(key)
-  link.dump()
 
-  # except Exception, e:
-  #   raise e
 
 if __name__ == '__main__':
   main()
