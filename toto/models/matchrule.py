@@ -22,6 +22,9 @@ class Matchrule(object):
     else:
       raise Exception("Invalid Matchrule!", data)
 
+  def verify_rule(self, *args, **kwargs):
+    raise Exception("Needs to be implemented in subclass!")
+
 @attr.s(repr=False)
 class Match(Matchrule): 
 
@@ -35,6 +38,12 @@ class MatchProduct(Match):
     return iter(["MATCH", "PRODUCT", "{}".format(self.path), 
         "FROM", "{}".format(self.step)])
 
+  def verify_rule(self, source_artifacts, links):
+    assert(self.path in source_artifacts.keys())
+    assert(self.step in links.keys())
+    assert(self.path in links[self.step].products.keys())
+    assert(artifacts[self.path] == links[self.step].products[self.path])
+
 
 @attr.s(repr=False)
 class MatchMaterial(Match):
@@ -42,6 +51,19 @@ class MatchMaterial(Match):
   def __iter__(self):
     return iter(["MATCH", "MATERIAL", "{}".format(self.path), 
         "FROM", "{}".format(self.step)])
+
+  def verify_rule(self, source_artifacts, links):
+    """
+    source_artifacts are materials or products in the form of:
+    {path : {<hashtype>: <hash>}, ...}
+    links is a dictionary of link objects by identified by name
+    {<link_name> : Link, ...}
+    """
+    assert(self.path in source_artifacts.keys())
+    assert(self.step in links.keys())
+    assert(self.path in links[self.step].materials.keys())
+    assert(artifacts[self.path] == links[self.step].materials[self.path])
+
 
 @attr.s(repr=False)
 class Create(Matchrule): 
@@ -51,6 +73,13 @@ class Create(Matchrule):
   def __iter__(self):
     return iter(["CREATE", "{}".format(self.path)])
 
+  def verify_rule(self, materials, products):
+    """ materials and products are in the form of:
+    {path : {<hashtype>: <hash>}, ...} """
+
+    assert(self.path not in materials.keys())
+    assert(self.path in products.keys())
+
 @attr.s(repr=False)
 class Delete(Matchrule): 
 
@@ -59,6 +88,13 @@ class Delete(Matchrule):
   def __iter__(self):
     return iter(["DELETE", "{}".format(self.path)])
 
+  def verify_rule(self, materials, products):
+    """ materials and products are in the form of:
+    {path : {<hashtype>: <hash>}, ...} """
+
+    assert(self.path in materials.keys())
+    assert(self.path not in products.keys())
+
 @attr.s(repr=False)
 class Modify(Matchrule): 
 
@@ -66,3 +102,11 @@ class Modify(Matchrule):
 
   def __iter__(self):
     return iter(["MODIFY", "{}".format(self.path)])
+
+  def verify_rule(self, materials, products):
+    """ materials and products are in the form of:
+    {path : {<hashtype>: <hash>}, ...} """
+
+    assert(self.path in materials.keys())
+    assert(self.path in products.keys())
+    assert(materials[self.path] != products[self.path])
