@@ -9,7 +9,7 @@ import json
 import toto.ssl_crypto.keys
 
 def create_and_persist_or_load_key(filename):
-  """Throw-away function that returns loads a key file or creates and
+  """Throw-away function that loads a key file or creates and
   stores it if it does not expist."""
 
   if not os.path.isfile(filename):
