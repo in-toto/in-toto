@@ -48,7 +48,7 @@ def main():
             "            [--materials <filepath>[,<filepath> ...]]\n" \
             "             --products <filepath>[,<filepath> ...]\n" \
             "             --key <filepath>\n" \
-            "             --key <filepath>\n" \
+            "             --record-byproducts\n" \
             "             -- <cmd> [args]" % (os.path.basename(__file__), ))
 
   # Option group for toto specific options, e.g. material and product
