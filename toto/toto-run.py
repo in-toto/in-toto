@@ -99,7 +99,7 @@ def main():
   if products:
     products = products.split(",")
 
-  toto.runlib.run_link(name, materials, products, key, link_cmd,
+  toto.runlib.toto_run(name, materials, products, key, link_cmd,
       record_byproducts)
 
 
