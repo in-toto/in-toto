@@ -2,6 +2,9 @@ import attr
 import canonicaljson
 from toto.models.common import ComparableHashDict
 
+class RuleVerficationFailed(Exception):
+  pass
+
 @attr.s(repr=False)
 class Matchrule(object):
 
@@ -21,10 +24,10 @@ class Matchrule(object):
     elif len(data) >= 2 and data[0] == "MODIFY":
       return Modify(path=data[1])
     else:
-      raise Exception("Invalid Matchrule!", data)
+      raise Exception("invalid Matchrule", data)
 
   def verify_rule(self):
-    print "Verify rule '%s' of '%s'" % (list(self), self.__class__.__name__)
+    # print "Verify rule '%s' of '%s'" % (list(self), self.__class__.__name__)
 
 @attr.s(repr=False)
 class Match(Matchrule): 
@@ -46,24 +49,22 @@ class MatchProduct(Match):
     links is a dictionary of link objects by identified by name
     {<link_name> : Link, ...}
     """
-    super(MatchProduct, self).verify_rule()
-
     if (self.path not in source_artifacts.keys()):
-      raise Exception("Could not find path '%s' in source products" \
+      raise RuleVerficationFailed("could not find path '%s' in source products" \
           % self.path)
 
     if (self.step not in links.keys()):
-      raise Exception("Could not find step '%s' in links '%s'" \
+      raise RuleVerficationFailed("could not find step '%s' in links '%s'" \
           % (self.step, links.keys()))
 
     if (self.path not in links[self.step].products.keys()):
-      raise Exception("Could not find path '%s' in target products" \
+      raise RuleVerficationFailed("could not find path '%s' in target products" \
           % self.path)
 
     if (ComparableHashDict(source_artifacts[self.path]) != \
         ComparableHashDict(links[self.step].products[self.path])):
-      raise Exception("Source artifact hash of '%s' does not match target artifact hash" \
-          % self.path)
+      raise RuleVerficationFailed("source artifact hash of '%s' " \
+          "does not match target artifact hash" % self.path)
 
 
 @attr.s(repr=False)
@@ -80,26 +81,23 @@ class MatchMaterial(Match):
     links is a dictionary of link objects by identified by name
     {<link_name> : Link, ...}
     """
-    super(MatchMaterial, self).verify_rule()
 
     if (self.path not in source_artifacts.keys()):
-      raise Exception("Could not find path '%s' in source materials" \
+      raise RuleVerficationFailed("could not find path '%s' in source materials" \
           % self.path)
 
     if (self.step not in links.keys()):
-      raise Exception("Could not find step '%s' in links '%s'" \
+      raise RuleVerficationFailed("could not find step '%s' in links '%s'" \
           % (self.step, links.keys()))
 
     if (self.path not in links[self.step].materials.keys()):
-      raise Exception("Could not find path '%s' in target materials" \
+      raise RuleVerficationFailed("could not find path '%s' in target materials" \
           % self.path)
 
     if (ComparableHashDict(source_artifacts[self.path]) != \
         ComparableHashDict(links[self.step].materials[self.path])):
-      raise Exception("Source artifact hash of '%s' does not match target artifact hash" \
-          % self.path)
-
-
+      raise RuleVerficationFailed("source artifact hash of '%s' "\
+          "does not match target artifact hash" % self.path)
 
 @attr.s(repr=False)
 class Create(Matchrule): 
@@ -113,15 +111,13 @@ class Create(Matchrule):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    super(Create, self).verify_rule()
-
     if (self.path in materials.keys()):
-      raise Exception("Newly created artifact '%s' found in source materials" \
-          % self.path)
+      raise RuleVerficationFailed("newly created artifact '%s' " \
+          "found in source materials" % self.path)
 
     if (self.path not in products.keys()):
-      raise Exception("Newly created artifact '%s' not found in source products" \
-          % self.path)
+      raise RuleVerficationFailed("newly created artifact '%s' " \
+          "not found in source products" % self.path)
 
 @attr.s(repr=False)
 class Delete(Matchrule): 
@@ -135,16 +131,13 @@ class Delete(Matchrule):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    super(Delete, self).verify_rule()
-
     if (self.path not in materials.keys()):
-      raise Exception("Delete artifact '%s' not found in source materials" \
-          % self.path)
+      raise RuleVerficationFailed("delete artifact '%s' " \
+        "not found in source materials" % self.path)
 
     if (self.path in products.keys()):
-      raise Exception("Delete artifact '%s' found in source products" \
-          % self.path)
-
+      raise RuleVerficationFailed("delete artifact '%s' " \
+          "found in source products" % self.path)
 
 @attr.s(repr=False)
 class Modify(Matchrule): 
@@ -158,17 +151,15 @@ class Modify(Matchrule):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    super(Modify, self).verify_rule()
-
     if (self.path not in materials.keys()):
-      raise Exception("Modified artifact '%s' not found in source materials" \
-          % self.path)
+      raise RuleVerficationFailed("modified artifact '%s' " \
+          "not found in source materials" % self.path)
 
     if (self.path not in products.keys()):
-      raise Exception("Delete artifact '%s' not found in source products" \
-          % self.path)
+      raise RuleVerficationFailed("delete artifact '%s' " \
+        "not found in source products" % self.path)
 
     if (ComparableHashDict(materials[self.path]) != \
         ComparableHashDict(products[self.path])):
-      raise Exception("Source artifact hash of '%s' does not match target artifact hash" \
-          % self.path)
+      raise RuleVerficationFailed("source artifact hash of '%s' " \
+          "does not match target artifact hash" % self.path)
