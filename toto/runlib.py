@@ -89,16 +89,23 @@ def record_artifacts_as_dict(artifacts):
 
     return hash_dict
 
+  def _normalize_path(path):
+    """Strips "./" on the left side of the path.
+    XXX LP: I'm not happy with doing this here, maybe we can do this in
+    verification? """
+
+    if path.startswith("./"):
+        return path[2:]
+    return path  # or whatever
+
   for artifact in artifacts:
     if os.path.isfile(artifact):
-      artifacts_dict[artifact] = _hash_artifact(artifact)
-
+      artifacts_dict[_normalize_path(artifact)] = _hash_artifact(artifact)
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact):
         for name in files:
           filepath = os.path.join(root, name)
-          _hash_artifact(filepath)
-
+          artifacts_dict[_normalize_path(filepath)] = _hash_artifact(filepath)
 
   return artifacts_dict
 
