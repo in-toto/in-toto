@@ -7,12 +7,15 @@ import pickle
 import json
 
 import toto.ssl_crypto.keys
+import toto.log as log
 
 def create_and_persist_or_load_key(filename):
   """Throw-away function that loads a key file or creates and
   stores it if it does not expist."""
 
   if not os.path.isfile(filename):
+    log.warning("Key was '%s' was not found!" % filename)
+    log.doing("create new key '%s'" % filename)
     key_dict = toto.ssl_crypto.keys.generate_rsa_key()
     with open(filename, "w+") as fp:
       key_data = toto.ssl_crypto.keys.format_keyval_to_metadata(
