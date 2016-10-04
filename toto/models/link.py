@@ -1,4 +1,5 @@
 import attr
+import json
 from . import common as models__common
 
 @attr.s(repr=False)
@@ -23,4 +24,8 @@ class Link(models__common.Signable):
 
   @staticmethod
   def read(data):
+    # XXX LP: ugly workaround for attrs underscore strip
+    # but _type is exempted from __init__ anyway
+    if data.get("_type"):
+      data.pop(u"_type")
     return Link(**data)
