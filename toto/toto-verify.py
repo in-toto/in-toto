@@ -25,6 +25,7 @@
 import argparse
 
 import toto.util
+import toto.verifylib
 
 def main():  # Create new parser with custom usage message
 
