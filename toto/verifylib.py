@@ -30,7 +30,6 @@ Verification:
     5. For each inspection
       - Execute with toto-run and add to link list
 
-
     6. For each link in link list
       - Check signature
       - Check matchrule
@@ -40,9 +39,13 @@ Verification:
 
 from collections import OrderedDict
 import toto.util
-import toto.ssl_crypto.keys
-import toto.models
 import toto.runlib
+import toto.models.layout
+import toto.models.link
+import toto.models.matchrule
+
+import toto.ssl_crypto.keys
+
 
 
 def toto_verify(layout_path, layout_key):
@@ -55,33 +58,43 @@ def toto_verify(layout_path, layout_key):
 
   # Load layout (validates format)
   try:
-    print "Loading layout '%s' ...", layout_path
+    print "Loading layout '%s' ..." % layout_path
     layout = toto.models.layout.Layout.read_from_file(layout_path)
   except Exception, e:
-    print e
+    raise  # XXX LP: exit gracefully instead of exception?
+
+
+  try:
+    print "Loading root layout key '%s' ..." % layout_key
+    # XXX LP: Change key load
+    layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
+  except Exception, e:
+    raise # XXX LP: exit gracefully instead of exception?
+
 
   # Verify signature for
   try:
     print "Verfying signature ..."
-    if layout.verify_signature(layout_key):
+    if layout.verify_signature(layout_key_dict):
       print "Result: GOOD signature"
     else:
       print "Result: BAD signature"
   except Exception, e:
-    print e
+    raise # XXX LP: exit gracefully instead of exception?
+
 
   step_links = {}
 
   # Load links by steps
   for step in layout.steps:
     try:
-      print "Loading step data (link) '%s' ..." % step.name
+      print "Loading step data '%s' ..." % step.name
       step_name = "%s.link" % step.name
       link = toto.models.link.Link.read_from_file(step_name)
     except Exception, e:
       print e
     else:
-      step_links[step_name] = link
+      step_links[step.name] = link
 
       # Fetching keys from layout
       print "Fetching link keys from layout ..."
@@ -112,25 +125,26 @@ def toto_verify(layout_path, layout_key):
         ran_cmd = link.ran_command
 
         expected_cmd_cnt = len(expected_cmd)
-        ran_cmd_cnt = len(ran_cmd_cnt)
+        ran_cmd_cnt = len(ran_cmd)
 
         if expected_cmd_cnt != ran_cmd_cnt:
           print "Result: BAD command length"
 
         for i in range(min(expected_cmd_cnt, ran_cmd_cnt)):
           if expected_cmd[i] != ran_cmd[i]:
-            print "Result: BAD command alignment - expected: '%s', ran: '%s" \
-                % (str(expected_cmd), str(ran_cmd))
+            print "Result: BAD command alignment - expected: '%s', ran: '%s" % (str(expected_cmd), str(ran_cmd))
             break
         else:
           print "Result: GOOD command alignment"
+      except Exception, e:
+        print e
+
 
   inspect_links = {}
-
   # Execute inspections and generate link metadata
   for inspection in layout.inspect:
     try:
-      print "Running inspection  '%s' ..." % inspection.name
+      print "Running inspection '%s' ..." % inspection.name
 
       # XXX LP: What should we record as material/product?
       # Is the current directory a sensible default? In general?
@@ -141,7 +155,8 @@ def toto_verify(layout_path, layout_key):
       # The specs says string, the code needs a list? Maybe split
       # the string in toto_run
       link = toto.runlib.run_link(inspection.name, ".", ".",
-        inspect.run.split())
+        inspection.run.split())
+
     except Exception, e:
       print e
     else:
@@ -151,13 +166,13 @@ def toto_verify(layout_path, layout_key):
       src_artifacts, links):
     """ Demultiplexes rules by class type (they have to be called
       with different arguments) """
-    if isinstance(rule, toto.models.matchrule.Create) or
-        isinstance(rule, toto.models.matchrule.Delete) or
+    if isinstance(rule, toto.models.matchrule.Create) or \
+        isinstance(rule, toto.models.matchrule.Delete) or \
         isinstance(rule, toto.models.matchrule.Modify):
-      rule.verify_match(src_materials, src_products)
-    elif isinstance(rule, toto.models.matchrule.Matchproduct) or
-        isinstance(rule, toto.models.matchrule.Matchmaterial):
-      rule.verify_match(src_artifacts, links)
+      rule.verify_rule(src_materials, src_products)
+    elif isinstance(rule, toto.models.matchrule.MatchProduct) or \
+        isinstance(rule, toto.models.matchrule.MatchMaterial):
+      rule.verify_rule(src_artifacts, links)
 
   def _verify_rules(rules, src_materials, src_products,
       src_artifacts, links):
@@ -173,13 +188,21 @@ def toto_verify(layout_path, layout_key):
       src_materials = item_links[item.name].materials
       src_products = item_links[item.name].products
 
-      _verify_rules(item.material_matchules, src_materials,
+      _verify_rules(item.material_matchrules, src_materials,
           src_products, src_materials, links)
 
       _verify_rules(item.product_matchrules, src_materials,
-          src_products, src_materials, link)
+          src_products, src_materials, links)
 
-  print "Verifying step matchrules ..."
-  _verify_all(layout.steps, step_links, step_links)
-  print "Verifying inspect matchrules ..."
-  _verify_all(layout.inspect, inspect_links, step_links)
+  try:
+    print "Verifying step matchrules ..."
+
+    _verify_all(layout.steps, step_links, step_links)
+  except Exception, e:
+    print e
+
+  try:
+    print "Verifying inspect matchrules ..."
+    _verify_all(layout.inspect, inspect_links, step_links)
+  except Exception, e:
+    print e
