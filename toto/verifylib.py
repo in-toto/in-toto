@@ -36,50 +36,46 @@ Verification:
       - Check command
 
 """
+import sys
 
-from collections import OrderedDict
 import toto.util
 import toto.runlib
 import toto.models.layout
 import toto.models.link
 import toto.models.matchrule
-
 import toto.ssl_crypto.keys
+import toto.log as log
 
 
 
 def toto_verify(layout_path, layout_key):
-  """
-  XXX LP: What should we do with exceptions?
-  Catch? Print? Re-raise? Let be?
-
-  Think about verbosity in general!
-  """
 
   # Load layout (validates format)
   try:
-    print "Loading layout '%s' ..." % layout_path
+    log.doing("load root layout '%s'" % layout_path)
     layout = toto.models.layout.Layout.read_from_file(layout_path)
   except Exception, e:
-    raise  # XXX LP: exit gracefully instead of exception?
-
+    log.error("something went wrong while loading layout - %s" % e)
+    sys.exit(1) # XXX LP: re-raise?
 
   try:
-    print "Loading root layout key '%s' ..." % layout_key
+    log.doing("load root layout key '%s'" % layout_key)
     # XXX LP: Change key load
     layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
   except Exception, e:
-    raise # XXX LP: exit gracefully instead of exception?
-
+    log.error("something went wrong while loading key - %s" % e)
 
   # Verify signature for
   try:
-    print "Verfying signature ..."
+    log.doing("verify layout signature of '%s' with key '%s'" \
+        % (layout_path, layout_key))
     if layout.verify_signature(layout_key_dict):
-      print "Result: GOOD signature"
+      log.passing("signature verification of layout '%s'" % layout_path)
     else:
-      print "Result: BAD signature"
+      log.failing("signature verification of layout '%s'" % layout_path)
   except Exception, e:
+    log.error("something went wrong while verifying signature - %s" % e)
+
     raise # XXX LP: exit gracefully instead of exception?
 
 
@@ -88,37 +84,40 @@ def toto_verify(layout_path, layout_key):
   # Load links by steps
   for step in layout.steps:
     try:
-      print "Loading step data '%s' ..." % step.name
       step_name = "%s.link" % step.name
       link = toto.models.link.Link.read_from_file(step_name)
+      log.doing("load link '%s' " % step_name)
     except Exception, e:
-      print e
+      log.error("something went wrong while loading link - %s" % e)
     else:
       step_links[step.name] = link
 
       # Fetching keys from layout
-      print "Fetching link keys from layout ..."
+      log.doing("fetch keys for link '%s' from layout '%s'" \
+          % (step.name, layout_path))
       keys = []
       for keyid in step.pubkeys:
         key = layout.keys.get(keyid)
         if key:
           keys.append(key)
         else:
-          print "BAD: Could not find key '%s' in layout" % keyid
+          log.failing("could not fetch key '%s'" % keyid)
 
       for key in keys:
         try:
-          print "Verfying link signature with key '%s'..." % key["keyid"]
+          log.doing("verify link signature of '%s'" % step.name)
           if link.verify_signature(key):
-            print "Result: GOOD signature"
+            log.passing("signature verification of link '%s'" % step.name)
           else:
-            print "Result: BAD signature"
+            log.failing("signature verification of link '%s'" % step.path)
         except Exception, e:
-          print e
+          log.error("something went wrong while verifying signature - %s" % e)
 
       # Check expected command
       try:
-        print "Verfying expected command ..."
+        log.doing("align actual command with expected command of '%s'" \
+            % step.name)
+
         # XXX LP: We have to know for sure if both are lists or not!!
         # Then we can validate and convert (if necessary) this in the model
         expected_cmd = step.expected_command.split()
@@ -128,23 +127,24 @@ def toto_verify(layout_path, layout_key):
         ran_cmd_cnt = len(ran_cmd)
 
         if expected_cmd_cnt != ran_cmd_cnt:
-          print "Result: BAD command length"
+          log.failing("commands '%s' and '%s' have diffent lengths" \
+              % (expected_cmd, ran_cmd))
 
         for i in range(min(expected_cmd_cnt, ran_cmd_cnt)):
           if expected_cmd[i] != ran_cmd[i]:
-            print "Result: BAD command alignment - expected: '%s', ran: '%s" % (str(expected_cmd), str(ran_cmd))
-            break
-        else:
-          print "Result: GOOD command alignment"
-      except Exception, e:
-        print e
+              log.failing("commands '%s' and '%s' don't align" \
+                  % (expected_cmd, ran_cmd))
 
+        else:
+          log.passing("command alignment")
+      except Exception, e:
+        log.error("something went wrong while aligning commands - %s" % e)
 
   inspect_links = {}
   # Execute inspections and generate link metadata
   for inspection in layout.inspect:
     try:
-      print "Running inspection '%s' ..." % inspection.name
+      log.doing("run inspection '%s' ..." % inspection.name)
 
       # XXX LP: What should we record as material/product?
       # Is the current directory a sensible default? In general?
@@ -155,10 +155,10 @@ def toto_verify(layout_path, layout_key):
       # The specs says string, the code needs a list? Maybe split
       # the string in toto_run
       link = toto.runlib.run_link(inspection.name, ".", ".",
-        inspection.run.split())
+          inspection.run.split())
 
     except Exception, e:
-      print e
+      log.error("something went wrong while running inspection - %s" % e)
     else:
       inspect_links[inspection.name] = link
 
@@ -178,8 +178,14 @@ def toto_verify(layout_path, layout_key):
       src_artifacts, links):
     """ Iterates over list of rules and calls verify on them. """
     for rule_data in rules:
-      rule = toto.models.matchrule.Matchrule.read(rule_data)
-      _verify_rule(rule, src_materials, src_products, src_artifacts, links)
+      try:
+        rule = toto.models.matchrule.Matchrule.read(rule_data)
+        _verify_rule(rule, src_materials, src_products, src_artifacts, links)
+      except RuleVerficationFailed, e:
+        log.failing(e)
+      else:
+        log.passing("verification of rule '%s'" list(rule))
+
 
   def _verify_all(items, item_links, links):
     """ Iterates over a list of items (steps or inspects) call verify rules
@@ -188,21 +194,22 @@ def toto_verify(layout_path, layout_key):
       src_materials = item_links[item.name].materials
       src_products = item_links[item.name].products
 
+      log.doing("verify material matchrules of '%s'" % item.name)
       _verify_rules(item.material_matchrules, src_materials,
           src_products, src_materials, links)
 
+      log.doing("verify product matchrules of '%s'" % item.name)
       _verify_rules(item.product_matchrules, src_materials,
           src_products, src_materials, links)
 
   try:
-    print "Verifying step matchrules ..."
-
+    log.doing("verify step matchrules")
     _verify_all(layout.steps, step_links, step_links)
   except Exception, e:
-    print e
+    log.error("something went wrong while verifying step matchrules - %s" % e)
 
   try:
-    print "Verifying inspect matchrules ..."
+    log.doing("verify inspect matchrules")
     _verify_all(layout.inspect, inspect_links, step_links)
   except Exception, e:
-    print e
+    log.error("something went wrong while verifying inspect matchrules - %s" % e)
