@@ -20,6 +20,8 @@ Pre-requisites:
 
 """
 
+import logging
+
 # Set a directory that should be used for all temporary files. If this
 # is None, then the system default will be used. The system default
 # will also be used if a directory path set here is invalid or
@@ -54,3 +56,5 @@ ED25519_CRYPTO_LIBRARY = 'ed25519'
 # Supported libraries for general-purpose cryptography:  ['pycrypto',
 # 'pyca-cryptography']
 GENERAL_CRYPTO_LIBRARY = 'pycrypto'
+
+LOG_LEVEL = logging.INFO
