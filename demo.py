@@ -5,18 +5,17 @@ import toto.ssl_crypto.keys
 import toto.models.layout as m
 import toto.util
 
-
 def main():
 
-
+  print """
   #############################################################################
   # Define the supply chain
   #############################################################################
+  """
 
   # Get keys
   alice_key = toto.util.create_and_persist_or_load_key("alice")
   bob_key = toto.util.create_and_persist_or_load_key("bob")
-
 
   # Create Layout
   layout = m.Layout.read({ 
@@ -52,7 +51,7 @@ def main():
         "product_matchrules": [
             ["MATCH", "PRODUCT", "foo.py", "FROM", "write-code"],
         ],
-        "run": "inspect_tarball.sh foo.tar.gz",
+        "run": "tar xfz foo.tar.gz",
       }],
     "signatures": []
   })
@@ -68,27 +67,78 @@ def main():
   #   print "There is something wrong with layout de-/serialization"
 
 
+  print """
   #############################################################################
-  # Do the supply chain
+  # Do the peachy supply chain
   #############################################################################
+  """
+
 
   write_code_cmd = "python -m toto.toto-run "\
                    "--name write-code --products foo.py "\
                    "--key alice -- vi foo.py"
+  print "Alice:",  write_code_cmd
   subprocess.call(write_code_cmd.split())
 
   package_cmd = "python -m toto.toto-run "\
                 "--name package --material foo.py --products foo.tar.gz "\
                 "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
+  print "Bob:", package_cmd
   subprocess.call(package_cmd.split())
 
+
+  print """
   #############################################################################
-  # Verify the supply chain
+  # Verify the peachy supply chain
   #############################################################################
+  """
+
+  verify_cmd = "python -m toto.toto-verify "\
+               "--layout root.layout "\
+               "--layout-key alice"
+  print "User:", verify_cmd
+  subprocess.call(verify_cmd.split())
+
+
+
+  print """
+  #############################################################################
+  # Do the failing supply chain
+  #############################################################################
+  """
+
+  write_code_cmd = "python -m toto.toto-run "\
+                   "--name write-code --products foo.py "\
+                   "--key alice -- vi foo.py"
+  print "Alice:",  write_code_cmd
+  subprocess.call(write_code_cmd.split())
+
+
+  bad_cmd = "vi foo.py"
+  print "Malory:", bad_cmd
+  subprocess.call(bad_cmd.split())
+
+
+  package_cmd = "python -m toto.toto-run "\
+                "--name package --material foo.py --products foo.tar.gz "\
+                "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
+  print "Bob:", package_cmd
+  subprocess.call(package_cmd.split())
+
+
+
+  print """
+  #############################################################################
+  # Verify the failing supply chain
+  #############################################################################
+  """
+
+  verify_cmd = "python -m toto.toto-verify "\
+               "--layout root.layout "\
+               "--layout-key alice"
+  print "User:", verify_cmd
+  subprocess.call(verify_cmd.split())
 
 
 if __name__ == '__main__':
   main()
-
-
-
