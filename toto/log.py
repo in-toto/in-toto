@@ -15,4 +15,5 @@ def passing(msg):
 def failing(msg):
   logging.critical("FAILING: %s" % str(msg))
 
-error = logging.error
+def error(msg):
+  logging.error("EXCEPTION: %s" % str(msg))
