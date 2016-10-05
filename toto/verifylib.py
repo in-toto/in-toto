@@ -46,8 +46,6 @@ import toto.models.matchrule
 import toto.ssl_crypto.keys
 import toto.log as log
 
-
-
 def toto_verify(layout_path, layout_key):
 
   # Load layout (validates format)
@@ -77,7 +75,6 @@ def toto_verify(layout_path, layout_key):
     log.error("something went wrong while verifying signature - %s" % e)
 
     raise # XXX LP: exit gracefully instead of exception?
-
 
   step_links = {}
 
@@ -181,11 +178,10 @@ def toto_verify(layout_path, layout_key):
       try:
         rule = toto.models.matchrule.Matchrule.read(rule_data)
         _verify_rule(rule, src_materials, src_products, src_artifacts, links)
-      except RuleVerficationFailed, e:
+      except toto.models.matchrule.RuleVerficationFailed, e:
         log.failing(e)
       else:
-        log.passing("verification of rule '%s'" list(rule))
-
+        log.passing("verification of rule '%s'" % list(rule))
 
   def _verify_all(items, item_links, links):
     """ Iterates over a list of items (steps or inspects) call verify rules

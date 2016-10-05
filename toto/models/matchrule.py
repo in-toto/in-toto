@@ -27,7 +27,7 @@ class Matchrule(object):
       raise Exception("invalid Matchrule", data)
 
   def verify_rule(self):
-    # print "Verify rule '%s' of '%s'" % (list(self), self.__class__.__name__)
+    raise Exception("Not implemented")
 
 @attr.s(repr=False)
 class Match(Matchrule): 
