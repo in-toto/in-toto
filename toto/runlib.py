@@ -172,16 +172,16 @@ def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
   XXX: This should probably be atomic, i.e. all or nothing"""
 
   # Record - Run - Record
-  log.doing("record materials for '%s'" % name)
+  # log.doing("record materials for '%s'" % name)
   materials_dict = record_artifacts_as_dict(materials)
 
-  log.doing("run command '%s' for '%s'" % (toto_cmd_args, name))
+  # log.doing("run command '%s' for '%s'" % (toto_cmd_args, name))
   byproducts, return_value = execute_link(toto_cmd_args, record_byproducts)
 
-  log.doing("record products for '%s'" % name)
+  # log.doing("record products for '%s'" % name)
   products_dict = record_artifacts_as_dict(products)
 
-  log.doing("create metadata for '%s'" % name)
+  # log.doing("create metadata for '%s'" % name)
 
   link = create_link_metadata(name, materials_dict, products_dict, byproducts,
     toto_cmd_args, return_value)
@@ -195,10 +195,10 @@ def toto_run(name, materials, products, key, toto_cmd_args,
         record_byproducts)
 
   # XXX LP: Change key load
-  log.doing("load key '%s'" % key)
+  # log.doing("load key '%s'" % key)
   key_dict = toto.util.create_and_persist_or_load_key(key)
 
-  log.doing("sign metadata '%s' with key '%s'" % (name, key))
+  # log.doing("sign metadata '%s' with key '%s'" % (name, key))
   link.sign(key_dict)
-  log.doing("store metadata '%s' to disk" % name)
+  # log.doing("store metadata '%s' to disk" % name)
   link.dump()
