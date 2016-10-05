@@ -8,6 +8,8 @@ class RuleVerficationFailed(Exception):
 @attr.s(repr=False)
 class Matchrule(object):
 
+  source_type = attr.ib("", init=False)
+
   @staticmethod
   def read(data):
 
@@ -30,74 +32,58 @@ class Matchrule(object):
     raise Exception("Not implemented")
 
 @attr.s(repr=False)
-class Match(Matchrule): 
+class Match(Matchrule):
 
   path = attr.ib([])
   step = attr.ib([])
 
-@attr.s(repr=False)
-class MatchProduct(Match):
-  
-  def __iter__(self):
-    return iter(["MATCH", "PRODUCT", "{}".format(self.path), 
-        "FROM", "{}".format(self.step)])
+  def verify_rule(self, item_link, step_links):
+    if self.source_type == "product":
+      source_artifacts = item_link.products
+    elif self.source_type == "material":
+      source_artifacts = item_link.materials
 
-  def verify_rule(self, source_artifacts, links):
-    """
-    source_artifacts are materials or products in the form of:
-    {path : {<hashtype>: <hash>}, ...}
-    links is a dictionary of link objects by identified by name
-    {<link_name> : Link, ...}
-    """
+    if isinstance(self, MatchProduct):
+      target_artifacts = step_links[self.step].products
+      target_type = "product"
+    elif isinstance(self, MatchMaterial):
+      target_artifacts = step_links[self.step].materials
+      target_type = "material"
+    else:
+      raise Exception("Bad matchrule")
+
+
     if (self.path not in source_artifacts.keys()):
-      raise RuleVerficationFailed("could not find path '%s' in source products" \
-          % self.path)
+      raise RuleVerficationFailed("'%s' not in source %ss" \
+          % (self.path, self.source_type))
 
-    if (self.step not in links.keys()):
-      raise RuleVerficationFailed("could not find step '%s' in links '%s'" \
-          % (self.step, links.keys()))
+    if (self.step not in step_links.keys()):
+      raise RuleVerficationFailed("'%s' not in target links" \
+          % self.step)
 
-    if (self.path not in links[self.step].products.keys()):
-      raise RuleVerficationFailed("could not find path '%s' in target products" \
-          % self.path)
+    if (self.path not in target_artifacts.keys()):
+      raise RuleVerficationFailed("'%s' not in target %ss" \
+          % (self.path, target_type))
 
     if (ComparableHashDict(source_artifacts[self.path]) != \
-        ComparableHashDict(links[self.step].products[self.path])):
-      raise RuleVerficationFailed("source artifact hash of '%s' " \
-          "does not match target artifact hash" % self.path)
+        ComparableHashDict(target_artifacts[self.path])):
+      raise RuleVerficationFailed("hashes of '%s' do not match " \
+          % self.path)
 
+
+@attr.s(repr=False)
+class MatchProduct(Match):
+
+  def __iter__(self):
+    return iter(["MATCH", "PRODUCT", "{}".format(self.path),
+        "FROM", "{}".format(self.step)])
 
 @attr.s(repr=False)
 class MatchMaterial(Match):
 
   def __iter__(self):
-    return iter(["MATCH", "MATERIAL", "{}".format(self.path), 
+    return iter(["MATCH", "MATERIAL", "{}".format(self.path),
         "FROM", "{}".format(self.step)])
-
-  def verify_rule(self, source_artifacts, links):
-    """
-    source_artifacts are materials or products in the form of:
-    {path : {<hashtype>: <hash>}, ...}
-    links is a dictionary of link objects by identified by name
-    {<link_name> : Link, ...}
-    """
-
-    if (self.path not in source_artifacts.keys()):
-      raise RuleVerficationFailed("could not find path '%s' in source materials" \
-          % self.path)
-
-    if (self.step not in links.keys()):
-      raise RuleVerficationFailed("could not find step '%s' in links '%s'" \
-          % (self.step, links.keys()))
-
-    if (self.path not in links[self.step].materials.keys()):
-      raise RuleVerficationFailed("could not find path '%s' in target materials" \
-          % self.path)
-
-    if (ComparableHashDict(source_artifacts[self.path]) != \
-        ComparableHashDict(links[self.step].materials[self.path])):
-      raise RuleVerficationFailed("source artifact hash of '%s' "\
-          "does not match target artifact hash" % self.path)
 
 @attr.s(repr=False)
 class Create(Matchrule): 
@@ -107,17 +93,17 @@ class Create(Matchrule):
   def __iter__(self):
     return iter(["CREATE", "{}".format(self.path)])
 
-  def verify_rule(self, materials, products):
+  def verify_rule(self, item_link, step_links):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    if (self.path in materials.keys()):
-      raise RuleVerficationFailed("newly created artifact '%s' " \
-          "found in source materials" % self.path)
+    if (self.path in item_link.materials.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "in materials" % self.path)
 
-    if (self.path not in products.keys()):
-      raise RuleVerficationFailed("newly created artifact '%s' " \
-          "not found in source products" % self.path)
+    if (self.path not in item_link.products.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "not in products" % self.path)
 
 @attr.s(repr=False)
 class Delete(Matchrule): 
@@ -127,17 +113,17 @@ class Delete(Matchrule):
   def __iter__(self):
     return iter(["DELETE", "{}".format(self.path)])
 
-  def verify_rule(self, materials, products):
+  def verify_rule(self, item_link, step_links):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    if (self.path not in materials.keys()):
-      raise RuleVerficationFailed("delete artifact '%s' " \
-        "not found in source materials" % self.path)
+    if (self.path not in item_link.materials.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "not in materials" % self.path)
 
-    if (self.path in products.keys()):
-      raise RuleVerficationFailed("delete artifact '%s' " \
-          "found in source products" % self.path)
+    if (self.path in item_link.products.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "in products" % self.path)
 
 @attr.s(repr=False)
 class Modify(Matchrule): 
@@ -147,19 +133,19 @@ class Modify(Matchrule):
   def __iter__(self):
     return iter(["MODIFY", "{}".format(self.path)])
 
-  def verify_rule(self, materials, products):
+  def verify_rule(self, item_link, step_links):
     """ materials and products are in the form of:
     {path : {<hashtype>: <hash>}, ...} """
 
-    if (self.path not in materials.keys()):
-      raise RuleVerficationFailed("modified artifact '%s' " \
-          "not found in source materials" % self.path)
+    if (self.path not in item_link.materials.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "in materials" % self.path)
 
-    if (self.path not in products.keys()):
-      raise RuleVerficationFailed("delete artifact '%s' " \
-        "not found in source products" % self.path)
+    if (self.path not in item_link.products.keys()):
+      raise RuleVerficationFailed("'%s' " \
+          "in products" % self.path)
 
-    if (ComparableHashDict(materials[self.path]) != \
-        ComparableHashDict(products[self.path])):
-      raise RuleVerficationFailed("source artifact hash of '%s' " \
-          "does not match target artifact hash" % self.path)
+    if (ComparableHashDict(item_link.materials[self.path]) == \
+        ComparableHashDict(item_link.products[self.path])):
+      raise RuleVerficationFailed("hashes of '%s' matches" \
+          % self.path)
