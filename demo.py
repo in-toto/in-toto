@@ -108,6 +108,8 @@ def main():
   #############################################################################
   """
 
+  wait_for_y("Wanna verify peachy supply chain?")
+
   verify_cmd = "python -m toto.toto-verify "\
                "--layout root.layout "\
                "--layout-key alice"
