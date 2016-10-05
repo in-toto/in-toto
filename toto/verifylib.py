@@ -46,7 +46,10 @@ import toto.models.matchrule
 import toto.ssl_crypto.keys
 import toto.log as log
 
+retval = 0
+
 def toto_verify(layout_path, layout_key):
+  global retval
 
   # Load layout (validates format)
   try:
@@ -54,7 +57,7 @@ def toto_verify(layout_path, layout_key):
     layout = toto.models.layout.Layout.read_from_file(layout_path)
   except Exception, e:
     log.error("in load layout - %s" % e)
-    sys.exit(1) # XXX LP: re-raise?
+    return 1 # XXX LP: re-raise?
 
   try:
     log.doing("'%s' - load key '%s'" % (layout_path, layout_key))
@@ -62,6 +65,7 @@ def toto_verify(layout_path, layout_key):
     layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
   except Exception, e:
     log.error("in load key - %s" % e)
+
 
   # Verify signature
   try:
@@ -73,10 +77,10 @@ def toto_verify(layout_path, layout_key):
       log.passing(msg)
     else:
       log.failing(msg)
+      retval = 1
 
   except Exception, e:
     log.error("in verify signature - %s" % e)
-
     raise # XXX LP: exit gracefully instead of exception?
 
   step_links = {}
@@ -117,6 +121,7 @@ def toto_verify(layout_path, layout_key):
           log.passing(msg)
         else:
           log.failing(msg)
+          retval = 1
       except Exception, e:
         log.error("in verify signature - %s" % e)
 
@@ -142,6 +147,8 @@ def toto_verify(layout_path, layout_key):
       for i in range(min(expected_cmd_cnt, ran_cmd_cnt)):
         if expected_cmd[i] != ran_cmd[i]:
           log.failing(msg)
+          retval = 1
+          break
       else:
         if same_cmd_len:
           log.passing(msg)
@@ -177,6 +184,8 @@ def toto_verify(layout_path, layout_key):
 
   def _verify_rules(rules, source_type, item_name, item_link, step_links):
     """ Iterates over list of rules and calls verify on them. """
+    global retval
+
     for rule_data in rules:
       try:
         rule = toto.models.matchrule.Matchrule.read(rule_data)
@@ -188,6 +197,7 @@ def toto_verify(layout_path, layout_key):
       except toto.models.matchrule.RuleVerficationFailed, e:
         log.failing("'%s' - '%s' - verify %s matchrule - %s" \
             % (layout_path, item_name, source_type, e))
+        retval = 1
       except Exception, e:
         log.error("in verify matchrule - %s" % e)
       else:
@@ -210,3 +220,4 @@ def toto_verify(layout_path, layout_key):
     _verify_rules(item.product_matchrules, "product", 
         item.name, item_link, step_links)
 
+  return retval

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 <Program Name>
   toto-verify.py
@@ -22,6 +23,7 @@
 
   ```
 """
+import sys
 import argparse
 
 import toto.util
@@ -45,7 +47,8 @@ def main():  # Create new parser with custom usage message
 
   args = parser.parse_args()
 
-  toto.verifylib.toto_verify(args.layout, args.layout_key)
+  retval = toto.verifylib.toto_verify(args.layout, args.layout_key)
+  sys.exit(retval)
 
 if __name__ == '__main__':
   main()
