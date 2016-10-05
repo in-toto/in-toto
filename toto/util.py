@@ -14,7 +14,7 @@ def create_and_persist_or_load_key(filename):
   stores it if it does not expist."""
 
   if not os.path.isfile(filename):
-    log.warning("Key was '%s' was not found!" % filename)
+    log.warning("key '%s' was not found!" % filename)
     log.doing("create new key '%s'" % filename)
     key_dict = toto.ssl_crypto.keys.generate_rsa_key()
     with open(filename, "w+") as fp:
