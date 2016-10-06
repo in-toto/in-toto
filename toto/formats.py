@@ -12,8 +12,12 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Defines schemas for toto metadata files using ssl_commons.schema
+  Currently unused!!
+  Used to define schemas for toto metadata files using ssl_commons.schema
+  before we moved to OO
 
+Todo:
+  - remove
 """
 
 # LAYOUT_SCHEMA

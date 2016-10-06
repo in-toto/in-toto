@@ -1,3 +1,64 @@
+"""
+<Program Name>
+  matchrule.py
+
+<Author>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres <santiago@nyu.edu>
+
+<Started>
+  Sep 23, 2016
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Provides classes for material and product matchrules defined in
+  Step or Inspection definitions in the layout, used to verify if
+  materials and products as reported by link metadata are correctly
+  interconnected
+
+<Classes>
+  Matchrule:
+      base class for all matchrules
+
+  Match:
+      base class for MatchProduct and MatchMaterial
+
+  MatchProduct:
+      class for matchrules of format: MATCH PRODUCT <path> FROM <step>
+
+  Matchmaterial:
+      class for matchrules of format: MATCH MATERIAL <path> FROM <step>
+
+  Create:
+      class for matchrules of format: CREATE <path>
+
+  Delete:
+      class for matchrules of format: DELETE <path>
+
+  Modify:
+      class for matchrules of format: MODIFY <path>
+
+Todo:
+  - rethink specifications for matchrules, for now only the match target is
+    mentioned in the rule, I think it would be clearer to have the notion of
+    both match candiates in the rule:
+    e.g.:
+    MATCH <path> IN (PRODUCT|MATERIAL) WITH (PRODUCT|MATERIAL) FROM <step>
+
+  - clarify specifications for CREATE, DELETE, MODIFY matchrules
+    I think the way how these rules are verified is not the way the specs
+    intended them to do
+
+  - general revision of the verify_rule methods and the used arguments
+
+  - move RuleVerficationFailed to toto.exception (and fix typo)
+
+  - general revision of Exception messages
+
+"""
+
 import attr
 import canonicaljson
 from toto.models.common import ComparableHashDict
@@ -5,14 +66,29 @@ from toto.models.common import ComparableHashDict
 class RuleVerficationFailed(Exception):
   pass
 
+
 @attr.s(repr=False)
 class Matchrule(object):
+  """
+  Base class for all matchrules, provides a method to instantiate the
+  different matchrules based on their list representation.
+
+  Each subclass must implement a verify_rule method.
+
+  <Attributes>
+    source_type:
+        either "material" or "product" depending on whether the rule resides
+        in a material_matchrules list or product_matchrules list
+
+  Todo:
+    - needs better checking in the read method
+  """
 
   source_type = attr.ib("", init=False)
 
+
   @staticmethod
   def read(data):
-
     # XXX LP: needs some better checking
     # e.g. move checking to validator altogether
     if len(data) == 5 and data[0] == "MATCH" and data[1] == "MATERIAL":
@@ -33,9 +109,26 @@ class Matchrule(object):
 
 @attr.s(repr=False)
 class Match(Matchrule):
+  """
+  Base class for MatchProduct and MatchMaterial.
+  Implements verify_rule which can be used by both subclasses
+
+  <Attributes>
+    path:
+        the path to the material or product the be verified
+        in case of MatchProduct path is a product and in case of
+        MatchMaterial path is a material
+
+    step:
+        the unique name of the step to match with
+
+  Todo:
+    - raise BadMatchruleException (or something like that)
+  """
 
   path = attr.ib([])
   step = attr.ib([])
+
 
   def verify_rule(self, item_link, step_links):
     if self.source_type == "product":
@@ -51,7 +144,6 @@ class Match(Matchrule):
       target_type = "material"
     else:
       raise Exception("Bad matchrule")
-
 
     if (self.path not in source_artifacts.keys()):
       raise RuleVerficationFailed("'%s' not in source %ss" \
@@ -73,29 +165,33 @@ class Match(Matchrule):
 
 @attr.s(repr=False)
 class MatchProduct(Match):
-
+  """ Check if the hash of the source artifact (material or product depending
+  on self.source_type) matches with the hash of the target product """
   def __iter__(self):
     return iter(["MATCH", "PRODUCT", "{}".format(self.path),
         "FROM", "{}".format(self.step)])
 
+
 @attr.s(repr=False)
 class MatchMaterial(Match):
-
+  """ Check if the hash of the path (material or product depending
+  on self.source_type) matches with the hash of the target material """
   def __iter__(self):
     return iter(["MATCH", "MATERIAL", "{}".format(self.path),
         "FROM", "{}".format(self.step)])
 
+
 @attr.s(repr=False)
 class Create(Matchrule): 
-
+  """Check if path is only in products and not in materials """
   path = attr.ib([])
+
 
   def __iter__(self):
     return iter(["CREATE", "{}".format(self.path)])
 
+
   def verify_rule(self, item_link, step_links):
-    """ materials and products are in the form of:
-    {path : {<hashtype>: <hash>}, ...} """
 
     if (self.path in item_link.materials.keys()):
       raise RuleVerficationFailed("'%s' " \
@@ -105,17 +201,16 @@ class Create(Matchrule):
       raise RuleVerficationFailed("'%s' " \
           "not in products" % self.path)
 
+
 @attr.s(repr=False)
 class Delete(Matchrule): 
-
+  """Check if path is only in materials and not in products """
   path = attr.ib([])
 
   def __iter__(self):
     return iter(["DELETE", "{}".format(self.path)])
 
   def verify_rule(self, item_link, step_links):
-    """ materials and products are in the form of:
-    {path : {<hashtype>: <hash>}, ...} """
 
     if (self.path not in item_link.materials.keys()):
       raise RuleVerficationFailed("'%s' " \
@@ -125,13 +220,18 @@ class Delete(Matchrule):
       raise RuleVerficationFailed("'%s' " \
           "in products" % self.path)
 
+
 @attr.s(repr=False)
-class Modify(Matchrule): 
+class Modify(Matchrule):
+  """Check if path is in products and in materials and if the related file
+  hashes differ """
 
   path = attr.ib([])
 
+
   def __iter__(self):
     return iter(["MODIFY", "{}".format(self.path)])
+
 
   def verify_rule(self, item_link, step_links):
     """ materials and products are in the form of:

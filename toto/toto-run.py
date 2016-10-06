@@ -22,7 +22,7 @@
   Example Usage
   ```
   python -m toto.toto-run --material <files> --product <files> -- 
-    <command-to-execute> <command-options-and-arguments> | edit
+    <command-to-execute> <command-options-and-arguments>
   ```
 
   The actual wrapper and the tasks it performs are implemented in runlib.

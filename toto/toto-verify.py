@@ -16,12 +16,16 @@
   Provides a command line interface that wraps the verification of
   toto final product.
 
-
+  The actual verification is implemented in verifylib.
 
   Example Usage:
   ```
-
+  python -m toto.toto-verify --layout <root.layout> --layout-key <layout-key>
   ```
+
+  Todo:
+    - Maybe move some of the parts of verifylib over here
+
 """
 import sys
 import argparse

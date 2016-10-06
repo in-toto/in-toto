@@ -17,21 +17,18 @@
   The wrapper performs the following tasks which are implemented in this
   library.
 
-    * Record state of material (files the command is executed on)
-    * Execute command
-      * Capture stdout/stderr/return value of the executed command
-    * Record state of product (files after the command was executed)
-    * Return link object
+    - Record state of material (files the command is executed on)
+    - Execute command
+      - Capture stdout/stderr/return value of the executed command
+    - Record state of product (files after the command was executed)
+    - Return link object
         can be used to sign and dump
 
-
-    (* Sign metadata file (moved to toto-run.py))
-    (* Store medata file as "[name].link" (moved to toto-run.py))
-
-  TODO
-    * Decide on metadata location
-    * Properly duplicate stdout/stderr
-
+Todo:
+  - Decide on metadata location
+  - Properly duplicate stdout/stderr
+  - record_artifacts_as_dict needs revision
+  - Change key load
 """
 import sys
 import os
@@ -58,11 +55,11 @@ import toto.ssl_crypto.formats
 
 
 def record_artifacts_as_dict(artifacts):
-  """Takes a directory or file names as input and creates a dict
-  with filepaths as keys and their file's hashes as values.
+  """Takes a list of directories and/or filenames as input and creates a dict
+  with filepaths as keys and their files' hashes as values.
 
   The dirs/files a link command is executed on are called materials.
-  The dir/files the result form a link command execution are called products.
+  The dirs/files that result form a link command execution are called products.
 
   XXX Todo: Needs revision!
   """
@@ -73,7 +70,7 @@ def record_artifacts_as_dict(artifacts):
     return artifacts_dict
 
   def _hash_artifact(filepath, hash_algorithms=['sha256']):
-    """Takes filenames and hashes the respective file's contents
+    """Takes a filename and hashes the respective file's contents
     using the passed hash_algorithms. Returns a HASHDICT
 
     XXX LP: Maybe this should live in the link model. Or in
@@ -113,9 +110,9 @@ def record_artifacts_as_dict(artifacts):
 
 def execute_link(link_cmd_args, record_byproducts):
   """Takes a command and its options and arguments of the software supply 
-  chain as input, runs the command in a suprocess, records the stdout, 
+  chain as input, runs the command in a subprocess, records stdout,
   stderr and return value of the command and returns them. Stdout and stderr
-  are called byproducts."""
+  are called by-products."""
 
   # XXX: The first approach only redirects the stdout/stderr to a tempfile
   # but we actually want to duplicate it, ideas
@@ -150,10 +147,9 @@ def execute_link(link_cmd_args, record_byproducts):
 
 def create_link_metadata(name, materials, products, byproducts,
     ran_command, return_value):
-  """Takes the state of the material (before link command execution), the state
-  of the product (after link command execution) and the by-products of the link
-  command execution and creates the link metadata according to the specified 
-  metadata format."""
+  """Takes the state of the materials (before link command execution), the state
+  of the products (after link command execution) and the by-products of the link
+  command execution and creates and returns a Link metadata object """
 
   link_dict = {
     "name" : name,
@@ -169,9 +165,8 @@ def create_link_metadata(name, materials, products, byproducts,
 
 def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
   """Performs all actions associated with toto run-link.
-  XXX: This should probably be atomic, i.e. all or nothing"""
+  XXX LP: This should probably be atomic, i.e. all or nothing"""
 
-  # Record - Run - Record
   # log.doing("record materials for '%s'" % name)
   materials_dict = record_artifacts_as_dict(materials)
 
@@ -182,7 +177,6 @@ def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
   products_dict = record_artifacts_as_dict(products)
 
   # log.doing("create metadata for '%s'" % name)
-
   link = create_link_metadata(name, materials_dict, products_dict, byproducts,
     toto_cmd_args, return_value)
 
@@ -190,6 +184,7 @@ def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
 
 def toto_run(name, materials, products, key, toto_cmd_args,
     record_byproducts=False):
+  """Calls run link signs the resulting link metadata and stores it to a file """
 
   link = toto.runlib.run_link(name, materials, products, toto_cmd_args,
         record_byproducts)

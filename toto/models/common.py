@@ -1,3 +1,31 @@
+"""
+<Program Name>
+  common.py
+
+<Author>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres <santiago@nyu.edu>
+
+<Started>
+  Sep 23, 2016
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Provides base classes for various classes in the model.
+
+<Classes>
+  Metablock:
+      pretty printed canonical JSON representation and dump
+
+  Signable:
+      sign self, store signature to self and verify signatures
+
+  ComparableHashDict: (helper class)
+      compare contained dictionary of hashes using "=", "!="
+"""
+
 import attr
 import canonicaljson
 
@@ -5,9 +33,9 @@ from ..ssl_crypto import keys as ssl_crypto__keys
 
 @attr.s(repr=False)
 class Metablock(object):
-  """ Objects with Base class Metablock have a __repr__ method
-  that returns a canonical pretty printed JSON string and also dumped to a
-  file. """
+  """Objects with base class Metablock have a __repr__ method
+  that returns a canonical pretty printed JSON string and can be dumped to a
+  file """
   def __repr__(self):
     return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
 
@@ -15,12 +43,12 @@ class Metablock(object):
     with open(filename, 'wt') as fp:
       fp.write("{}".format(self))
 
+
 @attr.s(repr=False)
 class Signable(Metablock):
-  """ Objects of signable can sign themselves, i.e. their __repr__
-  without the signatures property, and store the signature to a signature
-  property.
-  """
+  """Objects with base class Signable can sign their payload (a canonical
+  pretty printed JSON string not containing the signatures attribute) and store
+  the signature (signature format: ssl_crypto__formats.SIGNATURE_SCHEMA) """
   signatures = attr.ib([])
 
   @property
@@ -30,8 +58,12 @@ class Signable(Metablock):
     return canonicaljson.encode_pretty_printed_json(payload)
 
   def sign(self, key):
-    """ Signs the canonical JSON repr of itself (without the signatures property)
-    and adds the signatures to its signature properties. """
+    """Signs the canonical JSON representation of itself (without the
+    signatures property) and adds the signatures to its signature properties.
+
+    Todo:
+      - Verify key format
+    """
 
     # XXX LP: Todo: Verify key format
 
@@ -39,12 +71,14 @@ class Signable(Metablock):
     self.signatures.append(signature)
 
   def verify_signature(self, key):
-    """ Verifies if the object contains a signature matching the keyid of the
+    """Verifies if the object contains a signature matching the keyid of the
     passed key, and if the signature is valid.
 
-    Exceptions
-      Invalid key format Exception
-      Signature not found Exception
+    Todo:
+      - Verify key format
+      - raise InvalidKeyFormat
+      - raise SignatureNotFound
+      - raise WrongKeyForSignature (or similar)
     """
 
     # XXX LP: Todo: Verify key format
@@ -54,16 +88,21 @@ class Signable(Metablock):
         return ssl_crypto__keys.verify_signature(key, signature,
             self.payload)
     else:
-      # XXX LP: Replace exception (or return false?)
+      # XXX LP: Replace exception with KeyNotFound exception (or return false?)
       raise Exception("Signature with keyid not found")
+
 
 @attr.s(repr=False, cmp=False)
 class ComparableHashDict(object):
-  """ Helper class implementing __eq__/__ne__ to compare two hash_dicts
-  of the format toto.ssl_crypto.formats.HASHDICT_SCHEMA """
+  """Helper class providing that wraps hash dicts (format:
+  toto.ssl_crypto.formats.HASHDICT_SCHEMA) in order to compare them using
+  "=" and "!=" """
+
   hash_dict = attr.ib({})
 
   def __eq__(self, other):
+    """Equal if the dicts have the same keys and the according values
+    (strings) are equal"""
 
     if self.hash_dict.keys() != other.hash_dict.keys():
       return False

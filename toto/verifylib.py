@@ -13,28 +13,39 @@
 
 <Purpose>
 
-Verification:
-    1. Load root layout
-      - Search for one of
-        - passed layout name, or
-        - 'root.layout' in current directory
-        - in a bundle?
+  Provides a library to verify a Toto final product containing
+  a software supply chain layout.
 
-      - Check if properly formatted
-    2. Load root key
-      - by passed name
+  The verification boils down to the following steps:
+    1. Load root layout of final product from file
+    2. Load root key from file
     3. Check signature of layout
     4. For each step in layout
-      - Load link and add to link list
-      - Check if poprerly formatted
-    5. For each inspection
-      - Execute with toto-run and add to link list
+      a) Load link metadata from file and add Link object to a list
+      b) Look for the according key in the layout and check the link's signature
+      c) Verify if the run command and the expected command align
+    5. For each inspection in layout
+      - Execute with toto-run and add generated Link object to a list
+    6. For each step link verify matchrules
+    7. For each inspection link verify matchrules
 
-    6. For each link in link list
-      - Check signature
-      - Check matchrule
-      - Check command
 
+Todo:
+    - De-spaghettify:
+      Currently this is implemented as one long function. We should separate
+      the single verification steps, so that this file actually deserves to
+      be called a library
+
+    - Exception catching:
+      Currently failing verification steps raise exceptions, which are caught
+      here. Maybe we should pass on the exceptions and catch them in a program
+      closer to the user (e.g. in the commandline interface toto-verify)
+
+    - Same goes for the return value:
+      IMHO the functions of this library should just raise exceptions
+      and don't return a value (Python style)
+      If toto-verify wants to return something let it do so, but we shouldn't
+      track return value with a global variable here, we really shouldn't!
 """
 import sys
 
