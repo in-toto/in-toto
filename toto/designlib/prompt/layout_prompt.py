@@ -29,23 +29,35 @@ from toto.designlib.util import (TotoCommandCompletions, print_help,
 
 from toto.models.layout import Layout
 
-def dummy_command(*args):
-    """: *** dummy wrapper for the commands that are not yet implemented *** """
-    print("called!")
-    pass
+from toto.ssl_crypto.keys import (format_rsakey_from_pem,
+                                  import_rsakey_from_encrypted_pem)
+from toto.ssl_commons.exceptions import FormatError
+
+PROMPT = unicode("toto-layout/{}> ")
 
 def leave(*args):
     """:
             Leave the Toto layout tool 
     """
-    yesorno = prompt("You are editing a layout, " 
-                     "are you sure you want to leave? [Y/n] ")
+    message = unicode("You are editing a layout, are you sure you "
+                      "want to leave? [Y/n] ")
+    yesorno = prompt(message)
 
     if yesorno.startswith("Y"):
         sys.exit()
 
+def edit_step(state, layout, args):
+    """ <name>:
+            Edit a step with the name <name> in the currently loaded layout
+    """
+    if len(args) < 1:
+        print("We can't edit a step without a name!")
+        return
 
-def add_step(layout, args):
+    name = args[0]
+    go_to_step_prompt(layout, name, edit=True)
+
+def add_step(state, layout, args):
     """ <name>:
             Add a step to the currently-loaded layout
     """
@@ -55,20 +67,20 @@ def add_step(layout, args):
 
     name = args[0]
 
-    if name in layout['steps'] or name in layout['inspections']:
+    if name in layout.steps or name in layout.inspect:
         print("You can't add a step with that name. Remove the step or "
               "validation with that name, or use edit_step instead")
         return
 
-    layout['steps'].add(go_to_step_prompt(layout, name, edit=False))
+    layout.steps.append(go_to_step_prompt(layout, name, edit=False))
 
-def list_steps(layout, args):
+def list_steps(state, layout, args):
     """:
             List the existing steps in the currently-loaded layout
     """
-    print(layout['steps'])
+    print("{}".format(layout.steps))
 
-def remove_step(layout, args):
+def remove_step(state, layout, args):
     """ <name>:
             Remove the step <name> from the currently-loaded layout
     """
@@ -77,14 +89,15 @@ def remove_step(layout, args):
         return
     name = args[0]
 
-    if name not in layout['steps']:
+    if name not in layout.steps:
         print("Cannot remove non-existing layout step")
         return
 
-    del layout['steps'][name]
+    # FIXME: how do we delete a step.
+    # del layout.steps.name
 
 
-def add_inspection(layout, args):
+def add_inspection(state, layout, args):
     """ <name>:
             Add an inspection <name> to the currently-loaded layout
     """
@@ -93,7 +106,7 @@ def add_inspection(layout, args):
         return
     name = args[0]
 
-    if name in layout['steps'] or name in layout['inspections']:
+    if name in layout.steps or name in layout.inspections:
         print("You can't add an inspection with that name. Remove the step or "
               "validation with that name, or use edit_validation instead")
         return
@@ -101,13 +114,13 @@ def add_inspection(layout, args):
     go_to_inspection_prompt(layout, name, edit=False)
 
 
-def list_inspections(layout, args):
+def list_inspections(state, layout, args):
     """: 
             List the inspections in the currently-loaded layout
     """
-    print(layout['inspections'])
+    print(layout.inspections)
 
-def remove_inspection(layout, args):
+def remove_inspection(state, layout, args):
     """ <name>:
             Remove the inspection <name> from the currenlty-loaded layout
     """
@@ -120,44 +133,119 @@ def remove_inspection(layout, args):
         print("Cannot remove non-existing layout inspection")
         return
 
-    del layout['inspections'][name]
+    # FIXME: how ?
+    # del layout['inspections'][name]
 
-def add_functionary_pubkey(layout,args):
+def add_functionary_pubkey(state, layout, args):
     """ <path>:
             Load the pubkey from <path> and add it as a functionary pubkey
     """
-    print("Imagine we did this...")
+    if len(args) < 1:
+        print("I require a filepath to load!")
+        return
 
-def remove_functionary_pubkey(layout, args):
+    filepath = args[0]
+    # Read the contents of 'filepath' that should be an encrypted PEM.
+    try:
+        with open(filepath, 'rb') as fp:
+            pem = fp.read().decode('utf-8')
+
+    except IOError as e:
+        print("Could not load key {}".format(e))
+        return
+
+    try:
+        rsa_key = format_rsakey_from_pem(pem)
+
+    except FormatError as e:
+        raise Exception("Could not load RSA key "
+                        "from file {}".format(filepath))
+
+    # FIXME: should check if the key already exists in the list...
+    layout.keys.append(rsa_key)
+
+def remove_functionary_pubkey(state, layout, args):
     """ <keyid>:
             Remove the functionary pubkey with keyid <keyid>, A prefix can be 
             be used instead of the whole keyid (it must be the only matching 
             prefix)
     """
-    print("Imagine we also did this...")
+    if len(args) < 1:
+        print("We require the keyid you want to remove from this layout")
+        return
 
-def list_functionary_pubkeys(layout, args):
+    keyid = args[0]
+
+    for key in layout.keys:
+        if key['keyid'] == keyid:
+            layout.keys.remove(key)
+            break
+    else:
+        print("Couldn't find the key!")
+
+    print("Successfuly removed key")
+
+
+def list_functionary_pubkeys(state, layout, args):
     """: 
             List the functionary pubkeys in the currently-loaded layout
     """
-    print(layout['functionary_pubkeys'])
+    i = 1
+    for key in layout.keys:
+        print("[{}]({}) {}".format(i, key['keytype'], key['keyid']))
 
-def sign_and_save_layout(layout, args):
+
+def load_project_owner_signing_key(state, layout, args):
+    """ <path>:
+            Load the project owner private to sign this layout
+    """
+
+    if len(args) < 1:
+        print("We need a filepath to load the key!")
+        return
+
+    filepath = args[0]
+    message = unicode('Enter a password for the encrypted RSA file: ')
+    password = prompt_password(message)
+
+    with open(filepath, 'rb') as file_object:
+        encrypted_pem = file_object.read().decode('utf-8')
+
+    rsa_key = import_rsakey_from_encrypted_pem(encrypted_pem, password)
+
+    state.layout_private_key = rsa_key
+
+
+def sign_and_save_layout(state, layout, args):
     """ [filename]:
             Sign the current layout and save it to disk. If no filename is 
             specified, "root.layout" will be used
     """
-    print("imagine we did this...")
+    if not state.layout_private_key:
+        print("I can't save this state without the private key!")
+        return
 
-def go_back(args):
+    layout.sign(state.layout_private_key)
+    layout.dump(state.layout_filename)
+
+
+def go_back(state, layout, args):
     """:  
             Discard this layout and go back
     """
     pass
 
 
+class promptState(object):
+    """ This class holds state information about the context of this prompt """
+    layout_private_key = None
+    is_layout_dirty = False
+    layout_filename = None
+
+
 VALID_COMMANDS = {
         "add_step":  add_step,
+        "edit_step": edit_step,
         "list_steps": list_steps,
         "remove_step": remove_step,
         "add_inspection": add_inspection,
@@ -167,6 +255,7 @@ VALID_COMMANDS = {
         "remove_functionary_pubkey": remove_functionary_pubkey,
         "list_functionary_pubkeys": list_functionary_pubkeys,
         "sign_and_save_layout": sign_and_save_layout,
+        "load_project_owner_signing_key": load_project_owner_signing_key,
         "exit": leave,
         "back": go_back,
         "help": print_help,
@@ -196,12 +285,13 @@ def go_to_layout_prompt(name, load):
 
 
     # actually load the layout
+    state = promptState()
     if load:
-        print("Imagine we loaded a layout instance...")
-        layout = {"name": name}
+        layout = Layout.read_from_file(name)
+        state.filename = name
     else:
-        print("Imagine we created a layout instance...")
-        layout = {"name": name} 
+        layout = Layout()
+        state.layout_filename = "{}.layout".format(name)
 
     # setup the environment and eye candy
     thisprompt = PROMPT.format(name)
@@ -224,9 +314,7 @@ def go_to_layout_prompt(name, load):
             print_help(VALID_COMMANDS)
             continue
 
-            break
-
         else:
-            VALID_COMMANDS[command[0]](layout, command[1:])
+            VALID_COMMANDS[command[0]](state, layout, command[1:])
 
     return layout

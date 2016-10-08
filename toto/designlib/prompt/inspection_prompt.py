@@ -30,8 +30,9 @@ def leave(*args):
     """:
             Leave the Toto layout tool 
     """
-    yesorno = prompt("You are editing an inspection, " 
-                     "are you sure you want to leave? [Y/n] ")
+    message = unicode("You er editing a step, "
+                      "are you  sure you want to leave? [Y/n]")
+    yesorno = prompt(message)
 
     if yesorno.startswith("Y"):
         sys.exit()
@@ -46,21 +47,35 @@ def add_material_matchrule(inspection, args):
         print("We can't create a inspection without a name")
         return
 
-    inspection["material_matchrules"].add(" ".join(args))
+    inspection.material_matchrules.append(" ".join(args))
     return False
 
 def list_material_matchrules(inspection, args):
     """:
             List the existing material matchrules in this inspection
     """
-    print(inspection['material_matchrules'])
+    i = 0
+    for matchrule in step.material_matchrules:
+        print("{:3}: {}".format(i, matchrule))
+        i += 1
+
     return False
 
 def remove_material_matchrule(inspection, args):
     """ <number>:
             Remove matchrule numbered <number>
     """
-    # FIXME: I don't know what is the best way to do this....
+    if (len(args) < 1):
+        list_material_matchrules(step, [])
+        print("\nWhich matchrule do you want to delete?")
+        text = prompt()
+        target = int(text)
+    else:
+        target = args[0]
+
+    # FIXME: some bound checking here would be interesting here
+    step.material_matchrules.remove(target)
+
     return False
 
 def add_product_matchrule(inspection, args):
@@ -69,25 +84,40 @@ def add_product_matchrule(inspection, args):
             requires the "from" argument
     """
     # FIXME: we should validate this
-    if len(args) <= 2:
+    if len(args) < 2:
         print("We can't add an inspection without a name")
         return
     name = args[0]
 
-    inspection["product_matchrules"].add("".join(args))
+    inspection.product_matchrules.append(" ".join(args))
     return False
 
 def list_product_matchrules(inspection, args):
     """: 
             List the inspections in the currently-loaded layout
     """
-    print(inspection['product_matchrules'])
+    i = 0
+    for matchrule in step.product_matchrules:
+        print("{:3}: {}".format(i, matchrule))
+        i += 1
+
     return False
 
 def remove_product_matchrule(inspection, args):
     """ <number>:
             Remove the product matchrule numbered <number>
     """
+    if (len(args) < 1):
+        list_product_matchrules(step, [])
+        print("\nWhich matchrule do you want to delete?")
+        text = prompt()
+        target = int(text)
+    else:
+        target = args[0]
+
+    # FIXME: some bound checking here would be interesting here
+    step.product_matchrules.remove(target)
+
     return False
 
 def set_run(inspection, args):
@@ -98,7 +128,7 @@ def set_run(inspection, args):
         print("We need to have *something* as a command :/")
         return False
 
-    inspection['run'] = "".join(args)
+    inspection['run'] = " ".join(args)
     return False
 
 def go_back(step, args):
@@ -146,16 +176,17 @@ def go_to_inspection_prompt(layout, name, edit=False):
 
     # find the inspection to edit or create
     if edit:
-        print("Imagine we loaded an inspection instance...")
-        inspection = {"_name": name}
-    else:
-        print("Imagine we created a inspection instance...")
-        inspection= {"_name": name} 
+        for this_inspection in layout.inspect:
+            if this_inspection.name == name:
+                inspection = this_inspection
+                break
+        else:
+            print("The inspection you wan't to edit does not exist!")
+            return None
 
-    # FIXME: we will use the actual classes later
-    inspection['product_matchrules'] = set()
-    inspection['material_matchrules'] = set()
-    inspection['run'] = None
+    else:
+        inspection = Inspection()
+        inspection.name = name
 
     while True:
 

@@ -74,7 +74,8 @@ def toto_prompt():
 
     while True:
 
-        text = promptk(PROMPT, history=history, 
+        thisprompt = unicode(PROMPT)
+        text = promptk(thisprompt, history=history,
                      auto_suggest=AutoSuggestFromHistory(),
                      completer=completer)
 
