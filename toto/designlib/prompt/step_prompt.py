@@ -19,8 +19,8 @@ import sys
 from prompt_toolkit import prompt
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from designlib.history import history
-from designlib.util import TotoCommandCompletions, print_help
+from toto.designlib.history import history
+from toto.designlib.util import TotoCommandCompletions, print_help
 
 PROMPT = "toto-layout/{}->step({})> "
 

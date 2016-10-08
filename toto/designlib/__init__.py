@@ -27,11 +27,9 @@ from prompt_toolkit import prompt as promptk
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.contrib.completers import WordCompleter
 
-from designlib.history import history
-from designlib.prompt import go_to_layout_prompt 
-from designlib.util import TotoCommandCompletions, print_help
-
-#from toto.util import load_keys
+from toto.designlib.history import history
+from toto.designlib.prompt import go_to_layout_prompt
+from toto.designlib.util import TotoCommandCompletions, print_help
 
 PROMPT = "toto-layout> "
 

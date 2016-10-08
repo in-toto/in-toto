@@ -22,11 +22,12 @@ import sys
 from prompt_toolkit import prompt
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-from designlib.history import history
-from designlib.prompt import go_to_step_prompt, go_to_inspection_prompt
-from designlib.util import TotoCommandCompletions, print_help
+from toto.designlib.history import history
+from toto.designlib.prompt import go_to_step_prompt, go_to_inspection_prompt
+from toto.designlib.util import (TotoCommandCompletions, print_help, 
+                                prompt_password)
 
-PROMPT = "toto-layout/{}> "
+from toto.models.layout import Layout
 
 def dummy_command(*args):
     """: *** dummy wrapper for the commands that are not yet implemented *** """
