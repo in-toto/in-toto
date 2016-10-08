@@ -195,10 +195,6 @@ def go_to_layout_prompt(name, load):
     """
 
 
-    # setup the environment and eye candy 
-    thisprompt = PROMPT.format(name)
-    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), [])
-
     # actually load the layout
     if load:
         print("Imagine we loaded a layout instance...")
@@ -207,11 +203,9 @@ def go_to_layout_prompt(name, load):
         print("Imagine we created a layout instance...")
         layout = {"name": name} 
 
-    # FIXME: we will use the actual classes later
-    layout['steps'] = set()
-    layout['inspections'] = set()
-    layout['functionary_pubkeys'] = set()
-    layout['expiration'] = None
+    # setup the environment and eye candy
+    thisprompt = PROMPT.format(name)
+    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), layout, [])
 
     while True:
 

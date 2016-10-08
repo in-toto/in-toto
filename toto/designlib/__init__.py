@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-    <name> 
+    <name>
         designlib
 
     <description>
-        The toto layout tool "main" handler. It will process the initial 
+        The toto layout tool "main" handler. It will process the initial
         commands to start a layout-session. Mostly, this will just receive
         "load_layout" to load a layout file, or create_layout, to create it
 
@@ -20,7 +20,7 @@
 
     <date>
         09/27/2016
-""" 
+"""
 import sys
 
 from prompt_toolkit import prompt as promptk
@@ -53,7 +53,7 @@ def create_layout(args):
 
 def load_layout(args):
     """ <filepath>:
-            Load a root.layout file from the filesystem 
+            Load a root.layout file from the filesystem
     """
     if len(args) < 1:
         print("You have to supply a path to the root.layout file!")
@@ -70,7 +70,7 @@ VALID_COMMANDS = {
 
 def toto_prompt():
 
-    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), [])
+    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), None, [])
 
     while True:
 

@@ -168,8 +168,8 @@ def go_to_step_prompt(layout, name, edit=False):
     """
 
     # setup the environment and eye candy 
-    thisprompt = PROMPT.format(layout['name'], name)
-    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), [])
+    thisprompt = PROMPT.format("layout", name)
+    completer = TotoCommandCompletions(VALID_COMMANDS.keys(), layout, [])
 
     # find the step to edit or create
     if edit:
