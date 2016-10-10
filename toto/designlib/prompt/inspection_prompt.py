@@ -24,7 +24,7 @@ from toto.designlib.util import TotoCommandCompletions, print_help
 
 from toto.models.layout import Inspection
 
-PROMPT = "toto-layout/{}->inspection({})> "
+PROMPT = unicode("toto-layout/{}->inspection({})> ")
 
 def leave(*args):
     """:
@@ -37,7 +37,7 @@ def leave(*args):
     if yesorno.startswith("Y"):
         sys.exit()
 
-def add_material_matchrule(inspection, args):
+def add_material_matchrule(layout, inspection, args):
     """ (MATCH|CREATE|MODIFY|DELETE) <path> [from=<inspectionname>] :
             Add a matchrule to this inspection. the MATCH key requires the "from"
             argument
@@ -50,7 +50,7 @@ def add_material_matchrule(inspection, args):
     inspection.material_matchrules.append(" ".join(args))
     return False
 
-def list_material_matchrules(inspection, args):
+def list_material_matchrules(layout, inspection, args):
     """:
             List the existing material matchrules in this inspection
     """
@@ -61,7 +61,7 @@ def list_material_matchrules(inspection, args):
 
     return False
 
-def remove_material_matchrule(inspection, args):
+def remove_material_matchrule(layout, inspection, args):
     """ <number>:
             Remove matchrule numbered <number>
     """
@@ -78,7 +78,7 @@ def remove_material_matchrule(inspection, args):
 
     return False
 
-def add_product_matchrule(inspection, args):
+def add_product_matchrule(layout, inspection, args):
     """ (MATCH|CREATE|MODIFY|DELETE) <path> [from=<inspectionname>] :
             Add a matchrule to this inspection's product matchrules. The MATCH key
             requires the "from" argument
@@ -92,7 +92,7 @@ def add_product_matchrule(inspection, args):
     inspection.product_matchrules.append(" ".join(args))
     return False
 
-def list_product_matchrules(inspection, args):
+def list_product_matchrules(layout, inspection, args):
     """: 
             List the inspections in the currently-loaded layout
     """
@@ -103,7 +103,7 @@ def list_product_matchrules(inspection, args):
 
     return False
 
-def remove_product_matchrule(inspection, args):
+def remove_product_matchrule(layout, inspection, args):
     """ <number>:
             Remove the product matchrule numbered <number>
     """
@@ -120,7 +120,7 @@ def remove_product_matchrule(inspection, args):
 
     return False
 
-def set_run(inspection, args):
+def set_run(layout, inspection, args):
     """ <command>:
             Set the command to run for this inspection
     """
@@ -128,10 +128,10 @@ def set_run(inspection, args):
         print("We need to have *something* as a command :/")
         return False
 
-    inspection['run'] = " ".join(args)
+    inspection.run = " ".join(args)
     return False
 
-def go_back(step, args):
+def go_back(layout, step, args):
     """:  
             Discard finish with this inspection and go back
     """
@@ -185,7 +185,7 @@ def go_to_inspection_prompt(layout, name, edit=False):
             return None
 
     else:
-        inspection = Inspection()
+        inspection = Inspection(name)
         inspection.name = name
 
     while True:
@@ -205,7 +205,8 @@ def go_to_inspection_prompt(layout, name, edit=False):
             print_help(VALID_COMMANDS)
             continue
 
-        should_go_back = VALID_COMMANDS[command[0]](inspection, command[1:])
+        should_go_back = VALID_COMMANDS[command[0]](layout, inspection, 
+                                                    command[1:])
         if should_go_back:
             break
 

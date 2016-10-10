@@ -80,6 +80,18 @@ def list_steps(state, layout, args):
     """
     print("{}".format(layout.steps))
 
+def edit_inspection(state, layout, args):
+    """ <name>:
+            Edit a step with the name <name> in the currently loaded layout
+    """
+    if len(args) < 1:
+        print("We can't edit an inspection without a name!")
+        return
+
+    name = args[0]
+    go_to_inspection_prompt(layout, name, edit=True)
+
+
 def remove_step(state, layout, args):
     """ <name>:
             Remove the step <name> from the currently-loaded layout
@@ -106,19 +118,19 @@ def add_inspection(state, layout, args):
         return
     name = args[0]
 
-    if name in layout.steps or name in layout.inspections:
+    if name in layout.steps or name in layout.inspect:
         print("You can't add an inspection with that name. Remove the step or "
               "validation with that name, or use edit_validation instead")
         return
 
-    go_to_inspection_prompt(layout, name, edit=False)
+    layout.inspect.append(go_to_inspection_prompt(layout, name, edit=False))
 
 
 def list_inspections(state, layout, args):
     """: 
             List the inspections in the currently-loaded layout
     """
-    print(layout.inspections)
+    print("{}".format(layout.inspect))
 
 def remove_inspection(state, layout, args):
     """ <name>:
@@ -249,6 +261,7 @@ VALID_COMMANDS = {
         "list_steps": list_steps,
         "remove_step": remove_step,
         "add_inspection": add_inspection,
+        "edit_inspection": edit_inspection,
         "list_inspections": list_inspections,
         "remove_inspection": remove_inspection,
         "add_functionary_pubkey": add_functionary_pubkey,
