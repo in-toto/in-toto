@@ -1,8 +1,3 @@
-"""
-Currently unused
-Needs revison!!
-Should be used to validate the format of objects
-"""
 
 def validate_materials(self, Attribute, materials):
 

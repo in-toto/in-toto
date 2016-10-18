@@ -29,23 +29,6 @@
     6. For each step link verify matchrules
     7. For each inspection link verify matchrules
 
-
-Todo:
-    - De-spaghettify:
-      Currently this is implemented as one long function. We should separate
-      the single verification steps, so that this file actually deserves to
-      be called a library
-
-    - Exception catching:
-      Currently failing verification steps raise exceptions, which are caught
-      here. Maybe we should pass on the exceptions and catch them in a program
-      closer to the user (e.g. in the commandline interface toto-verify)
-
-    - Same goes for the return value:
-      IMHO the functions of this library should just raise exceptions
-      and don't return a value (Python style)
-      If toto-verify wants to return something let it do so, but we shouldn't
-      track return value with a global variable here, we really shouldn't!
 """
 import sys
 
@@ -142,7 +125,7 @@ def toto_verify(layout_path, layout_key):
       # XXX LP: We have to know for sure if both are lists or not!!
       # Then we can validate and convert (if necessary) this in the model
       expected_cmd = step.expected_command.split()
-      ran_cmd = link.ran_command
+      ran_cmd = link.command
 
       log.doing("'%s' - '%s' - align commands '%s' and '%s'" \
           % (layout_path, step.name, expected_cmd, ran_cmd))

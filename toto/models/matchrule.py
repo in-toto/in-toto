@@ -39,24 +39,6 @@
 
   Modify:
       class for matchrules of format: MODIFY <path>
-
-Todo:
-  - rethink specifications for matchrules, for now only the match target is
-    mentioned in the rule, I think it would be clearer to have the notion of
-    both match candiates in the rule:
-    e.g.:
-    MATCH <path> IN (PRODUCT|MATERIAL) WITH (PRODUCT|MATERIAL) FROM <step>
-
-  - clarify specifications for CREATE, DELETE, MODIFY matchrules
-    I think the way how these rules are verified is not the way the specs
-    intended them to do
-
-  - general revision of the verify_rule methods and the used arguments
-
-  - move RuleVerficationFailed to toto.exception (and fix typo)
-
-  - general revision of Exception messages
-
 """
 
 import attr
@@ -79,9 +61,6 @@ class Matchrule(object):
     source_type:
         either "material" or "product" depending on whether the rule resides
         in a material_matchrules list or product_matchrules list
-
-  Todo:
-    - needs better checking in the read method
   """
 
   source_type = attr.ib("", init=False)
@@ -121,9 +100,6 @@ class Match(Matchrule):
 
     step:
         the unique name of the step to match with
-
-  Todo:
-    - raise BadMatchruleException (or something like that)
   """
 
   path = attr.ib([])
@@ -182,7 +158,7 @@ class MatchMaterial(Match):
 
 
 @attr.s(repr=False)
-class Create(Matchrule): 
+class Create(Matchrule):
   """Check if path is only in products and not in materials """
   path = attr.ib([])
 
@@ -203,7 +179,7 @@ class Create(Matchrule):
 
 
 @attr.s(repr=False)
-class Delete(Matchrule): 
+class Delete(Matchrule):
   """Check if path is only in materials and not in products """
   path = attr.ib([])
 
@@ -234,8 +210,6 @@ class Modify(Matchrule):
 
 
   def verify_rule(self, item_link, step_links):
-    """ materials and products are in the form of:
-    {path : {<hashtype>: <hash>}, ...} """
 
     if (self.path not in item_link.materials.keys()):
       raise RuleVerficationFailed("'%s' " \

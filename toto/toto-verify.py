@@ -23,9 +23,6 @@
   python -m toto.toto-verify --layout <root.layout> --layout-key <layout-key>
   ```
 
-  Todo:
-    - Maybe move some of the parts of verifylib over here
-
 """
 import sys
 import argparse

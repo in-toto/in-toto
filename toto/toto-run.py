@@ -13,25 +13,20 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface which takes any link command of the software 
-  supply chain as input and wraps toto metadata recording. 
+  Provides a command line interface which takes any link command of the software
+  supply chain as input and wraps toto metadata recording.
 
-  Toto run options are separated from the command to be executed by 
+  Toto run options are separated from the command to be executed by
   a double dash.
 
   Example Usage
   ```
-  python -m toto.toto-run --material <files> --product <files> -- 
+  python -m toto.toto-run --material <files> --product <files> --
     <command-to-execute> <command-options-and-arguments>
   ```
 
   The actual wrapper and the tasks it performs are implemented in runlib.
 
-  TODO
-    * Material/Product
-      For now we specify --materials and --products explicitly. Later we can think
-      of more sophisticate/secure ways to find out which files are being 
-      transformed
 """
 
 import os
@@ -80,7 +75,7 @@ def main():
   # Option group for link command to be executed
   link_args = parser.add_argument_group("Link command")
 
-  # XXX: This is not yet ideal. 
+  # XXX: This is not yet ideal.
   # What should we do with tokens like > or ;
   link_args.add_argument("link_cmd", nargs="+",
     help="Link command to be executed with options and arguments")

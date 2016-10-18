@@ -59,11 +59,7 @@ class Signable(Metablock):
 
   def sign(self, key):
     """Signs the canonical JSON representation of itself (without the
-    signatures property) and adds the signatures to its signature properties.
-
-    Todo:
-      - Verify key format
-    """
+    signatures property) and adds the signatures to its signature properties."""
 
     # XXX LP: Todo: Verify key format
 
@@ -72,14 +68,7 @@ class Signable(Metablock):
 
   def verify_signature(self, key):
     """Verifies if the object contains a signature matching the keyid of the
-    passed key, and if the signature is valid.
-
-    Todo:
-      - Verify key format
-      - raise InvalidKeyFormat
-      - raise SignatureNotFound
-      - raise WrongKeyForSignature (or similar)
-    """
+    passed key, and if the signature is valid."""
 
     # XXX LP: Todo: Verify key format
 
@@ -96,7 +85,7 @@ class Signable(Metablock):
 class ComparableHashDict(object):
   """Helper class providing that wraps hash dicts (format:
   toto.ssl_crypto.formats.HASHDICT_SCHEMA) in order to compare them using
-  "=" and "!=" """
+  `=` and `!=`"""
 
   hash_dict = attr.ib({})
 

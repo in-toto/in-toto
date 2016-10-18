@@ -16,10 +16,6 @@
 <Purpose>
   Provides a class for link metadata which is information gathered when a
   step of the supply chain is performed.
-
-Todo:
-  - Think about a better solution for the `attr` workaround for variables
-    with underscores
 """
 
 import attr
@@ -54,12 +50,11 @@ class Link(models__common.Signable):
             "stderr": <standard error of the executed command>
           }
 
-    ran_command:
+    command:
         the command that was wrapped by toto-run
 
     return_value:
         the return value of the executed command
-
    """
 
   _type = attr.ib("Link", init=False)
@@ -67,7 +62,7 @@ class Link(models__common.Signable):
   materials = attr.ib({})
   products = attr.ib({})
   byproducts = attr.ib({})
-  ran_command = attr.ib("")
+  command = attr.ib("")
   return_value = attr.ib(None)
 
   def dump(self, filename=False):

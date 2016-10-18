@@ -27,11 +27,6 @@
 
   Inspection:
     represents a hook that is run at verification
-
-Todo:
-  - Move matchrule verification functionality from verifylib to model
-  - Add and use model schema validators
-  - Think about generalization (super class) for Step and Inspection
 """
 
 import json
@@ -70,10 +65,6 @@ class Layout(models__common.Signable):
 
     expires:
         the expiration date of a layout
-
-  Todo:
-    - Warn if someone tries to add the private portion of a key to the keys
-
   """
 
   _type = attr.ib("layout", init=False)
@@ -93,7 +84,7 @@ class Layout(models__common.Signable):
   def read_from_file(filename='root.layout'):
     """Static method to instantiate a new Layout object from a
     canonical JSON serialized file """
-    with open(filename, 'r') as fp: 
+    with open(filename, 'r') as fp:
       return Layout.read(json.load(fp))
 
 
@@ -117,7 +108,7 @@ class Layout(models__common.Signable):
 @attr.s(repr=False)
 class Step(models__common.Metablock):
   """
-  Represents a step of the supply chain performed by functionary.
+  Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
   performed.
 
@@ -135,10 +126,6 @@ class Step(models__common.Metablock):
 
     expected_command:
         the command expected to have performed this step
-
-  Todo:
-    - Currently we store the list representation of matchrules to make
-    de-/serialization easier. But we actually want to store the objects.
 
   """
   _type = attr.ib("step", init=False)
@@ -186,9 +173,6 @@ class Inspection(models__common.Metablock):
 
     run:
         the command to execute during layout verification
-
-    Todo:
-      cf. Step Todo
 
   """
 

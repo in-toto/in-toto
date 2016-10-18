@@ -13,10 +13,6 @@
 
 <Purpose>
   Simple wrapper of Python's logger module.
-
-Todo:
-  - Rethink log levels and function names
-  - Think about using logging formats and different logging scopes
 """
 
 import logging

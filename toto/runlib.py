@@ -23,18 +23,12 @@
     - Record state of product (files after the command was executed)
     - Return link object
         can be used to sign and dump
-
-Todo:
-  - Decide on metadata location
-  - Properly duplicate stdout/stderr
-  - record_artifacts_as_dict needs revision
-  - Change key load
 """
 import sys
 import os
 import tempfile
 
-# POSIX users (Linux, BSD, etc.) are strongly encouraged to 
+# POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
 if os.name == 'posix' and sys.version_info[0] < 3:
   import subprocess32 as subprocess
@@ -59,10 +53,8 @@ def record_artifacts_as_dict(artifacts):
   with filepaths as keys and their files' hashes as values.
 
   The dirs/files a link command is executed on are called materials.
-  The dirs/files that result form a link command execution are called products.
-
-  XXX Todo: Needs revision!
-  """
+  The dirs/files that result form a link command execution are called
+  products."""
 
   artifacts_dict = {}
 
@@ -71,10 +63,7 @@ def record_artifacts_as_dict(artifacts):
 
   def _hash_artifact(filepath, hash_algorithms=['sha256']):
     """Takes a filename and hashes the respective file's contents
-    using the passed hash_algorithms. Returns a HASHDICT
-
-    XXX LP: Maybe this should live in the link model. Or in
-    a not yet existent artifact model. """
+    using the passed hash_algorithms. Returns a HASHDICT"""
 
     toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
     hash_dict = {}
@@ -88,9 +77,7 @@ def record_artifacts_as_dict(artifacts):
     return hash_dict
 
   def _normalize_path(path):
-    """Strips "./" on the left side of the path.
-    XXX LP: I'm not happy with doing this here, maybe we can do this in
-    verification? """
+    """Strips "./" on the left side of the path"""
 
     if path.startswith("./"):
         return path[2:]
@@ -109,7 +96,7 @@ def record_artifacts_as_dict(artifacts):
 
 
 def execute_link(link_cmd_args, record_byproducts):
-  """Takes a command and its options and arguments of the software supply 
+  """Takes a command and its options and arguments of the software supply
   chain as input, runs the command in a subprocess, records stdout,
   stderr and return value of the command and returns them. Stdout and stderr
   are called by-products."""
@@ -146,7 +133,7 @@ def execute_link(link_cmd_args, record_byproducts):
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
 
 def create_link_metadata(name, materials, products, byproducts,
-    ran_command, return_value):
+    command, return_value):
   """Takes the state of the materials (before link command execution), the state
   of the products (after link command execution) and the by-products of the link
   command execution and creates and returns a Link metadata object """
@@ -156,7 +143,7 @@ def create_link_metadata(name, materials, products, byproducts,
     "materials" : materials,
     "products" : products,
     "byproducts" : byproducts,
-    "ran_command" : ran_command,
+    "command" : command,
     "return_value" : return_value
   }
 

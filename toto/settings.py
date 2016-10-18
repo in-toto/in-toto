@@ -26,10 +26,6 @@
   To access a settings:
   from simple_settings import settings
 
-Todo:
-  - Use it! Some things that should reside here are hard-coded throughout the
-  project
-
 """
 
 import logging
