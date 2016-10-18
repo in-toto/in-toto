@@ -57,6 +57,7 @@ def toto_verify(layout_path, layout_key):
     log.doing("'%s' - load key '%s'" % (layout_path, layout_key))
     # XXX LP: Change key load
     layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
+
   except Exception, e:
     log.error("in load key - %s" % e)
 
@@ -67,7 +68,7 @@ def toto_verify(layout_path, layout_key):
         % (layout_path, layout_key))
 
     msg = "'%s' - verify signature" % layout_path
-    if layout.verify_signature(layout_key_dict):
+    if layout.verify_signature(layout_key):
       log.passing(msg)
     else:
       log.failing(msg)

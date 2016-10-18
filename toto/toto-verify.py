@@ -48,7 +48,9 @@ def main():  # Create new parser with custom usage message
 
   args = parser.parse_args()
 
-  retval = toto.verifylib.toto_verify(args.layout, args.layout_key)
+  layout_key = toto.util.prompt_import_rsa_key_from_file(args.layout_key)
+
+  retval = toto.verifylib.toto_verify(args.layout, layout_key)
   sys.exit(retval)
 
 if __name__ == '__main__':
