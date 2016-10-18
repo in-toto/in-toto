@@ -86,7 +86,7 @@ def main():
   name = args.name
   materials = args.materials
   products = args.products
-  key = args.key
+  key_name = args.key
   link_cmd = args.link_cmd
   record_byproducts = args.record_byproducts
 
@@ -94,6 +94,8 @@ def main():
     materials = materials.split(",")
   if products:
     products = products.split(",")
+
+  key = toto.util.prompt_import_rsa_key_from_file(key_name)
 
   toto.runlib.toto_run(name, materials, products, key, link_cmd,
       record_byproducts)
