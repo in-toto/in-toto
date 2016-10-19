@@ -35,7 +35,7 @@ import attr
 # import validators
 from . import common as models__common
 from . import matchrule as models__matchrule
-
+from . import link as models__link
 @attr.s(repr=False)
 class Layout(models__common.Signable):
   """
@@ -104,6 +104,15 @@ class Layout(models__common.Signable):
         keys=data.get("keys"), expires=data.get("expires"),
         signatures=data.get("signatures"))
 
+  def import_step_metadata_from_files_as_dict(self):
+    """Iteratively loads link metadata files for each Step of the Layout
+    from disk and returns a dict with Link names as keys and Link objects
+    as values. """
+    step_link_dict = {}
+    for step in self.steps:
+      link = models__link.Link.read_from_file(step.name + '.link')
+      step_link_dict[step.name] = link
+    return step_link_dict
 
 @attr.s(repr=False)
 class Step(models__common.Metablock):

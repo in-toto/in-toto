@@ -66,19 +66,20 @@ class Signable(Metablock):
     signature = ssl_crypto__keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
-  def verify_signature(self, key):
-    """Verifies if the object contains a signature matching the keyid of the
-    passed key, and if the signature is valid."""
+  def verify_signatures(self, keys_dict):
+    """Verifies all signatures of the object using the passed key_dict."""
 
-    # XXX LP: Todo: Verify key format
+    if not self.signatures or len(self.signatures) <= 0:
+      raise Exception("No signatures found")
 
     for signature in self.signatures:
-      if key["keyid"] == signature["keyid"]:
-        return ssl_crypto__keys.verify_signature(key, signature,
-            self.payload)
-    else:
-      # XXX LP: Replace exception with KeyNotFound exception (or return false?)
-      raise Exception("Signature with keyid not found")
+      keyid = signature["keyid"]
+      try:
+        key = keys_dict[keyid]
+      except:
+        raise Exception("Signature key not found, key id is %s" % keyid)
+
+      ssl_crypto__keys.verify_signature(key, signature, self.payload)
 
 
 @attr.s(repr=False, cmp=False)
