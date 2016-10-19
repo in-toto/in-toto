@@ -2,18 +2,19 @@
 """
     TODO: this
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name="Toto",
+    name="toto-framework",
     version="0.0.1",
-    author="Santiago Torres",
+    author="New York University: Secure Systems Lab",
     author_email="santiago@nyu.edu",
-    description=("Toto is a series of scripts to verify the integrity"
-                 "of the software supply chain"),
+    description=("A framework to define and secure "
+                 "the integrity of software supply chains"),
     license="MIT",
-    packages=["toto"],
-    install_requires=[
-        ],
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    install_requires=['six', 'simple_settings', 'attrs', 'canonicaljson'],
     test_suite="test.runtests",
+    scripts=['toto/toto-run.py',
+             'toto/toto-verify.py']
 )
