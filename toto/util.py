@@ -43,10 +43,10 @@ def generate_and_write_rsa_keypair(filepath, password):
   private = rsa_key['keyval']['private']
   private_pem = toto.ssl_crypto.keys.create_rsa_encrypted_pem(private, password)
 
-  with open(filepath + '.pub', 'w') as fo_public, \
-      open(filepath, 'w') as fo_private:
-
+  with open(filepath + '.pub', 'w') as fo_public:
     fo_public.write(public.encode('utf-8'))
+
+  with open(filepath, 'w') as fo_private:
     fo_private.write(private_pem.encode('utf-8'))
 
 
