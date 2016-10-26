@@ -25,10 +25,10 @@ def main():
   """
   # Create keys
   print "Generate keypair for Alice..."
-  toto.util.prompt_generate_and_write_rsa_keypair("alice")
+  toto.util.generate_and_write_rsa_keypair("alice")
 
   print "Generate keypair for Bob..."
-  toto.util.prompt_generate_and_write_rsa_keypair("bob")
+  toto.util.generate_and_write_rsa_keypair("bob")
 
   alice_public = toto.util.import_rsa_key_from_file("alice.pub")
   bob_public = toto.util.import_rsa_key_from_file("bob.pub")
@@ -74,7 +74,7 @@ def main():
 
   # Sign and dump layout
   print "Load alice private key to sign layout..."
-  alice_private = toto.util.prompt_import_rsa_key_from_file("alice")
+  alice_private = toto.util.import_rsa_key_from_file("alice")
   layout.sign(alice_private)
   layout.dump()
 
