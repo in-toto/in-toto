@@ -105,9 +105,25 @@ class Layout(models__common.Signable):
         signatures=data.get("signatures"))
 
   def import_step_metadata_from_files_as_dict(self):
-    """Iteratively loads link metadata files for each Step of the Layout
-    from disk and returns a dict with Link names as keys and Link objects
-    as values. """
+    """
+    <Purpose>
+      Iteratively loads link metadata files for each Step of the Layout
+      from disk and returns a dict with Link names as keys and Link objects
+      as values.
+
+    <Arguments>
+      None
+
+    <Exceptions>
+      TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+    <Side Effects>
+      Calls functions to read files from disk
+
+    <Returns>
+      A dictionary with Link names as keys and Link objects as values.
+
+    """
     step_link_dict = {}
     for step in self.steps:
       link = models__link.Link.read_from_file(step.name + '.link')
