@@ -20,7 +20,7 @@
 
   Example Usage:
   ```
-  ./toto-verify.py --layout <root.layout> --layout-keys <layout-key>
+  toto-verify.py --layout <root.layout> --layout-keys <layout-key>
   ```
 
 """
@@ -96,8 +96,8 @@ def in_toto_verify(layout_path, layout_key_paths):
 def main():
   parser = argparse.ArgumentParser(
       description="Verifies in-toto final product",
-      usage="./toto-verify.py --layout <layout path>\n" \
-            "                 --layout-keys (<layout pubkey path>,...)")
+      usage=("toto-verify.py --layout <layout path>\n" +
+             "                      --layout-keys (<layout pubkey path>,...)"))
 
   toto_args = parser.add_argument_group("Toto options")
 

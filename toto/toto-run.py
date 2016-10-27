@@ -23,7 +23,7 @@
 
   Example Usage
   ```
-  ./toto-run.py --step-name write-code --materials . --products . --key bob \
+  toto-run.py --step-name write-code --materials . --products . --key bob \
       -- vi foo.py
   ```
 
@@ -92,12 +92,12 @@ def in_toto_run(step_name, key_path, material_list, product_list,
 def main():
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata",
-      usage="./toto-verify.py --step-name <unique step name>\n" \
-            "                [--materials <filepath>[,<filepath> ...]]\n" \
-            "                [--products <filepath>[,<filepath> ...]]\n" \
-            "                 --key <functionary private key path>\n" \
-            "                [--record-byproducts]\n" \
-            "                 -- <cmd> [args]")
+      usage="toto-verify.py --step-name <unique step name>\n" +
+            "                     [--materials <filepath>[,<filepath> ...]]\n" +
+            "                     [--products <filepath>[,<filepath> ...]]\n" +
+            "                      --key <functionary private key path>\n" +
+            "                     [--record-byproducts]\n" +
+            "                      -- <cmd> [args]")
 
   toto_args = parser.add_argument_group("Toto options")
   # XXX LP: Name has to be unique!!! Where will we check this?
@@ -108,7 +108,7 @@ def main():
 
   # XXX LP: We should allow path wildcards here and sanitze them
   toto_args.add_argument("-m", "--materials", type=str, required=False,
-      help="Files to recorded before link command execution")
+      help="Files to record before link command execution")
   toto_args.add_argument("-p", "--products", type=str, required=False,
       help="Files to record after link command execution")
 
