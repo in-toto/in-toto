@@ -36,7 +36,7 @@ def main():
   # Create Layout
   layout = m.Layout.read({
     "_type": "layout",
-    "expires": "EXPIRES",
+    "expires": "",
     "keys": {
         alice_public["keyid"]: alice_public,
         bob_public["keyid"]: bob_public

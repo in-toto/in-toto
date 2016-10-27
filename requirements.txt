@@ -1,2 +1,4 @@
 sphinx
 simple-settings
+python-dateutil
+iso8601
