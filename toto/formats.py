@@ -60,8 +60,7 @@ LINK_TRANSFORMATIONS_SCHEMA = ssl_commons.schema.ListOf(
 LINK_METADATA_SCHEMA = ssl_commons.schema.Object(
   object_name = 'LINK_METADATA_SCHEMA',
   _type = SCHEMA.String('link'),
-  # version = ssl_crypto.formats.METADATAVERSION_SCHEMA, # XXX: Are we sure we want a version here?
-  command = LINK_COMMAND_SCHEMA,
+  # version = ssl_crypto.formats.METADATAVERSION_SCHEMA,
   branch = ssl_crypto.formats.HASH_SCHEMA,
   ssl_commons.schema.DictOf(
     key_schema = ssl_commons.schema.String("materials-hash"),
@@ -72,5 +71,5 @@ LINK_METADATA_SCHEMA = ssl_commons.schema.Object(
     key_schema = ssl_commons.schema.String("transformation-hash"),
     value_schema = ssl_crypto.formats.HASH_SCHEMA,
   ),
-  report = ssl_commons.schema.Any() # XXX: Need to decide on format
+  report = ssl_commons.schema.Any()
 )

@@ -51,11 +51,11 @@ def toto_verify(layout_path, layout_key):
     layout = toto.models.layout.Layout.read_from_file(layout_path)
   except Exception, e:
     log.error("in load layout - %s" % e)
-    return 1 # XXX LP: re-raise?
+    return 1 # TODO: re-raise?
 
   try:
     log.doing("'%s' - load key '%s'" % (layout_path, layout_key))
-    # XXX LP: Change key load
+    # FIXME: Change key load
     layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
   except Exception, e:
     log.error("in load key - %s" % e)
@@ -75,7 +75,7 @@ def toto_verify(layout_path, layout_key):
 
   except Exception, e:
     log.error("in verify signature - %s" % e)
-    raise # XXX LP: exit gracefully instead of exception?
+    raise # TODO: exit gracefully instead of exception?
 
   step_links = {}
 
@@ -122,7 +122,7 @@ def toto_verify(layout_path, layout_key):
     # Check expected command
     try:
 
-      # XXX LP: We have to know for sure if both are lists or not!!
+      # TODO: We have to know for sure if both are lists or not!!
       # Then we can validate and convert (if necessary) this in the model
       expected_cmd = step.expected_command.split()
       ran_cmd = link.command
@@ -159,12 +159,12 @@ def toto_verify(layout_path, layout_key):
       log.doing("'%s' - '%s' - execute '%s'" \
           % (layout_path, inspection.name, inspection.run))
 
-      # XXX LP: What should we record as material/product?
+      # TODO: What should we record as material/product?
       # Is the current directory a sensible default? In general?
       # If so, we should propably make it a default in run_link
       # We could use matchrule paths
 
-      # XXX LP: Is inspect.run a string or a list?
+      # TODO: Is inspect.run a string or a list?
       # The specs says string, the code needs a list? Maybe split
       # the string in toto_run
       link = toto.runlib.run_link(inspection.name, ".", ".",

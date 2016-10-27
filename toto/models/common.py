@@ -61,7 +61,7 @@ class Signable(Metablock):
     """Signs the canonical JSON representation of itself (without the
     signatures property) and adds the signatures to its signature properties."""
 
-    # XXX LP: Todo: Verify key format
+    # TODO: Verify key format
 
     signature = ssl_crypto__keys.create_signature(key, self.payload)
     self.signatures.append(signature)
@@ -70,14 +70,14 @@ class Signable(Metablock):
     """Verifies if the object contains a signature matching the keyid of the
     passed key, and if the signature is valid."""
 
-    # XXX LP: Todo: Verify key format
+    # TODO: Verify key format
 
     for signature in self.signatures:
       if key["keyid"] == signature["keyid"]:
         return ssl_crypto__keys.verify_signature(key, signature,
             self.payload)
     else:
-      # XXX LP: Replace exception with KeyNotFound exception (or return false?)
+      # TODO: Replace exception with KeyNotFound exception (or return false?)
       raise Exception("Signature with keyid not found")
 
 

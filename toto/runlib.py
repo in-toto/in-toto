@@ -35,7 +35,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
   import subprocess
 
-# XXX LP: I think we'll get rid of toto formats because we want to use
+# TODO: I think we'll get rid of toto formats because we want to use
 # model validators instead for toto schemas, we'll still use
 # toto.ssl_crypto.formats though
 
@@ -101,19 +101,18 @@ def execute_link(link_cmd_args, record_byproducts):
   stderr and return value of the command and returns them. Stdout and stderr
   are called by-products."""
 
-  # XXX: The first approach only redirects the stdout/stderr to a tempfile
+  # TODO: The first approach only redirects the stdout/stderr to a tempfile
   # but we actually want to duplicate it, ideas
   #  - Using a pipe won't work because processes like vi will complain
   #  - Wrapping stdout/sterr in Python does not work because the suprocess
   #    will only take the fd and then uses it natively
   #  - Reading from /dev/stdout|stderr, /dev/tty is *NIX specific
-
   # Until we come up with a proper solution we use a flag and let the user
   # decide if s/he wants to see or store stdout/stderr
   # btw: we ignore them in the layout anyway
 
   if record_byproducts:
-    # XXX: Use SpooledTemporaryFile if we expect very large outputs
+    # NOTE: Use SpooledTemporaryFile if we expect very large outputs
     stdout_file = tempfile.TemporaryFile()
     stderr_file = tempfile.TemporaryFile()
 
@@ -152,7 +151,7 @@ def create_link_metadata(name, materials, products, byproducts,
 
 def run_link(name, materials, products, toto_cmd_args, record_byproducts=False):
   """Performs all actions associated with toto run-link.
-  XXX LP: This should probably be atomic, i.e. all or nothing"""
+  TODO: This should probably be atomic, i.e. all or nothing"""
 
   # log.doing("record materials for '%s'" % name)
   materials_dict = record_artifacts_as_dict(materials)
@@ -176,7 +175,7 @@ def toto_run(name, materials, products, key, toto_cmd_args,
   link = toto.runlib.run_link(name, materials, products, toto_cmd_args,
         record_byproducts)
 
-  # XXX LP: Change key load
+  # TODO: Change key load
   # log.doing("load key '%s'" % key)
   key_dict = toto.util.create_and_persist_or_load_key(key)
 

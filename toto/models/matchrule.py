@@ -68,7 +68,7 @@ class Matchrule(object):
 
   @staticmethod
   def read(data):
-    # XXX LP: needs some better checking
+    # TODO: needs some better checking
     # e.g. move checking to validator altogether
     if len(data) == 5 and data[0] == "MATCH" and data[1] == "MATERIAL":
       return MatchMaterial(path=data[2], step=data[4])
