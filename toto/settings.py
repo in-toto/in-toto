@@ -1,22 +1,30 @@
 """
-settings.py
+<Program Name>
+  settings.py
 
-This is a global settings file used througout the entire package, inspired
-by Django's settings system.
+<Author>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
 
-To make this work we use the simple-settings module available on Pypi.
-http://simple-settings.readthedocs.io/en/master/
+<Started>
+  June 23, 2016
 
-We can think of our own implementation later, if we don't want to use a
-third party requirement.
+<Copyright>
+  See LICENSE for licensing information.
 
-Pre-requisites:
+<Purpose>
+  A global settings file used througout the entire package, inspired
+  by Django's settings system.
+
+
+<Pre-requisites>
+  To make this work we use the simple-settings module available on Pypi.
+  http://simple-settings.readthedocs.io/en/master/
+
   $ pip install simple-settings
   $ export SIMPLE_SETTINGS=toto.settings
 
   To access a settings:
   from simple_settings import settings
-  
 
 """
 
@@ -62,4 +70,3 @@ GENERAL_CRYPTO_LIBRARY = 'pycrypto'
 LOG_LEVEL = logging.INFO
 # Debug level CRITICAL only shows toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
-

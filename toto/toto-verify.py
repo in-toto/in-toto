@@ -16,12 +16,13 @@
   Provides a command line interface that wraps the verification of
   toto final product.
 
-
+  The actual verification is implemented in verifylib.
 
   Example Usage:
   ```
-
+  python -m toto.toto-verify --layout <root.layout> --layout-key <layout-key>
   ```
+
 """
 import sys
 import argparse
@@ -41,7 +42,7 @@ def main():  # Create new parser with custom usage message
   toto_args.add_argument("-l", "--layout", type=str, required=True,
       help="Root layout to use for verification")
 
-  # XXX LP: This could be more than one
+  # FIXME: This could be more than one
   toto_args.add_argument("-k", "--layout-key", type=str, required=True,
     help="Key to verify root layout signature")
 

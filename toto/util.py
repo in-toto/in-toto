@@ -11,7 +11,11 @@ import toto.log as log
 
 def create_and_persist_or_load_key(filename):
   """Throw-away function that loads a key file or creates and
-  stores it if it does not expist."""
+  stores it if it does not expist.
+
+  Todo:
+      THROW AWAY!!!
+  """
 
   if not os.path.isfile(filename):
     log.warning("key '%s' was not found!" % filename)

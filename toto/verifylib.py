@@ -13,27 +13,21 @@
 
 <Purpose>
 
-Verification:
-    1. Load root layout
-      - Search for one of
-        - passed layout name, or
-        - 'root.layout' in current directory
-        - in a bundle?
+  Provides a library to verify a Toto final product containing
+  a software supply chain layout.
 
-      - Check if properly formatted
-    2. Load root key
-      - by passed name
+  The verification boils down to the following steps:
+    1. Load root layout of final product from file
+    2. Load root key from file
     3. Check signature of layout
     4. For each step in layout
-      - Load link and add to link list
-      - Check if poprerly formatted
-    5. For each inspection
-      - Execute with toto-run and add to link list
-
-    6. For each link in link list
-      - Check signature
-      - Check matchrule
-      - Check command
+      a) Load link metadata from file and add Link object to a list
+      b) Look for the according key in the layout and check the link's signature
+      c) Verify if the run command and the expected command align
+    5. For each inspection in layout
+      - Execute with toto-run and add generated Link object to a list
+    6. For each step link verify matchrules
+    7. For each inspection link verify matchrules
 
 """
 import sys
@@ -57,11 +51,11 @@ def toto_verify(layout_path, layout_key):
     layout = toto.models.layout.Layout.read_from_file(layout_path)
   except Exception, e:
     log.error("in load layout - %s" % e)
-    return 1 # XXX LP: re-raise?
+    return 1 # TODO: re-raise?
 
   try:
     log.doing("'%s' - load key '%s'" % (layout_path, layout_key))
-    # XXX LP: Change key load
+    # FIXME: Change key load
     layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
   except Exception, e:
     log.error("in load key - %s" % e)
@@ -81,7 +75,7 @@ def toto_verify(layout_path, layout_key):
 
   except Exception, e:
     log.error("in verify signature - %s" % e)
-    raise # XXX LP: exit gracefully instead of exception?
+    raise # TODO: exit gracefully instead of exception?
 
   step_links = {}
 
@@ -128,10 +122,10 @@ def toto_verify(layout_path, layout_key):
     # Check expected command
     try:
 
-      # XXX LP: We have to know for sure if both are lists or not!!
+      # TODO: We have to know for sure if both are lists or not!!
       # Then we can validate and convert (if necessary) this in the model
       expected_cmd = step.expected_command.split()
-      ran_cmd = link.ran_command
+      ran_cmd = link.command
 
       log.doing("'%s' - '%s' - align commands '%s' and '%s'" \
           % (layout_path, step.name, expected_cmd, ran_cmd))
@@ -165,12 +159,12 @@ def toto_verify(layout_path, layout_key):
       log.doing("'%s' - '%s' - execute '%s'" \
           % (layout_path, inspection.name, inspection.run))
 
-      # XXX LP: What should we record as material/product?
+      # TODO: What should we record as material/product?
       # Is the current directory a sensible default? In general?
       # If so, we should propably make it a default in run_link
       # We could use matchrule paths
 
-      # XXX LP: Is inspect.run a string or a list?
+      # TODO: Is inspect.run a string or a list?
       # The specs says string, the code needs a list? Maybe split
       # the string in toto_run
       link = toto.runlib.run_link(inspection.name, ".", ".",

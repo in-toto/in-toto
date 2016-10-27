@@ -1,4 +1,33 @@
 #!/usr/bin/env python
+"""
+<Program Name>
+  layout.py
+
+<Author>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres <santiago@nyu.edu>
+
+<Started>
+  Sep 23, 2016
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Provides classes related to the definition of a software supply chain.
+
+<Classes>
+  Layout:
+      represents the metadata file that defines a software supply chain through
+      steps and inspections
+
+  Step:
+      represents one step of the software supply chain, performed by one or many
+      functionaries, who are identified by a key also stored to the layout
+
+  Inspection:
+    represents a hook that is run at verification
+"""
 
 import json
 import attr
@@ -9,6 +38,34 @@ from . import matchrule as models__matchrule
 
 @attr.s(repr=False)
 class Layout(models__common.Signable):
+  """
+  The layout specifies each of the different steps and the requirements for
+  each step, as well as the public keys functionaries used to perform these
+  steps.
+
+  The layout also specifies additional steps called inspections
+  that are carried out during the verification.
+
+  Both steps and inspections can list rules that define how steps are
+  interconnected by their materials and products.
+
+  Layouts define a software supply chain and can be signed, dumped to a file,
+  and instantiated from a file.
+
+  <Attributes>
+    steps:
+        a list of Step objects
+
+    inspect:
+        a list of Inspection objects
+
+    keys:
+        a list of public keys used to verify the signature of link
+        metadata file related to a step
+
+    expires:
+        the expiration date of a layout
+  """
 
   _type = attr.ib("layout", init=False)
   steps = attr.ib([])
@@ -16,16 +73,24 @@ class Layout(models__common.Signable):
   keys = attr.ib([])
   expires = attr.ib("")
 
+
   def dump(self, filename='root.layout'):
+    """Write pretty printed JSON represented of self to a file with filename.
+    If no filename is specified 'root.layout' is used as default """
     super(Layout, self).dump(filename)
+
 
   @staticmethod
   def read_from_file(filename='root.layout'):
-    with open(filename, 'r') as fp: 
+    """Static method to instantiate a new Layout object from a
+    canonical JSON serialized file """
+    with open(filename, 'r') as fp:
       return Layout.read(json.load(fp))
+
 
   @staticmethod
   def read(data):
+    """Static method to instantiate a new Layout from a Python dictionary """
     layout = Layout()
     tmp_steps = []
     tmp_inspect = []
@@ -39,15 +104,37 @@ class Layout(models__common.Signable):
         keys=data.get("keys"), expires=data.get("expires"),
         signatures=data.get("signatures"))
 
+
 @attr.s(repr=False)
 class Step(models__common.Metablock):
+  """
+  Represents a step of the supply chain performed by a functionary.
+  A step relates to a link metadata file generated when the step was
+  performed.
 
+  <Attributes>
+    name:
+        a unique name used to identify the related link metadata
+
+    material_matchrules and product_matchrules:
+        a list of matchrules used to verify if the materials or products of the
+        step (found in the according link metadata file) link correctly with
+        other steps of the supply chain
+
+    pubkeys:
+        a list of keyids of the functionaries authorized to perform the step
+
+    expected_command:
+        the command expected to have performed this step
+
+  """
   _type = attr.ib("step", init=False)
   name = attr.ib()
   material_matchrules = attr.ib([])
   product_matchrules = attr.ib([])
   pubkeys = attr.ib([])
   expected_command = attr.ib("")
+
 
   @staticmethod
   def read(data):
@@ -69,14 +156,32 @@ class Step(models__common.Metablock):
         pubkeys=data.get("pubkeys"),
         expected_command=data.get("expected_command"))
 
+
 @attr.s(repr=False)
 class Inspection(models__common.Metablock):
+  """
+  Represents an inspection which performs a command during layout verification.
+
+  <Attributes>
+    name:
+        a unique name used to identify related link metadata
+        link metadata for Inspections are just created and used on the fly
+        and not stored to disk
+
+    material_matchrules and product_matchrules:
+        cf. Step Attributes
+
+    run:
+        the command to execute during layout verification
+
+  """
 
   _type = attr.ib("inspection", init=False)
   name = attr.ib()
   material_matchrules = attr.ib([])
   product_matchrules = attr.ib([])
   run = attr.ib("")
+
 
   @staticmethod
   def read(data):
