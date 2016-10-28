@@ -66,6 +66,12 @@ def in_toto_verify(layout_path, layout_key_paths):
     _die("in load link metadata - %s" % e)
 
   try:
+    log.doing("verify all step command alignments...")
+    toto.verifylib.verify_all_steps_command_alignment(layout, step_link_dict)
+  except Exception, e:
+    _die("command alignments - %s" % e)
+
+  try:
     log.doing("verify signatures for all links...")
     toto.verifylib.verify_all_steps_signatures(layout, step_link_dict)
   except Exception, e:
