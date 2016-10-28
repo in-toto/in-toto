@@ -23,24 +23,29 @@ def main():
   # Define the supply chain
   #############################################################################
   """
+  # Create keys
+  print "Generate keypair for Alice..."
+  toto.util.generate_and_write_rsa_keypair("alice")
 
-  # Get keys
-  alice_key = toto.util.create_and_persist_or_load_key("alice")
-  bob_key = toto.util.create_and_persist_or_load_key("bob")
+  print "Generate keypair for Bob..."
+  toto.util.generate_and_write_rsa_keypair("bob")
+
+  alice_public = toto.util.import_rsa_key_from_file("alice.pub")
+  bob_public = toto.util.import_rsa_key_from_file("bob.pub")
 
   # Create Layout
-  layout = m.Layout.read({ 
+  layout = m.Layout.read({
     "_type": "layout",
     "expires": "EXPIRES",
     "keys": {
-        alice_key["keyid"]: alice_key,
-        bob_key["keyid"]: bob_key
+        alice_public["keyid"]: alice_public,
+        bob_public["keyid"]: bob_public
     },
     "steps": [{
         "name": "write-code",
         "material_matchrules": [],
         "product_matchrules": [["CREATE", "foo.py"]],
-        "pubkeys": [alice_key["keyid"]],
+        "pubkeys": [alice_public["keyid"]],
         "expected_command": "vi",
       },
       {
@@ -51,7 +56,7 @@ def main():
         "product_matchrules": [
             ["CREATE", "foo.tar.gz"],
         ],
-        "pubkeys": [bob_key["keyid"]],
+        "pubkeys": [bob_public["keyid"]],
         "expected_command": "tar zcvf foo.tar.gz foo.py",
       }],
     "inspect": [{
@@ -68,7 +73,9 @@ def main():
   })
 
   # Sign and dump layout
-  layout.sign(alice_key)
+  print "Load alice private key to sign layout..."
+  alice_private = toto.util.import_rsa_key_from_file("alice")
+  layout.sign(alice_private)
   layout.dump()
 
 

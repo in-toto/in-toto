@@ -175,11 +175,7 @@ def toto_run(name, materials, products, key, toto_cmd_args,
   link = toto.runlib.run_link(name, materials, products, toto_cmd_args,
         record_byproducts)
 
-  # TODO: Change key load
-  # log.doing("load key '%s'" % key)
-  key_dict = toto.util.create_and_persist_or_load_key(key)
-
   # log.doing("sign metadata '%s' with key '%s'" % (name, key))
-  link.sign(key_dict)
+  link.sign(key)
   # log.doing("store metadata '%s' to disk" % name)
   link.dump()
