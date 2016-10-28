@@ -1,171 +1,121 @@
 import os
 import sys
 import subprocess
+import argparse
+from shutil import copyfile
 
-import toto.ssl_crypto.keys
-import toto.models.layout as m
-import toto.util
-import toto.log as log
+NO_PROMPT = False
 
-
-def wait_for_y(prompt):
+def prompt_key(prompt):
+  if NO_PROMPT:
+    print "\n" + prompt
+    return
   inp = False
   while inp != "":
     try:
-      inp = raw_input("%s (enter)" % prompt)
-      print inp
+      inp = raw_input("\n%s -- press any key to continue" % prompt)
     except Exception, e:
       pass
 
+def supply_chain():
+
+  prompt_key("Define supply chain layout (Alice)")
+  os.chdir("owner_alice")
+  create_layout_cmd = "python create_layout.py"
+  print create_layout_cmd
+  subprocess.call(create_layout_cmd.split())
+
+  prompt_key("Write code (Bob)")
+  os.chdir("../functionary_bob")
+  write_code_cmd = ("python -m toto.toto-run" +
+                    " --step-name write-code --products foo.py" +
+                    " --key bob -- vi foo.py")
+  print write_code_cmd
+  subprocess.call(write_code_cmd.split())
+  copyfile("foo.py", "../functionary_carl/foo.py")
+
+
+  prompt_key("Package (Carl)")
+  os.chdir("../functionary_carl")
+  package_cmd = ("python -m toto.toto-run" +
+                 " --step-name package --material foo.py" +
+                 " --products foo.tar.gz" +
+                 " --key carl --record-byproducts" +
+                 " -- tar zcvf foo.tar.gz foo.py")
+  print package_cmd
+  subprocess.call(package_cmd.split())
+
+
+  prompt_key("Create final product")
+  os.chdir("..")
+  copyfile("owner_alice/root.layout", "final_product/root.layout")
+  copyfile("functionary_bob/write-code.link", "final_product/write-code.link")
+  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_carl/foo.tar.gz", "final_product/foo.tar.gz")
+
+
+  prompt_key("Verify final product (client)")
+  os.chdir("final_product")
+  copyfile("../owner_alice/alice.pub", "alice.pub")
+  verify_cmd = ("python -m toto.toto-verify" +
+                " --layout root.layout" +
+                " --layout-key alice.pub")
+  print verify_cmd
+  retval = subprocess.call(verify_cmd.split())
+  print "Return value: " + str(retval)
+
+
+
+
+
+  prompt_key("Tampering with the supply chain")
+  os.chdir("../functionary_bob")
+  tamper_cmd = "echo 'something evil' >> foo.py"
+  print tamper_cmd
+  subprocess.call(tamper_cmd, shell=True)
+  copyfile("foo.py", "../functionary_carl/foo.py")
+
+
+  prompt_key("Package (Carl)")
+  os.chdir("../functionary_carl")
+  package_cmd = ("python -m toto.toto-run" +
+                 " --step-name package --material foo.py" +
+                 " --products foo.tar.gz" +
+                 " --key carl --record-byproducts" +
+                 " -- tar zcvf foo.tar.gz foo.py")
+  print package_cmd
+  subprocess.call(package_cmd.split())
+
+
+  prompt_key("Create final product")
+  os.chdir("..")
+  copyfile("owner_alice/root.layout", "final_product/root.layout")
+  copyfile("functionary_bob/write-code.link", "final_product/write-code.link")
+  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_carl/foo.tar.gz", "final_product/foo.tar.gz")
+
+
+  prompt_key("Verify final product (client)")
+  os.chdir("final_product")
+  copyfile("../owner_alice/alice.pub", "alice.pub")
+  verify_cmd = ("python -m toto.toto-verify" +
+                " --layout root.layout" +
+                " --layout-key alice.pub")
+  print verify_cmd
+  retval = subprocess.call(verify_cmd.split())
+  print "Return value: " + str(retval)
+
+
 def main():
-  print """
-  #############################################################################
-  # Define the supply chain
-  #############################################################################
-  """
-  # Create keys
-  print "Generate keypair for Alice..."
-  toto.util.generate_and_write_rsa_keypair("alice")
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-n", "--no-prompt", help="No prompt",
+      action="store_true")
+  args = parser.parse_args()
+  if args.no_prompt:
+    global NO_PROMPT
+    NO_PROMPT = True
 
-  print "Generate keypair for Bob..."
-  toto.util.generate_and_write_rsa_keypair("bob")
-
-  alice_public = toto.util.import_rsa_key_from_file("alice.pub")
-  bob_public = toto.util.import_rsa_key_from_file("bob.pub")
-
-  # Create Layout
-  layout = m.Layout.read({
-    "_type": "layout",
-    "expires": "",
-    "keys": {
-        alice_public["keyid"]: alice_public,
-        bob_public["keyid"]: bob_public
-    },
-    "steps": [{
-        "name": "write-code",
-        "material_matchrules": [],
-        "product_matchrules": [["CREATE", "foo.py"]],
-        "pubkeys": [alice_public["keyid"]],
-        "expected_command": "vi",
-      },
-      {
-        "name": "package",
-        "material_matchrules": [
-            ["MATCH", "PRODUCT", "foo.py", "FROM", "write-code"],
-        ],
-        "product_matchrules": [
-            ["CREATE", "foo.tar.gz"],
-        ],
-        "pubkeys": [bob_public["keyid"]],
-        "expected_command": "tar zcvf foo.tar.gz foo.py",
-      }],
-    "inspect": [{
-        "name": "untar",
-        "material_matchrules": [
-            ["MATCH", "PRODUCT", "foo.tar.gz", "FROM", "package"]
-        ],
-        "product_matchrules": [
-            ["MATCH", "PRODUCT", "foo.py", "FROM", "write-code"],
-        ],
-        "run": "tar xfz foo.tar.gz",
-      }],
-    "signatures": []
-  })
-
-  # Sign and dump layout
-  print "Load alice private key to sign layout..."
-  alice_private = toto.util.import_rsa_key_from_file("alice")
-  layout.sign(alice_private)
-  layout.dump()
-
-
-  # Check if dumping - reading - dumping produces the same layout
-  # layout_same = m.Layout.read_from_file("root.layout")
-  # if repr(layout) != repr(layout_same):
-  #   log.failing("There is something wrong with layout de-/serialization")
-
-
-  wait_for_y("Wanna do the peachy supply chain?")
-
-  print """
-  #############################################################################
-  # Do the peachy supply chain
-  #############################################################################
-  """
-
-
-  write_code_cmd = "python -m toto.toto-run "\
-                   "--step-name write-code --products foo.py "\
-                   "--key alice -- vi foo.py"
-  log.doing("(Alice) - %s" % write_code_cmd)
-
-  wait_for_y("Wanna drop to vi and write peachy code?")
-  subprocess.call(write_code_cmd.split())
-
-  package_cmd = "python -m toto.toto-run "\
-                "--step-name package --material foo.py --products foo.tar.gz "\
-                "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
-  log.doing("(Bob) - %s" % package_cmd)
-  subprocess.call(package_cmd.split())
-
-
-  print """
-  #############################################################################
-  # Verify the peachy supply chain
-  #############################################################################
-  """
-
-  wait_for_y("Wanna verify peachy supply chain?")
-
-  verify_cmd = "python -m toto.toto-verify "\
-               "--layout root.layout "\
-               "--layout-key alice.pub"
-  log.doing("(User) - %s" % verify_cmd)
-  subprocess.call(verify_cmd.split())
-
-  wait_for_y("Wanna do the failing supply chain?")
-
-  print """
-  #############################################################################
-  # Do the failing supply chain
-  #############################################################################
-  """
-
-  write_code_cmd = "python -m toto.toto-run "\
-                   "--step-name write-code --products foo.py "\
-                   "--key alice -- vi foo.py"
-  log.doing("(Alice) - %s" % write_code_cmd)
-  wait_for_y("Wanna drop to vi and write peachy code?")
-  subprocess.call(write_code_cmd.split())
-
-
-  bad_cmd = "vi foo.py"
-  wait_for_y("Wanna drop to vi and write baaad code?")
-  log.doing("(Malory) - %s" % bad_cmd)
-
-  subprocess.call(bad_cmd.split())
-
-
-  package_cmd = "python -m toto.toto-run "\
-                "--step-name package --material foo.py --products foo.tar.gz "\
-                "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
-  log.doing("(Bob) - %s" % package_cmd)
-  subprocess.call(package_cmd.split())
-
-
-
-  print """
-  #############################################################################
-  # Verify the failing supply chain
-  #############################################################################
-  """
-
-  verify_cmd = "python -m toto.toto-verify "\
-               "--layout root.layout "\
-               "--layout-key alice.pub"
-  log.doing("(User) - %s" % verify_cmd)
-  subprocess.call(verify_cmd.split())
-
+  supply_chain()
 
 if __name__ == '__main__':
   main()
