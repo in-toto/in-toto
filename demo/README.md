@@ -4,7 +4,7 @@ In this demo, we will use in-toto to secure a supply chain with a very simple
 workflow.
 Alice will be the project owner - she creates and signs the supply chain layout
 with her private key - and Bob and Carl will be the project functionaries - they
-carry out the steps of the supply chain layout defined in the layout.
+carry out the steps of the supply chain as defined in the layout.
 
 For the sake of demonstrating in-toto, we will have you run all parts of the
 supply chain.
@@ -24,6 +24,10 @@ cd in-toto
 # Install required packages (we strongly recommend using Virtual Environments)
 # http://docs.python-guide.org/en/latest/dev/virtualenvs/
 pip install -r requirements.txt
+
+# Install additional requirements that for some good reason are not in the
+# requirements file
+pip install pycrypto, cryptography
 
 # Make sure in-toto is on your PYTHONPATH and used commands are on your PATH
 export PYTHONPATH=$PYTHONPATH:$PWD
@@ -57,13 +61,13 @@ First, we will need to define the supply chain layout. To simplify this process,
 we provide a script that generates a simple layout for the purpose of the demo.
 In this supply chain layout, we have Alice, who is the project owner that creates
 the layout, Bob, who uses `vi` to create a Python program foo.py, and Carl, who
-uses `tar` to package up `foo.py` into a tarball and includes in-toto metadata
-which composes the final product that will eventually be installed and verified
+uses `tar` to package up `foo.py` into a tarball which together with the in-toto
+metadata composes the final product that will eventually be installed and verified
 by the end user.
 
 ```shell
 # Create and sign the supply chain layout on behalf of Alice
-cd project_owner
+cd owner_alice
 python create_layout.py
 ```
 The script will create a layout, add Bob's and Carl's public keys (fetched from
@@ -94,13 +98,13 @@ Here is what happens behind the scenes:
  1. Toto wraps the command `vi foo.py`,
  1. hashes the product `foo.py`,
  1. stores the hash to a piece of link metadata,
- 1. signs the metadata with Bob's private key, and
+ 1. signs the metadata with Bob's private key and
  1. stores everything to `write-code.link`.
 
 ### Package (Carl)
 Now, we will perform Carl’s `package` step.
 Execute the following commands to change to Carl's directory and `tar` up Bob's
-foo.py
+`foo.py`:
 
 ```shell
 cd ../functionary_carl
@@ -131,9 +135,9 @@ This command will verify that:
  1. the layout has not expired,
  1. was signed with Alice’s private key,
  1. that each step was performed and signed by the authorized functionary,
- 1. that the functionaries used the commands they were supposed to use (`vi`, `tar`).
+ 1. that the functionaries used the commands they were supposed to use (`vi`, `tar`) and
  1. that the recorded materials and product align with the matchrules
- 1. and that the defined inspection `untar` finds what it expects
+ 1. that the defined inspection `untar` finds what it expects.
 
 
 From it, you will see the meaningful output `PASSING` and a return value
@@ -151,7 +155,7 @@ this by changing `foo.py` on Bob's machine (in `functionary_bob` directory)
 and then let Carl package and ship the malicious code.
 ```shell
 cd ../functionary_bob
-echo “something evil” >> foo.py
+echo "something evil" >> foo.py
 cp foo.py ../functionary_carl/
 ```
 Let's switch to Carl's machine and let him run the package step which
@@ -160,7 +164,7 @@ unwittingly packages the tampered version of foo.py
 cd ../functionary_carl
 toto-run.py --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
 ```
-and then again ship everything out again as final product:
+and then again ship everything out as final product to the client:
 ```shell
 cd ..
 cp owner_alice/root.layout functionary_bob/write-code.link functionary_carl/package.link functionary_carl/foo.tar.gz final_product/
