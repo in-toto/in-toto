@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 # Install additional requirements that for some good reason are not in the
 # requirements file
-pip install pycrypto, cryptography
+pip install pycrypto cryptography
 
 # Make sure in-toto is on your PYTHONPATH and used commands are on your PATH
 export PYTHONPATH=$PYTHONPATH:$PWD
