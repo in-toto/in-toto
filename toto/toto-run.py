@@ -19,13 +19,13 @@
   Toto run options are separated from the command to be executed by
   a double dash.
 
+  The implementation of the tasks can be found in runlib.
+
   Example Usage
   ```
-  python -m toto.toto-run --material <files> --product <files> --
-    <command-to-execute> <command-options-and-arguments>
+  toto-run.py --step-name write-code --materials . --products . --key bob \
+      -- vi foo.py
   ```
-
-  The actual wrapper and the tasks it performs are implemented in runlib.
 
 """
 
@@ -34,47 +34,93 @@ import sys
 import argparse
 import toto.util
 import toto.runlib
+import toto.log as log
 
+def _die(msg, exitcode=1):
+  log.error(msg)
+  sys.exit(exitcode)
+
+def in_toto_run(step_name, key_path, material_list, product_list,
+    link_cmd_args, record_byproducts=False):
+  """Load link signing private keys from disk and runs passed command, storing
+  its materials, by-products and return value, and products into link metadata
+  file. The link metadata file is signed and stored to disk. """
+  try:
+    log.doing("load link signing key...")
+    key = toto.util.prompt_import_rsa_key_from_file(key_path)
+  except Exception, e:
+    _die("in load key - %s" % e)
+
+  try:
+    log.doing("record materials...")
+    materials_dict = toto.runlib.record_artifacts_as_dict(material_list)
+  except Exception, e:
+    _die("in record materials - %s" % e)
+
+  try:
+    log.doing("run command...")
+    byproducts, return_value = toto.runlib.execute_link(link_cmd_args,
+        record_byproducts)
+  except Exception, e:
+    _die("in run command - %s" % e)
+
+  try:
+    log.doing("record products...")
+    products_dict = toto.runlib.record_artifacts_as_dict(product_list)
+  except Exception, e:
+    _die("in record products - %s" % e)
+
+  try:
+    log.doing("create link metadata...")
+    link = toto.runlib.create_link_metadata(step_name, materials_dict,
+        products_dict, link_cmd_args, byproducts, return_value)
+  except Exception, e:
+    raise e
+
+  try:
+    log.doing("sign metadata...")
+    link.sign(key)
+  except Exception, e:
+    _die("in sign metadata - %s" % e)
+
+  try:
+    log.doing("store metadata...")
+    link.dump()
+  except Exception, e:
+    _die("in store metadata - %s" % e)
 
 def main():
-  # Create new parser with custom usage message
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata",
-      usage="python -m %s --name <unique name>\n" \
-            "            [--materials <filepath>[,<filepath> ...]]\n" \
-            "             --products <filepath>[,<filepath> ...]\n" \
-            "             --key <filepath>\n" \
-            "             --record-byproducts\n" \
-            "             -- <cmd> [args]" % (os.path.basename(__file__), ))
+      usage="toto-verify.py --step-name <unique step name>\n" +
+            "                     [--materials <filepath>[,<filepath> ...]]\n" +
+            "                     [--products <filepath>[,<filepath> ...]]\n" +
+            "                      --key <functionary private key path>\n" +
+            "                     [--record-byproducts]\n" +
+            "                      -- <cmd> [args]")
 
-  # Option group for toto specific options, e.g. material and product
   toto_args = parser.add_argument_group("Toto options")
-
   # XXX LP: Name has to be unique!!! Where will we check this?
   # XXX LP: Do we limit the allowed characters for the name?
   # XXX LP: Should it be possible to add a path?
-  toto_args.add_argument("-n", "--name", type=str, required=True,
+  toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
   # XXX LP: We should allow path wildcards here and sanitze them
   toto_args.add_argument("-m", "--materials", type=str, required=False,
-      help="Files to recorded before link command execution")
-  toto_args.add_argument("-p", "--products", type=str, required=True,
+      help="Files to record before link command execution")
+  toto_args.add_argument("-p", "--products", type=str, required=False,
       help="Files to record after link command execution")
 
-  # XXX LP: Could be more than one key
-  # XXX LP: Specifiy a format or choice of formats to use,
-  # For now it is "ssl_crypto.formats.RSAKEY_SCHEMA"
+  # XXX LP: Specifiy a format or choice of formats to use
   toto_args.add_argument("-k", "--key", type=str, required=True,
-      help="Path to private key (<FORMAT>) to sign link metadata")
+      help="Path to private key to sign link metadata")
 
   toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
       help="If set redirects stdout/stderr and stores to link metadata",
       default=False, action='store_true')
 
-  # Option group for link command to be executed
   link_args = parser.add_argument_group("Link command")
-
   # XXX: This is not yet ideal.
   # What should we do with tokens like > or ;
   link_args.add_argument("link_cmd", nargs="+",
@@ -82,24 +128,16 @@ def main():
 
   args = parser.parse_args()
 
-  # XXX LP: Sanitze more?
-  name = args.name
-  materials = args.materials
-  products = args.products
-  key_name = args.key
-  link_cmd = args.link_cmd
-  record_byproducts = args.record_byproducts
+  material_list = []
+  product_list = []
 
-  if materials:
-    materials = materials.split(",")
-  if products:
-    products = products.split(",")
+  if args.materials:
+    material_list = args.materials.split(",")
+  if args.products:
+    product_list = args.products.split(",")
 
-  key = toto.util.prompt_import_rsa_key_from_file(key_name)
-
-  toto.runlib.toto_run(name, materials, products, key, link_cmd,
-      record_byproducts)
-
+  in_toto_run(args.step_name, args.key, material_list, product_list,
+      args.link_cmd, args.record_byproducts)
 
 if __name__ == '__main__':
   main()

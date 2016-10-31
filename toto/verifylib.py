@@ -16,20 +16,16 @@
   Provides a library to verify a Toto final product containing
   a software supply chain layout.
 
-  The verification boils down to the following steps:
-    1. Load root layout of final product from file
-    2. Load root key from file
-    3. Check signature of layout
-    4. For each step in layout
-      a) Load link metadata from file and add Link object to a list
-      b) Look for the according key in the layout and check the link's signature
-      c) Verify if the run command and the expected command align
-    5. For each inspection in layout
-      - Execute with toto-run and add generated Link object to a list
-    6. For each step link verify matchrules
-    7. For each inspection link verify matchrules
+  The library provides functions to:
+    - verify signatures of a layout
+    - verify signatures of a link
+    - verify if the expected command of a step aligns with the actual command
+      as recorded in the link metadata file.
+    - run inspections (records link metadata)
+    - verify product or material matchrules for steps or inspections
 
 """
+
 import sys
 
 import toto.util
@@ -40,179 +36,235 @@ import toto.models.matchrule
 import toto.ssl_crypto.keys
 import toto.log as log
 
-retval = 0
+def run_all_inspections(layout):
+  """
+  <Purpose>
+    Extracts all inspections from a passed Layout's inspect field and
+    iteratively runs each inspections command as defined in the in Inspection's
+    run field using in-toto runlib.  This producces link metadata which is
+    returned as a dictionary with the according inspection names as keys and
+    the Link metadata objects as values.
 
-def toto_verify(layout_path, layout_key):
-  global retval
+  <Arguments>
+    layout:
+            A Layout object which is used to extract the Inpsections.
 
-  # Load layout (validates format)
-  try:
-    log.doing("'%s' - load layout" % layout_path)
-    layout = toto.models.layout.Layout.read_from_file(layout_path)
-  except Exception, e:
-    log.error("in load layout - %s" % e)
-    return 1 # XXX LP: re-raise?
+  <Exceptions>
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-  try:
-    log.doing("'%s' - load key '%s'" % (layout_path, layout_key))
-    # XXX LP: Change key load
-    layout_key_dict = toto.util.create_and_persist_or_load_key(layout_key)
+  <Side Effects>
+    Executes the Inspection command and produces Link metadata.
 
-  except Exception, e:
-    log.error("in load key - %s" % e)
-
-
-  # Verify signature
-  try:
-    log.doing("'%s' - verify signature - key '%s'" \
-        % (layout_path, layout_key))
-
-    msg = "'%s' - verify signature" % layout_path
-    if layout.verify_signature(layout_key):
-      log.passing(msg)
-    else:
-      log.failing(msg)
-      retval = 1
-
-  except Exception, e:
-    log.error("in verify signature - %s" % e)
-    raise # XXX LP: exit gracefully instead of exception?
-
-  step_links = {}
-
-  # Load links by steps
-  for step in layout.steps:
-    try:
-      step_name = "%s.link" % step.name
-      log.doing("'%s' - '%s' - load link" % (layout_path, step.name))
-      link = toto.models.link.Link.read_from_file(step_name)
-    except Exception, e:
-      log.error("in load link - %s" % e)
-      continue
-    else:
-      step_links[step.name] = link
-
-    # Fetching keys from layout
-    keys = []
-    for keyid in step.pubkeys:
-      try:
-        log.doing("'%s' - '%s' - fetch key '%s'" \
-            % (layout_path, step.name, keyid))
-        key = layout.keys.get(keyid)
-      except Exception, e:
-        log.error("in fetch key - %s" % e)
-        continue
-      else:
-        keys.append(key)
-
-
-    # Verify signature of each link file
-    for key in keys:
-      try:
-        log.doing("'%s' - '%s' - verify signature - key '%s'" \
-            % (layout_path, step.name, key["keyid"]))
-        msg = "'%s' - '%s' - verify signature" % (layout_path, step.name)
-        if link.verify_signature(key):
-          log.passing(msg)
-        else:
-          log.failing(msg)
-          retval = 1
-      except Exception, e:
-        log.error("in verify signature - %s" % e)
-
-    # Check expected command
-    try:
-
-      # XXX LP: We have to know for sure if both are lists or not!!
-      # Then we can validate and convert (if necessary) this in the model
-      expected_cmd = step.expected_command.split()
-      ran_cmd = link.command
-
-      log.doing("'%s' - '%s' - align commands '%s' and '%s'" \
-          % (layout_path, step.name, expected_cmd, ran_cmd))
-
-      expected_cmd_cnt = len(expected_cmd)
-      ran_cmd_cnt = len(ran_cmd)
-
-      same_cmd_len = (expected_cmd_cnt == ran_cmd_cnt)
-
-      msg = "'%s' - '%s' - align commands" \
-          % (layout_path, step.name)
-
-      for i in range(min(expected_cmd_cnt, ran_cmd_cnt)):
-        if expected_cmd[i] != ran_cmd[i]:
-          log.failing(msg)
-          retval = 1
-          break
-      else:
-        if same_cmd_len:
-          log.passing(msg)
-        else:
-          log.passing("%s (with different command lengths)" % msg)
-
-    except Exception, e:
-      log.error("in align commands - %s" % e)
-
-  inspect_links = {}
-  # Execute inspections and generate link metadata
+  <Returns>
+    A dictionary containing one Link metadata object per Inspection where
+    the key is the Inspection name.
+  """
+  inspection_links_dict = {}
   for inspection in layout.inspect:
-    try:
-      log.doing("'%s' - '%s' - execute '%s'" \
-          % (layout_path, inspection.name, inspection.run))
+    # XXX LP: What should we record as material/product?
+    # Is the current directory a sensible default? In general?
+    # If so, we should propably make it a default in run_link
+    # We could use matchrule paths
+    link = toto.runlib.run_link(inspection.name, '.', '.',
+        inspection.run.split())
+    inspection_links_dict[inspection.name] = link
+  return inspection_links_dict
 
-      # XXX LP: What should we record as material/product?
-      # Is the current directory a sensible default? In general?
-      # If so, we should propably make it a default in run_link
-      # We could use matchrule paths
+def verify_layout_signatures(layout, keys_dict):
+  """
+  <Purpose>
+    Iteratively verifies all signatures of a Layout object using the passed
+    keys.
 
-      # XXX LP: Is inspect.run a string or a list?
-      # The specs says string, the code needs a list? Maybe split
-      # the string in toto_run
-      link = toto.runlib.run_link(inspection.name, ".", ".",
-          inspection.run.split())
+  <Arguments>
+    layout:
+            A Layout object whose signatures are verified.
+    keys_dict:
+            A dictionary of keys to verify the signatures conformant with
+            ssl_crypto.formats.KEYDICT_SCHEMA.
 
-    except Exception, e:
-      log.error("in run - %s" % e)
-    else:
-      inspect_links[inspection.name] = link
+  <Exceptions>
+    Raises an exception if a needed key can not be found in the passed
+    keys_dict or if a verification fails.
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
 
+  <Side Effects>
+    Verifies cryptographic Layout signatures.
 
-  def _verify_rules(rules, source_type, item_name, item_link, step_links):
-    """ Iterates over list of rules and calls verify on them. """
-    global retval
-
-    for rule_data in rules:
-      try:
-        rule = toto.models.matchrule.Matchrule.read(rule_data)
-        rule.source_type = source_type
-        log.doing("'%s' - '%s' - verify %s matchrule - %s" \
-            % (layout_path, item_name, source_type, rule_data))
-        rule.verify_rule(item_link, step_links)
-
-      except toto.models.matchrule.RuleVerficationFailed, e:
-        log.failing("'%s' - '%s' - verify %s matchrule - %s" \
-            % (layout_path, item_name, source_type, e))
-        retval = 1
-      except Exception, e:
-        log.error("in verify matchrule - %s" % e)
-      else:
-        log.passing("'%s' - '%s' - verify %s matchrule" \
-            % (layout_path, item_name, source_type))
+  """
+  layout.verify_signatures(keys_dict)
 
 
+def verify_link_signatures(link, keys_dict):
+  """
+  <Purpose>
+    Iteratively verifies all signatures of a Link object using the passed
+    keys.
 
-  for item in layout.steps:
-    item_link = step_links[item.name]
-    _verify_rules(item.material_matchrules, "material", 
-        item.name, item_link, step_links)
-    _verify_rules(item.product_matchrules, "product", 
-        item.name, item_link, step_links)
+  <Arguments>
+    link:
+            A Link object whose signatures are verified.
+    keys_dict:
+            A dictionary of keys to verify the signatures conformant with
+            ssl_crypto.formats.KEYDICT_SCHEMA.
 
-  for item in layout.inspect:
-    item_link = inspect_links[item.name]
-    _verify_rules(item.material_matchrules, "material", 
-        item.name, item_link, step_links)
-    _verify_rules(item.product_matchrules, "product", 
-        item.name, item_link, step_links)
+  <Exceptions>
+    Raises an exception if a needed key can not be found in the passed
+    keys_dict or if a verification fails.
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-  return retval
+  <Side Effects>
+    Verifies cryptographic Link signatures.
+
+  """
+  link.verify_signatures(keys_dict)
+
+
+def verify_all_steps_signatures(layout, links_dict):
+  """
+  <Purpose>
+    Extracts the Steps of a passed Layout and iteratively verifies the
+    the signatures of the Link object related to each Step by the name field.
+    The public keys used for verification are also extracted from the Layout.
+
+  <Arguments>
+    layout:
+            A Layout object whose Steps are extracted and verified.
+    links_dict:
+            A dictionary of Link metadata objects with Link names as keys.
+
+  <Exceptions>
+    Raises an exception if a needed key can not be found in the passed
+    keys_dict or if a verification fails.
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    Verifies cryptographic Link signatures related to Steps of a Layout.
+
+  """
+  for step in layout.steps:
+    # Find the according link for this step
+    link = links_dict[step.name]
+
+    # Create the dictionary of keys for this step
+    keys_dict = {}
+    for keyid in step.pubkeys:
+      keys_dict[keyid] = layout.keys[keyid]
+
+    # Verify link metadata file's signatures
+    verify_link_signatures(link, keys_dict)
+
+
+def verify_command_alignment(command, expected_command):
+  """
+  <Purpose>
+    Checks if two commands align.  The commands align if all of their elements
+    are equal.  The commands align in a relaxed fashion if they have different
+    lengths and the first x elements of both commands are equal. X being
+    min(len(command), len(expected_command)).
+
+  <Arguments>
+    command:
+            A command list, e.g. ["vi", "foo.py"]
+    expected_command:
+            A command list, e.g. ["vi"]
+
+  <Exceptions>
+    raises an Exception if the commands don't align
+    prints a warning if the commands align in a relaxed fashioin
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    Performs string comparison of two lists.
+
+  """
+  command_len = len(command)
+  expected_command_len = len(expected_command)
+
+  for i in range(min(command_len, expected_command_len)):
+    if command[i] != expected_command[i]:
+      raise Exception("Command '%s' and expected command '%s' do not align" \
+          % (command, expected_command))
+  if command_len != expected_command_len:
+    log.warning("Command '%s' and expected command '%s' do not fully align" \
+        % (command, expected_command))
+
+
+def verify_all_steps_command_alignment(layout, links_dict):
+  """
+  <Purpose>
+    Iteratively checks if all expected commands as defined in the
+    Steps of a Layout align with the actual commands as recorded in the Link
+    metadata.
+
+    Note:
+      Command alignment is a weak guarantee. Because a functionary can easily
+      alias commands.
+
+  <Arguments>
+    layout:
+            A Layout object to extract the expected commands from.
+    links_dict:
+            A dictionary of Link metadata objects with Link names as keys.
+
+  <Exceptions>
+    raises an Exception if the commands don't align
+    prints a warning if the commands align in a relaxed fashioin
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    Performs string comparison of two lists.
+
+  """
+  for step in layout.steps:
+    # Find the according link for this step
+    link = links_dict[step.name]
+    command = link.command
+    expected_command = step.expected_command.split()
+    verify_command_alignment(command, expected_command)
+
+
+def _verify_rules(rules, source_type, item_name, item_link, step_links):
+  """Internal helper function to iterate over a list of Matchrules and
+  verify them."""
+
+  for rule_data in rules:
+    rule = toto.models.matchrule.Matchrule.read(rule_data)
+    rule.source_type = source_type
+    rule.verify_rule(item_link, step_links)
+
+
+def verify_all_item_rules(items, source_links, target_links):
+  """
+  <Purpose>
+    Iteratively verifies material matchrules and product matchrules of
+    passed items (Steps or Inspections).
+    Artificats in source links are usually matched with artifacts in
+    target links according to the rules defined in the item.
+
+  <Arguments>
+    items:
+            A list of either Step or Inspection objects
+    source_links:
+            A dictionary of Link metadata objects with Link names as keys.
+    target_links:
+            A dictionary of Link metadata objects with Link names as keys.
+
+  <Exceptions>
+    raises an Exception if a matchrule does not verify.
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    Calls matchrule verification methods.
+
+  """
+  for item in items:
+    source_link = source_links[item.name]
+    _verify_rules(item.material_matchrules, "material",
+        item.name, source_link, target_links)
+
+    _verify_rules(item.product_matchrules, "product",
+        item.name, source_link, target_links)
+
+
+

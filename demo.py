@@ -95,7 +95,7 @@ def main():
 
 
   write_code_cmd = "python -m toto.toto-run "\
-                   "--name write-code --products foo.py "\
+                   "--step-name write-code --products foo.py "\
                    "--key alice -- vi foo.py"
   log.doing("(Alice) - %s" % write_code_cmd)
 
@@ -103,7 +103,7 @@ def main():
   subprocess.call(write_code_cmd.split())
 
   package_cmd = "python -m toto.toto-run "\
-                "--name package --material foo.py --products foo.tar.gz "\
+                "--step-name package --material foo.py --products foo.tar.gz "\
                 "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
   log.doing("(Bob) - %s" % package_cmd)
   subprocess.call(package_cmd.split())
@@ -119,7 +119,7 @@ def main():
 
   verify_cmd = "python -m toto.toto-verify "\
                "--layout root.layout "\
-               "--layout-key alice"
+               "--layout-key alice.pub"
   log.doing("(User) - %s" % verify_cmd)
   subprocess.call(verify_cmd.split())
 
@@ -132,7 +132,7 @@ def main():
   """
 
   write_code_cmd = "python -m toto.toto-run "\
-                   "--name write-code --products foo.py "\
+                   "--step-name write-code --products foo.py "\
                    "--key alice -- vi foo.py"
   log.doing("(Alice) - %s" % write_code_cmd)
   wait_for_y("Wanna drop to vi and write peachy code?")
@@ -147,7 +147,7 @@ def main():
 
 
   package_cmd = "python -m toto.toto-run "\
-                "--name package --material foo.py --products foo.tar.gz "\
+                "--step-name package --material foo.py --products foo.tar.gz "\
                 "--key bob --record-byproducts -- tar zcvf foo.tar.gz foo.py"
   log.doing("(Bob) - %s" % package_cmd)
   subprocess.call(package_cmd.split())
@@ -162,7 +162,7 @@ def main():
 
   verify_cmd = "python -m toto.toto-verify "\
                "--layout root.layout "\
-               "--layout-key alice"
+               "--layout-key alice.pub"
   log.doing("(User) - %s" % verify_cmd)
   subprocess.call(verify_cmd.split())
 
