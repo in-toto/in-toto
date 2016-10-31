@@ -97,6 +97,15 @@ def import_rsa_key_from_file(filepath, password=None):
 
   return rsa_key
 
+def import_rsa_public_keys_from_files_as_dict(filepaths):
+  """Takes a list of filepaths to RSA public keys and returns them as a
+  dictionary conformant with ssl_crypto.formats.KEYDICT_SCHEMA."""
+  key_dict = {}
+  for filepath in filepaths:
+    key = import_rsa_key_from_file(filepath)
+    keyid = key['keyid']
+    key_dict[keyid] = key
+  return key_dict
 
 def prompt_password(prompt="Enter password: "):
   """Prompts for password input and returns the password. """
