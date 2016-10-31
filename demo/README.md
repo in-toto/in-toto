@@ -21,17 +21,17 @@ git clone -b develop --recursive https://github.com/in-toto/in-toto.git
 # Change into project root directory
 cd in-toto
 
-# Install required packages (we strongly recommend using Virtual Environments)
+# Install with pip in "develop mode"
+# (we strongly recommend using Virtual Environments)
 # http://docs.python-guide.org/en/latest/dev/virtualenvs/
-pip install -r requirements.txt
+pip install -e .
+
+# Export the envvar required for "simple settings"
+export SIMPLE_SETTINGS=toto.settings
 
 # Install additional requirements that for some good reason are not in the
 # requirements file
 pip install pycrypto cryptography
-
-# Make sure in-toto is on your PYTHONPATH and used commands are on your PATH
-export PYTHONPATH=$PYTHONPATH:$PWD
-export PATH=$PATH:$PWD/toto
 
 # Change into the demo directoy and you are ready to start
 cd demo
@@ -52,8 +52,9 @@ tree
 # │   └── carl.pub
 # ├── owner_alice
 # │   ├── alice
-# │   └── alice.pub
-# └── run-demo.py
+# │   ├── alice.pub
+# │   └── create_layout.py
+# └── run_demo.py
 ```
 
 ### Define supply chain layout (Alice)
@@ -85,9 +86,8 @@ directory and perform the step.
 ```shell
 cd ../functionary_bob
 toto-run.py --step-name write-code --products foo.py --key bob -- vi foo.py
-# Bob has to send the resulting foo.py to Carl so that he can package it
-cp foo.py ../functionary_carl/
 ```
+
 The command you just entered will open a `vi` editor, where you can write your
 code (you can write whatever you want). After you save the file and close vi
 (do this by entering `:x`), you will find `write-code.link` inside
@@ -100,6 +100,11 @@ Here is what happens behind the scenes:
  1. stores the hash to a piece of link metadata,
  1. signs the metadata with Bob's private key and
  1. stores everything to `write-code.link`.
+
+```shell
+# Bob has to send the resulting foo.py to Carl so that he can package it
+cp foo.py ../functionary_carl/
+```
 
 ### Package (Carl)
 Now, we will perform Carl’s `package` step.
@@ -126,18 +131,20 @@ cp owner_alice/root.layout functionary_bob/write-code.link functionary_carl/pack
 And now run verification on behalf of the client:
 ```shell
 cd final_product
-# Fetch Alices public key from a trusted source to verify the layout signature
+# Fetch Alice's public key from a trusted source to verify the layout signature
 # Note: The functionary public keys are fetched from the layout
 cp ../owner_alice/alice.pub .
 toto-verify.py --layout root.layout --layout-key alice.pub
 ```
-This command will verify that:
+This command will verify that
  1. the layout has not expired,
- 1. was signed with Alice’s private key,
- 1. that each step was performed and signed by the authorized functionary,
- 1. that the functionaries used the commands they were supposed to use (`vi`, `tar`) and
- 1. that the recorded materials and product align with the matchrules
- 1. that the defined inspection `untar` finds what it expects.
+ 2. was signed with Alice’s private key,
+<br>and that according to the definitions in the layout
+ 3. each step was performed and signed by the authorized functionary
+ 4. the functionaries used the commands they were supposed to use (`vi`,
+    `tar`)
+ 5. the recorded materials and products align with the matchrules and
+ 6. the inspection `untar` finds what it expects.
 
 
 From it, you will see the meaningful output `PASSING` and a return value
