@@ -8,7 +8,7 @@ setup(
   name="toto-framework",
   version="0.0.1",
   author="New York University: Secure Systems Lab",
-  author_email="santiago@nyu.edu",
+  author_email=["santiago@nyu.edu", "lukas.puehringer@nyu.edu"],
   description=("A framework to define and secure "
                "the integrity of software supply chains"),
   license="MIT",
