@@ -3,8 +3,8 @@
 In this demo, we will use in-toto to secure a software supply chain with a very
 simple workflow.
 Alice will be the project owner - she creates and signs the software supply chain
-layout with her private key - and Bob and Carl will be the project functionaries
-- they carry out the steps of the software supply chain as defined in the layout.
+layout with her private key - and Bob and Carl will be the project functionaries -
+they carry out the steps of the software supply chain as defined in the layout.
 
 For the sake of demonstrating in-toto, we will have you run all parts of the
 software supply chain.
