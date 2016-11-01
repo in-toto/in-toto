@@ -27,6 +27,7 @@
 import sys
 import os
 import tempfile
+import logging
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
