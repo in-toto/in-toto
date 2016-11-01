@@ -26,7 +26,6 @@
 """
 import sys
 import argparse
-
 import toto.util
 import toto.verifylib
 import toto.log as log
@@ -45,6 +44,12 @@ def in_toto_verify(layout_path, layout_key_paths):
     layout = Layout.read_from_file(layout_path)
   except Exception, e:
     _die("in load layout - %s" % e)
+
+  try:
+    log.doing("verify layout expiration")
+    toto.verifylib.verify_layout_expiration(layout)
+  except Exception, e:
+    _die("in verify layout expiration - %s" % e)
 
   try:
     log.doing("load layout keys...")

@@ -27,6 +27,9 @@
 """
 
 import sys
+import datetime
+import iso8601
+from dateutil import tz
 
 import toto.util
 import toto.runlib
@@ -69,6 +72,30 @@ def run_all_inspections(layout):
         inspection.run.split())
     inspection_links_dict[inspection.name] = link
   return inspection_links_dict
+
+def verify_layout_expiration(layout):
+  """
+  <Purpose>
+    Raises an exception if the passed layout has expired, i.e. if its
+    "expire" property is lesser "now".
+    Time zone aware datetime objects in UTC+00:00 (Zulu Time) are used.
+
+  <Arguments>
+    layout:
+            The Layout object to be verified.
+
+  <Exceptions>
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    None
+
+  """
+  expire_datetime = iso8601.parse_date(layout.expires)
+  if expire_datetime < datetime.datetime.now(tz.tzutc()):
+    # raise LayoutExpiredError
+    raise Exception("Layout expired")
+
 
 def verify_layout_signatures(layout, keys_dict):
   """

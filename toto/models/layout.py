@@ -31,6 +31,8 @@
 
 import json
 import attr
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 # import validators
 from . import common as models__common
@@ -100,8 +102,13 @@ class Layout(models__common.Signable):
     for inspect_data in data.get("inspect"):
       tmp_inspect.append(Inspection.read(inspect_data))
 
+    expires = data.get("expires")
+    if not expires:
+      # Set a month from now with Zulu offset as expiration date default
+      expires = (datetime.today() + relativedelta(months=1)).isoformat() + 'Z'
+
     return Layout(steps=tmp_steps, inspect=tmp_inspect,
-        keys=data.get("keys"), expires=data.get("expires"),
+        keys=data.get("keys"), expires=expires,
         signatures=data.get("signatures"))
 
   def import_step_metadata_from_files_as_dict(self):
