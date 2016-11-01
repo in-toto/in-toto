@@ -1,13 +1,13 @@
 # in-toto demo
 
-In this demo, we will use in-toto to secure a supply chain with a very simple
-workflow.
-Alice will be the project owner - she creates and signs the supply chain layout
-with her private key - and Bob and Carl will be the project functionaries - they
-carry out the steps of the supply chain as defined in the layout.
+In this demo, we will use in-toto to secure a software supply chain with a very
+simple workflow.
+Alice will be the project owner - she creates and signs the software supply chain
+layout with her private key - and Bob and Carl will be the project functionaries
+- they carry out the steps of the software supply chain as defined in the layout.
 
 For the sake of demonstrating in-toto, we will have you run all parts of the
-supply chain.
+software supply chain.
 This is, you will perform the commands on behalf of Alice, Bob and Carl as well
 as the client who verifies the final product.
 
@@ -57,17 +57,17 @@ tree
 # └── run_demo.py
 ```
 
-### Define supply chain layout (Alice)
-First, we will need to define the supply chain layout. To simplify this process,
-we provide a script that generates a simple layout for the purpose of the demo.
-In this supply chain layout, we have Alice, who is the project owner that creates
-the layout, Bob, who uses `vi` to create a Python program foo.py, and Carl, who
-uses `tar` to package up `foo.py` into a tarball which together with the in-toto
-metadata composes the final product that will eventually be installed and verified
-by the end user.
+### Define software supply chain layout (Alice)
+First, we will need to define the software supply chain layout. To simplify this
+process, we provide a script that generates a simple layout for the purpose of
+the demo. In this software supply chain layout, we have Alice, who is the project
+owner that creates the layout, Bob, who uses `vi` to create a Python program
+`foo.py`, and Carl, who uses `tar` to package up `foo.py` into a tarball which
+together with the in-toto metadata composes the final product that will
+eventually be installed and verified by the end user.
 
 ```shell
-# Create and sign the supply chain layout on behalf of Alice
+# Create and sign the software supply chain layout on behalf of Alice
 cd owner_alice
 python create_layout.py
 ```
@@ -95,7 +95,7 @@ Bob's directory. This is one piece of step link metadata that the client will
 use for verification.
 
 Here is what happens behind the scenes:
- 1. Toto wraps the command `vi foo.py`,
+ 1. In-toto wraps the command `vi foo.py`,
  1. hashes the product `foo.py`,
  1. stores the hash to a piece of link metadata,
  1. signs the metadata with Bob's private key and
@@ -154,8 +154,8 @@ echo $?
 # should output 0
 ```
 
-### Tampering with the supply chain
-Now, let’s try to tamper with the supply chain.
+### Tampering with the software supply chain
+Now, let’s try to tamper with the software supply chain.
 Imagine that someone got a hold of `foo.py` before it was passed over to
 Carl (e.g., someone hacked into the version control system). We will simulate
 this by changing `foo.py` on Bob's machine (in `functionary_bob` directory)
@@ -193,10 +193,11 @@ echo $?
 
 
 ### Wrapping up
-Congratulations! You have completed the Toto demo! This exercise shows a very
-simple case in how Toto can protect the different steps within the supply chain.
-More complex supply chains that contain more steps can be created in a similar
-way. You can read more about what Toto protects against and how to use it here.
+Congratulations! You have completed the in-toto demo! This exercise shows a very
+simple case in how in-toto can protect the different steps within the software
+supply chain. More complex software supply chains that contain more steps can be
+created in a similar way. You can read more about what in-toto protects against
+and how to use it on [in-toto's Github page](https://in-toto.github.io/).
 
 ### Tired of copy-pasting commands?
 We provide a `run_demo.py` script that sequentially executes all commands
