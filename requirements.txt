@@ -1,4 +1,6 @@
 sphinx
+attrs
 simple-settings
 python-dateutil
 iso8601
+canonicaljson
