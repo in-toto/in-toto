@@ -36,7 +36,6 @@ from dateutil.relativedelta import relativedelta
 
 # import validators
 from . import common as models__common
-from . import matchrule as models__matchrule
 from . import link as models__link
 @attr.s(repr=False)
 class Layout(models__common.Signable):
@@ -170,21 +169,9 @@ class Step(models__common.Metablock):
 
   @staticmethod
   def read(data):
-    tmp_material_matchrules = []
-    tmp_product_matchrules = []
-
-    # We just store the list representation of Matchrules because it makes
-    # serialization/deserialization easier.
-    for matchrule in data.get("material_matchrules"):
-      tmp_material_matchrules.append(
-          list(models__matchrule.Matchrule.read(matchrule)))
-    for matchrule in data.get("product_matchrules"):
-      tmp_product_matchrules.append(
-          list(models__matchrule.Matchrule.read(matchrule)))
-
     return Step(name=data.get("name"),
-        material_matchrules=tmp_material_matchrules,
-        product_matchrules=tmp_product_matchrules,
+        material_matchrules=data.get("material_matchrules"),
+        product_matchrules=data.get("product_matchrules"),
         pubkeys=data.get("pubkeys"),
         expected_command=data.get("expected_command"))
 
@@ -217,18 +204,6 @@ class Inspection(models__common.Metablock):
 
   @staticmethod
   def read(data):
-    tmp_material_matchrules = []
-    tmp_product_matchrules = []
-
-    # We just store the list representation of Matchrules because it makes
-    # serialization/deserialization easier.
-    for matchrule in data.get("material_matchrules"):
-      tmp_material_matchrules.append(
-          list(models__matchrule.Matchrule.read(matchrule)))
-    for matchrule in data.get("product_matchrules"):
-      tmp_product_matchrules.append(
-          list(models__matchrule.Matchrule.read(matchrule)))
-
     return Inspection(name=data.get("name"), run=data.get("run"),
-        material_matchrules=tmp_material_matchrules,
-        product_matchrules=tmp_product_matchrules)
+        material_matchrules=data.get("material_matchrules"),
+        product_matchrules=data.get("product_matchrules"))
