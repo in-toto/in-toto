@@ -336,19 +336,19 @@ def verify_match_rule(rule, source_type, source_link, target_links):
   # Verify that the source artifact was recorded as material or product
   # in the step this rule was defined for.
   if (source_path not in source_artifacts.keys()):
-    raise RuleVerficationFailed("'%s' of link '%s' not in source %ss" \
+    raise RuleVerficationFailed("'%s' of link '%s' not in source %ss"
         % (source_path, source_link.name, source_type))
 
   # Verify that the Link metadata object which contains the material or product
   # to match with exists.
   if (target_name not in target_links.keys()):
-    raise RuleVerficationFailed("'%s' not in target links" \
+    raise RuleVerficationFailed("'%s' not in target links"
         % target_name)
 
   # Verify that the target Link metadata object contains the material or product
   # to match with.
   if (target_path not in target_artifacts.keys()):
-    raise RuleVerficationFailed("'%s' not in target %ss" \
+    raise RuleVerficationFailed("'%s' not in target %ss"
         % (target_path, target_type))
 
   # Verify that the recorded source artifact hash and the recorded target
@@ -389,7 +389,7 @@ def verify_create_rule(rule, link):
   # FIXME: Validate rule format
   path = rule[1]
   if (path in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' " \
+    raise RuleVerficationFailed("'%s' "
         "found in materials of link '%s'" % (path, link.name))
 
   if (path not in link.products.keys()):
@@ -428,7 +428,7 @@ def verify_delete_rule(rule, link):
 
   path = rule[1]
   if (path not in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' " \
+    raise RuleVerficationFailed("'%s' "
         "not found in materials of link '%s'" % (path, link.name))
 
   if (path in link.products.keys()):
@@ -469,7 +469,7 @@ def verify_modify_rule(rule, link):
   path = rule[1]
 
   if (path not in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' " \
+    raise RuleVerficationFailed("'%s' "
         "not found in materials of link '%s'" % (path, link.name))
 
   if (path not in item_link.products.keys()):
