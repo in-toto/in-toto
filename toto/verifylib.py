@@ -90,7 +90,7 @@ def verify_layout_expiration(layout):
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    None
+    None.
 
   """
   expire_datetime = iso8601.parse_date(layout.expires)
@@ -261,7 +261,7 @@ def verify_match_rule(rule, source_type, source_link, target_links):
     (depending on the 2nd element of the rule a material or product).
 
     Also verifies:
-    That the target_link as idetfied by ("FROM" <step>) exists in
+    That the target_link as identified by ("FROM" <step>) exists in
     the passed target_links dictionary.
     That the source artifact was recorded in the source and target link.
 
@@ -293,11 +293,14 @@ def verify_match_rule(rule, source_type, source_link, target_links):
             The contained materials and products are used as verification target.
 
   <Exceptions>
-    raises an Exception if the rule is not conformant with the rule format.
+    raises an Exception if the rule does not conform with the rule format.
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed
+    RuleVerficationFailed if the source path is not in the source Link's
+    artifacts, or the target link is not found, or the target path is not in
+    the target link's artifacts or source path and target path hashes don't
+    match.
 
   <Side Effects>
     None.
@@ -372,11 +375,12 @@ def verify_create_rule(rule, link):
             the rule.
 
   <Exceptions>
-    raises an Exception if the rule is not conformant with the rule format.
+    raises an Exception if the rule does not conform with the rule format.
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed
+    RuleVerficationFailed if path is found in materials (was already there
+    before creation) or is not found in products (was not created).
 
   <Side Effects>
     None.
@@ -409,11 +413,12 @@ def verify_delete_rule(rule, link):
             the rule.
 
   <Exceptions>
-    raises an Exception if the rule is not conformant with the rule format.
+    raises an Exception if the rule does not conform with the rule format.
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed
+    RuleVerficationFailed if path is not found in materials (was not there)
+    or is found in products (was not deleted).
 
   <Side Effects>
     None.
@@ -448,11 +453,12 @@ def verify_modify_rule(rule, link):
             the rule.
 
   <Exceptions>
-    raises an Exception if the rule is not conformant with the rule format.
+    raises an Exception if the rule does not conform with the rule format.
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed
+    RuleVerficationFailed if path is not found in the materials or products
+    or if the hashes are equal (were not modified).
 
   <Side Effects>
     None.
@@ -501,12 +507,12 @@ def _verify_rules(rules, source_type, source_link, target_links):
             The contained materials and products are used as verification target.
 
   <Exceptions>
-    raises an Exception if a rule is not conformant with the rule format.
+    raises an Exception if a rule does not conform with the rule format.
     raises an Exception if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    Calls the respective verify_<rule-type>_rule function.
+    None.
 
   """
   for rule in rules:
@@ -558,7 +564,7 @@ def verify_all_item_rules(items, source_links, target_links):
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    Calls helper functions to verify all matchrules of an item.
+    None.
 
   """
   for item in items:
