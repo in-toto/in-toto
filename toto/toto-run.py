@@ -93,8 +93,8 @@ def main():
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata",
       usage="toto-verify.py --step-name <unique step name>\n" +
-            "                     [--materials <filepath>[,<filepath> ...]]\n" +
-            "                     [--products <filepath>[,<filepath> ...]]\n" +
+            "                     [--materials <filepath>[ <filepath> ...]]\n" +
+            "                     [--products <filepath>[ <filepath> ...]]\n" +
             "                      --key <functionary private key path>\n" +
             "                     [--record-byproducts]\n" +
             "                      -- <cmd> [args]")
@@ -108,9 +108,9 @@ def main():
 
   # XXX LP: We should allow path wildcards here and sanitze them
   toto_args.add_argument("-m", "--materials", type=str, required=False,
-      help="Files to record before link command execution")
+      nargs='+', help="Files to record before link command execution")
   toto_args.add_argument("-p", "--products", type=str, required=False,
-      help="Files to record after link command execution")
+      nargs='+', help="Files to record after link command execution")
 
   # XXX LP: Specifiy a format or choice of formats to use
   toto_args.add_argument("-k", "--key", type=str, required=True,
@@ -132,9 +132,9 @@ def main():
   product_list = []
 
   if args.materials:
-    material_list = args.materials.split(",")
+    material_list = args.materials
   if args.products:
-    product_list = args.products.split(",")
+    product_list = args.products
 
   in_toto_run(args.step_name, args.key, material_list, product_list,
       args.link_cmd, args.record_byproducts)
