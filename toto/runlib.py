@@ -100,6 +100,11 @@ def record_artifacts_as_dict(artifacts):
     return artifacts_dict
 
   for artifact in artifacts:
+
+    if not os.path.exists(artifact):
+      log.warning("path: {} does not exist, skipping..".format(artifact))
+      continue 
+
     if os.path.isfile(artifact):
       artifacts_dict[_normalize_path(artifact)] = _hash_artifact(artifact)
     elif os.path.isdir(artifact):
