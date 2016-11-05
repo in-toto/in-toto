@@ -106,7 +106,6 @@ def main():
   toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
-  # XXX LP: We should allow path wildcards here and sanitze them
   toto_args.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
   toto_args.add_argument("-p", "--products", type=str, required=False,
@@ -128,15 +127,7 @@ def main():
 
   args = parser.parse_args()
 
-  material_list = []
-  product_list = []
-
-  if args.materials:
-    material_list = args.materials
-  if args.products:
-    product_list = args.products
-
-  in_toto_run(args.step_name, args.key, material_list, product_list,
+  in_toto_run(args.step_name, args.key, args.materials, args.products,
       args.link_cmd, args.record_byproducts)
 
 if __name__ == '__main__':
