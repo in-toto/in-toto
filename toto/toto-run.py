@@ -92,7 +92,7 @@ def in_toto_run(step_name, key_path, material_list, product_list,
 def main():
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata",
-      usage="toto-verify.py --step-name <unique step name>\n" +
+      usage="toto-run.py --step-name <unique step name>\n" +
             "                     [--materials <filepath>[ <filepath> ...]]\n" +
             "                     [--products <filepath>[ <filepath> ...]]\n" +
             "                      --key <functionary private key path>\n" +
