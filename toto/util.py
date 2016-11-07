@@ -129,3 +129,45 @@ def prompt_generate_and_write_rsa_keypair(filepath):
   password = prompt_password()
   generate_and_write_rsa_keypair(filepath, password)
 
+
+def flatten_and_invert_artifact_dict(artifact_dict, hash_algorithm="sha256"):
+  """
+  <Purpose>
+    Flattens an and inverts artifact_dict in the format of:
+    { <path> : HASHDICT_SCHEMA }.
+
+    >>> artifacts = {
+    >>> "foo": {
+    >>>   "sha512" : "23432df87ab",
+    >>>   "sha256" : "34324abc34df",
+    >>>   }
+    >>> }
+    >>> flat_artifacts = flatten_and_invert_artifact_dict(artifacts)
+    >>> flat_artifacts == {"34324abc34df" : "foo"}
+    True
+
+  <Arguments>
+    artifact_dict:
+      The artifact_dict to flatten and invert.
+
+    hash_algorithm: (optional)
+      Use the hash generated with the specified hash_algorithm.
+
+  <Exceptions>
+    ssl_commons.FormatError, if the arguments are improperly formatted
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A dictionary with artifact hashes as keys and artifact paths as values.
+  """
+  toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match([hash_algorithm])
+
+  inverted_dict = {}
+  for file_path, hash_dict in artifact_dict.iteritems():
+    toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+    file_hash = hash_dict[hash_algorithm]
+    inverted_dict[file_hash] = file_path
+
+  return inverted_dict
