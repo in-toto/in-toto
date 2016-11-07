@@ -90,8 +90,7 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   try:
     log.doing("verify all step matchrules...")
-    toto.verifylib.verify_all_item_rules(layout.steps, step_link_dict,
-        step_link_dict)
+    toto.verifylib.verify_all_item_rules(layout.steps, step_link_dict)
   except Exception, e:
     _die("in verify all step matchrules - %s" % e)
 
