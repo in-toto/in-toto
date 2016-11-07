@@ -29,6 +29,7 @@
 import sys
 import datetime
 import iso8601
+import fnmatch
 from dateutil import tz
 
 import toto.util
@@ -253,41 +254,52 @@ def verify_all_steps_command_alignment(layout, links_dict):
     verify_command_alignment(command, expected_command)
 
 
-def verify_match_rule(rule, source_type, source_link, target_links):
+def verify_match_rule(rule, artifact_queue, artifacts, links):
   """
   <Purpose>
-    Verifies that the source artifact (depending on the list the rule was
-    extracted from a material or product) hash matches the target artifact
-    (depending on the 2nd element of the rule a material or product).
+    Verifies that target path pattern - 3rd or 5th element of rule - matches
+    at least one file in target artifacts. This might conflict with
+    general understanding of glob patterns (especially "*").
 
-    Also verifies:
-    That the target_link as identified by ("FROM" <step>) exists in
-    the passed target_links dictionary.
-    That the source artifact was recorded in the source and target link.
+    Further verifies that each matched target artifact has a corresponding
+    source artifact with a matching hash in the passed artifact dictionary and
+    that this artifact in also the artifact queue.
 
-    In case the ("AS", "<target_path>") part of the rule is omitted the
-    specified path (3rd element of the rule) is used for target and source.
+    This guarantees that the target artifact was reported by the target Step
+    and the step that is being verified reported to use an artifact with the
+    same hash, as required by the matchrule.
+
+  <Note>
+    In case the explicit ("AS", "<target path pattern>") part of the rule is
+    omitted the 3rd element of the rule (path pattern) is used to match
+    target and source artifacts implicitly.
 
   <Arguments>
     rule:
-          The rule to be verified. Format is one of:
-            ["MATCH", "MATERIAL", "<path>", "FROM", "<step>"]
-            ["MATCH", "PRODUCT", "<path>", "FROM", "<step>"]
-            ["MATCH", "MATERIAL", "<source_path>", "AS",
-                "<target_path>", "FROM", "<step>"]
-            ["MATCH", "PRODUCT", "<source_path>", "AS",
-                "<target_path>", "FROM", "<step>"]
+            The rule to be verified. Format is one of:
+            ["MATCH", "MATERIAL", "<path pattern>", "FROM", "<step name>"]
+            ["MATCH", "PRODUCT", "<path pattern>", "FROM", "<step name>"]
+            ["MATCH", "MATERIAL", "<path pattern>", "AS",
+                "<target path pattern>", "FROM", "<step name>"]
+            ["MATCH", "PRODUCT", "<path pattern>", "AS",
+                "<target path pattern>", "FROM", "<step name>"]
 
-    source_type:
-            A string to identify if the rule is a material matchrule or
-            product matchrule. One of "material" or "product".
+    artifact_queue:
+            A list of artifact paths that haven't been matched by a previous
+            rule yet.
 
-    source_link:
-            The Link object for an Item (Step or Inspection) that contains the
-            rules to be verified.
-            The contained materials and products are used as verification source.
+    artifacts:
+            A dictionary of artifacts, depending on the list the rule was
+            extracted from, materials or products of the step or inspection the
+            rule was extracted from.
+            The format is:
+            {
+              <path> : HASHDICTS
+            }
+             with artifact paths as keys
+            and HASHDICTS as values.
 
-    target_links:
+    links:
             A dictionary of Link objects with Link names as keys.
             The Link objects relate to Steps.
             The contained materials and products are used as verification target.
@@ -303,261 +315,305 @@ def verify_match_rule(rule, source_type, source_link, target_links):
     match.
 
   <Side Effects>
-    None.
+    Uses fnmatch.filter which translates a glob pattern to re.
+
+  <Returns>
+    The artifact queue minus the files that were matched by the rule.
 
   """
   # FIXME: Validate rule format
-
-  source_type = source_type.lower()
-  source_path = rule[2]
-  target_path = rule[4] if len(rule) == 7 else source_path
+  path_pattern = rule[2]
+  target_path_pattern = rule[4] if len(rule) == 7 else path_pattern
   target_type = rule[1].lower()
   target_name = rule[-1]
 
-  # Extract source artifacts from source link
-  if source_type == "material":
-    source_artifacts = source_link.materials
-  elif source_type == "product":
-    source_artifacts = source_link.products
-  else:
-    raise Exception("Wrong source type '%s'. Has to be 'material' or 'product'"
-        % source_type)
-
-  # Extract target artifacts from target links
+  # Extract target artifacts from links
   if target_type == "material":
-    target_artifacts = target_links[target_name].materials
+    target_artifacts = links[target_name].materials
   elif target_type == "product":
-    target_artifacts = target_links[target_name].products
+    target_artifacts = links[target_name].products
   else:
-    # Note: We should never reach this because rule format was validate before
+    # FIXME: We should never reach this because rule format was validate before
     raise Exception("Wrong target type '%s'. Has to be 'material' or 'product'"
         % source_type)
 
-  # Verify that the source artifact was recorded as material or product
-  # in the step this rule was defined for.
-  if (source_path not in source_artifacts.keys()):
-    raise RuleVerficationFailed("'%s' of link '%s' not in source %ss"
-        % (source_path, source_link.name, source_type))
+  matched_target_artifacts = fnmatch.filter(target_artifacts.keys(),
+      target_path_pattern)
 
-  # Verify that the Link metadata object which contains the material or product
-  # to match with exists.
-  if (target_name not in target_links.keys()):
-    raise RuleVerficationFailed("'%s' not in target links"
-        % target_name)
+  if not matched_target_artifacts:
+    raise RuleVerficationFailed("Rule {0} failed, path pattern '{1}' did not "
+      "match any {2}s in target link '{3}'"
+      .format(rule, target_path_pattern, target_type, target_name))
 
-  # Verify that the target Link metadata object contains the material or product
-  # to match with.
-  if (target_path not in target_artifacts.keys()):
-    raise RuleVerficationFailed("'%s' not in target %ss"
-        % (target_path, target_type))
+  inverted_artifacts = toto.util.flatten_and_invert_artifact_dict(artifacts)
 
-  # Verify that the recorded source artifact hash and the recorded target
-  # artifact hash are equal.
-  if (ComparableHashDict(source_artifacts[source_path]) != \
-      ComparableHashDict(target_artifacts[target_path])):
-    raise RuleVerficationFailed("hash of source '%s' does not match hash"
-        " of target '%s'" % (source_path, target_path))
+  # FIXME: sha256 should not be hardcoded but be a setting instead
+  hash_algorithm = "sha256"
+
+  for target_path in matched_target_artifacts:
+    match_hash = target_artifacts[target_path][hash_algorithm]
+    # Look if there is a source artifact that matches the hash
+    try:
+      source_path = inverted_artifacts[match_hash]
+    except KeyError as e:
+      raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+          "could not be found in source artifacts".format(rule, target_path))
+    else:
+      # The matched source artifact's path must be in the artifact queue
+      if source_path not in artifact_queue:
+        raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+            "could not be found (was matched before)".format(rule, source_path))
+
+      # and it must match with path pattern.
+      elif not fnmatch.filter([source_path], path_pattern):
+        raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+          "matches hash of '{2}' in source artifacts but should match '{3}')"
+          .format(rule, target_path, source_path, path_pattern))
+
+      else:
+        artifact_queue.remove(source_path)
+
+  return artifact_queue
 
 
-def verify_create_rule(rule, link):
+def verify_create_rule(rule, artifact_queue):
   """
   <Purpose>
-    Verifies that the path (2nd element in rule list) is not found in the
-    material list but is found in the product list of the passed Link object,
-    i.e. the file was created in the step the rule was defined for.
+    Verifies that path pattern - 2nd element of rule - matches at least one
+    file in the artifact queue. This might conflict with common understanding of
+    glob patterns (especially "*").
+
+    The CREATE rule DOES NOT verify if the artifact has appeared in previous or
+    will appear in later steps of the software supply chain.
 
   <Arguments>
     rule:
-            The rule to be verified. Format is: ["CREATE", "<path>"]
+            The rule to be verified. Format is ["CREATE", "<path pattern>"]
 
-    link:
-            The Link object for the Item (Step or Inspection) that contains
-            the rule.
+    artifact_queue:
+            A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
     raises an Exception if the rule does not conform with the rule format.
-    raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed if path is found in materials (was already there
-    before creation) or is not found in products (was not created).
+    RuleVerficationFailed if nothing is matched in the artifact queue.
 
   <Side Effects>
-    None.
+    Uses fnmatch.filter which translates a glob pattern to re.
+
+  <Returns>
+    The artifact queue minus the files that were matched by the rule.
 
   """
   # FIXME: Validate rule format
-  path = rule[1]
-  if (path in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' "
-        "found in materials of link '%s'" % (path, link.name))
+  path_pattern = rule[1]
+  matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
 
-  if (path not in link.products.keys()):
-    raise RuleVerficationFailed("'%s' not found in products of link '%s' "
-        "- should have been created" % (path, link.name))
+  if not matched_artifacts:
+    raise RuleVerficationFailed("Rule {0} failed, no artifacts were created"
+        .format(rule))
+
+  return list(set(artifact_queue) - set(matched_artifacts))
 
 
-def verify_delete_rule(rule, link):
+def verify_delete_rule(rule, artifact_queue):
   """
   <Purpose>
-    Verifies that the path (2nd element in rule list) is found in the material
-    and not in the product list of the passed Link object, i.e. the file was
-    deleted in the step the rule was defined for.
+    Verifies that the path pattern - 2nd element of rule - does not match any
+    files in the artifact queue.
+
+    The DELETE rule DOES NOT verify if the artifact has appeared in previous or
+    will appear in later steps of the software supply chain.
 
   <Arguments>
     rule:
-            The rule to be verified. Format is: ["DELETE", "<path>"]
+            The rule to be verified. Format is ["DELETE", "<path pattern>"]
 
-    link:
-            The Link object for the Item (Step or Inspection) that contains
-            the rule.
-
-  <Exceptions>
-    raises an Exception if the rule does not conform with the rule format.
-    raises an if a matchrule does not verify.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
-
-    RuleVerficationFailed if path is not found in materials (was not there)
-    or is found in products (was not deleted).
-
-  <Side Effects>
-    None.
-
-  """
-  # FIXME: Validate rule format
-
-  path = rule[1]
-  if (path not in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' "
-        "not found in materials of link '%s'" % (path, link.name))
-
-  if (path in link.products.keys()):
-    raise RuleVerficationFailed("'%s' found in products of link '%s' "
-        "- should have been deleted" % (path, link.name))
-
-
-def verify_modify_rule(rule, link):
-  """
-  <Purpose>
-    Verifies that the path (2nd element in rule list) is found in the materials
-    and products list of the passed Link object and that the hashes of the
-    according material and product are not equal, i.e. the file was modified in
-    the step the rule was defined for.
-
-  <Arguments>
-    rule:
-            The rule to be verified. Format is: ["MODIFY", "<path>"]
-
-    link:
-            The Link object for the Item (Step or Inspection) that contains
-            the rule.
+    artifact_queue:
+            A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
     raises an Exception if the rule does not conform with the rule format.
-    raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed if path is not found in the materials or products
-    or if the hashes are equal (were not modified).
+    RuleVerficationFailed if path pattern matches files in artifact queue.
 
   <Side Effects>
+    Uses fnmatch.filter which translates a glob pattern to re.
+
+  <Returns>
     None.
+    In contrast to other rule types, the DELETE rule does not
+    remove matched files from the artifact queue, because it MUST not match
+    files in order to pass.
 
   """
   # FIXME: Validate rule format
-
-  path = rule[1]
-
-  if (path not in link.materials.keys()):
-    raise RuleVerficationFailed("'%s' "
-        "not found in materials of link '%s'" % (path, link.name))
-
-  if (path not in item_link.products.keys()):
-    raise RuleVerficationFailed("'%s' "
-        "not found in products of link '%s'" % (path, link.name))
-
-  if (ComparableHashDict(link.materials[path]) == \
-      ComparableHashDict(link.products[path])):
-    raise RuleVerficationFailed("hashes of product and material '%s' of link "
-        "'%s' match - should have been modified" % (path, link.name))
+  path_pattern = rule[1]
+  matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
+  if matched_artifacts:
+    raise RuleVerficationFailed("Rule {0} failed, artifacts {1} "
+        "were not deleted".format(rule, matched_artifacts))
 
 
-def _verify_rules(rules, source_type, source_link, target_links):
+# def verify_modify_rule(rule, link):
+#   """
+#   <Purpose>
+#     Verifies that the path (2nd element in rule list) is found in the materials
+#     and products list of the passed Link object and that the hashes of the
+#     according material and product are not equal, i.e. the file was modified in
+#     the step the rule was defined for.
+
+#   <Arguments>
+#     rule:
+#             The rule to be verified. Format is: ["MODIFY", "<path>"]
+
+#     link:
+#             The Link object for the Item (Step or Inspection) that contains
+#             the rule.
+
+#   <Exceptions>
+#     raises an Exception if the rule does not conform with the rule format.
+#     raises an if a matchrule does not verify.
+#     TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+#     RuleVerficationFailed if path is not found in the materials or products
+#     or if the hashes are equal (were not modified).
+
+#   <Side Effects>
+#     None.
+
+#   """
+#   # FIXME: Validate rule format
+
+#   path = rule[1]
+
+#   if (path not in link.materials.keys()):
+#     raise RuleVerficationFailed("'%s' "
+#         "not found in materials of link '%s'" % (path, link.name))
+
+#   if (path not in item_link.products.keys()):
+#     raise RuleVerficationFailed("'%s' "
+#         "not found in products of link '%s'" % (path, link.name))
+
+#   if (ComparableHashDict(link.materials[path]) == \
+#       ComparableHashDict(link.products[path])):
+#     raise RuleVerficationFailed("hashes of product and material '%s' of link "
+#         "'%s' match - should have been modified" % (path, link.name))
+
+
+def verify_item_rules(item_name, rules, artifacts, links):
   """
   <Purpose>
-    Helper method to iteratively verify all rules of a type.
+    Iteratively apply passed material or product matchrules to guarantee that
+    all artifacts required by a rule are matched and that only artifacts
+    required by a rule are matched.
+
+  <Algorithm>
+      1. Create an artifact queue (a list of all file names found in artifacts)
+      2. For each rule
+        a. Artifacts matched by a rule are removed from the artifact queue
+           (see note below)
+        b. If a rule cannot match the artifacts as specified by the rule
+              raise an Exception
+        c. If the artifacts queue is not empty after verification of a rule
+              continue with the next rule and the updated artifacts queue
+           If the artifacts queue is empty
+              abort verification
+      3. After processing all rules the artifact queue must be empty, if not
+              raise an Exception
+
+  <Note>
+    Each rule will be applied on the artifacts currently in the queue, that is
+    if artifacts were already matched by a previous rule in the list they
+    cannot be matched again.
+
+    This can lead to ambiguity in case of conflicting rules, e.g. given a step
+    with a reported artifact "foo" and a rule list
+    [["CREATE", "foo"], ["DELETE", "foo"]].
+    In this case the verification would pass, because
+    verify_create_rule would remove the artifact from the artifact queue, which
+    would make "foo" appear as deleted for verify_delete_rule.
 
   <Arguments>
+    item_name:
+            The name of the item (Step or Inspection) being verified,
+            used for user feedback.
+
     rules:
-            A list containing rules defined in the material_matchrules or
-            product_matchrules field of a Step or Inspection object.
+            The list of rules (material or product matchrules) for the item
+            being verified.
 
-    source_type:
-            A string to identify if the rule is a material matchrule or
-            product matchrule. One of "material" or "product".
+    artifacts:
+            The artifact dictionary (materials or products) as reported by the
+            Link of the item being verified.
 
-    source_link:
-            The Link object for an Item (Step or Inspection) that contains the
-            rules to be verified.
-            The contained materials and products are used as verification source.
-
-    target_links:
+    links:
             A dictionary of Link objects with Link names as keys.
             The Link objects relate to Steps.
             The contained materials and products are used as verification target.
 
+
   <Exceptions>
     raises an Exception if a rule does not conform with the rule format.
-    raises an Exception if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
     None.
 
   """
+  # A list of file paths, recorded as artifacts for this item
+  artifact_queue = artifacts.keys()
+  #FIXME: Validate rule format
   for rule in rules:
-    #FIXME: Validate rule format
     if rule[0].lower() == "match":
-      verify_match_rule(rule, source_type, source_link, target_links)
+      queue = verify_match_rule(rule, artifact_queue, artifacts, links)
 
     elif rule[0].lower() == "create":
-      verify_create_rule(rule, source_link)
+      queue = verify_create_rule(rule, artifact_queue)
 
     elif rule[0].lower() == "delete":
-      verify_delete_rule(rule, source_link)
+      verify_delete_rule(rule, artifact_queue)
 
+    # FIXME: MODIFY rule needs revision
     elif rule[0].lower() == "modify":
-      verify_modify_rule(rule, source_link)
+      raise Exception("modify rule is currently not implemented.")
 
     else:
-      # Note: We should never get here since the rule format was verified before
+      # FIXME: We should never get here since the rule format was verified before
       raise Exception("Invalid Matchrule", rule)
 
+    if not artifact_queue:
+      break
+
+  if artifact_queue:
+    raise RuleVerficationFailed("Artifacts {0} were not matched by any rule of "
+        "item {1}".format(artifact_queue, item_name))
 
 
-def verify_all_item_rules(items, source_links, target_links):
+def verify_all_item_rules(items, links, target_links=None):
   """
   <Purpose>
     Iteratively verifies material matchrules and product matchrules of
     passed items (Steps or Inspections).
-    In case of MATCH matchrules an artifact from a source link is matched
-    against an artifact from a target link.
-    In case of CREATE, DELETE and MODIFY matchrules a source link material
-    is matched with a target material.
 
   <Arguments>
     items:
-            A list containing Step and/or Inspection objects
+            A list containing Step or Inspection objects whose material
+            and product matchrules will be verified.
 
-    source_links:
-            A dictionary of Link objects with Link names as keys.
-            The Link objects can relate to Steps or Inspections.
-            The contained materials and products are used as verification source.
+    links:
+            A dictionary of Link objects with Link names as keys. For each
+            passed item (Step or Inspection) to be verified, the related Link
+            object is taken from this list.
 
-    target_links:
-            A dictionary of Link objects with Link names as keys.
-            The Link objects relate to Steps.
-            The contained materials and products are used as verification target.
+    target_links: (optional)
+            A dictionary of Link objects with Link names as keys. Each Link
+            object relates to one Step of the supply chain. The artifacts of
+            these links are used as match targets for the the artifacts of the
+            items to be verified.
+            If omitted, the passed links are also used as target_links.
 
   <Exceptions>
     raises an Exception if a matchrule does not verify.
@@ -567,13 +623,15 @@ def verify_all_item_rules(items, source_links, target_links):
     None.
 
   """
-  for item in items:
-    source_link = source_links[item.name]
-    _verify_rules(item.material_matchrules, "material",
-        source_link, target_links)
+  if not target_links:
+    target_links = links
 
-    _verify_rules(item.product_matchrules, "product",
-        source_link, target_links)
+  for item in items:
+    link = links[item.name]
+    verify_item_rules(item.name, item.material_matchrules,
+        link.materials, target_links)
+    verify_item_rules(item.name, item.product_matchrules,
+        link.products, target_links)
 
 
 
