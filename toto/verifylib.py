@@ -456,52 +456,6 @@ def verify_delete_rule(rule, artifact_queue):
         "were not deleted".format(rule, matched_artifacts))
 
 
-# def verify_modify_rule(rule, link):
-#   """
-#   <Purpose>
-#     Verifies that the path (2nd element in rule list) is found in the materials
-#     and products list of the passed Link object and that the hashes of the
-#     according material and product are not equal, i.e. the file was modified in
-#     the step the rule was defined for.
-
-#   <Arguments>
-#     rule:
-#             The rule to be verified. Format is: ["MODIFY", "<path>"]
-
-#     link:
-#             The Link object for the Item (Step or Inspection) that contains
-#             the rule.
-
-#   <Exceptions>
-#     raises an Exception if the rule does not conform with the rule format.
-#     raises an if a matchrule does not verify.
-#     TBA (see https://github.com/in-toto/in-toto/issues/6)
-
-#     RuleVerficationFailed if path is not found in the materials or products
-#     or if the hashes are equal (were not modified).
-
-#   <Side Effects>
-#     None.
-
-#   """
-#   # FIXME: Validate rule format
-
-#   path = rule[1]
-
-#   if (path not in link.materials.keys()):
-#     raise RuleVerficationFailed("'%s' "
-#         "not found in materials of link '%s'" % (path, link.name))
-
-#   if (path not in item_link.products.keys()):
-#     raise RuleVerficationFailed("'%s' "
-#         "not found in products of link '%s'" % (path, link.name))
-
-#   if (ComparableHashDict(link.materials[path]) == \
-#       ComparableHashDict(link.products[path])):
-#     raise RuleVerficationFailed("hashes of product and material '%s' of link "
-#         "'%s' match - should have been modified" % (path, link.name))
-
-
 def verify_item_rules(item_name, rules, artifacts, links):
   """
   <Purpose>
