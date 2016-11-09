@@ -20,12 +20,13 @@
 
 import unittest
 from toto.models.link import Link
+from toto.models.layout import Step, Inspection
 from toto.verifylib import verify_delete_rule, verify_create_rule, \
-    verify_match_rule
+    verify_match_rule, verify_item_rules, verify_all_item_rules
 from toto.exceptions import RuleVerficationFailed
 
 class TestVerifyDeleteRule(unittest.TestCase):
-  """Test verifylib.verify_delete_rule function. """
+  """Test verifylib.verify_delete_rule(rule, artifact_queue) """
 
   def setUp(self):
     """ Setup artifact queues. """
@@ -80,7 +81,7 @@ class TestVerifyDeleteRule(unittest.TestCase):
 
 
 class TestVerifyCreateRule(unittest.TestCase):
-  """Test verifylib.verify_create_rule function. """
+  """Test verifylib.verify_create_rule(rule, artifact_queue) """
 
   def setUp(self):
     """ Setup artifact queues. """
@@ -143,7 +144,7 @@ class TestVerifyCreateRule(unittest.TestCase):
 
 
 class TestVerifyMatchRule(unittest.TestCase):
-  """Test verifylib.verify_match_rule function. """
+  """Test verifylib.verify_match_rule(rule, artifact_queue, artifacts, links) """
 
   def setUp(self):
     """Setup artifact queues, artifacts dictionary and Link dictionary. """
@@ -298,6 +299,8 @@ class TestVerifyMatchRule(unittest.TestCase):
 
     rule = ["MATCH", "PRODUCT", "foo", "FROM", "link-1"]
     with self.assertRaises(RuleVerficationFailed):
+      # Pass an empty artifacts queue and artifacts dictionary
+      # to match nothing
       verify_match_rule(rule, [], [], self.links)
 
 
@@ -339,5 +342,161 @@ class TestVerifyMatchRule(unittest.TestCase):
     with self.assertRaises(RuleVerficationFailed):
       verify_match_rule(rule, queue, artifacts, self.links)
 
+
+
+
+
+class TestVerifyItemRules(unittest.TestCase):
+  """Test verifylib.verify_item_rules(item_name, rules, artifacts, links)"""
+
+  def setUp(self):
+    self.item_name = "test-item"
+    self.sha256_foo = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_bar = \
+        "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+
+    self.artifacts = {
+      "foo": {"sha256": self.sha256_foo},
+      "bar": {"sha256": self.sha256_bar}
+    }
+    self.links = {
+      "link-1": Link(name="link-1",
+          materials={}, products={"foo": {"sha256": self.sha256_foo}})
+    }
+
+
+  def test_pass_with_rule_of_each_type(self):
+    """Pass with list of rules of each rule type. """
+
+    rules = [
+      ["CREATE", "bar"],
+      ["DELETE", "baz"],
+      ["MATCH", "PRODUCT", "foo", "FROM", "link-1"]
+    ]
+    verify_item_rules(self.item_name, rules, self.artifacts, self.links)
+
+
+  def test_fail_with_conflicting_rules(self):
+    """Fail with artifact being matched by a match and by a create rule."""
+
+    rules = [
+      ["MATCH", "PRODUCT", "foo", "FROM", "link-1"],
+      ["CREATE", "foo"]
+    ]
+
+    with self.assertRaises(RuleVerficationFailed):
+      verify_item_rules(self.item_name, rules, self.artifacts, self.links)
+
+
+  def test_fail_unmatched_artifacts(self):
+    """Fail with unmatched artifacts after executing all rules. """
+
+    rules = []
+    with self.assertRaises(RuleVerficationFailed):
+      verify_item_rules(self.item_name, rules, self.artifacts, {})
+
+
+
+
+
+class TestVerifyAllItemRules(unittest.TestCase):
+  """Test verifylib.verify_all_item_rules(items, links, target_links=None). """
+
+  def setUp(self):
+    """Create a dummy supply chain with two steps one inspection and the
+    according link metadata:
+
+    write-code (Step) ->  package (step) -> untar (Inspection)
+
+    'write-code' creates an artifact foo
+    'package' creates foo.tar.gz and deletes foo
+    'untar' untars foo.tar.gz which results in foo.tar.gz and foo
+
+    """
+
+    self.sha256_foo = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_foo_tar = \
+        "93c3c35a039a6a3d53e81c5dbee4ebb684de57b7c8be11b8739fd35804a0e918"
+
+    self.steps = [
+        Step(name="write-code",
+            product_matchrules=[
+                ["CREATE", "foo"]
+            ],
+        ),
+        Step(name="package",
+            material_matchrules=[
+                ["MATCH", "PRODUCT", "foo",
+                    "AS", "foo", "FROM", "write-code"]
+            ],
+            product_matchrules=[
+                ["CREATE", "foo.tar.gz"],
+                ["DELETE", "foo"]
+            ],
+        )
+    ]
+
+    self.inspections = [
+        Inspection(name="untar",
+            material_matchrules=[
+                ["MATCH", "PRODUCT", "foo.tar.gz", "FROM", "package"]
+            ],
+            product_matchrules=[
+                ["MATCH", "PRODUCT", "dir/foo", "AS", "foo",
+                    "FROM", "write-code"]
+            ]
+        )
+    ]
+
+    self.step_links = {
+      "write-code" : Link(name="write-code",
+          products={
+              "foo": {
+                  "sha256": self.sha256_foo
+              }
+          }
+      ),
+      "package" : Link(name="package",
+          materials={
+              "foo": {
+                  "sha256": self.sha256_foo
+              }
+          },
+          products={
+              "foo.tar.gz": {
+                  "sha256": self.sha256_foo_tar
+              }
+          }
+      )
+    }
+
+    self.inspection_links = {
+        "untar" : Link(name="untar",
+            materials={
+                "foo.tar.gz": {
+                    "sha256": self.sha256_foo_tar
+                }
+            },
+            products={
+                "dir/foo": {
+                    "sha256": self.sha256_foo
+                },
+            }
+        )
+    }
+
+  def test_pass_verify_all_step_rules(self):
+    """Pass rule verification for dummy supply chain Steps. """
+    verify_all_item_rules(self.steps, self.step_links)
+
+
+  def test_pass_verify_all_inspection_rules(self):
+    """Pass rule verification for dummy supply chain Inspections. """
+    verify_all_item_rules(self.inspections, self.inspection_links,
+        self.step_links)
+
 if __name__ == '__main__':
+
   unittest.main()
