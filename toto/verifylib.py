@@ -409,7 +409,6 @@ def verify_create_rule(rule, artifact_queue):
   # FIXME: Validate rule format
   path_pattern = rule[1]
   matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
-
   if not matched_artifacts:
     raise RuleVerficationFailed("Rule {0} failed, no artifacts were created"
         .format(rule))
@@ -568,10 +567,10 @@ def verify_item_rules(item_name, rules, artifacts, links):
   #FIXME: Validate rule format
   for rule in rules:
     if rule[0].lower() == "match":
-      queue = verify_match_rule(rule, artifact_queue, artifacts, links)
+      artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
 
     elif rule[0].lower() == "create":
-      queue = verify_create_rule(rule, artifact_queue)
+      artifact_queue = verify_create_rule(rule, artifact_queue)
 
     elif rule[0].lower() == "delete":
       verify_delete_rule(rule, artifact_queue)
@@ -589,7 +588,7 @@ def verify_item_rules(item_name, rules, artifacts, links):
 
   if artifact_queue:
     raise RuleVerficationFailed("Artifacts {0} were not matched by any rule of "
-        "item {1}".format(artifact_queue, item_name))
+        "item '{1}'".format(artifact_queue, item_name))
 
 
 def verify_all_item_rules(items, links, target_links=None):
