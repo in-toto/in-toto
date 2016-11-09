@@ -111,7 +111,7 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("-n", "--no-prompt", help="No prompt.",
       action="store_true")
-  parser.add_argument("-c", "--clear", help="Clear created files.",
+  parser.add_argument("-c", "--clean", help="Remove files created during demo.",
       action="store_true")
   args = parser.parse_args()
 
