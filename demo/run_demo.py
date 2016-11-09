@@ -38,7 +38,7 @@ def supply_chain():
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
   package_cmd = ("python -m toto.toto-run" +
-                 " --step-name package --material foo.py" +
+                 " --step-name package --materials foo.py" +
                  " --products foo.tar.gz" +
                  " --key carl --record-byproducts" +
                  " -- tar zcvf foo.tar.gz foo.py")
@@ -79,7 +79,7 @@ def supply_chain():
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
   package_cmd = ("python -m toto.toto-run" +
-                 " --step-name package --material foo.py" +
+                 " --step-name package --materials foo.py" +
                  " --products foo.tar.gz" +
                  " --key carl --record-byproducts" +
                  " -- tar zcvf foo.tar.gz foo.py")
@@ -101,6 +101,7 @@ def supply_chain():
   verify_cmd = ("python -m toto.toto-verify" +
                 " --layout root.layout" +
                 " --layout-key alice.pub")
+
   print verify_cmd
   retval = subprocess.call(verify_cmd.split())
   print "Return value: " + str(retval)
@@ -108,12 +109,37 @@ def supply_chain():
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("-n", "--no-prompt", help="No prompt",
+  parser.add_argument("-n", "--no-prompt", help="No prompt.",
+      action="store_true")
+  parser.add_argument("-c", "--clear", help="Clear created files.",
       action="store_true")
   args = parser.parse_args()
+
+  if args.clear:
+    files_to_delete = [
+      "owner_alice/root.layout",
+      "functionary_bob/write-code.link",
+      "functionary_bob/foo.py",
+      "functionary_carl/package.link",
+      "functionary_carl/foo.tar.gz",
+      "functionary_carl/foo.py",
+      "final_product/alice.pub",
+      "final_product/foo.py",
+      "final_product/foo.tar.gz",
+      "final_product/package.link",
+      "final_product/write-code.link",
+      "final_product/root.layout"
+    ]
+
+    for path in files_to_delete:
+      if os.path.isfile(path):
+        os.remove(path)
+
+    sys.exit(0)
   if args.no_prompt:
     global NO_PROMPT
     NO_PROMPT = True
+
 
   supply_chain()
 
