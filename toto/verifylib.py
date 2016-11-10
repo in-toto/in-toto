@@ -384,6 +384,100 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
   return artifact_queue
 
 
+def verify_notmatch_rule(rule, artifact_queue, artifacts, links):
+  """
+  <Purpose>
+    Verifies that no file in the artifact queue matched by source path pattern
+    has a related file in the target artifacts matched by the target aritfact
+    pattern with the same hash.
+
+  <Arguments>
+    rule:
+            The rule to be verified. Format is one of:
+
+            ["NOTMATCH", "MATERIAL", "<source and target path pattern>",
+                "FROM", "<step name>"]
+
+            ["NOTMATCH", "PRODUCT", "<source and target pattern>",
+                "FROM", "<step name>"]
+
+            ["NOTMATCH", "MATERIAL", "<source path pattern>", "AS",
+                "<target path pattern>", "FROM", "<step name>"]
+
+            ["NOTMATCH", "PRODUCT", "<source path pattern>", "AS",
+                "<target path pattern>", "FROM", "<step name>"]
+
+    artifact_queue:
+            A list of artifact paths that haven't been matched by a previous
+            rule yet.
+
+    artifacts:
+            A dictionary of artifacts, depending on the list the rule was
+            extracted from, materials or products of the step or inspection
+            the rule was extracted from.
+
+            The format is: {<path>: HASHDICTS}
+            with artifact paths as keys and HASHDICTS as values.
+
+    links:
+            A dictionary of Link objects with Link names as keys.
+            The Link objects relate to Steps.
+            The contained materials and products are used as verification
+            target.
+
+  <Exceptions>
+    raises an Exception if the rule does not conform with the rule format.
+    raises an if a matchrule does not verify.
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+    RuleVerficationFailed if path is not found in the materials or products
+    or if the hashes are equal (were not modified).
+
+  <Side Effects>
+    None.
+
+  """
+
+  # FIXME: Validate rule format
+  path_pattern = rule[2]
+  target_path_pattern = rule[4] if len(rule) == 7 else path_pattern
+  target_type = rule[1].lower()
+  target_name = rule[-1]
+
+  # Extract target artifacts from links
+  if target_type == "material":
+    target_artifacts = links[target_name].materials
+  elif target_type == "product":
+    target_artifacts = links[target_name].products
+  else:
+    # FIXME: We should never reach this because rule format was validate before
+    raise Exception("Wrong target type '%s'. Has to be 'material' or 'product'"
+        % source_type)
+
+  matched_source_artifacts = fnmatch.filter(artifact_queue, path_pattern)
+  matched_target_artifacts = fnmatch.filter(target_artifacts.keys(),
+      target_path_pattern)
+
+  # FIXME: sha256 should not be hardcoded but be a setting instead
+  hash_algorithm = "sha256"
+
+  matched_source_hashes = Set()
+  for path in matched_source_artifacts:
+    matched_source_hashes.add(artifacts[path][hash_algorithm])
+
+  matched_target_hashes = Set()
+  for path in matched_target_artifacts:
+    matched_target_hashes.add(target_artifacts[path][hash_algorithm])
+
+  if (matched_source_hashes & matched_target_hashes):
+    raise RuleVerficationFailed("Rule {0} failed, artifacts {1} "
+              "must not match {2}s {3}  not changed."
+              .format(rule, matched_source_artifacts, target_type,
+              matched_target_artifacts))
+
+  return artifact_queue
+
+
 def verify_create_rule(rule, artifact_queue):
   """
   <Purpose>
@@ -531,15 +625,14 @@ def verify_item_rules(item_name, rules, artifacts, links):
     if rule[0].lower() == "match":
       artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
 
+    elif rule[0].lower() == "notmatch":
+      artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
+
     elif rule[0].lower() == "create":
       artifact_queue = verify_create_rule(rule, artifact_queue)
 
     elif rule[0].lower() == "delete":
       verify_delete_rule(rule, artifact_queue)
-
-    # FIXME: MODIFY rule needs revision
-    elif rule[0].lower() == "modify":
-      raise Exception("modify rule is currently not implemented.")
 
     else:
       # FIXME: We should never get here since the rule format was verified before
