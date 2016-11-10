@@ -262,12 +262,13 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
     general understanding of glob patterns (especially "*").
 
     Further verifies that each matched target artifact has a corresponding
-    source artifact with a matching hash in the passed artifact dictionary and
-    that this artifact in also the artifact queue.
+    source artifact with a matching hash in the passed artifact dictionary
+    which is matched by the source path pattern - 2nd element of rule - and can
+    be found in the artifact queue.
 
-    This guarantees that the target artifact was reported by the target Step
-    and the step that is being verified reported to use an artifact with the
-    same hash, as required by the matchrule.
+    This guarantees that the target artifact was reported by the target Link
+    and the Step or Inspection that is being verified reported to use an
+    artifact with the same hash, as required by the matchrule.
 
   <Note>
     In case the explicit ("AS", "<target path pattern>") part of the rule is
@@ -277,11 +278,17 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
   <Arguments>
     rule:
             The rule to be verified. Format is one of:
-            ["MATCH", "MATERIAL", "<path pattern>", "FROM", "<step name>"]
-            ["MATCH", "PRODUCT", "<path pattern>", "FROM", "<step name>"]
-            ["MATCH", "MATERIAL", "<path pattern>", "AS",
+
+            ["MATCH", "MATERIAL", "<source and target path pattern>",
+                "FROM", "<step name>"]
+
+            ["MATCH", "PRODUCT", "<source and target pattern>",
+                "FROM", "<step name>"]
+
+            ["MATCH", "MATERIAL", "<source path pattern>", "AS",
                 "<target path pattern>", "FROM", "<step name>"]
-            ["MATCH", "PRODUCT", "<path pattern>", "AS",
+
+            ["MATCH", "PRODUCT", "<source path pattern>", "AS",
                 "<target path pattern>", "FROM", "<step name>"]
 
     artifact_queue:
@@ -296,13 +303,14 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
             {
               <path> : HASHDICTS
             }
-             with artifact paths as keys
+            with artifact paths as keys
             and HASHDICTS as values.
 
     links:
             A dictionary of Link objects with Link names as keys.
             The Link objects relate to Steps.
-            The contained materials and products are used as verification target.
+            The contained materials and products are used as verification
+            target.
 
   <Exceptions>
     raises an Exception if the rule does not conform with the rule format.
