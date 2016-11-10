@@ -373,7 +373,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
             "could not be found (was matched before)".format(rule, source_path))
 
       # and it must match with path pattern.
-      elif not fnmatch.filter([source_path], path_pattern):
+      elif not fnmatch.fnmatch(source_path, path_pattern):
         raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
           "matches hash of '{2}' in source artifacts but should match '{3}')"
           .format(rule, target_path, source_path, path_pattern))
