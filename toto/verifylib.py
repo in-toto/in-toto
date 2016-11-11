@@ -255,6 +255,60 @@ def verify_all_steps_command_alignment(layout, links_dict):
 
 
 
+def _construct_rule_data_from_matchingrule(rule, links):
+  """
+  <Purpose>
+    Parse rule and construct necessary data to verify rule.
+    Matchingrule here refers to rules of type "MATCH" and "NOTMATCH" as
+    opposed to the in-toto specification where every tule is a matchingrule.
+
+  <Arguments>
+    rule:
+            A matchingrule of type:
+              ["MATCH", ...] or ["NOTMATCH", ...]
+              See verify_match_rule and verify_notmatch_rule for details.
+
+    links:
+            A dictionary of target Link objects with Link names as keys.
+
+  <Exception>
+    WIP (see https://github.com/in-toto/in-toto/issues/6)
+    RuleVerficationFailed if target item specified in rule can't be found
+    in passed Link dictionary.
+
+  <Returns>
+    A list containing
+      source_path_pattern - path pattern to match in source artifacts
+      target_path_pattern - path pattern to match in target artifacts
+      target_type - type of target artifacts (material or product)
+      target_name - name of target item
+      target_artifacts - dict of target artifacts
+
+  """
+
+  source_path_pattern = rule[2]
+  target_path_pattern = rule[4] if len(rule) == 7 else source_path_pattern
+  target_type = rule[1].lower()
+  target_name = rule[-1]
+
+  # Extract target artifacts from links
+  try:
+    if target_type == "material":
+      target_artifacts = links[target_name].materials
+    elif target_type == "product":
+      target_artifacts = links[target_name].products
+    else:
+      # FIXME: We should never reach this because rule format was validate before
+      raise Exception("Rule {0} failed, wrong target type '{1}', must be "
+        "'material' or 'product'".format(target_type))
+  except KeyError:
+    raise RuleVerficationFailed("Rule {0} failed, can't find target item '{1}'"
+      .format(rule, target_name))
+
+  return [source_path_pattern, target_path_pattern, target_type, target_name,
+      target_artifacts]
+
+
 def verify_match_rule(rule, artifact_queue, artifacts, links):
   """
   <Purpose>
@@ -331,20 +385,11 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
 
   """
   # FIXME: Validate rule format
-  path_pattern = rule[2]
-  target_path_pattern = rule[4] if len(rule) == 7 else path_pattern
-  target_type = rule[1].lower()
-  target_name = rule[-1]
-
-  # Extract target artifacts from links
-  if target_type == "material":
-    target_artifacts = links[target_name].materials
-  elif target_type == "product":
-    target_artifacts = links[target_name].products
-  else:
-    # FIXME: We should never reach this because rule format was validate before
-    raise Exception("Wrong target type '%s'. Has to be 'material' or 'product'"
-        % source_type)
+  source_path_pattern, \
+  target_path_pattern, \
+  target_type, \
+  target_name, \
+  target_artifacts = _construct_rule_data_from_matchingrule(rule, links)
 
   matched_target_artifacts = fnmatch.filter(target_artifacts.keys(),
       target_path_pattern)
@@ -374,10 +419,10 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
             "could not be found (was matched before)".format(rule, source_path))
 
       # and it must match with path pattern.
-      elif not fnmatch.fnmatch(source_path, path_pattern):
+      elif not fnmatch.fnmatch(source_path, source_path_pattern):
         raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
           "matches hash of '{2}' in source artifacts but should match '{3}')"
-          .format(rule, target_path, source_path, path_pattern))
+          .format(rule, target_path, source_path, source_path_pattern))
 
       else:
         artifact_queue.remove(source_path)
@@ -440,22 +485,13 @@ def verify_notmatch_rule(rule, artifact_queue, artifacts, links):
   """
 
   # FIXME: Validate rule format
-  path_pattern = rule[2]
-  target_path_pattern = rule[4] if len(rule) == 7 else path_pattern
-  target_type = rule[1].lower()
-  target_name = rule[-1]
+  source_path_pattern, \
+  target_path_pattern, \
+  target_type, \
+  target_name, \
+  target_artifacts = _construct_rule_data_from_matchingrule(rule, links)
 
-  # Extract target artifacts from links
-  if target_type == "material":
-    target_artifacts = links[target_name].materials
-  elif target_type == "product":
-    target_artifacts = links[target_name].products
-  else:
-    # FIXME: We should never reach this because rule format was validate before
-    raise Exception("Wrong target type '%s'. Has to be 'material' or 'product'"
-        % source_type)
-
-  matched_source_artifacts = fnmatch.filter(artifact_queue, path_pattern)
+  matched_source_artifacts = fnmatch.filter(artifact_queue, source_path_pattern)
   matched_target_artifacts = fnmatch.filter(target_artifacts.keys(),
       target_path_pattern)
 
@@ -560,6 +596,8 @@ def verify_delete_rule(rule, artifact_queue):
         "were not deleted".format(rule, matched_artifacts))
 
 
+
+
 def verify_item_rules(item_name, rules, artifacts, links):
   """
   <Purpose>
@@ -620,7 +658,7 @@ def verify_item_rules(item_name, rules, artifacts, links):
     None.
 
   """
-  # A list of file paths, recorded as artifacts for this item
+
   artifact_queue = artifacts.keys()
   #FIXME: Validate rule format
   for rule in rules:

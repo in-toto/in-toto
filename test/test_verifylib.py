@@ -343,6 +343,14 @@ class TestVerifyMatchRule(unittest.TestCase):
     with self.assertRaises(RuleVerficationFailed):
       verify_match_rule(rule, queue, artifacts, self.links)
 
+  def test_fail_cannot_find_target_item(self):
+    """["MATCH", "MATERIAL", "foo", "FROM", "link-missing"],
+    no target link "link-missing" in passed target links, fails. """
+
+    rule = ["MATCH", "MATERIAL", "foo", "FROM", "link-missing"]
+    with self.assertRaises(RuleVerficationFailed):
+      verify_match_rule(rule, [], {}, self.links)
+
 
 
 
@@ -389,13 +397,19 @@ class TestVerifyNotmatchRule(unittest.TestCase):
 
 
   def test_pass_not_match_as_name(self):
-    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar" "FROM", "link-1"]
+    """["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"],
+    source foo has different hash then target as foo, passes. """
+
+    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"]
     artifacts = {"bar": {"sha256": self.sha256_foo}}
     queue = artifacts.keys()
     verify_notmatch_rule(rule, queue, artifacts, self.links)
 
 
   def test_pass_not_match_as_star(self):
+    """["NOTMATCH", "PRODUCT", "*", "AS", "*" "FROM", "link-1"],
+    source bar has different hash then target bar and barfoo, passes. """
+
     rule = ["NOTMATCH", "PRODUCT", "*", "AS", "*" "FROM", "link-1"]
     artifacts = {"bar": {"sha256": self.sha256_foo}}
     queue = artifacts.keys()
@@ -403,6 +417,9 @@ class TestVerifyNotmatchRule(unittest.TestCase):
 
 
   def test_fail_match(self):
+    """["NOTMATCH", "PRODUCT", "bar", "FROM", "link-1"],
+    source and target bar have same hash, fails. """
+
     rule = ["NOTMATCH", "PRODUCT", "bar", "FROM", "link-1"]
     artifacts = {"bar": {"sha256": self.sha256_bar}}
     queue = artifacts.keys()
@@ -411,6 +428,9 @@ class TestVerifyNotmatchRule(unittest.TestCase):
 
 
   def test_fail_match_as_name(self):
+    """["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"],
+    source bar and target as bar have same hash, fails. """
+
     rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"]
     artifacts = {"bar": {"sha256": self.sha256_bar}}
     queue = artifacts.keys()
@@ -419,12 +439,14 @@ class TestVerifyNotmatchRule(unittest.TestCase):
 
 
   def test_fail_match_as_star(self):
-    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"]
+    """["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"],
+    source bar and target a target artifact (*) have same hash, fails. """
+
+    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "*", "FROM", "link-1"]
     artifacts = {"bar": {"sha256": self.sha256_bar}}
     queue = artifacts.keys()
     with self.assertRaises(RuleVerficationFailed):
       verify_notmatch_rule(rule, queue, artifacts, self.links)
-
 
 
 
