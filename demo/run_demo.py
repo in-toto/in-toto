@@ -115,7 +115,7 @@ def main():
       action="store_true")
   args = parser.parse_args()
 
-  if args.clear:
+  if args.clean:
     files_to_delete = [
       "owner_alice/root.layout",
       "functionary_bob/write-code.link",
