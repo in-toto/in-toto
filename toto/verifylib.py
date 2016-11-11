@@ -254,6 +254,7 @@ def verify_all_steps_command_alignment(layout, links_dict):
     verify_command_alignment(command, expected_command)
 
 
+
 def verify_match_rule(rule, artifact_queue, artifacts, links):
   """
   <Purpose>
@@ -460,22 +461,23 @@ def verify_notmatch_rule(rule, artifact_queue, artifacts, links):
 
   # FIXME: sha256 should not be hardcoded but be a setting instead
   hash_algorithm = "sha256"
-
-  matched_source_hashes = Set()
+  matched_source_hashes = set()
   for path in matched_source_artifacts:
     matched_source_hashes.add(artifacts[path][hash_algorithm])
 
-  matched_target_hashes = Set()
+  matched_target_hashes = set()
   for path in matched_target_artifacts:
     matched_target_hashes.add(target_artifacts[path][hash_algorithm])
 
-  if (matched_source_hashes & matched_target_hashes):
+
+  if matched_source_hashes & matched_target_hashes:
     raise RuleVerficationFailed("Rule {0} failed, artifacts {1} "
-              "must not match {2}s {3}  not changed."
+              "must not match {2}s {3}."
               .format(rule, matched_source_artifacts, target_type,
               matched_target_artifacts))
 
-  return artifact_queue
+
+  return list(set(artifact_queue) - set(matched_source_artifacts))
 
 
 def verify_create_rule(rule, artifact_queue):
@@ -626,7 +628,7 @@ def verify_item_rules(item_name, rules, artifacts, links):
       artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
 
     elif rule[0].lower() == "notmatch":
-      artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
+      artifact_queue = verify_notmatch_rule(rule, artifact_queue, artifacts, links)
 
     elif rule[0].lower() == "create":
       artifact_queue = verify_create_rule(rule, artifact_queue)

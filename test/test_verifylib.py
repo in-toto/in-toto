@@ -22,7 +22,8 @@ import unittest
 from toto.models.link import Link
 from toto.models.layout import Step, Inspection
 from toto.verifylib import verify_delete_rule, verify_create_rule, \
-    verify_match_rule, verify_item_rules, verify_all_item_rules
+    verify_match_rule, verify_item_rules, verify_all_item_rules, \
+    verify_notmatch_rule
 from toto.exceptions import RuleVerficationFailed
 
 class TestVerifyDeleteRule(unittest.TestCase):
@@ -346,6 +347,89 @@ class TestVerifyMatchRule(unittest.TestCase):
 
 
 
+class TestVerifyNotmatchRule(unittest.TestCase):
+  """Test verifylib.verify_notmatch_rule(rule, artifact_queue, artifacts, links). """
+
+  def setUp(self):
+    # Dummy artifact hashes
+    self.sha256_foo = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_foobar = \
+        "155c693a6b7481f48626ebfc545f05236df679f0099225d6d0bc472e6dd21155"
+    self.sha256_bar = \
+        "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+    self.sha256_barfoo = \
+        "2036784917e49b7685c7c17e03ddcae4a063979aa296ee5090b5bb8f8aeafc5d"
+
+    # Link dictionary containing dummy artifacts related to Steps the rule is
+    # matched with (match target).
+    materials = {
+      "foo": {"sha256": self.sha256_foo},
+      "foobar": {"sha256": self.sha256_foobar}
+    }
+    products = {
+      "bar": {"sha256": self.sha256_bar},
+      "barfoo": {"sha256": self.sha256_barfoo}
+      }
+
+    # Note: For simplicity the Links don't have all usually required fields set
+    self.links = {
+        "link-1" : Link(name="link-1", materials=materials, products=products),
+    }
+
+
+  def test_pass_not_match(self):
+    """["NOTMATCH", "MATERIAL", "foo", "FROM", "link-1"],
+    source foo has different hash then target foo, passes. """
+
+    rule = ["NOTMATCH", "MATERIAL", "foo", "FROM", "link-1"]
+    artifacts = {"foo": {"sha256": self.sha256_bar}}
+    queue = artifacts.keys()
+    verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+  def test_pass_not_match_as_name(self):
+    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar" "FROM", "link-1"]
+    artifacts = {"bar": {"sha256": self.sha256_foo}}
+    queue = artifacts.keys()
+    verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+  def test_pass_not_match_as_star(self):
+    rule = ["NOTMATCH", "PRODUCT", "*", "AS", "*" "FROM", "link-1"]
+    artifacts = {"bar": {"sha256": self.sha256_foo}}
+    queue = artifacts.keys()
+    verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+  def test_fail_match(self):
+    rule = ["NOTMATCH", "PRODUCT", "bar", "FROM", "link-1"]
+    artifacts = {"bar": {"sha256": self.sha256_bar}}
+    queue = artifacts.keys()
+    with self.assertRaises(RuleVerficationFailed):
+      verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+  def test_fail_match_as_name(self):
+    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"]
+    artifacts = {"bar": {"sha256": self.sha256_bar}}
+    queue = artifacts.keys()
+    with self.assertRaises(RuleVerficationFailed):
+      verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+  def test_fail_match_as_star(self):
+    rule = ["NOTMATCH", "PRODUCT", "bar", "AS", "bar", "FROM", "link-1"]
+    artifacts = {"bar": {"sha256": self.sha256_bar}}
+    queue = artifacts.keys()
+    with self.assertRaises(RuleVerficationFailed):
+      verify_notmatch_rule(rule, queue, artifacts, self.links)
+
+
+
+
+
+
 class TestVerifyItemRules(unittest.TestCase):
   """Test verifylib.verify_item_rules(item_name, rules, artifacts, links)"""
 
@@ -355,10 +439,14 @@ class TestVerifyItemRules(unittest.TestCase):
         "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
     self.sha256_bar = \
         "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+    self.sha256_foobar = \
+        "155c693a6b7481f48626ebfc545f05236df679f0099225d6d0bc472e6dd21155"
 
     self.artifacts = {
       "foo": {"sha256": self.sha256_foo},
-      "bar": {"sha256": self.sha256_bar}
+      "bar": {"sha256": self.sha256_bar},
+      "foobar": {"sha256": self.sha256_foobar},
+
     }
     self.links = {
       "link-1": Link(name="link-1",
@@ -372,7 +460,8 @@ class TestVerifyItemRules(unittest.TestCase):
     rules = [
       ["CREATE", "bar"],
       ["DELETE", "baz"],
-      ["MATCH", "PRODUCT", "foo", "FROM", "link-1"]
+      ["MATCH", "PRODUCT", "foo", "FROM", "link-1"],
+      ["NOTMATCH", "MATERIAL", "foobar", "FROM", "link-1"]
     ]
     verify_item_rules(self.item_name, rules, self.artifacts, self.links)
 
