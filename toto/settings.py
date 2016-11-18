@@ -65,6 +65,8 @@ ED25519_CRYPTO_LIBRARY = 'ed25519'
 # 'pyca-cryptography']
 GENERAL_CRYPTO_LIBRARY = 'pycrypto'
 
+# Hash algorithms
+REPOSITORY_HASH_ALGORITHMS = ['sha256', 'sha512']
 
 # Debug level INFO shows a bunch of stuff that is happening
 LOG_LEVEL = logging.INFO
