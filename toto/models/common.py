@@ -102,7 +102,8 @@ class Signable(Metablock):
       try:
         key = keys_dict[keyid]
       except:
-        raise SignatureVerificationError("Signature key not found, key id is %s" % keyid)
+        raise SignatureVerificationError(
+            "Signature key not found, key id is '{0}'".format(keyid))
       if not ssl_crypto__keys.verify_signature(key, signature, self.payload):
         raise SignatureVerificationError("Invalid signature")
 

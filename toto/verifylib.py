@@ -215,14 +215,14 @@ def verify_command_alignment(command, expected_command):
   for i in range(min(command_len, expected_command_len)):
     if command[i] != expected_command[i]:
       raise CommandAlignmentFailed(
-          "Command '%s' and expected command '%s' do not align" \
-          % (command, expected_command))
+          "Command '{0}' and expected command '{1}' do not align"
+          .format(command, expected_command))
   if command_len != expected_command_len:
     # FIXME we don't want print statements in a library
     # The warning will be obsolete with a fix for
     # https://github.com/in-toto/in-toto/issues/46
-    print "Command '%s' and expected command '%s' do not fully align" \
-        % (command, expected_command)
+    print("Command '{0}' and expected command '{1}' do not fully align"
+        .format(command, expected_command))
 
 
 def verify_all_steps_command_alignment(layout, links_dict):
