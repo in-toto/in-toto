@@ -89,6 +89,7 @@ def verify_layout_expiration(layout):
             The Layout object to be verified.
 
   <Exceptions>
+    LayoutExpiredError
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
@@ -97,8 +98,7 @@ def verify_layout_expiration(layout):
   """
   expire_datetime = iso8601.parse_date(layout.expires)
   if expire_datetime < datetime.datetime.now(tz.tzutc()):
-    # raise LayoutExpiredError
-    raise Exception("Layout expired")
+    raise LayoutExpiredError("Layout expired")
 
 
 def verify_layout_signatures(layout, keys_dict):
