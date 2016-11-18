@@ -30,6 +30,7 @@ import attr
 import canonicaljson
 import inspect
 
+from ..exceptions import SignatureVerificationError
 from ..ssl_crypto import keys as ssl_crypto__keys
 
 @attr.s(repr=False)
@@ -94,16 +95,16 @@ class Signable(Metablock):
     """Verifies all signatures of the object using the passed key_dict."""
 
     if not self.signatures or len(self.signatures) <= 0:
-      raise Exception("No signatures found")
+      raise SignatureVerificationError("No signatures found")
 
     for signature in self.signatures:
       keyid = signature["keyid"]
       try:
         key = keys_dict[keyid]
       except:
-        raise Exception("Signature key not found, key id is %s" % keyid)
+        raise SignatureVerificationError("Signature key not found, key id is %s" % keyid)
       if not ssl_crypto__keys.verify_signature(key, signature, self.payload):
-        raise Exception("Invalid signature")
+        raise SignatureVerificationError("Invalid signature")
 
 @attr.s(repr=False, cmp=False)
 class ComparableHashDict(object):
