@@ -37,7 +37,7 @@ import toto.runlib
 import toto.models.layout
 import toto.models.link
 import toto.ssl_crypto.keys
-from toto.exceptions import RuleVerficationFailed
+from toto.exceptions import CommandAlignmentFailed, RuleVerficationFailed
 from toto.models.common import ComparableHashDict
 from toto.matchrule_validators import check_matchrule_syntax
 import toto.log as log
@@ -201,8 +201,8 @@ def verify_command_alignment(command, expected_command):
             A command list, e.g. ["vi"]
 
   <Exceptions>
-    raises an Exception if the commands don't align
-    prints a warning if the commands align in a relaxed fashioin
+    raises CommandAlignmentFailed if the commands don't align
+    prints a warning if the commands align in a relaxed fashion
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
@@ -214,11 +214,15 @@ def verify_command_alignment(command, expected_command):
 
   for i in range(min(command_len, expected_command_len)):
     if command[i] != expected_command[i]:
-      raise Exception("Command '%s' and expected command '%s' do not align" \
+      raise CommandAlignmentFailed(
+          "Command '%s' and expected command '%s' do not align" \
           % (command, expected_command))
   if command_len != expected_command_len:
-    log.warning("Command '%s' and expected command '%s' do not fully align" \
-        % (command, expected_command))
+    # FIXME we don't want print statements in a library
+    # The warning will be obsolete with a fix for
+    # https://github.com/in-toto/in-toto/issues/46
+    print "Command '%s' and expected command '%s' do not fully align" \
+        % (command, expected_command)
 
 
 def verify_all_steps_command_alignment(layout, links_dict):
