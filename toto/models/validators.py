@@ -1,69 +1,94 @@
+"""
+<Module Name>
+  toto/models/validators.py
 
-def validate_materials(self, Attribute, materials):
+<Author>
+  Santiago Torres-Arias <santiago@nyu.edu>
 
-    for material in materials:
-        validate_individual_product(self, material)
+<Started>
+  Nov 18, 2016
 
-def validate_products(self, Attribute, products):
-    return validate_materials(self, Attribute, products)
+<Copyright>
+  See LICENSE for licensing information.
 
+<Purpose>
+  This module provides functions to ensure the syntax of the matchrules is
+  correct. 
 
-def validate_match_operation(self, keywords):
+"""
+from toto.ssl_commons.exceptions import FormatError
+import toto.ssl_crypto.formats
 
-    MATERIAL_OR_PRODUCT = {'PRODUCT', 'MATERIAL'}
+def _validate_match_rule(keywords):
+  """ private helper to verify the syntax of the MATCH matchrule """
+  MATERIAL_OR_PRODUCT = {'PRODUCT', 'MATERIAL'}
 
-    if not isinstance(keywords, list):
-        raise TypeError("this matching rule is not a list")
+  if not isinstance(keywords, list):
+    raise FormatError("this matching rule is not a list")
 
-    if len(keywords) != 5:
-        raise TypeError("Wrong operation format, should be: "
-                        "MATCH (MATERIAL/PRODUCT) <target> FROM <step>.\n\t"
-                        "Got: {}".format(" ".join(keywords)))
+  if len(keywords) != 5 and len(keywords) != 7:
+    raise FormatError("Wrong rule format, should be: "
+            "MATCH (MATERIAL/PRODUCT) <target> FROM <step>.\n\t"
+            "Got: {}".format(" ".join(keywords)))
 
-    operation, material_or_product, target, from_keyword, step = keywords
+  rule, artifact, target, from_keyword, step = keywords
 
-    if operation != "MATCH":
-        raise TypeError("Wrong operation to verify! {}".format(operation))
+  if rule != "MATCH":
+    raise FormatError("Wrong rule to verify! {}".format(rule))
 
-    if from_keyword != "FROM":
-        raise TypeError("FROM should come before step")
+  if from_keyword != "FROM":
+    raise FormatError("FROM should come before step")
 
-    if material_or_product not in MATERIAL_OR_PRODUCT:
-        raise TypeError("Wrong target! Target should be "
-                        "either MATERIAL or PRODUCT")
+  if artifact not in MATERIAL_OR_PRODUCT:
+    raise FormatError("Target should be either MATERIAL or PRODUCT!")
 
-def validate_generic_operation(self, keywords):
+def _validate_generic_rule(keywords):
+  """ private helper that verifies the syntax of the other rules """
 
-    VALID_OPERATIONS = {'CREATE', 'MODIFY', 'DROP',}
+  VALID_OPERATIONS = {'CREATE', 'MODIFY', 'DELETE',}
 
-    if not isinstance(keywords, list):
-        raise TypeError("this matching rule is not a list")
+  if not isinstance(keywords, list):
+    raise FormatError("this matching rule is not a list")
 
-    if len(keywords) != 2: 
-        raise TypeError("Wrong operation format, should be: "
-                        "{} <target>", keywords[0])
+  if len(keywords) != 2: 
+    raise FormatError("Wrong rule format")
 
-    operation, material_or_product = keywords
+  rule, artifact = keywords
 
-    if operation not in VALID_OPERATIONS:
-        raise TypeError("Wrong operation to verify! {}".format(operation))
+  toto.ssl_crypto.formats.PATH_SCHEMA.check_match(artifact)
 
-def validate_individual_product(self, keywords):
+  if rule not in VALID_OPERATIONS:
+    raise FormatError("{} is not a valid rule!".format(rule))
 
-    OPERATION_KEYWORDS = {'MATCH': validate_match_operation,
-            'CREATE': validate_generic_operation, 
-            'MODIFY': validate_generic_operation,
-            'DROP': validate_generic_operation
-            }
+def check_matchrule_syntax(keywords):
+  """
+  <Name>
+    check_matchrule_syntax
 
-    if not isinstance(keywords, list):
-        raise TypeError("Product and Material matchers should be a list!")
+  <Description>
+    Given a list of keywords (e.g., ["CREATE", "foo"]), verify that the
+    syntax corresponds to the valid statements of the matchrules described
+    in the specification
 
-    operation = keywords[0]
-    if operation not in OPERATION_KEYWORDS:
-        raise TypeError("error in {}.\n\t"
-                        "material should be one of "
-                        "{}".format(product,
-                                    OPERATION_KEYWORDS.keys()))
-    return OPERATION_KEYWORDS[operation](self, keywords)
+  <Returns>
+    None
 
+  <Raises>
+    FormatError: if the keywords provided do not match the matchrule syntax
+  """
+
+  RULE_DISPATCHERS = {'MATCH': _validate_match_rule,
+      'CREATE': _validate_generic_rule, 
+      'MODIFY': _validate_generic_rule,
+      'DELETE': _validate_generic_rule
+  }
+
+  if not isinstance(keywords, list):
+    raise FormatError("Product and Material matchers should be a list!")
+
+  rule = keywords[0]
+  if rule not in RULE_DISPATCHERS:
+    raise FormatError("error in {}.\n\trule should be one of "
+            "{}".format(rule, RULE_DISPATCHERS.keys()))
+
+  return RULE_DISPATCHERS[rule](keywords)
