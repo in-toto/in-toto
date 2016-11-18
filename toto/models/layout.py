@@ -71,7 +71,7 @@ class Layout(models__common.Signable):
   _type = attr.ib("layout", init=False)
   steps = attr.ib([])
   inspect = attr.ib([])
-  keys = attr.ib([])
+  keys = attr.ib({})
   expires = attr.ib("")
 
 
