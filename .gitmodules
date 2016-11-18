@@ -1,3 +1,7 @@
 [submodule "toto/ssl_crypto"]
-	path = toto/ssl_crypto
-	url = https://github.com/santiagotorres/ssl_crypto
+  path = toto/ssl_crypto
+  url = https://github.com/secure-systems-lab/ssl_commons.git
+
+[submodule "toto/ssl_commons"]
+  path = toto/ssl_commons
+  url = https://github.com/secure-systems-lab/ssl_commons.git
