@@ -30,8 +30,8 @@ import attr
 import canonicaljson
 import inspect
 
-from ..exceptions import SignatureVerificationError
-from ..ssl_crypto import keys as ssl_crypto__keys
+from toto.exceptions import SignatureVerificationError
+from toto.ssl_crypto import keys
 
 @attr.s(repr=False)
 class Metablock(object):
@@ -88,7 +88,7 @@ class Signable(Metablock):
 
     # XXX LP: Todo: Verify key format
 
-    signature = ssl_crypto__keys.create_signature(key, self.payload)
+    signature = keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
   def verify_signatures(self, keys_dict):
@@ -104,7 +104,7 @@ class Signable(Metablock):
       except:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
-      if not ssl_crypto__keys.verify_signature(key, signature, self.payload):
+      if not keys.verify_signature(key, signature, self.payload):
         raise SignatureVerificationError("Invalid signature")
 
 @attr.s(repr=False, cmp=False)
