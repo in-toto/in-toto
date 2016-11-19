@@ -26,18 +26,26 @@ def _validate_match_rule(keywords):
   if not isinstance(keywords, list):
     raise FormatError("this matching rule is not a list")
 
-  if len(keywords) != 5 and len(keywords) != 7:
-    raise FormatError("Wrong rule format, should be: "
-            "MATCH (MATERIAL/PRODUCT) <target> FROM <step>.\n\t"
-            "Got: {}".format(" ".join(keywords)))
+  if len(keywords) == 5:
+    rule, artifact, target, from_keyword, step = keywords
+    as_keyword = "AS"
+    new_target = target
 
-  rule, artifact, target, from_keyword, step = keywords
+  elif len(keywords) == 7:
+    rule, artifact, target, from_keyword, step, as_keyword, new_target = keywords
+  else:
+    raise FormatError("Wrong rule format, should be: MATCH (MATERIAL/PRODUCT)"
+      "<target> FROM <step> [AS <new_target>].\n\t"
+      "Got: {}".format(" ".join(keywords)))
 
   if rule != "MATCH":
     raise FormatError("Wrong rule to verify! {}".format(rule))
 
   if from_keyword != "FROM":
     raise FormatError("FROM should come before step")
+
+  if as_keyword != "AS":
+    raise FormatError("AS should come after the step name")
 
   if artifact not in MATERIAL_OR_PRODUCT:
     raise FormatError("Target should be either MATERIAL or PRODUCT!")
