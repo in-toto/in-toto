@@ -28,6 +28,7 @@
 
 import attr
 import canonicaljson
+import inspect
 
 from ..ssl_crypto import keys as ssl_crypto__keys
 
@@ -43,6 +44,14 @@ class Metablock(object):
     with open(filename, 'wt') as fp:
       fp.write("{}".format(self))
 
+  def validate(self):
+    """ Aggregates all the validate methods of itself and its subclasses """
+    for method in inspect.getmembers(self, predicate=inspect.ismethod):
+        if method[0].startswith("_validate_"):
+          if not method[1]():
+            return False
+
+    return True
 
 @attr.s(repr=False)
 class Signable(Metablock):
@@ -80,7 +89,6 @@ class Signable(Metablock):
         raise Exception("Signature key not found, key id is %s" % keyid)
       if not ssl_crypto__keys.verify_signature(key, signature, self.payload):
         raise Exception("Invalid signature")
-
 
 @attr.s(repr=False, cmp=False)
 class ComparableHashDict(object):

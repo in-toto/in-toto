@@ -26,13 +26,20 @@
       functionaries, who are identified by a key also stored to the layout
 
   Inspection:
-    represents a hook that is run at verification
+      represents a hook that is run at verification
 """
 
 import json
 import attr
+
+import toto.ssl_crypto.formats
+import toto.models.matchrule
+
+from toto.ssl_commons.exceptions import FormatError 
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from dateutil.parser import parse
 
 # import validators
 from . import common as models__common
@@ -136,6 +143,62 @@ class Layout(models__common.Signable):
       step_link_dict[step.name] = link
     return step_link_dict
 
+  def _validate_type(self):
+    """ ensure that the type string is set to layout"""
+    if self._type != "layout":
+      raise FormatError("Invalid _type value for layout (Should be 'layout')")
+
+    return True
+
+  def _validate_expires(self):
+    """ ensure that the expiration field is a proper timestamp"""
+    try:
+      date = parse(self.expires)
+    except:
+      raise FormatError("Malformed date string in layout!")
+
+    return True
+
+  def _validate_keys(self):
+    """ ensure that the key dictionary contains the right keys"""
+    if type(self.keys) != dict:
+      raise FormatError("keys dictionary is malformed!")
+
+    for keyid in self.keys:
+      toto.ssl_crypto.formats.KEYID_SCHEMA.check_match(keyid)
+      toto.ssl_crypto.formats.ANYKEY_SCHEMA.check_match(self.keys[keyid])
+
+      if 'private' in self.keys[keyid] and self.keys[keyid]['private'] != '':
+        raise FormatError("key: {} contains a private key part!".format(keyid))
+
+    return True
+
+  def _validate_steps(self):
+    """ ensure that the list of steps is correctly formed """
+    if type(self.steps) != list:
+      raise FormatError("the steps section should be a list!")
+
+    for step in self.steps:
+      if not isinstance(step, Step):
+        raise FormatError("The steps list should only contain steps!")
+
+      step.validate()
+
+    return True
+
+  def _validate_inspections(self):
+    """ ensure that the list of steps is correctly formed """
+    if type(self.inspect) != list:
+      raise FormatError("The inspect field should a be a list!")
+
+    for inspection in self.inspect:
+      if not isinstance(inspection, Inspection):
+        raise FormatError("The inspect list should only contain inspections!")
+
+      inspection.validate()
+
+    return True
+
 @attr.s(repr=False)
 class Step(models__common.Metablock):
   """
@@ -176,6 +239,49 @@ class Step(models__common.Metablock):
         expected_command=data.get("expected_command"))
 
 
+  def _validate_type(self):
+    """ ensure that the type field is set to step """
+    if self._type != "step":
+      raise FormatError("Invalid _type value for step (Should be 'step')")
+
+  def _validate_threshold(self):
+    """ Check that the threshold field is set to an int """
+    try:
+      int(self.threshold)
+    except:
+      raise FormatError("Invalid threshold value for this step")
+    return True
+
+  def _validate_material_matchrules(self):
+    """ check that the material matchrules contains a list of matchrules """
+    if type(self.material_matchrules) != list:
+      raise FormatError("Material matchrules should be a list!")
+
+    for matchrule in self.material_matchrules:
+      toto.models.matchrule.check_matchrule_syntax(matchrule)
+
+  def _validate_product_matchrules(self):
+    """ check that the product matchrules contains a list of matchrules"""
+    if type(self.product_matchrules) != list:
+      raise FormatError("Product matchrules should be a list!")
+
+    for matchrule in self.product_matchrules:
+      toto.models.matchrule.check_matchrule_syntax(matchrule)
+
+  def _validate_pubkeys(self):
+    """ check that the pubkeys is a list of keyids"""
+    if type(self.pubkeys) != list:
+      raise FormatError("The pubkeys field should be a list!")
+
+    for keyid in self.pubkeys:
+      toto.ssl_crypto.formats.KEYID_SCHEMA.check_match(keyid)
+
+  def _validate_expected_command(self):
+    """ check that the expected command is a command-like string"""
+    # TODO: Maybe be a little bit more granularity
+    if type(self.expected_command) != str:
+      raise FormatError("The expected command field is malformed!")
+
 @attr.s(repr=False)
 class Inspection(models__common.Metablock):
   """
@@ -207,3 +313,30 @@ class Inspection(models__common.Metablock):
     return Inspection(name=data.get("name"), run=data.get("run"),
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"))
+
+  def _validate_type(self):
+    """ ensure that the type field is set to inspection"""
+    if self._type != "inspection":
+      raise FormatError("The _type field should be aset to inspection!")
+
+  def _validate_material_matchrules(self):
+    """ check that the material matchrules contains a list of matchrules """
+    if type(self.material_matchrules) != list:
+      raise FormatError("The material matchrules should be a list!")
+
+    for matchrule in self.material_matchrules:
+      toto.models.matchrule.check_matchrule_syntax(matchrule)
+
+  def _validate_product_matchrules(self):
+    """ check that the product matchrules contains a list of matchrules"""
+    if type(self.product_matchrules) != list:
+      raise FormatError("The product matchrules should be a list!")
+
+    for matchrule in self.product_matchrules:
+      toto.models.matchrule.check_matchrule_syntax(matchrule)
+
+  def _validate_run(self):
+    """ check that the expected command is a command-like string"""
+    # TODO: Maybe be a little bit more granularity
+    if type(self.run) != str:
+      raise FormatError("The run field is malformed!")
