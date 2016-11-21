@@ -177,8 +177,8 @@ def execute_link(link_cmd_args, record_byproducts):
 
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
 
-def create_link_metadata(link_name, materials_dict, products_dict,
-    link_cmd_args, byproducts, return_value):
+def create_link_metadata(link_name, materials_dict={}, products_dict={},
+    link_cmd_args="", byproducts={}, return_value=None):
   """
   <Purpose>
     Takes the state of the materials (before link command execution), the state
@@ -190,20 +190,20 @@ def create_link_metadata(link_name, materials_dict, products_dict,
     link_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    materials_dict:
+    materials_dict: (optional)
             A dictionary with file paths as keys and the files' hashes as
             values.
-    products_dict:
+    products_dict: (optional)
             A dictionary with file paths as keys and the files' hashes as
             values.
-    link_cmd_args:
+    link_cmd_args: (optional)
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    byproducts:
+    byproducts: (optional)
             A dictionary in the format containing standard output and standard
             error of the executed link command, i.e.:
             {"stdout": "<standard output", "stderr": "<standard error>"}
-    return_value:
+    return_value: (optional)
             The return value of the executed command.
 
   <Exceptions>
@@ -268,5 +268,4 @@ def run_link(link_name, materials_list, products_list, link_cmd_args,
   products_dict = record_artifacts_as_dict(products_list)
   return create_link_metadata(link_name, materials_dict, products_dict,
       link_cmd_args, byproducts, return_value)
-
 
