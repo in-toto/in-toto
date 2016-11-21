@@ -35,7 +35,7 @@ import attr
 import toto.ssl_crypto.formats
 import toto.models.matchrule
 
-from toto.ssl_commons.exceptions import FormatError 
+from toto.ssl_commons.exceptions import FormatError
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta

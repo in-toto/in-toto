@@ -32,7 +32,7 @@ class TestStepValidator(unittest.TestCase):
 
   def test_wrong_type(self):
     """ test the type field within Validate() """
-  
+
     with self.assertRaises(FormatError):
       self.step._type = "wrong"
       self.step._validate_type()
@@ -42,9 +42,9 @@ class TestStepValidator(unittest.TestCase):
     self.step._validate_type()
 
   def test_wrong_threshold(self):
-    """ test that the threshold value is correctly checked """ 
+    """ test that the threshold value is correctly checked """
 
-    with self.assertRaises(FormatError): 
+    with self.assertRaises(FormatError):
 
       # no, python is not *this* smart
       self.step.threshold = "Ten"
@@ -98,8 +98,8 @@ class TestStepValidator(unittest.TestCase):
     rsa_key_one = toto.ssl_crypto.keys.generate_rsa_key()
     rsa_key_two = toto.ssl_crypto.keys.generate_rsa_key()
 
-    with self.assertRaises(FormatError): 
-      
+    with self.assertRaises(FormatError):
+
       self.step.pubkeys = ['bad-keyid']
       self.step._validate_pubkeys()
       self.step.validate()
@@ -110,7 +110,7 @@ class TestStepValidator(unittest.TestCase):
 
   def test_wrong_expected_command(self):
 
-    with self.assertRaises(FormatError): 
+    with self.assertRaises(FormatError):
 
       # no, python is not *this* smart
       self.step.expected_command = -1

@@ -31,7 +31,7 @@ class TestInspectionValidator(unittest.TestCase):
 
   def test_wrong_type(self):
     """ test the type field within Validate() """
-  
+
     with self.assertRaises(FormatError):
       self.inspection._type = "wrong"
       self.inspection._validate_type()
@@ -42,7 +42,7 @@ class TestInspectionValidator(unittest.TestCase):
 
   def test_wrong_material_matchrules(self):
     """ test that the material matchrule validators catch malformed ones """
-   
+
     with self.assertRaises(FormatError):
       self.inspection.material_matchrules = [["NONFOO"]]
       self.inspection._validate_material_matchrules()
@@ -76,7 +76,7 @@ class TestInspectionValidator(unittest.TestCase):
 
   def test_wrong_run(self):
 
-    with self.assertRaises(FormatError): 
+    with self.assertRaises(FormatError):
 
       # no, python is not *this* smart
       self.inspection.run = -1

@@ -13,7 +13,7 @@
 
 <Purpose>
   This module provides functions to ensure the syntax of the matchrules is
-  correct. 
+  correct.
 
 """
 from toto.ssl_commons.exceptions import FormatError
@@ -58,7 +58,7 @@ def _validate_generic_rule(keywords):
   if not isinstance(keywords, list):
     raise FormatError("this matching rule is not a list")
 
-  if len(keywords) != 2: 
+  if len(keywords) != 2:
     raise FormatError("Wrong rule format")
 
   rule, artifact = keywords
@@ -86,7 +86,7 @@ def check_matchrule_syntax(keywords):
   """
 
   RULE_DISPATCHERS = {'MATCH': _validate_match_rule,
-      'CREATE': _validate_generic_rule, 
+      'CREATE': _validate_generic_rule,
       'MODIFY': _validate_generic_rule,
       'DELETE': _validate_generic_rule
   }

@@ -33,7 +33,7 @@ class TestLayoutValidator(unittest.TestCase):
 
   def test_wrong_type(self):
     """ test the type field within Validate() """
-  
+
     with self.assertRaises(FormatError):
       self.layout._type = "wrong"
       self.layout._validate_type()
@@ -46,15 +46,15 @@ class TestLayoutValidator(unittest.TestCase):
     """ test the expires field is properly populated """
 
     with self.assertRaises(FormatError):
-      self.layout.expires = '' 
+      self.layout.expires = ''
       self.layout._validate_expires()
       self.layout.validate()
 
-      self.layout.expires = '-1' 
+      self.layout.expires = '-1'
       self.layout._validate_expires()
       self.layout.validate()
 
-      # notice the wrong month 
+      # notice the wrong month
       self.layout.expires = '2016-13-18T16:44:55.553304'
       self.layout._validate_expires()
       self.layout.validate()
@@ -64,7 +64,7 @@ class TestLayoutValidator(unittest.TestCase):
     self.assertTrue(self.layout.validate())
 
   def test_wrong_key_dictionary(self):
-    """ test that the keys dictionary is properly populated """ 
+    """ test that the keys dictionary is properly populated """
     rsa_key_one = toto.ssl_crypto.keys.generate_rsa_key()
     rsa_key_two = toto.ssl_crypto.keys.generate_rsa_key()
 

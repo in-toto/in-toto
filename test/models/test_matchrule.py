@@ -47,7 +47,7 @@ class TestMatchruleSyntax(unittest.TestCase):
 
     rule = ["DELETE", "foo"]
     check_matchrule_syntax(rule)
- 
+
   def test_validate_match_rule(self):
 
     with self.assertRaises(FormatError):
