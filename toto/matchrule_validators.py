@@ -32,10 +32,11 @@ def _validate_match_rule(keywords):
     new_target = target
 
   elif len(keywords) == 7:
-    rule, artifact, target, from_keyword, step, as_keyword, new_target = keywords
+    (rule, artifact, target, as_keyword, new_target, from_keyword, 
+        step) = keywords
   else:
     raise FormatError("Wrong rule format, should be: MATCH (MATERIAL/PRODUCT)"
-      "<target> FROM <step> [AS <new_target>].\n\t"
+      "<target> [AS <new_target>] FROM <step>.\n\t"
       "Got: {}".format(" ".join(keywords)))
 
   if rule != "MATCH":

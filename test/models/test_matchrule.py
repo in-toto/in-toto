@@ -20,22 +20,25 @@
 
 import unittest
 from toto.ssl_commons.exceptions import FormatError
-from toto.models.matchrule import check_matchrule_syntax
+from toto.matchrule_validators import check_matchrule_syntax
 
 class TestMatchruleSyntax(unittest.TestCase):
   """Test matchrule syntax validators """
 
   def test_validate_generic_rules(self):
+    """Check the syntax generic rules (2 argument): CREATE, MODIFY, DELETE."""
 
     # test for non-existing generic rule
+    rule = ["SUBVERT", "foo"]
     with self.assertRaises(FormatError):
-      rule = ["SUBVERT", "foo"]
       check_matchrule_syntax(rule)
 
-      rule = ["CREATE", "foo", "AND", "bar"]
+    rule = ["CREATE", "foo", "AND", "bar"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
-      rule = ["CREATE"]
+    rule = ["CREATE"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
     # test proper generic rule
@@ -49,27 +52,32 @@ class TestMatchruleSyntax(unittest.TestCase):
     check_matchrule_syntax(rule)
 
   def test_validate_match_rule(self):
+    """Check the MATCH variant of the matchrules."""
 
+    rule = ["MATCH"]
     with self.assertRaises(FormatError):
-      rule = ["MATCH"]
       check_matchrule_syntax(rule)
 
-      rule = ["MATCH", "PRODUCT", "foo", "NOTFROM", "step"]
+    rule = ["MATCH", "PRODUCT", "foo", "NOTFROM", "step"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
-      rule = ["MATCH", "PRODUCT", "foo", "FROM", "step", "NOT-AS", "otherpath"]
+    rule = ["MATCH", "PRODUCT", "foo", "NOT-AS", "otherpath", "FROM", "step"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
-      rule = ["MATCH", "PRODUCT", "foo", "FROM"]
+    rule = ["MATCH", "PRODUCT", "foo", "FROM"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
-      rule = ["MATCH", "PRODUCT", "foo", "FROM", "step", "NOT-AS"]
+    rule = ["MATCH", "PRODUCT", "foo", "AS", "FROM", "step"]
+    with self.assertRaises(FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "FROM", "step"]
     check_matchrule_syntax(rule)
 
-    rule = ["MATCH", "PRODUCT", "foo", "FROM", "step", "AS", "bar"]
+    rule = ["MATCH", "PRODUCT", "foo", "AS", "bar", "FROM", "step"]
     check_matchrule_syntax(rule)
 
 if __name__ == '__main__':

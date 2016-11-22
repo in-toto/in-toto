@@ -27,77 +27,88 @@ class TestLayoutValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
 
   def setUp(self):
-    """ Populate a base layout that we can use """
+    """Populate a base layout that we can use."""
     self.layout = Layout()
-    self.layout.expires = datetime.datetime.now().isoformat()
+    self.layout.expires = '2016-11-18T16:44:55Z'
 
   def test_wrong_type(self):
-    """ test the type field within Validate() """
+    """Test that the type field is validated properly."""
 
     with self.assertRaises(FormatError):
       self.layout._type = "wrong"
       self.layout._validate_type()
-      self.assertFalse(self.layout.validate())
+      self.layout.validate()
 
     self.layout._type = "layout"
-    self.assertTrue(self.layout._validate_type())
+    self.layout._validate_type()
 
   def test_wrong_expires(self):
-    """ test the expires field is properly populated """
+    """Test the expires field is properly populated."""
+
+    self.layout.expires = ''
+    with self.assertRaises(FormatError):
+      self.layout._validate_expires()
 
     with self.assertRaises(FormatError):
-      self.layout.expires = ''
-      self.layout._validate_expires()
       self.layout.validate()
 
-      self.layout.expires = '-1'
+    self.layout.expires = '-1'
+    with self.assertRaises(FormatError):
       self.layout._validate_expires()
+
+    with self.assertRaises(FormatError):
       self.layout.validate()
 
-      # notice the wrong month
-      self.layout.expires = '2016-13-18T16:44:55.553304'
+    # notice the wrong month
+    self.layout.expires = '2016-13-18T16:44:55Z'
+    with self.assertRaises(FormatError):
       self.layout._validate_expires()
+
+    with self.assertRaises(FormatError):
       self.layout.validate()
 
-    self.layout.expires = '2016-11-18T16:44:55.553304'
-    self.assertTrue(self.layout._validate_expires())
-    self.assertTrue(self.layout.validate())
+    self.layout.expires = '2016-11-18T16:44:55Z'
+    self.layout._validate_expires()
+    self.layout.validate()
 
   def test_wrong_key_dictionary(self):
-    """ test that the keys dictionary is properly populated """
+    """Test that the keys dictionary is properly populated."""
     rsa_key_one = toto.ssl_crypto.keys.generate_rsa_key()
     rsa_key_two = toto.ssl_crypto.keys.generate_rsa_key()
 
+    # FIXME: attr.ib reutilizes the default dictionary, so future constructor
+    # are not empty...
+    self.layout.keys = {"kek": rsa_key_one}
     with self.assertRaises(FormatError):
-
-      # FIXME: attr.ib reutilizes the default dictionary, so future constructor
-      # are not empty...
-      self.layout.keys = {}
-      self.layout.keys["kek"] = rsa_key_one
-
       self.layout._validate_keys()
+
+    with self.assertRaises(FormatError):
       self.layout.validate()
 
-      self.layout.keys = {}
-      self.layout.keys[rsa_key_two['keyid']] = "kek"
-
+    self.layout.keys = {}
+    self.layout.keys[rsa_key_two['keyid']] = "kek"
+    with self.assertRaises(FormatError):
       self.layout._validate_keys()
+
+    with self.assertRaises(FormatError):
       self.layout.validate()
 
     self.layout.keys = {}
     self.layout.keys[rsa_key_one['keyid']] = rsa_key_one
     self.layout.keys[rsa_key_two['keyid']] = rsa_key_two
 
-    self.assertTrue(self.layout._validate_keys())
-    self.assertTrue(self.layout.validate())
+    self.layout._validate_keys()
+    self.layout.validate()
 
   def test_wrong_steps_list(self):
-    """ check that the validate method checks the steps' correctness """
+    """Check that the validate method checks the steps' correctness."""
+    self.layout.steps = "not-a-step"
+
     with self.assertRaises(FormatError):
-      self.layout.steps = "not-a-step"
       self.layout.validate()
 
-      test_step = Step("this-is-a-step")
+    test_step = Step("this-is-a-step")
+    with self.assertRaises(FormatError):
       test_step.material_matchrules = ['this is a malformed step']
       self.layout.steps = [test_step]
       self.layout.validate()
@@ -105,29 +116,27 @@ class TestLayoutValidator(unittest.TestCase):
 
     test_step = Step("this-is-a-step")
     test_step.material_matchrules = [["CREATE", "foo"]]
+    test_step.threshold = 1
     self.layout.steps = [test_step]
     self.layout.validate()
 
   def test_wrong_inspect_list(self):
-    """ check that the validate method checks the inspections' correctness """
+    """Check that the validate method checks the inspections' correctness."""
 
+    self.layout.inspect = "not-an-inspection"
     with self.assertRaises(FormatError):
-      self.layout.inspect = "not-an-inspection"
       self.layout.validate()
 
-      test_inspection = Inspection("this-is-a-step")
-      test_inspection.material_matchrules = ['this is a malformed inspection']
-      self.layout.inspect= [test_inspection]
+    test_inspection = Inspection("this-is-a-step")
+    test_inspection.material_matchrules = ['this is a malformed matchrule']
+    self.layout.inspect = [test_inspection]
+    with self.assertRaises(FormatError):
       self.layout.validate()
-
 
     test_inspection = Inspection("this-is-a-step")
     test_inspection.material_matchrules = [["CREATE", "foo"]]
     self.layout.inspect = [test_inspection]
     self.layout.validate()
-
-
-    pass
 
 if __name__ == '__main__':
 

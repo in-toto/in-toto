@@ -26,30 +26,37 @@ class TestInspectionValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
 
   def setUp(self):
-    """ Populate a base layout that we can use """
+    """Populate a base layout that we can use."""
     self.inspection = Inspection("some-inspection")
 
   def test_wrong_type(self):
-    """ test the type field within Validate() """
+    """Test the type field within Validate()."""
+
+    self.inspection._type = "wrong"
+    with self.assertRaises(FormatError):
+      self.inspection._validate_type()
 
     with self.assertRaises(FormatError):
-      self.inspection._type = "wrong"
-      self.inspection._validate_type()
       self.assertFalse(self.inspection.validate())
 
     self.inspection._type = "inspection"
     self.inspection._validate_type()
 
   def test_wrong_material_matchrules(self):
-    """ test that the material matchrule validators catch malformed ones """
+    """Test that the material matchrule validators catch malformed ones."""
 
     with self.assertRaises(FormatError):
       self.inspection.material_matchrules = [["NONFOO"]]
       self.inspection._validate_material_matchrules()
+
+    with self.assertRaises(FormatError):
       self.assertFalse(self.inspection.validate())
 
+    with self.assertRaises(FormatError):
       self.inspection.material_matchrules = "PFF"
       self.inspection._validate_material_matchrules()
+
+    with self.assertRaises(FormatError):
       self.assertFalse(self.inspection.validate())
 
     # for more thorough tests, check the test_matchrule.py module
@@ -58,15 +65,20 @@ class TestInspectionValidator(unittest.TestCase):
     self.assertFalse(self.inspection.validate())
 
   def test_wrong_product_matchrules(self):
-    """ test that the product matchrule validatores catch malformed ones """
+    """Test that the product matchrule validators catch malformed values."""
+
+    self.inspection.product_matchrules = [["NONFOO"]]
+    with self.assertRaises(FormatError):
+      self.inspection._validate_product_matchrules()
 
     with self.assertRaises(FormatError):
-      self.inspection.product_matchrules = [["NONFOO"]]
-      self.inspection._validate_product_matchrules()
       self.assertFalse(self.inspection.validate())
 
-      self.inspection.product_matchrules = "PFF"
+    self.inspection.product_matchrules = "PFF"
+    with self.assertRaises(FormatError):
       self.inspection._validate_product_matchrules()
+
+    with self.assertRaises(FormatError):
       self.assertFalse(self.inspection.validate())
 
     # for more thorough tests, check the test_matchrule.py module
@@ -75,13 +87,13 @@ class TestInspectionValidator(unittest.TestCase):
     self.assertFalse(self.inspection.validate())
 
   def test_wrong_run(self):
+    """Test that the run validators catch malformed values."""
+
+    self.inspection.run = -1
+    with self.assertRaises(FormatError):
+      self.inspection._validate_run()
 
     with self.assertRaises(FormatError):
-
-      # no, python is not *this* smart
-      self.inspection.run = -1
-
-      self.inspection._validate_run()
       self.inspection.validate()
 
     self.inspection.run = "somecommand"
