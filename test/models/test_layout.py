@@ -138,6 +138,22 @@ class TestLayoutValidator(unittest.TestCase):
     self.layout.inspect = [test_inspection]
     self.layout.validate()
 
+  def test_repeated_step_names(self):
+    """Check that only unique names exist in the steps and inspect lists"""
+
+    self.layout.steps = [Step("name"), Step("name")]
+    with self.assertRaises(FormatError):
+      self.layout.validate()
+
+    self.layout.steps = [Step("name")]
+    self.layout.inspect = [Inspection("name")]
+    with self.assertRaises(FormatError):
+      self.layout.validate()
+
+    self.layout.step = [Step("name"), Step("othername")]
+    self.layout.inspect = [Inspection("thirdname")]
+    self.layout.validate()
+
 if __name__ == '__main__':
 
   unittest.main()

@@ -168,8 +168,11 @@ class Layout(models__common.Signable):
       if 'private' in key and key['private'] != '':
         raise FormatError("key: {} contains a private key part!".format(keyid))
 
-  def _validate_steps(self):
-    """Private method to verify that the list of steps is correctly formed."""
+  def _validate_steps_and_inspections(self):
+    """Private method to verify that the list of steps and inspections are
+    correctly formed."""
+
+    names_seen = set()
     if type(self.steps) != list:
       raise FormatError("the steps section should be a list!")
 
@@ -179,8 +182,11 @@ class Layout(models__common.Signable):
 
       step.validate()
 
-  def _validate_inspections(self):
-    """Private method to ensure that the list of inspections proper."""
+      if step.name in names_seen:
+        raise FormatError("There is a repeated name in the steps! "
+                          "{}".format(step.name))
+      names_seen.add(step.name)
+
     if type(self.inspect) != list:
       raise FormatError("The inspect field should a be a list!")
 
@@ -190,7 +196,10 @@ class Layout(models__common.Signable):
 
       inspection.validate()
 
-    return True
+      if inspection.name in names_seen:
+        raise FormatError("There is a repeated name in the steps! "
+                          "{}".format(inspection.name))
+      names_seen.add(inspection.name)
 
 @attr.s(repr=False)
 class Step(models__common.Metablock):
