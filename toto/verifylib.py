@@ -39,6 +39,7 @@ import toto.models.link
 import toto.ssl_crypto.keys
 from toto.exceptions import RuleVerficationFailed
 from toto.models.common import ComparableHashDict
+from toto.matchrule_validators import check_matchrule_syntax
 import toto.log as log
 
 
@@ -305,7 +306,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
             The contained materials and products are used as verification target.
 
   <Exceptions>
-    raises an Exception if the rule does not conform with the rule format.
+    raises FormatError if the rule does not conform with the rule format.
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
@@ -321,7 +322,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
     The artifact queue minus the files that were matched by the rule.
 
   """
-  # FIXME: Validate rule format
+  check_matchrule_syntax(rule)
   path_pattern = rule[2]
   target_path_pattern = rule[4] if len(rule) == 7 else path_pattern
   target_type = rule[1].lower()
@@ -332,10 +333,6 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
     target_artifacts = links[target_name].materials
   elif target_type == "product":
     target_artifacts = links[target_name].products
-  else:
-    # FIXME: We should never reach this because rule format was validate before
-    raise Exception("Wrong target type '%s'. Has to be 'material' or 'product'"
-        % source_type)
 
   matched_target_artifacts = fnmatch.filter(target_artifacts.keys(),
       target_path_pattern)
@@ -394,7 +391,7 @@ def verify_create_rule(rule, artifact_queue):
             A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
-    raises an Exception if the rule does not conform with the rule format.
+    raises an FormatError if the rule does not conform with the rule format.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
     RuleVerficationFailed if nothing is matched in the artifact queue.
@@ -406,7 +403,7 @@ def verify_create_rule(rule, artifact_queue):
     The artifact queue minus the files that were matched by the rule.
 
   """
-  # FIXME: Validate rule format
+  check_matchrule_syntax(rule)
   path_pattern = rule[1]
   matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
   if not matched_artifacts:
@@ -433,7 +430,7 @@ def verify_delete_rule(rule, artifact_queue):
             A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
-    raises an Exception if the rule does not conform with the rule format.
+    raises FormatError if the rule does not conform with the rule format.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
     RuleVerficationFailed if path pattern matches files in artifact queue.
@@ -448,7 +445,7 @@ def verify_delete_rule(rule, artifact_queue):
     files in order to pass.
 
   """
-  # FIXME: Validate rule format
+  check_matchrule_syntax(rule)
   path_pattern = rule[1]
   matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
   if matched_artifacts:
@@ -509,7 +506,7 @@ def verify_item_rules(item_name, rules, artifacts, links):
 
 
   <Exceptions>
-    raises an Exception if a rule does not conform with the rule format.
+    raises FormatError if a rule does not conform with the rule format.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
@@ -518,8 +515,8 @@ def verify_item_rules(item_name, rules, artifacts, links):
   """
   # A list of file paths, recorded as artifacts for this item
   artifact_queue = artifacts.keys()
-  #FIXME: Validate rule format
   for rule in rules:
+    check_matchrule_syntax(rule)
     if rule[0].lower() == "match":
       artifact_queue = verify_match_rule(rule, artifact_queue, artifacts, links)
 

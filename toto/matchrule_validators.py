@@ -39,16 +39,17 @@ def _validate_match_rule(keywords):
       "<target> [AS <new_target>] FROM <step>.\n\t"
       "Got: {}".format(" ".join(keywords)))
 
-  if rule != "MATCH":
+  if rule != "MATCH" and rule.upper() != "MATCH":
     raise FormatError("Wrong rule to verify! {}".format(rule))
 
-  if from_keyword != "FROM":
+  if from_keyword != "FROM" and from_keyword.upper() != "FROM":
     raise FormatError("FROM should come before step")
 
-  if as_keyword != "AS":
+  if as_keyword != "AS" and as_keyword.upper() != "AS":
     raise FormatError("AS should come after the step name")
 
-  if artifact not in MATERIAL_OR_PRODUCT:
+  if artifact not in MATERIAL_OR_PRODUCT and \
+      artifact.upper() not in MATERIAL_OR_PRODUCT:
     raise FormatError("Target should be either MATERIAL or PRODUCT!")
 
 def _validate_generic_rule(keywords):
@@ -66,7 +67,7 @@ def _validate_generic_rule(keywords):
 
   toto.ssl_crypto.formats.PATH_SCHEMA.check_match(artifact)
 
-  if rule not in VALID_OPERATIONS:
+  if rule not in VALID_OPERATIONS and rule.upper() not in VALID_OPERATIONS:
     raise FormatError("{} is not a valid rule!".format(rule))
 
 def check_matchrule_syntax(keywords):
@@ -95,7 +96,7 @@ def check_matchrule_syntax(keywords):
   if not isinstance(keywords, list):
     raise FormatError("Product and Material matchers should be a list!")
 
-  rule = keywords[0]
+  rule = keywords[0].upper()
   if rule not in RULE_DISPATCHERS:
     raise FormatError("error in {}.\n\trule should be one of "
             "{}".format(rule, RULE_DISPATCHERS.keys()))
