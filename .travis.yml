@@ -1,10 +1,18 @@
-language: python
+language:
+    python
 
 python:
-      - "2.7"
+    - "2.7"
+
+env:
+    TOXENV=py27
 
 install:
     - pip install tox
+    - pip install coveralls
 
 script:
     tox
+
+after_success:
+    coveralls

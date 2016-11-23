@@ -8,6 +8,7 @@ import unittest
 
 class Test(unittest.TestCase):
 
+  @unittest.skip("Missing test implementation")
   def test_unimplemented(self):
     raise self.assertFalse("Missing test implementation!")
 
