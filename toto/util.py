@@ -146,6 +146,11 @@ def flatten_and_invert_artifact_dict(artifact_dict, hash_algorithm="sha256"):
     >>> flat_artifacts == {"34324abc34df" : "foo"}
     True
 
+  <Discussion>
+    What should we do if we face a key collision, i.e. if their are two files
+    with the same hash? Should we give a warning, should we raise an exception?
+    This is prone to happen. Think of empty files.
+
   <Arguments>
     artifact_dict:
       The artifact_dict to flatten and invert.
