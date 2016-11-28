@@ -37,7 +37,7 @@ class TestInspectionValidator(unittest.TestCase):
       self.inspection._validate_type()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.inspection.validate())
+      self.inspection.validate()
 
     self.inspection._type = "inspection"
     self.inspection._validate_type()
@@ -50,19 +50,19 @@ class TestInspectionValidator(unittest.TestCase):
       self.inspection._validate_material_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.inspection.validate())
+      self.inspection.validate()
 
     with self.assertRaises(FormatError):
       self.inspection.material_matchrules = "PFF"
       self.inspection._validate_material_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.inspection.validate())
+      self.inspection.validate()
 
     # for more thorough tests, check the test_matchrule.py module
     self.inspection.material_matchrules = [["CREATE", "foo"]]
     self.inspection._validate_material_matchrules()
-    self.assertFalse(self.inspection.validate())
+    self.inspection.validate()
 
   def test_wrong_product_matchrules(self):
     """Test that the product matchrule validators catch malformed values."""
@@ -72,19 +72,19 @@ class TestInspectionValidator(unittest.TestCase):
       self.inspection._validate_product_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.inspection.validate())
+      self.inspection.validate()
 
     self.inspection.product_matchrules = "PFF"
     with self.assertRaises(FormatError):
       self.inspection._validate_product_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.inspection.validate())
+      self.inspection.validate()
 
     # for more thorough tests, check the test_matchrule.py module
     self.inspection.product_matchrules = [["CREATE", "foo"]]
     self.inspection._validate_product_matchrules()
-    self.assertFalse(self.inspection.validate())
+    self.inspection.validate()
 
   def test_wrong_run(self):
     """Test that the run validators catch malformed values."""

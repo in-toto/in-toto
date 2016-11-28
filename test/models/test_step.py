@@ -38,7 +38,7 @@ class TestStepValidator(unittest.TestCase):
       self.step._validate_type()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.step.validate())
+      self.step.validate()
 
     self.step._type = "step"
     self.step._validate_type()
@@ -67,19 +67,19 @@ class TestStepValidator(unittest.TestCase):
       self.step._validate_material_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.step.validate())
+      self.step.validate()
 
     self.step.material_matchrules = "PFF"
     with self.assertRaises(FormatError):
       self.step._validate_material_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.step.validate())
+      self.step.validate()
 
     # for more thorough tests, check the test_matchrule.py module
     self.step.material_matchrules = [["CREATE", "foo"]]
     self.step._validate_material_matchrules()
-    self.assertFalse(self.step.validate())
+    self.step.validate()
 
   def test_wrong_product_matchrules(self):
     """Test that the product matchrule validators catch malformed ones."""
@@ -89,19 +89,19 @@ class TestStepValidator(unittest.TestCase):
       self.step._validate_product_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.step.validate())
+      self.step.validate()
 
     self.step.product_matchrules = "PFF"
     with self.assertRaises(FormatError):
       self.step._validate_product_matchrules()
 
     with self.assertRaises(FormatError):
-      self.assertFalse(self.step.validate())
+      self.step.validate()
 
     # for more thorough tests, check the test_matchrule.py module
     self.step.product_matchrules = [["CREATE", "foo"]]
     self.step._validate_product_matchrules()
-    self.assertFalse(self.step.validate())
+    self.step.validate()
 
   def test_wrong_pubkeys(self):
     # FIXME: generating keys for each test are expensive processes, maybe we
