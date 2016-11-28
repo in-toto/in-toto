@@ -72,13 +72,12 @@ def _validate_generic_rule(keywords):
 
 def check_matchrule_syntax(keywords):
   """
-  <Name>
-    check_matchrule_syntax
+  <Purpose>
+    verify that the syntax of the provided keywords corresponds to the valid
+    statements of the matchrules described in the specification
 
-  <Description>
-    Given a list of keywords (e.g., ["CREATE", "foo"]), verify that the
-    syntax corresponds to the valid statements of the matchrules described
-    in the specification
+  <Arguments>
+    keywords: a list of keywords (e.g., ["CREATE", "foo"]), 
 
   <Returns>
     None
