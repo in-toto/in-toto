@@ -27,16 +27,16 @@ def _validate_match_rule(keywords):
     raise FormatError("this matching rule is not a list")
 
   if len(keywords) == 5:
-    rule, artifact, target, from_keyword, step = keywords
+    rule, artifact, path_pattern, from_keyword, step = keywords
     as_keyword = "AS"
-    new_target = target
+    target_path_pattern = path_pattern 
 
   elif len(keywords) == 7:
-    (rule, artifact, target, as_keyword, new_target, from_keyword,
+    (rule, artifact, path_pattern, as_keyword, target_path_pattern, from_keyword,
         step) = keywords
   else:
     raise FormatError("Wrong rule format, should be: MATCH (MATERIAL/PRODUCT)"
-      "<target> [AS <new_target>] FROM <step>.\n\t"
+      "<path_pattern> [AS <target_path_pattern>] FROM <step>.\n\t"
       "Got: {}".format(" ".join(keywords)))
 
   if rule != "MATCH" and rule.upper() != "MATCH":
