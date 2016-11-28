@@ -83,7 +83,7 @@ def check_matchrule_syntax(keywords):
   <Returns>
     None
 
-  <Raises>
+  <Exceptions>
     FormatError: if the keywords provided do not match the matchrule syntax
   """
 
