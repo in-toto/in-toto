@@ -28,6 +28,7 @@
 
 import attr
 import canonicaljson
+import inspect
 
 from ..ssl_crypto import keys as ssl_crypto__keys
 
@@ -43,6 +44,29 @@ class Metablock(object):
     with open(filename, 'wt') as fp:
       fp.write("{}".format(self))
 
+  def validate(self):
+    """
+      <Purpose>
+        Inspects the class (or subclass) for validate methods to ensure the
+        all its members are properly formed. This method can be used to ensure
+        the metadata contained in this class is proper before calling dump.
+
+      <Arguments>
+        None
+
+      <Exceptions>
+        FormatError: If any of the members of this class are not properly
+                     populated.
+
+      <Side Effects>
+        None
+
+      <Returns>
+        None
+    """
+    for method in inspect.getmembers(self, predicate=inspect.ismethod):
+        if method[0].startswith("_validate_"):
+          method[1]()
 
 @attr.s(repr=False)
 class Signable(Metablock):
@@ -80,7 +104,6 @@ class Signable(Metablock):
         raise Exception("Signature key not found, key id is %s" % keyid)
       if not ssl_crypto__keys.verify_signature(key, signature, self.payload):
         raise Exception("Invalid signature")
-
 
 @attr.s(repr=False, cmp=False)
 class ComparableHashDict(object):
