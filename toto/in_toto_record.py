@@ -36,9 +36,9 @@
 
   Example Usage
   ```
-  in-toto-run.py start --step-name edit-files --materials . --key bob
+  in_toto_record.py start --step-name edit-files --materials . --key bob
   # Edit files manually ...
-  in-toto-run.py stop --step-name edit-files --products . --key bob
+  in_toto_record.py stop --step-name edit-files --products . --key bob
   ```
 
 """
