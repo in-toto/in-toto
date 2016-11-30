@@ -69,7 +69,7 @@ class Layout(models__common.Signable):
         a list of Inspection objects
 
     keys:
-        A dictionary of  public keys used to verify the signature of link
+        A dictionary of public keys used to verify the signature of link
         metadata file related to a step. Format is
         ssl_crypto.formats.KEYDICT_SCHEMA
 
