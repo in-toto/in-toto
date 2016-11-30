@@ -70,7 +70,7 @@ def in_toto_record_start(step_name, key_path, material_list):
             materials.
 
   <Exceptions>
-    None.
+    SystemExit if any exception occurs
 
   <Side Effects>
     Loads private key from disk
@@ -78,11 +78,11 @@ def in_toto_record_start(step_name, key_path, material_list):
     Calls sys.exit(1) if an exception is raised
 
   <Returns>
-    Link object (unfinished)
+    None.
 
   """
 
-  unfinished_fn = "." + str(step_name) + ".link-unfinished"
+  unfinished_fn = ".{}.link-unfinished".format(step_name)
 
   try:
     log.doing("Start recording '{0}'...".format(step_name))
@@ -100,10 +100,8 @@ def in_toto_record_start(step_name, key_path, material_list):
     log.doing("store metadata to '{0}'...".format(unfinished_fn))
     link.dump(unfinished_fn)
 
-    return link
-
   except Exception, e:
-    log.error("in start record - %s" % e)
+    log.error("in start record - {}".format(e))
     sys.exit(1)
 
 def in_toto_record_stop(step_name, key_path, product_list):
@@ -126,21 +124,20 @@ def in_toto_record_stop(step_name, key_path, product_list):
             List of file or directory paths that should be recorded as products.
 
   <Exceptions>
-    Exception if signature fails
-    IOException if file ".<step_name>.link-unfinished" can't be read
+    SystemExit if any exception occurs
 
   <Side Effects>
     Loads private key from disk
     Writes link file to disk "<step_name>.link"
-    Remvoes unfinished link file ".<step_name>.link-unfinished" from disk
+    Removes unfinished link file ".<step_name>.link-unfinished" from disk
     Calls sys.exit(1) if an exception is raised
 
   <Returns>
-    Link object
+    None.
 
   """
 
-  unfinished_fn = "." + str(step_name) + ".link-unfinished"
+  unfinished_fn = ".{}.link-unfinished".format(step_name)
 
   try:
     log.doing("load link signing key...")
@@ -168,10 +165,8 @@ def in_toto_record_stop(step_name, key_path, product_list):
     log.doing("remove unfinished file...")
     os.remove(unfinished_fn)
 
-    return link
-
   except Exception, e:
-    log.error("in stop record - %s" % e)
+    log.error("in stop record - {}".format(e))
     sys.exit(1)
 
 
@@ -196,7 +191,6 @@ def main():
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("Toto options")
-  # FIXME: Name has to be unique!!! Where will we check this?
   # FIXME: Do we limit the allowed characters for the name?
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")

@@ -23,6 +23,8 @@ import sys
 import unittest
 import logging
 import argparse
+import shutil
+import tempfile
 from mock import patch
 
 from toto.util import generate_and_write_rsa_keypair
@@ -30,45 +32,40 @@ from toto.models.link import Link
 from toto.in_toto_record import main as in_toto_record_main
 from toto.in_toto_record import in_toto_record_start, in_toto_record_stop
 
+WORKING_DIR = os.getcwd()
+
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
-
-def _try_remove_files(file_list):
-  if not isinstance(file_list, list):
-    return
-  else:
-    for path in file_list:
-      try:
-        os.remove(path)
-      except Exception, e:
-        pass
-
 
 class TestInTotoRecordMain(unittest.TestCase):
   """Test in_toto_record's main() - requires sys.argv patching. """
 
   @classmethod
   def setUpClass(self):
-    """Generate key pair, dummy artifact and base arguments. """
-    generate_and_write_rsa_keypair("test-key")
+    """Create and change into temporary directory,
+    generate key pair, dummy artifact and base arguments. """
+    self.test_dir = tempfile.mkdtemp()
+    os.chdir(self.test_dir)
+
+    self.test_key = "test_key"
+    generate_and_write_rsa_keypair(self.test_key)
+
+    self.test_artifact = "test_artifact"
+    open(self.test_artifact, "w").close()
+
     self.args = [
         "in_toto_record.py",
         "--step-name",
         "test-step",
         "--key",
-        "test-key"
+        self.test_key
     ]
-    self.test_artifact = "test-artifact"
-    open(self.test_artifact, "a").close()
 
   @classmethod
   def tearDownClass(self):
-    """Remove key pair, dummy artifact and link metadata. """
-    files_to_remove = [
-      "test-key", "test-key.pub", "test-step.link", self.test_artifact
-    ]
-    _try_remove_files(files_to_remove)
-
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(WORKING_DIR)
+    shutil.rmtree(self.test_dir)
 
   def test_command_start_stop_required_args(self):
     """Test CLI command record start/stop with required arguments. """
@@ -89,75 +86,78 @@ class TestInTotoRecordMain(unittest.TestCase):
       in_toto_record_main()
 
 
-
-
-
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key_path, material_list). """
 
   @classmethod
   def setUpClass(self):
-    """Generate key pair, dummy artifact and base arguments. """
+    """Create and change into temporary directory, generate key pair and dummy
+    material. """
+    self.test_dir = tempfile.mkdtemp()
+    os.chdir(self.test_dir)
+
     self.step_name = "test-step"
-    self.key_path = "test-key"
+    self.link_name_unfinished = ".{}.link-unfinished".format(self.step_name)
+
+    self.key_path = "test_key"
     generate_and_write_rsa_keypair(self.key_path)
-    self.test_material= "test-material"
-    open(self.test_material, "a").close()
+
+    self.test_material= "test_material"
+    open(self.test_material, "w").close()
 
   @classmethod
   def tearDownClass(self):
-    """Remove key pair, dummy artifact and link metadata. """
-    files_to_remove = [
-        self.key_path, self.key_path + ".pub", self.test_material,
-        "." + self.step_name + ".link-unfinished"
-      ]
-    _try_remove_files(files_to_remove)
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(WORKING_DIR)
+    shutil.rmtree(self.test_dir)
 
   def test_create_link_unfinished_file(self):
     """Test record start creates a link metadata file. """
     in_toto_record_start(self.step_name, self.key_path, [self.test_material])
-    open("." + self.step_name + ".link-unfinished", "r")
+    open(self.link_name_unfinished)
 
   def test_record_test_material(self):
     """Test record start records expected material. """
-    link = in_toto_record_start(
+    in_toto_record_start(
         self.step_name, self.key_path, [self.test_material])
+    link = Link.read_from_file(self.link_name_unfinished)
     self.assertEquals(link.materials.keys(), [self.test_material])
 
 
-
-
-
 class TestInTotoRecordStop(unittest.TestCase):
-  """"Test in_toto_record_start(step_name, key_path, material_list). """
+  """"Test in_toto_record_stop(step_name, key_path, product_list). """
 
   @classmethod
   def setUpClass(self):
-    """Generate key pair, dummy artifact and base arguments. """
+    """Create and change into temporary directory, generate two key pairs
+    and dummy product. """
+    self.test_dir = tempfile.mkdtemp()
+    os.chdir(self.test_dir)
+
     self.step_name = "test-step"
+    self.link_name = "{}.link".format(self.step_name)
+    self.link_name_unfinished = ".{}.link-unfinished".format(self.step_name)
+
     self.key_path = "test-key"
     self.key_path2 = "test-key2"
     generate_and_write_rsa_keypair(self.key_path)
-    generate_and_write_rsa_keypair(self.key_path)
+    generate_and_write_rsa_keypair(self.key_path2)
 
-    self.test_product = "test-product"
-    open(self.test_product, "a").close()
+    self.test_product = "test_product"
+    open(self.test_product, "w").close()
 
   @classmethod
   def tearDownClass(self):
-    """Remove key pair, dummy artifact and link metadata. """
-    files_to_remove = [
-      self.key_path, self.key_path + ".pub", self.key_path2,
-      self.key_path2 + ".pub", self.test_product, self.step_name + ".link",
-      "." + self.step_name + ".link-unfinished"
-    ]
-    _try_remove_files(files_to_remove)
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(WORKING_DIR)
+    shutil.rmtree(self.test_dir)
 
   def test_record_test_product(self):
     """Test record stop records expected product. """
     in_toto_record_start(self.step_name, self.key_path, [])
-    link = in_toto_record_stop(
+    in_toto_record_stop(
         self.step_name, self.key_path, [self.test_product])
+    link = Link.read_from_file(self.link_name)
     self.assertEquals(link.products.keys(), [self.test_product])
 
   def test_replace_unfinished_file(self):
@@ -165,8 +165,8 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, self.key_path, [])
     in_toto_record_stop(self.step_name, self.key_path, [])
     with self.assertRaises(IOError):
-      open("." + self.step_name + ".link-unfinished", "r")
-    open(self.step_name + ".link", "r")
+      open(self.link_name_unfinished, "r")
+    open(self.link_name, "r")
 
   def test_missing_unfinished_file(self):
     """Test record stop exits on missing unfinished file. """
