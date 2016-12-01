@@ -89,6 +89,7 @@ def verify_layout_expiration(layout):
             The Layout object to be verified.
 
   <Exceptions>
+    LayoutExpiredError
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
@@ -97,8 +98,7 @@ def verify_layout_expiration(layout):
   """
   expire_datetime = iso8601.parse_date(layout.expires)
   if expire_datetime < datetime.datetime.now(tz.tzutc()):
-    # raise LayoutExpiredError
-    raise Exception("Layout expired")
+    raise LayoutExpiredError("Layout expired")
 
 
 def verify_layout_signatures(layout, keys_dict):
@@ -189,36 +189,36 @@ def verify_all_steps_signatures(layout, links_dict):
 def verify_command_alignment(command, expected_command):
   """
   <Purpose>
-    Checks if two commands align.  The commands align if all of their elements
-    are equal.  The commands align in a relaxed fashion if they have different
-    lengths and the first x elements of both commands are equal. X being
-    min(len(command), len(expected_command)).
+    Checks if a run command aligns with an expected command. The commands align
+    if all of their elements are equal. If alignment fails, a warning is
+    printed.
+
+    Note:
+      Command alignment is a weak guarantee. Because a functionary can easily
+      alias commands.
 
   <Arguments>
     command:
             A command list, e.g. ["vi", "foo.py"]
     expected_command:
-            A command list, e.g. ["vi"]
+            A command list, e.g. ["make", "install"]
 
   <Exceptions>
-    raises an Exception if the commands don't align
-    prints a warning if the commands align in a relaxed fashioin
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    None.
 
   <Side Effects>
-    Performs string comparison of two lists.
+    Logs warning in case commands do not align.
 
   """
-  command_len = len(command)
-  expected_command_len = len(expected_command)
+  # In what case command alignment should fail and how that failure should be
+  # propagated has been thoughly discussed in:
+  # https://github.com/in-toto/in-toto/issues/46 and
+  # https://github.com/in-toto/in-toto/pull/47
+  # We chose the simplest solution for now, i.e. Warn if they do not align.
 
-  for i in range(min(command_len, expected_command_len)):
-    if command[i] != expected_command[i]:
-      raise Exception("Command '%s' and expected command '%s' do not align" \
-          % (command, expected_command))
-  if command_len != expected_command_len:
-    log.warning("Command '%s' and expected command '%s' do not fully align" \
-        % (command, expected_command))
+  if command != expected_command:
+    log.warning("Run command '{0}' differs from expected command '{1}'"
+        .format(command, expected_command))
 
 
 def verify_all_steps_command_alignment(layout, links_dict):
@@ -228,10 +228,6 @@ def verify_all_steps_command_alignment(layout, links_dict):
     Steps of a Layout align with the actual commands as recorded in the Link
     metadata.
 
-    Note:
-      Command alignment is a weak guarantee. Because a functionary can easily
-      alias commands.
-
   <Arguments>
     layout:
             A Layout object to extract the expected commands from.
@@ -239,12 +235,10 @@ def verify_all_steps_command_alignment(layout, links_dict):
             A dictionary of Link metadata objects with Link names as keys.
 
   <Exceptions>
-    raises an Exception if the commands don't align
-    prints a warning if the commands align in a relaxed fashioin
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    None.
 
   <Side Effects>
-    Performs string comparison of two lists.
+    None.
 
   """
   for step in layout.steps:

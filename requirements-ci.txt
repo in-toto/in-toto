@@ -3,3 +3,4 @@ cryptography
 pytest
 PyNaCl
 coverage
+mock
