@@ -47,6 +47,8 @@ import toto.log as log
 import toto.ssl_crypto.hash
 import toto.ssl_crypto.formats
 
+UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
+
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
@@ -86,7 +88,7 @@ def record_artifacts_as_dict(artifacts):
             the link command.
 
   <Exceptions>
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    None.
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -114,7 +116,6 @@ def record_artifacts_as_dict(artifacts):
           artifacts_dict[_normalize_path(filepath)] = _hash_artifact(filepath)
 
   return artifacts_dict
-
 
 def execute_link(link_cmd_args, record_byproducts):
   """
@@ -207,7 +208,7 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
             The return value of the executed command.
 
   <Exceptions>
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    None.
 
   <Side Effects>
     Creates a Link object from a Python dictionary.
@@ -223,6 +224,7 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
     "byproducts" : byproducts,
     "return_value" : return_value
   }
+
   return  toto.models.link.Link.read(link_dict)
 
 
@@ -269,3 +271,102 @@ def run_link(link_name, materials_list, products_list, link_cmd_args,
   return create_link_metadata(link_name, materials_dict, products_dict,
       link_cmd_args, byproducts, return_value)
 
+
+def in_toto_record_start(step_name, key, material_list):
+  """
+  <Purpose>
+    Starts creating link metadata for a multi-part in-toto step. I.e.
+    records passed materials, creates link meta data object from it, signs it
+    with passed key and stores it to disk with UNFINISHED_FILENAME_FORMAT.
+
+  <Arguments>
+    step_name:
+            A unique name to relate link metadata with a step defined in the
+            layout.
+    key:
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
+    material_list:
+            List of file or directory paths that should be recorded as
+            materials.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Creates a file UNFINISHED_FILENAME_FORMAT
+
+  <Returns>
+    None.
+
+  """
+
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
+  log.doing("Recording '{}'...".format(step_name))
+
+  log.doing("Recording materials...")
+  materials_dict = record_artifacts_as_dict(material_list)
+
+  log.doing("Creating preliminary link metadata...")
+  link = create_link_metadata(step_name, materials_dict)
+
+  log.doing("Signing metadata...")
+  link.sign(key)
+
+  log.doing("Storing metadata in '{0}'...".format(unfinished_fn))
+  link.dump(unfinished_fn)
+
+
+def in_toto_record_stop(step_name, key, product_list):
+  """
+  <Purpose>
+    Finishes creating link metadata for a multi-part in-toto step.
+    Loads signing key and unfinished link metadata file from disk, verifies
+    that the file was signed with the key, records products, updates unfinished
+    Link object (products and signature), removes unfinished link file from and
+    stores new link file to disk.
+
+  <Arguments>
+    step_name:
+            A unique name to relate link metadata with a step defined in the
+            layout.
+    key:
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
+    product_list:
+            List of file or directory paths that should be recorded as products.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Writes link file to disk "<step_name>.link"
+    Removes unfinished link file UNFINISHED_FILENAME_FORMAT from disk
+
+  <Returns>
+    None.
+
+  """
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
+
+  # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
+  log.doing("Loading unfinished link file...")
+  link = toto.models.link.Link.read_from_file(unfinished_fn)
+
+  # The file must have been signed by the same key
+  log.doing("Verifying unfinished link signature...")
+  keydict = {key["keyid"] : key}
+  link.verify_signatures(keydict)
+
+  log.doing("Recording products...")
+  link.products = record_artifacts_as_dict(product_list)
+
+  log.doing("Updating signature...")
+  link.signatures = []
+  link.sign(key)
+
+  log.doing("Storing metadata to file...")
+  link.dump()
+
+  log.doing("Removing unfinished file...")
+  os.remove(unfinished_fn)

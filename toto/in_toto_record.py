@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """
 <Program Name>
   in_toto_record.py
@@ -36,9 +37,9 @@
 
   Example Usage
   ```
-  in_toto_record.py start --step-name edit-files --materials . --key bob
+  in_toto_record.py --step-name edit-files start --materials . --key bob
   # Edit files manually ...
-  in_toto_record.py stop --step-name edit-files --products . --key bob
+  in_toto_record.py --step-name edit-files stop --products . --key bob
   ```
 
 """
@@ -50,21 +51,18 @@ from toto import runlib
 from toto import log
 from toto.models.link import Link
 
-
-def in_toto_record_start(step_name, key_path, material_list):
+def in_toto_record_start(step_name, key, material_list):
   """
   <Purpose>
-    Starts creating link metadata for a multi-part in-toto step. I.e.
-    loads link signing private key from disk, records passed materials, creates
-    link meta data object from it, signs it with loaded key and stores it to
-    disk as ".<step_name>.link-unfinished".
+    Calls runlib.in_toto_record_start and handles exceptions
 
   <Arguments>
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key_path:
-            Path to private key to sign link metadata (PEM).
+    key:
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
     material_list:
             List of file or directory paths that should be recorded as
             materials.
@@ -73,53 +71,31 @@ def in_toto_record_start(step_name, key_path, material_list):
     SystemExit if any exception occurs
 
   <Side Effects>
-    Loads private key from disk
-    Creates a file with  name ".<step_name>.link-unfinished"
     Calls sys.exit(1) if an exception is raised
 
   <Returns>
     None.
 
   """
-
-  unfinished_fn = ".{}.link-unfinished".format(step_name)
-
   try:
-    log.doing("Start recording '{0}'...".format(step_name))
-    key = toto.util.prompt_import_rsa_key_from_file(key_path)
-
-    log.doing("record materials...")
-    materials_dict = runlib.record_artifacts_as_dict(material_list)
-
-    log.doing("create preliminary link metadata...")
-    link = runlib.create_link_metadata(step_name, materials_dict)
-
-    log.doing("sign metadata...")
-    link.sign(key)
-
-    log.doing("store metadata to '{0}'...".format(unfinished_fn))
-    link.dump(unfinished_fn)
-
-  except Exception, e:
+    runlib.in_toto_record_start(step_name, key, material_list)
+  except Exception as e:
     log.error("in start record - {}".format(e))
     sys.exit(1)
 
-def in_toto_record_stop(step_name, key_path, product_list):
+def in_toto_record_stop(step_name, key, product_list):
   """
   <Purpose>
-    Finishes creating link metadata for a multi-part in-toto step.
-    Loads signing key and unfinished link metadata file from disk, verifies
-    that the file was signed with the key, records products, updates unfinished
-    Link object (products and signature), removes unfinished link file from and
-    stores new link file to disk.
+    Calls runlib.in_toto_record_stop and handles exceptions
+
 
   <Arguments>
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key_path:
-            Path to private key to verify unfinished link metadata and
-            sign finished link metadata (PEM).
+    key:
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
     product_list:
             List of file or directory paths that should be recorded as products.
 
@@ -127,51 +103,22 @@ def in_toto_record_stop(step_name, key_path, product_list):
     SystemExit if any exception occurs
 
   <Side Effects>
-    Loads private key from disk
-    Writes link file to disk "<step_name>.link"
-    Removes unfinished link file ".<step_name>.link-unfinished" from disk
     Calls sys.exit(1) if an exception is raised
 
   <Returns>
     None.
 
   """
-
-  unfinished_fn = ".{}.link-unfinished".format(step_name)
-
   try:
-    log.doing("load link signing key...")
-    key = toto.util.prompt_import_rsa_key_from_file(key_path)
-    keydict = {key["keyid"] : key}
-
-    # There must be a file .<step_name>.link-unfinished in the current dir
-    log.doing("load unfinished link file...")
-    link = Link.read_from_file(unfinished_fn)
-    # The unfinished link file must have been signed by the same key
-
-    log.doing("verify unfinished link signature...")
-    link.verify_signatures(keydict)
-
-    log.doing("record products...")
-    link.products = runlib.record_artifacts_as_dict(product_list)
-
-    log.doing("update signature...")
-    link.signatures = []
-    link.sign(key)
-
-    log.doing("store metadata to file...")
-    link.dump()
-
-    log.doing("remove unfinished file...")
-    os.remove(unfinished_fn)
-
-  except Exception, e:
+    runlib.in_toto_record_stop(step_name, key, product_list)
+  except Exception as e:
     log.error("in stop record - {}".format(e))
     sys.exit(1)
 
 
-
 def main():
+  """ Parse arguments, load key from disk and call either in_toto_record_start
+  or in_toto_record_stop. """
   parser = argparse.ArgumentParser(
       description="Starts or stops link metadata recording")
 
@@ -185,6 +132,7 @@ def main():
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
                " --key <functionary private key path>\n"
+               "[--verbose]\n"
       "Commands:\n{0}"
                "start [--materials <filepath>[ <filepath> ...]]\n{0}"
                "stop  [--products <filepath>[ <filepath> ...]]\n"
@@ -198,6 +146,9 @@ def main():
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
+  in_toto_args.add_argument("-v", "--verbose", dest='verbose',
+      help="Verbose execution.", default=False, action='store_true')
+
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
 
@@ -206,10 +157,22 @@ def main():
 
   args = parser.parse_args()
 
+  # Turn on all the `log.doing()` in the library
+  if args.verbose:
+    log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # We load the key here because it might prompt the user for a password in
+  # case the key is encrypted. Something that should not happen in the library.
+  try:
+    key = toto.util.prompt_import_rsa_key_from_file(args.key)
+  except Exception as e:
+    log.error("in load key - {}".format(args.key))
+    sys.exit(1)
+
   if args.command == "start":
-    in_toto_record_start(args.step_name, args.key, args.materials)
+    in_toto_record_start(args.step_name, key, args.materials)
   elif args.command == "stop":
-    in_toto_record_stop(args.step_name, args.key, args.products)
+    in_toto_record_stop(args.step_name, key, args.products)
 
 if __name__ == '__main__':
   main()
