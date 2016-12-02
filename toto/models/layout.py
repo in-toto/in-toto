@@ -69,17 +69,18 @@ class Layout(models__common.Signable):
         a list of Inspection objects
 
     keys:
-        a list of public keys used to verify the signature of link
-        metadata file related to a step
+        A dictionary of public keys used to verify the signature of link
+        metadata file related to a step. Format is
+        ssl_crypto.formats.KEYDICT_SCHEMA
 
     expires:
         the expiration date of a layout
   """
 
   _type = attr.ib("layout", init=False)
-  steps = attr.ib([])
-  inspect = attr.ib([])
-  keys = attr.ib({})
+  steps = attr.ib(default=attr.Factory(list))
+  inspect = attr.ib(default=attr.Factory(list))
+  keys = attr.ib(default=attr.Factory(dict))
   expires = attr.ib("")
 
 
@@ -226,9 +227,9 @@ class Step(models__common.Metablock):
   """
   _type = attr.ib("step", init=False)
   name = attr.ib()
-  material_matchrules = attr.ib([])
-  product_matchrules = attr.ib([])
-  pubkeys = attr.ib([])
+  material_matchrules = attr.ib(default=attr.Factory(list))
+  product_matchrules = attr.ib(default=attr.Factory(list))
+  pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
 
 
@@ -305,8 +306,8 @@ class Inspection(models__common.Metablock):
 
   _type = attr.ib("inspection", init=False)
   name = attr.ib()
-  material_matchrules = attr.ib([])
-  product_matchrules = attr.ib([])
+  material_matchrules = attr.ib(default=attr.Factory(list))
+  product_matchrules = attr.ib(default=attr.Factory(list))
   run = attr.ib("")
 
 

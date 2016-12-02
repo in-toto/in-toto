@@ -38,7 +38,6 @@ import toto.models.layout
 import toto.models.link
 import toto.ssl_crypto.keys
 from toto.exceptions import RuleVerficationFailed
-from toto.models.common import ComparableHashDict
 from toto.matchrule_validators import check_matchrule_syntax
 import toto.log as log
 

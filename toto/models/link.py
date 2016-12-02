@@ -59,9 +59,9 @@ class Link(models__common.Signable):
 
   _type = attr.ib("Link", init=False)
   name = attr.ib("")
-  materials = attr.ib({})
-  products = attr.ib({})
-  byproducts = attr.ib({})
+  materials = attr.ib(default=attr.Factory(dict))
+  products = attr.ib(default=attr.Factory(dict))
+  byproducts = attr.ib(default=attr.Factory(dict))
   command = attr.ib("")
   return_value = attr.ib(None)
 

@@ -35,10 +35,12 @@ import argparse
 import toto.util
 import toto.runlib
 import toto.log as log
+from toto.models.link import Link
 
 def _die(msg, exitcode=1):
   log.error(msg)
   sys.exit(exitcode)
+
 
 def in_toto_run(step_name, key_path, material_list, product_list,
     link_cmd_args, record_byproducts=False):
@@ -91,18 +93,21 @@ def in_toto_run(step_name, key_path, material_list, product_list,
 
 def main():
   parser = argparse.ArgumentParser(
-      description="Executes link command and records metadata",
-      usage="toto-run.py --step-name <unique step name>\n" +
-            "                     [--materials <filepath>[ <filepath> ...]]\n" +
-            "                     [--products <filepath>[ <filepath> ...]]\n" +
-            "                      --key <functionary private key path>\n" +
-            "                     [--record-byproducts]\n" +
-            "                      -- <cmd> [args]")
+      description="Executes link command and records metadata")
+  # Whitespace padding to align with program name
+  lpad = (len(parser.prog) + 1) * " "
+
+  parser.usage = ("\n"
+      "%(prog)s  --step-name <unique step name>\n{0}"
+               " --key <functionary private key path>\n{0}"
+               "[--materials <filepath>[ <filepath> ...]]\n{0}"
+               "[--products <filepath>[ <filepath> ...]]\n{0}"
+               "[--record-byproducts] -- <cmd> [args]\n\n"
+               .format(lpad))
 
   toto_args = parser.add_argument_group("Toto options")
-  # XXX LP: Name has to be unique!!! Where will we check this?
-  # XXX LP: Do we limit the allowed characters for the name?
-  # XXX LP: Should it be possible to add a path?
+  # FIXME: Name has to be unique!!! Where will we check this?
+  # FIXME: Do we limit the allowed characters for the name?
   toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
@@ -111,17 +116,16 @@ def main():
   toto_args.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
 
-  # XXX LP: Specifiy a format or choice of formats to use
   toto_args.add_argument("-k", "--key", type=str, required=True,
-      help="Path to private key to sign link metadata")
+      help="Path to private key to sign link metadata (PEM)")
 
   toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
       help="If set redirects stdout/stderr and stores to link metadata",
       default=False, action='store_true')
 
   link_args = parser.add_argument_group("Link command")
-  # XXX: This is not yet ideal.
-  # What should we do with tokens like > or ;
+  # FIXME: This is not yet ideal.
+  # What should we do with tokens like > or ; ?
   link_args.add_argument("link_cmd", nargs="+",
     help="Link command to be executed with options and arguments")
 
