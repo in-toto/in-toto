@@ -4,10 +4,10 @@ import pickle
 import json
 import getpass
 
-import toto.ssl_crypto.keys
-import toto.ssl_crypto.formats
-import toto.ssl_commons.exceptions
-import toto.log as log
+import in_toto.ssl_crypto.keys
+import in_toto.ssl_crypto.formats
+import in_toto.ssl_commons.exceptions
+import in_toto.log as log
 
 
 def generate_and_write_rsa_keypair(filepath, password=None):
@@ -37,15 +37,15 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   <Returns>
     None.
   """
-  toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
+  in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
 
-  rsa_key = toto.ssl_crypto.keys.generate_rsa_key()
+  rsa_key = in_toto.ssl_crypto.keys.generate_rsa_key()
 
   public = rsa_key['keyval']['public']
   private = rsa_key['keyval']['private']
 
   if password:
-    private_pem = toto.ssl_crypto.keys.create_rsa_encrypted_pem(private,
+    private_pem = in_toto.ssl_crypto.keys.create_rsa_encrypted_pem(private,
         password)
   else:
     private_pem = private
@@ -81,18 +81,18 @@ def import_rsa_key_from_file(filepath, password=None):
   <Returns>
     An RSA key object conformant to 'tuf.formats.RSAKEY_SCHEMA'
   """
-  toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
+  in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
 
   with open(filepath, 'rb') as fo_pem:
     rsa_pem = fo_pem.read().decode('utf-8')
 
-  if toto.ssl_crypto.keys.is_pem_private(rsa_pem):
-    rsa_key = toto.ssl_crypto.keys.import_rsakey_from_pem(rsa_pem, password)
+  if in_toto.ssl_crypto.keys.is_pem_private(rsa_pem):
+    rsa_key = in_toto.ssl_crypto.keys.import_rsakey_from_pem(rsa_pem, password)
 
-  elif toto.ssl_crypto.keys.is_pem_public(rsa_pem):
-    rsa_key = toto.ssl_crypto.keys.format_rsakey_from_pem(rsa_pem)
+  elif in_toto.ssl_crypto.keys.is_pem_public(rsa_pem):
+    rsa_key = in_toto.ssl_crypto.keys.format_rsakey_from_pem(rsa_pem)
   else:
-    raise toto.ssl_commons.exceptions.FormatError('The key has to be either'
+    raise in_toto.ssl_commons.exceptions.FormatError('The key has to be either'
             'a private or public RSA key in PEM format')
 
   return rsa_key
@@ -118,7 +118,7 @@ def prompt_import_rsa_key_from_file(filepath):
   password = None
   try:
     import_rsa_key_from_file(filepath)
-  except toto.ssl_commons.exceptions.CryptoError, e:
+  except in_toto.ssl_commons.exceptions.CryptoError, e:
     password = prompt_password()
   return import_rsa_key_from_file(filepath, password)
 
@@ -162,11 +162,11 @@ def flatten_and_invert_artifact_dict(artifact_dict, hash_algorithm="sha256"):
   <Returns>
     A dictionary with artifact hashes as keys and artifact paths as values.
   """
-  toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match([hash_algorithm])
+  in_toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match([hash_algorithm])
 
   inverted_dict = {}
   for file_path, hash_dict in artifact_dict.iteritems():
-    toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+    in_toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
     file_hash = hash_dict[hash_algorithm]
     inverted_dict[file_hash] = file_path
 

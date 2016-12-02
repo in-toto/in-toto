@@ -19,9 +19,9 @@
 
 import unittest
 import datetime
-from toto.models.layout import Step
-from toto.ssl_commons.exceptions import FormatError
-import toto.ssl_crypto
+from in_toto.models.layout import Step
+from in_toto.ssl_commons.exceptions import FormatError
+import in_toto.ssl_crypto
 
 class TestStepValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
@@ -107,8 +107,8 @@ class TestStepValidator(unittest.TestCase):
     # FIXME: generating keys for each test are expensive processes, maybe we
     # should have an asset/fixture folder/loader?
 
-    rsa_key_one = toto.ssl_crypto.keys.generate_rsa_key()
-    rsa_key_two = toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_one = in_toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_two = in_toto.ssl_crypto.keys.generate_rsa_key()
 
     self.step.pubkeys = ['bad-keyid']
 

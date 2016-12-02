@@ -68,5 +68,5 @@ GENERAL_CRYPTO_LIBRARY = 'pycrypto'
 
 # Debug level INFO shows a bunch of stuff that is happening
 LOG_LEVEL = logging.INFO
-# Debug level CRITICAL only shows toto-verify passing and failing
+# Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL

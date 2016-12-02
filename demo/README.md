@@ -27,7 +27,7 @@ cd in-toto
 pip install -e .
 
 # Export the envvar required for "simple settings"
-export SIMPLE_SETTINGS=toto.settings
+export SIMPLE_SETTINGS=in_toto.settings
 
 # Install additional requirements that for some good reason are not in the
 # requirements file
@@ -85,7 +85,7 @@ directory and perform the step.
 
 ```shell
 cd ../functionary_bob
-toto-run.py --step-name write-code --products foo.py --key bob -- vi foo.py
+in-toto-run --step-name write-code --products foo.py --key bob -- vi foo.py
 ```
 
 The command you just entered will open a `vi` editor, where you can write your
@@ -113,7 +113,7 @@ Execute the following commands to change to Carl's directory and `tar` up Bob's
 
 ```shell
 cd ../functionary_carl
-toto-run.py --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
+in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
 ```
 
 This will create another step link metadata file, called `package.link`.
@@ -134,7 +134,7 @@ cd final_product
 # Fetch Alice's public key from a trusted source to verify the layout signature
 # Note: The functionary public keys are fetched from the layout
 cp ../owner_alice/alice.pub .
-toto-verify.py --layout root.layout --layout-key alice.pub
+in-toto-verify --layout root.layout --layout-key alice.pub
 ```
 This command will verify that
  1. the layout has not expired,
@@ -169,7 +169,7 @@ Let's switch to Carl's machine and let him run the package step which
 unwittingly packages the tampered version of foo.py
 ```shell
 cd ../functionary_carl
-toto-run.py --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
+in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
 ```
 and then again ship everything out as final product to the client:
 ```shell
@@ -181,7 +181,7 @@ cp owner_alice/root.layout functionary_bob/write-code.link functionary_carl/pack
 
 ```shell
 cd final_product
-toto-verify.py --layout root.layout --layout-key alice.pub
+in-toto-verify --layout root.layout --layout-key alice.pub
 ```
 This time, in-toto will detect that the product `foo.py` from Bob's `write-code`
 step was not used as material in Carl's `package` step (the verified hashes

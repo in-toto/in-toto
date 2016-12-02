@@ -28,8 +28,8 @@ import attr
 import canonicaljson
 import inspect
 
-from toto.exceptions import SignatureVerificationError
-from toto.ssl_crypto import keys
+from in_toto.exceptions import SignatureVerificationError
+from in_toto.ssl_crypto import keys
 
 @attr.s(repr=False)
 class Metablock(object):

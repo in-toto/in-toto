@@ -19,8 +19,8 @@
 """
 
 import unittest
-from toto.ssl_commons.exceptions import FormatError
-from toto.matchrule_validators import check_matchrule_syntax
+from in_toto.ssl_commons.exceptions import FormatError
+from in_toto.matchrule_validators import check_matchrule_syntax
 
 class TestMatchruleSyntax(unittest.TestCase):
   """Test matchrule syntax validators """

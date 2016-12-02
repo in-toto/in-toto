@@ -19,12 +19,12 @@
 """
 
 import unittest
-from toto.models.link import Link
-from toto.models.layout import Step, Inspection
-from toto.verifylib import verify_delete_rule, verify_create_rule, \
+from in_toto.models.link import Link
+from in_toto.models.layout import Step, Inspection
+from in_toto.verifylib import verify_delete_rule, verify_create_rule, \
     verify_match_rule, verify_item_rules, verify_all_item_rules, \
     verify_command_alignment
-from toto.exceptions import RuleVerficationFailed
+from in_toto.exceptions import RuleVerficationFailed
 from mock import patch
 
 class TestVerifyCommandAlignment(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ slightly. """
     expected_command = ["/usr/bin/vi", "file1", "file2"]
 
-    with patch("toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
@@ -52,7 +52,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ completely. """
     expected_command = ["make install"]
 
-    with patch("toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"

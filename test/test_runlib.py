@@ -22,12 +22,12 @@ import os
 import unittest
 import shutil
 import tempfile
-from toto.runlib import in_toto_record_start, in_toto_record_stop, \
+from in_toto.runlib import in_toto_record_start, in_toto_record_stop, \
     UNFINISHED_FILENAME_FORMAT
-from toto.util import generate_and_write_rsa_keypair, \
+from in_toto.util import generate_and_write_rsa_keypair, \
     prompt_import_rsa_key_from_file
-from toto.models.link import Link
-from toto.exceptions import SignatureVerificationError
+from in_toto.models.link import Link
+from in_toto.exceptions import SignatureVerificationError
 
 
 WORKING_DIR = os.getcwd()

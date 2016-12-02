@@ -13,7 +13,7 @@
 
 <Purpose>
 
-  Provides a library to verify a Toto final product containing
+  Provides a library to verify a in_toto final product containing
   a software supply chain layout.
 
   The library provides functions to:
@@ -32,14 +32,14 @@ import iso8601
 import fnmatch
 from dateutil import tz
 
-import toto.util
-import toto.runlib
-import toto.models.layout
-import toto.models.link
-import toto.ssl_crypto.keys
-from toto.exceptions import RuleVerficationFailed
-from toto.matchrule_validators import check_matchrule_syntax
-import toto.log as log
+import in_toto.util
+import in_toto.runlib
+import in_toto.models.layout
+import in_toto.models.link
+import in_toto.ssl_crypto.keys
+from in_toto.exceptions import RuleVerficationFailed
+from in_toto.matchrule_validators import check_matchrule_syntax
+import in_toto.log as log
 
 
 def run_all_inspections(layout):
@@ -71,7 +71,7 @@ def run_all_inspections(layout):
     # Is the current directory a sensible default? In general?
     # If so, we should propably make it a default in run_link
     # We could use matchrule paths
-    link = toto.runlib.run_link(inspection.name, '.', '.',
+    link = in_toto.runlib.run_link(inspection.name, '.', '.',
         inspection.run.split())
     inspection_links_dict[inspection.name] = link
   return inspection_links_dict
@@ -335,7 +335,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
       "match any {2}s in target link '{3}'"
       .format(rule, target_path_pattern, target_type, target_name))
 
-  inverted_artifacts = toto.util.flatten_and_invert_artifact_dict(artifacts)
+  inverted_artifacts = in_toto.util.flatten_and_invert_artifact_dict(artifacts)
 
   # FIXME: sha256 should not be hardcoded but be a setting instead
   hash_algorithm = "sha256"

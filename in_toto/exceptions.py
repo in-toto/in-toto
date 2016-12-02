@@ -1,4 +1,4 @@
-from toto.ssl_commons.exceptions import Error
+from in_toto.ssl_commons.exceptions import Error
 
 class SignatureVerificationError(Error):
   """Indicates a signature verification Error. """
