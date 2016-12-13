@@ -16,10 +16,6 @@ setup(
   install_requires=["six", "simple-settings", "attrs", "canonicaljson",
                     "python-dateutil", "iso8601"],
   test_suite="test.runtests",
-  scripts=["in_toto/in_toto_run.py",
-           "in_toto/in_toto_record.py",
-           "in_toto/in_toto_verify.py"],
-
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-record = in_toto.in_toto_record:main",
