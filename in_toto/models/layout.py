@@ -33,10 +33,10 @@ import json
 import attr
 import six
 
-import toto.ssl_crypto.formats
-import toto.matchrule_validators
+import in_toto.ssl_crypto.formats
+import in_toto.matchrule_validators
 
-from toto.ssl_commons.exceptions import FormatError
+from in_toto.ssl_commons.exceptions import FormatError
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -154,7 +154,7 @@ class Layout(models__common.Signable):
     """Priavte method to verify the expiration field."""
     try:
       date = parse(self.expires)
-      toto.ssl_crypto.formats.ISO8601_DATETIME_SCHEMA.check_match(self.expires)
+      in_toto.ssl_crypto.formats.ISO8601_DATETIME_SCHEMA.check_match(self.expires)
     except:
       raise FormatError("Malformed date string in layout!")
 
@@ -163,7 +163,7 @@ class Layout(models__common.Signable):
     if type(self.keys) != dict:
       raise FormatError("keys dictionary is malformed!")
 
-    toto.ssl_crypto.formats.KEYDICT_SCHEMA.check_match(self.keys)
+    in_toto.ssl_crypto.formats.KEYDICT_SCHEMA.check_match(self.keys)
 
     for keyid, key in six.iteritems(self.keys):
       if 'private' in key and key['private'] != '':
@@ -262,7 +262,7 @@ class Step(models__common.Metablock):
       raise FormatError("Material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
-      toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
 
   def _validate_product_matchrules(self):
     """Private method to check the product matchrules are correctly formed."""
@@ -270,7 +270,7 @@ class Step(models__common.Metablock):
       raise FormatError("Product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
-      toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
@@ -278,7 +278,7 @@ class Step(models__common.Metablock):
       raise FormatError("The pubkeys field should be a list!")
 
     for keyid in self.pubkeys:
-      toto.ssl_crypto.formats.KEYID_SCHEMA.check_match(keyid)
+      in_toto.ssl_crypto.formats.KEYID_SCHEMA.check_match(keyid)
 
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
@@ -328,7 +328,7 @@ class Inspection(models__common.Metablock):
       raise FormatError("The material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
-      toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
 
   def _validate_product_matchrules(self):
     """Private method to check that the product matchrules are correct."""
@@ -336,7 +336,7 @@ class Inspection(models__common.Metablock):
       raise FormatError("The product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
-      toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""

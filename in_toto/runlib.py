@@ -41,11 +41,11 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
   import subprocess
 
-import toto.models.link
-import toto.log as log
+import in_toto.models.link
+import in_toto.log as log
 
-import toto.ssl_crypto.hash
-import toto.ssl_crypto.formats
+import in_toto.ssl_crypto.hash
+import in_toto.ssl_crypto.formats
 
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
 
@@ -53,14 +53,14 @@ def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
   with ssl_crypto.formats.HASHDICT_SCHEMA. """
-  toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
+  in_toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
   for algorithm in hash_algorithms:
-    digest_object = toto.ssl_crypto.hash.digest_filename(filepath, algorithm)
+    digest_object = in_toto.ssl_crypto.hash.digest_filename(filepath, algorithm)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
-  toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+  in_toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 
   return hash_dict
 
@@ -225,7 +225,7 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
     "return_value" : return_value
   }
 
-  return  toto.models.link.Link.read(link_dict)
+  return  in_toto.models.link.Link.read(link_dict)
 
 
 def run_link(link_name, materials_list, products_list, link_cmd_args,
@@ -351,7 +351,7 @@ def in_toto_record_stop(step_name, key, product_list):
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
   log.doing("Loading unfinished link file...")
-  link = toto.models.link.Link.read_from_file(unfinished_fn)
+  link = in_toto.models.link.Link.read_from_file(unfinished_fn)
 
   # The file must have been signed by the same key
   log.doing("Verifying unfinished link signature...")

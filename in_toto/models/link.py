@@ -29,7 +29,7 @@ class Link(models__common.Signable):
   by a functionary.
 
   Links are recorded, signed and stored to a file when a functionary wraps
-  a command with toto-run.
+  a command with in_toto-run.
 
   Links also contain materials and products which are hashes of the file before
   the command was executed and after the command was executed.
@@ -51,7 +51,7 @@ class Link(models__common.Signable):
           }
 
     command:
-        the command that was wrapped by toto-run
+        the command that was wrapped by in_toto-run
 
     return_value:
         the return value of the executed command

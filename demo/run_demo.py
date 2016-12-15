@@ -27,7 +27,7 @@ def supply_chain():
 
   prompt_key("Write code (Bob)")
   os.chdir("../functionary_bob")
-  write_code_cmd = ("python -m toto.toto-run" +
+  write_code_cmd = ("in-toto-run" +
                     " --step-name write-code --products foo.py" +
                     " --key bob -- vi foo.py")
   print write_code_cmd
@@ -37,7 +37,7 @@ def supply_chain():
 
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
-  package_cmd = ("python -m toto.toto-run" +
+  package_cmd = ("in-toto-run" +
                  " --step-name package --materials foo.py" +
                  " --products foo.tar.gz" +
                  " --key carl --record-byproducts" +
@@ -57,7 +57,7 @@ def supply_chain():
   prompt_key("Verify final product (client)")
   os.chdir("final_product")
   copyfile("../owner_alice/alice.pub", "alice.pub")
-  verify_cmd = ("python -m toto.toto-verify" +
+  verify_cmd = ("in-toto-verify" +
                 " --layout root.layout" +
                 " --layout-key alice.pub")
   print verify_cmd
@@ -78,7 +78,7 @@ def supply_chain():
 
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
-  package_cmd = ("python -m toto.toto-run" +
+  package_cmd = ("in-toto-run" +
                  " --step-name package --materials foo.py" +
                  " --products foo.tar.gz" +
                  " --key carl --record-byproducts" +
@@ -98,7 +98,7 @@ def supply_chain():
   prompt_key("Verify final product (client)")
   os.chdir("final_product")
   copyfile("../owner_alice/alice.pub", "alice.pub")
-  verify_cmd = ("python -m toto.toto-verify" +
+  verify_cmd = ("in-toto-verify" +
                 " --layout root.layout" +
                 " --layout-key alice.pub")
 

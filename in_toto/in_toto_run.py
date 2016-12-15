@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 <Program Name>
-  toto-run.py
+  in_toto_run.py
 
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
@@ -14,16 +14,16 @@
 
 <Purpose>
   Provides a command line interface which takes any link command of the software
-  supply chain as input and wraps toto metadata recording.
+  supply chain as input and wraps in_toto metadata recording.
 
-  Toto run options are separated from the command to be executed by
+  in_toto run options are separated from the command to be executed by
   a double dash.
 
   The implementation of the tasks can be found in runlib.
 
   Example Usage
   ```
-  toto-run.py --step-name write-code --materials . --products . --key bob \
+  in-toto-run --step-name write-code --materials . --products . --key bob \
       -- vi foo.py
   ```
 
@@ -32,10 +32,10 @@
 import os
 import sys
 import argparse
-import toto.util
-import toto.runlib
-import toto.log as log
-from toto.models.link import Link
+import in_toto.util
+import in_toto.runlib
+import in_toto.log as log
+from in_toto.models.link import Link
 
 def _die(msg, exitcode=1):
   log.error(msg)
@@ -49,32 +49,32 @@ def in_toto_run(step_name, key_path, material_list, product_list,
   file. The link metadata file is signed and stored to disk. """
   try:
     log.doing("load link signing key...")
-    key = toto.util.prompt_import_rsa_key_from_file(key_path)
+    key = in_toto.util.prompt_import_rsa_key_from_file(key_path)
   except Exception, e:
     _die("in load key - %s" % e)
 
   try:
     log.doing("record materials...")
-    materials_dict = toto.runlib.record_artifacts_as_dict(material_list)
+    materials_dict = in_toto.runlib.record_artifacts_as_dict(material_list)
   except Exception, e:
     _die("in record materials - %s" % e)
 
   try:
     log.doing("run command...")
-    byproducts, return_value = toto.runlib.execute_link(link_cmd_args,
+    byproducts, return_value = in_toto.runlib.execute_link(link_cmd_args,
         record_byproducts)
   except Exception, e:
     _die("in run command - %s" % e)
 
   try:
     log.doing("record products...")
-    products_dict = toto.runlib.record_artifacts_as_dict(product_list)
+    products_dict = in_toto.runlib.record_artifacts_as_dict(product_list)
   except Exception, e:
     _die("in record products - %s" % e)
 
   try:
     log.doing("create link metadata...")
-    link = toto.runlib.create_link_metadata(step_name, materials_dict,
+    link = in_toto.runlib.create_link_metadata(step_name, materials_dict,
         products_dict, link_cmd_args, byproducts, return_value)
   except Exception, e:
     raise e
@@ -105,21 +105,21 @@ def main():
                "[--record-byproducts] -- <cmd> [args]\n\n"
                .format(lpad))
 
-  toto_args = parser.add_argument_group("Toto options")
+  in_toto_args = parser.add_argument_group("in-toto options")
   # FIXME: Name has to be unique!!! Where will we check this?
   # FIXME: Do we limit the allowed characters for the name?
-  toto_args.add_argument("-n", "--step-name", type=str, required=True,
+  in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
-  toto_args.add_argument("-m", "--materials", type=str, required=False,
+  in_toto_args.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
-  toto_args.add_argument("-p", "--products", type=str, required=False,
+  in_toto_args.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
 
-  toto_args.add_argument("-k", "--key", type=str, required=True,
+  in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
+  in_toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
       help="If set redirects stdout/stderr and stores to link metadata",
       default=False, action='store_true')
 

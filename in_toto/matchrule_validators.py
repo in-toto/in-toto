@@ -1,6 +1,6 @@
 """
 <Module Name>
-  toto/models/validators.py
+  in_toto/models/validators.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
@@ -16,8 +16,8 @@
   correct.
 
 """
-from toto.ssl_commons.exceptions import FormatError
-import toto.ssl_crypto.formats
+from in_toto.ssl_commons.exceptions import FormatError
+import in_toto.ssl_crypto.formats
 
 def _validate_match_rule(keywords):
   """ private helper to verify the syntax of the MATCH matchrule """
@@ -29,7 +29,7 @@ def _validate_match_rule(keywords):
   if len(keywords) == 5:
     rule, artifact, path_pattern, from_keyword, step = keywords
     as_keyword = "AS"
-    target_path_pattern = path_pattern 
+    target_path_pattern = path_pattern
 
   elif len(keywords) == 7:
     (rule, artifact, path_pattern, as_keyword, target_path_pattern, from_keyword,
@@ -65,7 +65,7 @@ def _validate_generic_rule(keywords):
 
   rule, artifact = keywords
 
-  toto.ssl_crypto.formats.PATH_SCHEMA.check_match(artifact)
+  in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(artifact)
 
   if rule not in VALID_OPERATIONS and rule.upper() not in VALID_OPERATIONS:
     raise FormatError("{} is not a valid rule!".format(rule))
@@ -77,7 +77,7 @@ def check_matchrule_syntax(keywords):
     statements of the matchrules described in the specification
 
   <Arguments>
-    keywords: a list of keywords (e.g., ["CREATE", "foo"]), 
+    keywords: a list of keywords (e.g., ["CREATE", "foo"]),
 
   <Returns>
     None

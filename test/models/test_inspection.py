@@ -18,9 +18,9 @@
 """
 
 import unittest
-from toto.models.layout import Layout, Inspection
-from toto.ssl_commons.exceptions import FormatError
-import toto.ssl_crypto
+from in_toto.models.layout import Layout, Inspection
+from in_toto.ssl_commons.exceptions import FormatError
+import in_toto.ssl_crypto
 
 class TestInspectionValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """

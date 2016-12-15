@@ -37,19 +37,19 @@
 
   Example Usage
   ```
-  in_toto_record.py --step-name edit-files start --materials . --key bob
+  in-toto-record --step-name edit-files start --materials . --key bob
   # Edit files manually ...
-  in_toto_record.py --step-name edit-files stop --products . --key bob
+  in-toto-record --step-name edit-files stop --products . --key bob
   ```
 
 """
 import os
 import sys
 import argparse
-import toto.util
-from toto import runlib
-from toto import log
-from toto.models.link import Link
+import in_toto.util
+from in_toto import runlib
+from in_toto import log
+from in_toto.models.link import Link
 
 def in_toto_record_start(step_name, key, material_list):
   """
@@ -138,7 +138,7 @@ def main():
                "stop  [--products <filepath>[ <filepath> ...]]\n"
                .format(lpad))
 
-  in_toto_args = parser.add_argument_group("Toto options")
+  in_toto_args = parser.add_argument_group("in-toto options")
   # FIXME: Do we limit the allowed characters for the name?
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
@@ -164,7 +164,7 @@ def main():
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
   try:
-    key = toto.util.prompt_import_rsa_key_from_file(args.key)
+    key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
   except Exception as e:
     log.error("in load key - {}".format(args.key))
     sys.exit(1)

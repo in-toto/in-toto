@@ -19,9 +19,9 @@
 
 import unittest
 import datetime
-from toto.models.layout import Layout, Step, Inspection
-from toto.ssl_commons.exceptions import FormatError
-import toto.ssl_crypto
+from in_toto.models.layout import Layout, Step, Inspection
+from in_toto.ssl_commons.exceptions import FormatError
+import in_toto.ssl_crypto
 
 class TestLayoutValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
@@ -73,8 +73,8 @@ class TestLayoutValidator(unittest.TestCase):
 
   def test_wrong_key_dictionary(self):
     """Test that the keys dictionary is properly populated."""
-    rsa_key_one = toto.ssl_crypto.keys.generate_rsa_key()
-    rsa_key_two = toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_one = in_toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_two = in_toto.ssl_crypto.keys.generate_rsa_key()
 
     # FIXME: attr.ib reutilizes the default dictionary, so future constructor
     # are not empty...

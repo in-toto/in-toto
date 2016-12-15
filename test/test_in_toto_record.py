@@ -27,11 +27,11 @@ import shutil
 import tempfile
 from mock import patch
 
-from toto.util import generate_and_write_rsa_keypair, \
+from in_toto.util import generate_and_write_rsa_keypair, \
     prompt_import_rsa_key_from_file
-from toto.models.link import Link
-from toto.in_toto_record import main as in_toto_record_main
-from toto.in_toto_record import in_toto_record_start, in_toto_record_stop
+from in_toto.models.link import Link
+from in_toto.in_toto_record import main as in_toto_record_main
+from in_toto.in_toto_record import in_toto_record_start, in_toto_record_stop
 
 WORKING_DIR = os.getcwd()
 
