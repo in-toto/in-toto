@@ -22,15 +22,103 @@ import os
 import unittest
 import shutil
 import tempfile
+from in_toto import ssl_crypto
 from in_toto.runlib import in_toto_record_start, in_toto_record_stop, \
-    UNFINISHED_FILENAME_FORMAT
+    UNFINISHED_FILENAME_FORMAT, record_artifacts_as_dict, \
+    _apply_exclude_patterns
 from in_toto.util import generate_and_write_rsa_keypair, \
     prompt_import_rsa_key_from_file
 from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
+from simple_settings import settings
 
 
 WORKING_DIR = os.getcwd()
+
+class Test_ApplyExcludePatterns(unittest.TestCase):
+  """Test _apply_exclude_patterns(names, exclude_patterns) """
+
+  def test_apply_exclude_explict(self):
+    names = ["foo", "bar", "baz"]
+    patterns = ["foo", "bar"]
+    expected = ["baz"]
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(sorted(result), sorted(expected))
+
+  def test_apply_exclude_all(self):
+    names = ["foo", "bar", "baz"]
+    patterns = ["*"]
+    expected = []
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(sorted(result), sorted(expected))
+
+  def test_apply_exclude_multiple_star(self):
+    names = ["foo", "bar", "baz"]
+    patterns = ["*a*"]
+    expected = ["foo"]
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(sorted(result), sorted(expected))
+
+
+class TestRecordArtifactsAsDict(unittest.TestCase):
+  """Test record_artifacts_as_dict(artifacts). """
+
+  @classmethod
+  def setUpClass(self):
+    """Create and change into temp test directory with dummy artifacts. """
+    # Clear user set excludes
+    settings.ARTIFACT_EXCLUDES = []
+
+    self.test_dir = tempfile.mkdtemp()
+    os.chdir(self.test_dir)
+    open("foo", "w").write("foo")
+    open("bar", "w").write("bar")
+
+    os.mkdir("subdir")
+    open("subdir/foosub", "w").write("subfoo")
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(WORKING_DIR)
+    shutil.rmtree(self.test_dir)
+
+  def test_empty_artifacts_list_record_nothing(self):
+    """Empty list passed. Return empty dict. """
+    self.assertDictEqual(record_artifacts_as_dict([]), {})
+
+  def test_not_existing_artifacts_in_list_record_nothing(self):
+    """List with not existing artifact passed. Return empty dict. """
+    self.assertDictEqual(record_artifacts_as_dict(["baz"]), {})
+
+  def test_record_dot_check_files_hash_dict_schema(self):
+    """Traverse dir and subdir. Record three files. """
+    artifacts_dict = record_artifacts_as_dict(["."])
+
+    for key, val in artifacts_dict.iteritems():
+      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+      sorted(["foo", "bar", "subdir/foosub"]))
+
+  def test_record_files_and_subdir(self):
+    """Explicitly record files and subdir. """
+    artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
+
+    for key, val in artifacts_dict.iteritems():
+      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+      sorted(["foo", "subdir/foosub"]))
+
+  def test_record_dot_exclude_foo_star_from_recording(self):
+    """Traverse dir and subdir from. Exclude pattern. Record one file. """
+    settings.ARTIFACT_EXCLUDES = ["foo*"]
+    artifacts_dict = record_artifacts_as_dict(["."])
+
+    ssl_crypto.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
+    self.assertListEqual(artifacts_dict.keys(), ["bar"])
+    settings.ARTIFACT_EXCLUDES = []
 
 
 class TestInTotoRecordStart(unittest.TestCase):
@@ -39,7 +127,7 @@ class TestInTotoRecordStart(unittest.TestCase):
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
-    material, read key pai. """
+    material, read key pair. """
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 

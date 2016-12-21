@@ -28,6 +28,8 @@ import sys
 import os
 import tempfile
 import logging
+import fnmatch
+from simple_settings import settings
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
@@ -72,6 +74,14 @@ def _normalize_path(path):
   return path
 
 
+def _apply_exclude_patterns(names, exclude_patterns):
+  """Exclude matched patterns from passed names. """
+
+  for exclude_pattern in exclude_patterns:
+    excludes = fnmatch.filter(names, exclude_pattern)
+    names = list(set(names) - set(excludes))
+  return names
+
 def record_artifacts_as_dict(artifacts):
   """
   <Purpose>
@@ -81,6 +91,14 @@ def record_artifacts_as_dict(artifacts):
     The files a link command is executed on are called materials.
     The files that result form a link command execution are called
     products.
+
+    Excludes files that are matched by the file patterns specified in
+    ARTIFACT_EXCLUDES setting.
+    Note: Exclude patterns are applied on the basename, i.e. the pattern
+    "foo" excludes /foo as well as /subdir/foo
+
+    Exclude patterns are likely to become command line arguments or part of
+    a config file, e.g. .in-toto-ignore
 
   <Arguments>
     artifacts:
@@ -101,17 +119,19 @@ def record_artifacts_as_dict(artifacts):
   if not artifacts:
     return artifacts_dict
 
-  for artifact in artifacts:
-
+  # print settings.ARTIFACT_EXCLUDES
+  for artifact in _apply_exclude_patterns(artifacts,
+        settings.ARTIFACT_EXCLUDES):
     if not os.path.exists(artifact):
       log.warning("path: {} does not exist, skipping..".format(artifact))
       continue
 
     if os.path.isfile(artifact):
       artifacts_dict[_normalize_path(artifact)] = _hash_artifact(artifact)
+
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact):
-        for name in files:
+        for name in _apply_exclude_patterns(files, settings.ARTIFACT_EXCLUDES):
           filepath = os.path.join(root, name)
           artifacts_dict[_normalize_path(filepath)] = _hash_artifact(filepath)
 
