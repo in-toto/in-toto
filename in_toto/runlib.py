@@ -119,9 +119,10 @@ def record_artifacts_as_dict(artifacts):
   if not artifacts:
     return artifacts_dict
 
-  # print settings.ARTIFACT_EXCLUDES
+  # Exclude excluded files and dirs from the first level of tree traversel
   for artifact in _apply_exclude_patterns(artifacts,
         settings.ARTIFACT_EXCLUDES):
+
     if not os.path.exists(artifact):
       log.warning("path: {} does not exist, skipping..".format(artifact))
       continue
@@ -131,6 +132,12 @@ def record_artifacts_as_dict(artifacts):
 
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact):
+        # Also exclude excluded subdirs
+        # Modifying the dirs variable makes walk only recurse into
+        # remaining dirs
+        dirs[:] = _apply_exclude_patterns(dirs, settings.ARTIFACT_EXCLUDES)
+
+        # Finally exclude excluded tree nodes (files)
         for name in _apply_exclude_patterns(files, settings.ARTIFACT_EXCLUDES):
           filepath = os.path.join(root, name)
           artifacts_dict[_normalize_path(filepath)] = _hash_artifact(filepath)

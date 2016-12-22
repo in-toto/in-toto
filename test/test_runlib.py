@@ -75,7 +75,9 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     open("bar", "w").write("bar")
 
     os.mkdir("subdir")
-    open("subdir/foosub", "w").write("subfoo")
+    os.mkdir("subdir/subsubdir")
+    open("subdir/foosub", "w").write("foosub")
+    open("subdir/subsubdir/foosubsub", "w").write("foosubsub")
 
   @classmethod
   def tearDownClass(self):
@@ -92,32 +94,44 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     self.assertDictEqual(record_artifacts_as_dict(["baz"]), {})
 
   def test_record_dot_check_files_hash_dict_schema(self):
-    """Traverse dir and subdir. Record three files. """
+    """Traverse dir and subdirs. Record three files. """
     artifacts_dict = record_artifacts_as_dict(["."])
 
     for key, val in artifacts_dict.iteritems():
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "bar", "subdir/foosub"]))
+      sorted(["foo", "bar", "subdir/foosub", "subdir/subsubdir/foosubsub"]))
 
-  def test_record_files_and_subdir(self):
-    """Explicitly record files and subdir. """
+  def test_record_files_and_subdirs(self):
+    """Explicitly record files and subdirs. """
     artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
     for key, val in artifacts_dict.iteritems():
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "subdir/foosub"]))
+      sorted(["foo", "subdir/foosub", "subdir/subsubdir/foosubsub"]))
 
   def test_record_dot_exclude_foo_star_from_recording(self):
-    """Traverse dir and subdir from. Exclude pattern. Record one file. """
+    """Traverse dir and subdirs from. Exclude pattern. Record one file. """
     settings.ARTIFACT_EXCLUDES = ["foo*"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
     ssl_crypto.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
     self.assertListEqual(artifacts_dict.keys(), ["bar"])
+    settings.ARTIFACT_EXCLUDES = []
+
+  def test_exclude_subsubdir(self):
+    """Traverse dir and subdirs. Exclude subsubdir. """
+    settings.ARTIFACT_EXCLUDES = ["subsubdir"]
+    artifacts_dict = record_artifacts_as_dict(["."])
+
+    for key, val in artifacts_dict.iteritems():
+      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+        sorted(["foo", "bar", "subdir/foosub"]))
     settings.ARTIFACT_EXCLUDES = []
 
 
