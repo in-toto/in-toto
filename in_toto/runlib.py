@@ -77,27 +77,6 @@ def _apply_exclude_patterns(names, exclude_patterns):
   return names
 
 
-def _add_base_path_to_artifacts(artifacts):
-  """Prefixes each artifact from the artifacts list with the basepath.
-  Replaces a single dot with basepath '.'.
-  """
-
-  if not settings.ARTIFACT_BASE_PATH:
-    return artifacts
-
-  full_paths = []
-  for path in artifacts:
-    if path == ".":
-      full_path = settings.ARTIFACT_BASE_PATH
-    else:
-      full_path = settings.ARTIFACT_BASE_PATH + path
-
-    full_paths.append(full_path)
-
-  return full_paths
-
-
-
 def record_artifacts_as_dict(artifacts):
   """
   <Purpose>
@@ -155,6 +134,14 @@ def record_artifacts_as_dict(artifacts):
   if not artifacts:
     return artifacts_dict
 
+  # Temporarily change into base path dir if set
+  if settings.ARTIFACT_BASE_PATH:
+    original_cwd = os.getcwd()
+    try:
+      os.chdir(settings.ARTIFACT_BASE_PATH)
+    except OSError as e:
+      raise OSError("Review your ARTIFACT_BASE_PATH setting - {}".format(e))
+
   # Normalize passed paths
   norm_artifacts = []
   for path in artifacts:
@@ -205,6 +192,10 @@ def record_artifacts_as_dict(artifacts):
         for filepath in _apply_exclude_patterns(filepaths,
             settings.ARTIFACT_EXCLUDES):
           artifacts_dict[filepath] = _hash_artifact(filepath)
+
+  # Change back to where original current working dir
+  if settings.ARTIFACT_BASE_PATH:
+    os.chdir(original_cwd)
 
   return artifacts_dict
 
