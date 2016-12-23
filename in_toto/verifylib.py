@@ -41,6 +41,8 @@ from in_toto.exceptions import RuleVerficationFailed
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
 
+from simple_settings import settings
+
 
 def run_all_inspections(layout):
   """
@@ -67,13 +69,21 @@ def run_all_inspections(layout):
   """
   inspection_links_dict = {}
   for inspection in layout.inspect:
-    # XXX LP: What should we record as material/product?
+
+    # FIXME LP: What should we record as material/product?
     # Is the current directory a sensible default? In general?
-    # If so, we should propably make it a default in run_link
-    # We could use matchrule paths
+    # If so, we should probably make it a default in run_link.
+    # We could use matchrule paths.
+
+    # FIXME: We don't want to use the base path for runlib so we patch this
+    # for now. This will not stay!
+    base_path_backup = settings.ARTIFACT_BASE_PATH
+    settings.ARTIFACT_BASE_PATH = None
     link = in_toto.runlib.run_link(inspection.name, '.', '.',
         inspection.run.split())
+    link.dump()
     inspection_links_dict[inspection.name] = link
+    settings.ARTIFACT_BASE_PATH = base_path_backup
   return inspection_links_dict
 
 def verify_layout_expiration(layout):
