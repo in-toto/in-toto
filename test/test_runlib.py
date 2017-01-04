@@ -77,6 +77,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     os.mkdir("subdir")
     os.mkdir("subdir/subsubdir")
     open("subdir/foosub", "w").write("foosub")
+    open("subdir/foosub2", "w").write("foosub")
     open("subdir/subsubdir/foosubsub", "w").write("foosubsub")
 
   @classmethod
@@ -105,7 +106,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "bar", "subdir/foosub", "subdir/subsubdir/foosubsub"]))
+      sorted(["foo", "bar", "subdir/foosub", "subdir/foosub2",
+          "subdir/subsubdir/foosubsub"]))
 
   def test_record_files_and_subdirs(self):
     """Explicitly record files and subdirs. """
@@ -115,7 +117,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "subdir/foosub", "subdir/subsubdir/foosubsub"]))
+      sorted(["foo", "subdir/foosub", "subdir/foosub2",
+          "subdir/subsubdir/foosubsub"]))
 
   def test_record_dot_exclude_foo_star_from_recording(self):
     """Traverse dir and subdirs from. Exclude pattern. Record one file. """
@@ -134,7 +137,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-        sorted(["foo", "bar", "subdir/foosub"]))
+        sorted(["foo", "bar", "subdir/foosub", "subdir/foosub2"]))
 
 
 class TestInTotoRecordStart(unittest.TestCase):
