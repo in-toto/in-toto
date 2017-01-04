@@ -33,8 +33,6 @@ from in_toto.exceptions import SignatureVerificationError
 from simple_settings import settings
 
 
-WORKING_DIR = os.getcwd()
-
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
 
@@ -66,6 +64,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
   @classmethod
   def setUpClass(self):
     """Create and change into temp test directory with dummy artifacts. """
+    self.working_dir = os.getcwd()
+
     # Clear user set excludes
     settings.ARTIFACT_EXCLUDES = []
 
@@ -82,7 +82,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
-    os.chdir(WORKING_DIR)
+    os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
   def test_empty_artifacts_list_record_nothing(self):
@@ -142,6 +142,8 @@ class TestInTotoRecordStart(unittest.TestCase):
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
     material, read key pair. """
+    self.working_dir = os.getcwd()
+
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 
@@ -159,7 +161,7 @@ class TestInTotoRecordStart(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
-    os.chdir(WORKING_DIR)
+    os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
   def test_unfinished_filename_format(self):
@@ -191,6 +193,8 @@ class TestInTotoRecordStop(unittest.TestCase):
   def setUpClass(self):
     """Create and change into temporary directory, generate two key pairs
     and dummy product. """
+    self.working_dir = os.getcwd()
+
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 
@@ -212,7 +216,7 @@ class TestInTotoRecordStop(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
-    os.chdir(WORKING_DIR)
+    os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
   def test_create_metadata_with_expected_product(self):
