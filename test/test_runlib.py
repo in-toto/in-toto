@@ -85,6 +85,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
+  def tearDown(self):
+    """Clear the ARTIFACT_EXLCUDES after every test. """
+    settings.ARTIFACT_EXCLUDES = []
+
   def test_empty_artifacts_list_record_nothing(self):
     """Empty list passed. Return empty dict. """
     self.assertDictEqual(record_artifacts_as_dict([]), {})
@@ -120,7 +124,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     ssl_crypto.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
     self.assertListEqual(artifacts_dict.keys(), ["bar"])
-    settings.ARTIFACT_EXCLUDES = []
 
   def test_exclude_subsubdir(self):
     """Traverse dir and subdirs. Exclude subsubdir. """
@@ -132,7 +135,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub"]))
-    settings.ARTIFACT_EXCLUDES = []
 
 
 class TestInTotoRecordStart(unittest.TestCase):
