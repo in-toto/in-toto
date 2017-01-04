@@ -55,15 +55,44 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     patterns = ["*a*"]
     expected = ["foo"]
     result = _apply_exclude_patterns(names, patterns)
-    self.assertListEqual(sorted(result), sorted(expected))
+    self.assertListEqual(result, expected)
 
+  def test_apply_exclude_question_mark(self):
+    names = ["foo", "bazfoo", "barfoo"]
+    patterns = ["ba?foo"]
+    expected = ["foo"]
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(result, expected)
+
+  def test_apply_exclude_seq(self):
+    names = ["baxfoo", "bazfoo", "barfoo"]
+    patterns = ["ba[xz]foo"]
+    expected = ["barfoo"]
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(result, expected)
+
+  def test_apply_exclude_neg_seq(self):
+    names = ["baxfoo", "bazfoo", "barfoo"]
+    patterns = ["ba[!r]foo"]
+    expected = ["barfoo"]
+    result = _apply_exclude_patterns(names, patterns)
+    self.assertListEqual(result, expected)
 
 class TestRecordArtifactsAsDict(unittest.TestCase):
   """Test record_artifacts_as_dict(artifacts). """
 
   @classmethod
   def setUpClass(self):
-    """Create and change into temp test directory with dummy artifacts. """
+    """Create and change into temp test directory with dummy artifacts.
+    |-- bar
+    |-- foo
+    `-- subdir
+        |-- foosub
+        |-- foosub2
+        `-- subsubdir
+            `-- foosubsub
+    """
+
     self.working_dir = os.getcwd()
 
     # Clear user set excludes
@@ -76,7 +105,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     os.mkdir("subdir")
     os.mkdir("subdir/subsubdir")
-    open("subdir/foosub", "w").write("foosub")
+    open("subdir/foosub1", "w").write("foosub")
     open("subdir/foosub2", "w").write("foosub")
     open("subdir/subsubdir/foosubsub", "w").write("foosubsub")
 
@@ -106,7 +135,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "bar", "subdir/foosub", "subdir/foosub2",
+      sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2",
           "subdir/subsubdir/foosubsub"]))
 
   def test_record_files_and_subdirs(self):
@@ -117,27 +146,41 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-      sorted(["foo", "subdir/foosub", "subdir/foosub2",
+      sorted(["foo", "subdir/foosub1", "subdir/foosub2",
           "subdir/subsubdir/foosubsub"]))
 
-  def test_record_dot_exclude_foo_star_from_recording(self):
-    """Traverse dir and subdirs from. Exclude pattern. Record one file. """
-    settings.ARTIFACT_EXCLUDES = ["foo*"]
+  def test_record_dot_exclude_star_foo_star_from_recording(self):
+    """Traverse dot. Exclude pattern. Record one file. """
+    settings.ARTIFACT_EXCLUDES = ["*foo*"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
     ssl_crypto.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
     self.assertListEqual(artifacts_dict.keys(), ["bar"])
 
+  def test_exclude_subdir(self):
+    """Traverse dot. Exclude subdir (and subsubdir). """
+    settings.ARTIFACT_EXCLUDES = ["*subdir"]
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()), sorted(["bar", "foo"]))
+
+  def test_exclude_files_in_subdir(self):
+    """Traverse dot. Exclude files in subdir but not subsubdir. """
+    settings.ARTIFACT_EXCLUDES = ["*foosub?"]
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+      sorted(["bar", "foo", "subdir/subsubdir/foosubsub"]))
+
+
   def test_exclude_subsubdir(self):
-    """Traverse dir and subdirs. Exclude subsubdir. """
-    settings.ARTIFACT_EXCLUDES = ["subsubdir"]
+    """Traverse dot. Exclude subsubdir. """
+    settings.ARTIFACT_EXCLUDES = ["*subsubdir"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
     for key, val in artifacts_dict.iteritems():
       ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
-        sorted(["foo", "bar", "subdir/foosub", "subdir/foosub2"]))
+        sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
 
 class TestInTotoRecordStart(unittest.TestCase):
