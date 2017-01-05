@@ -27,8 +27,8 @@ import shutil
 import tempfile
 from mock import patch
 
-from in_toto.util import generate_and_write_rsa_keypair, \
-    prompt_import_rsa_key_from_file
+from in_toto.util import (generate_and_write_rsa_keypair,
+    prompt_import_rsa_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_record import main as in_toto_record_main
 from in_toto.in_toto_record import in_toto_record_start, in_toto_record_stop
