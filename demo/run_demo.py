@@ -128,6 +128,7 @@ def main():
       "final_product/foo.tar.gz",
       "final_product/package.link",
       "final_product/write-code.link",
+      "final_product/tar.link",
       "final_product/root.layout"
     ]
 

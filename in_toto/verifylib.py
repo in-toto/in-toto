@@ -31,6 +31,7 @@ import datetime
 import iso8601
 import fnmatch
 from dateutil import tz
+from simple_settings import settings
 
 import in_toto.util
 import in_toto.runlib
@@ -40,8 +41,6 @@ import in_toto.ssl_crypto.keys
 from in_toto.exceptions import RuleVerficationFailed
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
-
-from simple_settings import settings
 
 
 def run_all_inspections(layout):
@@ -69,19 +68,19 @@ def run_all_inspections(layout):
   """
   inspection_links_dict = {}
   for inspection in layout.inspect:
-
-    # FIXME LP: What should we record as material/product?
-    # Is the current directory a sensible default? In general?
-    # If so, we should probably make it a default in run_link.
-    # We could use matchrule paths.
-
     # FIXME: We don't want to use the base path for runlib so we patch this
     # for now. This will not stay!
     base_path_backup = settings.ARTIFACT_BASE_PATH
     settings.ARTIFACT_BASE_PATH = None
 
-    link = in_toto.runlib.run_link(inspection.name, '.', '.',
-        inspection.run.split())
+    # FIXME: What should we record as material/product?
+    # Is the current directory a sensible default? In general?
+    # If so, we should propably make it a default in run_link
+    # We could use matchrule paths.
+    material_list = product_list = ["."]
+    link = in_toto.runlib.in_toto_run(inspection.name, material_list,
+        product_list, inspection.run.split())
+
     inspection_links_dict[inspection.name] = link
 
     # Dump the inpsection link file for auditing
@@ -91,6 +90,7 @@ def run_all_inspections(layout):
     settings.ARTIFACT_BASE_PATH = base_path_backup
 
   return inspection_links_dict
+
 
 def verify_layout_expiration(layout):
   """
