@@ -18,14 +18,67 @@
 
 """
 
+import os
+import shutil
+import tempfile
 import unittest
+from simple_settings import settings
+
 from in_toto.models.link import Link
 from in_toto.models.layout import Step, Inspection
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
-    verify_command_alignment)
+    verify_command_alignment, run_all_inspections)
+
 from in_toto.exceptions import RuleVerficationFailed
 from mock import patch
+
+class TestRunAllInspections(unittest.TestCase):
+  """Test verifylib.run_all_inspections(layout)"""
+
+  @classmethod
+  def setUpClass(self):
+    """
+    Create layout with dummy inpsection.
+    Create and change into temp test directory with dummy artifact."""
+
+    # Create layout with one inspection
+    self.layout = Layout.read({
+      "_type": "layout",
+      "steps": [],
+      "inspect": [{
+        "name": "touch-bar",
+        "run": "touch bar",
+      }]
+    })
+
+    # Create directory where the verification will take place
+    self.working_dir = os.getcwd()
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+    open("foo", "w").write("foo")
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_inpsection_artifacts_with_base_path_ignored(self):
+    """Create new dummy test dir and set as base path, must ignore. """
+    ignore_dir = os.path.realpath(tempfile.mkdtemp())
+    ignore_foo = os.path.join(ignore_dir, "ignore_foo")
+    open(ignore_foo, "w").write("ignore foo")
+    settings.ARTIFACT_BASE_PATH = ignore_dir
+
+    run_all_inspections(self.layout)
+    link = Link.read_from_file("touch-bar.link")
+    self.assertListEqual(link.materials.keys(), ["foo"])
+    self.assertListEqual(sorted(link.products.keys()), sorted(["foo", "bar"]))
+
+    settings.ARTIFACT_BASE_PATH = None
+    shutil.rmtree(ignore_dir)
+
 
 class TestVerifyCommandAlignment(unittest.TestCase):
   """Test verifylib.verify_command_alignment(command, expected_command)"""

@@ -22,17 +22,18 @@ import os
 import unittest
 import shutil
 import tempfile
+from simple_settings import settings
 
 from in_toto import ssl_crypto
+from in_toto.models.link import Link
+from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_record_start, in_toto_record_stop,
     UNFINISHED_FILENAME_FORMAT, record_artifacts_as_dict,
     _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
 
-from in_toto.models.link import Link
-from in_toto.exceptions import SignatureVerificationError
-from simple_settings import settings
+
 
 
 class Test_ApplyExcludePatterns(unittest.TestCase):

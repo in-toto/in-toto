@@ -79,11 +79,17 @@ def run_all_inspections(layout):
     # for now. This will not stay!
     base_path_backup = settings.ARTIFACT_BASE_PATH
     settings.ARTIFACT_BASE_PATH = None
+
     link = in_toto.runlib.run_link(inspection.name, '.', '.',
         inspection.run.split())
-    link.dump()
     inspection_links_dict[inspection.name] = link
+
+    # Dump the inpsection link file for auditing
+    # Keep in mind that this pollutes the verfier's (client's) filesystem.
+    link.dump()
+
     settings.ARTIFACT_BASE_PATH = base_path_backup
+
   return inspection_links_dict
 
 def verify_layout_expiration(layout):
