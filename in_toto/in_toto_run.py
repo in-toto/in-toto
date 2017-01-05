@@ -120,10 +120,10 @@ def main():
 
   in_toto_args.add_argument("-b", "--record-byproducts",
       help="If set redirects stdout/stderr and stores to link metadata",
-      dest='record_byproducts', default=False, action='store_true')
+      dest="record_byproducts", default=False, action="store_true")
 
-  in_toto_args.add_argument("-v", "--verbose", dest='verbose',
-      help="Verbose execution.", default=False, action='store_true')
+  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", default=False, action="store_true")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
@@ -147,5 +147,5 @@ def main():
   in_toto_run(args.step_name, args.materials, args.products,
       args.link_cmd, key, args.record_byproducts)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   main()
