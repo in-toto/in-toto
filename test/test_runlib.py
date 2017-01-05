@@ -80,6 +80,7 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     result = _apply_exclude_patterns(names, patterns)
     self.assertListEqual(result, expected)
 
+
 class TestRecordArtifactsAsDict(unittest.TestCase):
   """Test record_artifacts_as_dict(artifacts). """
 
@@ -183,6 +184,78 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
+
+
+class TestRecordArtifactsAsDict(unittest.TestCase):
+  """Test record_artifacts_as_dict(artifacts). """
+
+  @classmethod
+  def setUpClass(self):
+    """Create and change into temp test directory with dummy artifacts.
+    |-- bar
+    |-- foo
+    `-- subdir
+        |-- foosub1
+        |-- foosub2
+        `-- subsubdir
+            `-- foosubsub
+    """
+
+    self.working_dir = os.getcwd()
+
+    # Clear user set excludes
+    settings.ARTIFACT_EXCLUDES = []
+    settings.ARTIFACT_BASE_PATH = None
+
+    # mkdtemp uses $TMPDIR, which might contain a symlink
+    # but we want the absolute location instead
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    open("foo", "w").write("foo")
+    open("bar", "w").write("bar")
+
+    os.mkdir("subdir")
+    os.mkdir("subdir/subsubdir")
+    open("subdir/foosub1", "w").write("foosub")
+    open("subdir/foosub2", "w").write("foosub")
+    open("subdir/subsubdir/foosubsub", "w").write("foosubsub")
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def tearDown(self):
+    """Clear the ARTIFACT_EXLCUDES after every test. """
+    settings.ARTIFACT_EXCLUDES = []
+    settings.ARTIFACT_BASE_PATH = None
+
+  def test_not_existing_base_path(self):
+    """Raise exception with not existing base path setting. """
+    settings.ARTIFACT_BASE_PATH = "path_does_not_exist"
+    with self.assertRaises(OSError):
+      record_artifacts_as_dict(["."])
+
+  def test_base_path_is_child_dir(self):
+    """Test path of recorded artifacts and cd back with child as base."""
+    settings.ARTIFACT_BASE_PATH = "subdir"
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
+    self.assertEquals(os.getcwd(), self.test_dir)
+
+  def test_base_path_is_parent_dir(self):
+    """Test path of recorded artifacts and cd back with parent as base. """
+    settings.ARTIFACT_BASE_PATH = ".."
+    os.chdir("subdir/subsubdir")
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
+    self.assertEquals(os.getcwd(),
+        os.path.join(self.test_dir, "subdir/subsubdir"))
+    os.chdir(self.test_dir)
 
 
 class TestInTotoRecordStart(unittest.TestCase):
