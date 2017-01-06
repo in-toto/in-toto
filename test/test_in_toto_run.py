@@ -27,12 +27,13 @@ import shutil
 import tempfile
 from mock import patch
 
-from in_toto.util import generate_and_write_rsa_keypair, \
-    prompt_import_rsa_key_from_file
+from in_toto.util import (generate_and_write_rsa_keypair,
+    prompt_import_rsa_key_from_file)
 
 from in_toto.models.link import Link
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.in_toto_run import in_toto_run
+from in_toto.runlib import FILENAME_FORMAT
 
 
 
@@ -57,7 +58,7 @@ class TestInTotoRunTool(unittest.TestCase):
     self.key = prompt_import_rsa_key_from_file(self.key_path)
 
     self.test_step = "test_step"
-    self.test_link = "test_step.link"
+    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step)
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 
