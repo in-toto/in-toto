@@ -593,4 +593,84 @@ def verify_all_item_rules(items, links, target_links=None):
         link.products, target_links)
 
 
+def in_toto_verify(layout_path, layout_key_paths):
+  """
+  <Purpose>
+    Does entire in-toto supply chain verification of a final product
+    by performing the following actions:
+        1.  Load root layout as specified by 'layout_path'
+        2.  Load root layout signing key(s) (project owner public key(s)) as
+            specified by 'layout_key_paths'
+        3.  Verify layout signature(s)
+        4.  Verify layout expiration
+        5.  Load link metadata for every Step defined in the layout
+            NOTE: in_toto_verify searches for link metadata files by their step
+            name plus the extension '.link' in the current directory.
+            E.g. a step of name 'foo' is expected to be found in the current
+            directory at 'foo.link'.
+        6.  For link metadata signatures
+        7.  Verify alignment of defined (Step) and reported (Link) commands
+            NOTE: Won't raise exception on mismatch
+        8.  Execute Inspection commands
+            NOTE: Inspections, similar to Steps executed with 'in-toto-run',
+            will record materials before and products after command execution.
+            For now it records everything in the current working directory.
+        9.  Verify rules defined in each Step's material_matchrules and
+            product_matchrules field.
+       10.  Verify rules defined in each Inspection's material_matchrules and
+            product_matchrules field.
 
+  <Arguments>
+    layout_path:
+            Path to the layout that is being verified.
+
+    layout_key_paths:
+            List of paths to project owner public keys, used to verify the
+            layout's signature.
+
+  <Exceptions>
+    TBA (see https://github.com/in-toto/in-toto/issues/6)
+
+  <Side Effects>
+    Reads layout from disk
+    Reads project owner public key(s) from disk
+    Reads link metadata files from disk
+
+  """
+
+  log.doing("Verifying software supply chain...")
+
+  log.doing("Reading layout...")
+  layout = in_toto.models.layout.Layout.read_from_file(layout_path)
+
+  log.doing("Reading layout key(s)...")
+  layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
+      layout_key_paths)
+
+  log.doing("Verifying layout signatures...")
+  verify_layout_signatures(layout, layout_key_dict)
+
+  log.doing("Verifying layout expiration... ")
+  verify_layout_expiration(layout)
+
+  log.doing("Reading link metadata files...")
+  step_link_dict = layout.import_step_metadata_from_files_as_dict()
+
+  log.doing("Verifying link metadata signatures...")
+  verify_all_steps_signatures(layout, step_link_dict)
+
+  log.doing("Verifying alignment of reported commands...")
+  verify_all_steps_command_alignment(layout, step_link_dict)
+
+  log.doing("Executing Inspection commands...")
+  inspection_link_dict = run_all_inspections(layout)
+
+  log.doing("Verifying Step rules...")
+  verify_all_item_rules(layout.steps, step_link_dict)
+
+  log.doing("Verifying Inspection rules...")
+  verify_all_item_rules(layout.inspect, inspection_link_dict,
+      step_link_dict)
+
+  # We made it this far without exception that means, verification passed.
+  log.passing("Passing verification")
