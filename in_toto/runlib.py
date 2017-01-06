@@ -50,7 +50,7 @@ import in_toto.log as log
 import in_toto.ssl_crypto.hash
 import in_toto.ssl_crypto.formats
 
-FILENAME_FORMAT = ".{step_name}.link"
+FILENAME_FORMAT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
