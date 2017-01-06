@@ -28,6 +28,8 @@ import sys
 import os
 import tempfile
 import logging
+import fnmatch
+from simple_settings import settings
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
@@ -65,11 +67,13 @@ def _hash_artifact(filepath, hash_algorithms=['sha256']):
   return hash_dict
 
 
-def _normalize_path(path):
-  """Internal helper that strips "./" on the left side of the path. """
-  if path.startswith("./"):
-      return path[2:]
-  return path
+def _apply_exclude_patterns(names, exclude_patterns):
+  """Exclude matched patterns from passed names. """
+
+  for exclude_pattern in exclude_patterns:
+    excludes = fnmatch.filter(names, exclude_pattern)
+    names = list(set(names) - set(excludes))
+  return names
 
 
 def record_artifacts_as_dict(artifacts):
@@ -81,6 +85,34 @@ def record_artifacts_as_dict(artifacts):
     The files a link command is executed on are called materials.
     The files that result form a link command execution are called
     products.
+
+    Paths are normalized for matching and storing by left stripping "./"
+
+    Excludes files that are matched by the file patterns specified in
+    ARTIFACT_EXCLUDES setting.
+
+    EXCLUDES:
+      - Uses Python fnmatch
+            *       matches everything
+            ?       matches any single character
+            [seq]   matches any character in seq
+            [!seq]  matches any character not in seq
+
+      - Patterns are checked for match against the full path relative to each
+        path passed in the artifacts list
+
+      - If a directory is excluded, all its files and subdirectories are also
+        excluded
+
+      - How it differs from .gitignore
+            - No need to escape #
+            - No ignoring of trailing spaces
+            - No general negation with exclamation mark !
+            - No special treatment of slash /
+            - No special treatment of consecutive asterisks **
+
+      - Exclude patterns are likely to become command line arguments or part of
+        a config file.
 
   <Arguments>
     artifacts:
@@ -101,19 +133,56 @@ def record_artifacts_as_dict(artifacts):
   if not artifacts:
     return artifacts_dict
 
-  for artifact in artifacts:
+  # Normalize passed paths
+  norm_artifacts = []
+  for path in artifacts:
+    norm_artifacts.append(os.path.normpath(path))
+
+  # Iterate over remaining normalized artifact paths after
+  # having applied exclusion patterns
+  for artifact in _apply_exclude_patterns(norm_artifacts,
+        settings.ARTIFACT_EXCLUDES):
 
     if not os.path.exists(artifact):
       log.warning("path: {} does not exist, skipping..".format(artifact))
       continue
 
     if os.path.isfile(artifact):
-      artifacts_dict[_normalize_path(artifact)] = _hash_artifact(artifact)
+      # Path was already normalized above
+      artifacts_dict[artifact] = _hash_artifact(artifact)
+
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact):
-        for name in files:
-          filepath = os.path.join(root, name)
-          artifacts_dict[_normalize_path(filepath)] = _hash_artifact(filepath)
+
+        # Create a list of normalized dirpaths
+        dirpaths = []
+        for dirname in dirs:
+          norm_dirpath = os.path.normpath(os.path.join(root, dirname))
+          dirpaths.append(norm_dirpath)
+
+        # Apply exlcude patterns on normalized dirpaths
+        dirpaths = _apply_exclude_patterns(dirpaths, settings.ARTIFACT_EXCLUDES)
+
+        # Reset and refill dirs with remaining names after exclusion
+        # Modify (not reassign) dirnames to only recurse into remaining dirs
+        dirs[:] = []
+        for dirpath in dirpaths:
+          # Dirs only contain the basename and not the full path
+          name = os.path.basename(dirpath)
+          dirs.append(name)
+
+        # Create a list of normalized filepaths
+        filepaths = []
+        for filename in files:
+          norm_filepath = os.path.normpath(os.path.join(root, filename))
+          filepaths.append(norm_filepath)
+
+        # Apply exclude patterns on normalized filepaths and
+        # store each remaining normalized filepath with it's files hash to
+        # the resulting artifact dict
+        for filepath in _apply_exclude_patterns(filepaths,
+            settings.ARTIFACT_EXCLUDES):
+          artifacts_dict[filepath] = _hash_artifact(filepath)
 
   return artifacts_dict
 

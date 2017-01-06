@@ -65,6 +65,8 @@ ED25519_CRYPTO_LIBRARY = 'ed25519'
 # 'pyca-cryptography']
 GENERAL_CRYPTO_LIBRARY = 'pycrypto'
 
+# FIXME: Add as command line argument or to config file, e.g .in-toto-ignore
+ARTIFACT_EXCLUDES=["*.link*", ".git", "*.pyc", "*~"]
 
 # Debug level INFO shows a bunch of stuff that is happening
 LOG_LEVEL = logging.INFO
