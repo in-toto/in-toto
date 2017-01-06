@@ -72,3 +72,9 @@ ARTIFACT_EXCLUDES=["*.link*", ".git", "*.pyc", "*~"]
 LOG_LEVEL = logging.INFO
 # Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
+
+# Used as base path for --materials and --products arguments when running
+# in-toto-run/in-toto-record
+# FIXME: This is likely to become a command line argument
+# FIXME: Do we want different base paths for materials and products?
+ARTIFACT_BASE_PATH = None

@@ -22,18 +22,16 @@ import os
 import unittest
 import shutil
 import tempfile
+from simple_settings import settings
 
 from in_toto import ssl_crypto
+from in_toto.models.link import Link
+from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_record_start, in_toto_record_stop,
     UNFINISHED_FILENAME_FORMAT, record_artifacts_as_dict,
     _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-
-from in_toto.models.link import Link
-from in_toto.exceptions import SignatureVerificationError
-from simple_settings import settings
-
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
@@ -80,6 +78,7 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     result = _apply_exclude_patterns(names, patterns)
     self.assertListEqual(result, expected)
 
+
 class TestRecordArtifactsAsDict(unittest.TestCase):
   """Test record_artifacts_as_dict(artifacts). """
 
@@ -89,7 +88,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     |-- bar
     |-- foo
     `-- subdir
-        |-- foosub
+        |-- foosub1
         |-- foosub2
         `-- subsubdir
             `-- foosubsub
@@ -97,11 +96,17 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     self.working_dir = os.getcwd()
 
-    # Clear user set excludes
+    # Backup and clear user set excludes and base path
+    self.artifact_exclude_orig = settings.ARTIFACT_EXCLUDES
+    self.artifact_base_path_orig = settings.ARTIFACT_BASE_PATH
     settings.ARTIFACT_EXCLUDES = []
+    settings.ARTIFACT_BASE_PATH = None
 
-    self.test_dir = tempfile.mkdtemp()
+    # mkdtemp uses $TMPDIR, which might contain a symlink
+    # but we want the absolute location instead
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
+
     open("foo", "w").write("foo")
     open("bar", "w").write("bar")
 
@@ -113,13 +118,41 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
+    """Change back to working dir, remove temp directory, restore settings. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
+    settings.ARTIFACT_EXCLUDES = self.artifact_exclude_orig
+    settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
 
   def tearDown(self):
     """Clear the ARTIFACT_EXLCUDES after every test. """
     settings.ARTIFACT_EXCLUDES = []
+    settings.ARTIFACT_BASE_PATH = None
+
+  def test_not_existing_base_path(self):
+    """Raise exception with not existing base path setting. """
+    settings.ARTIFACT_BASE_PATH = "path_does_not_exist"
+    with self.assertRaises(OSError):
+      record_artifacts_as_dict(["."])
+
+  def test_base_path_is_child_dir(self):
+    """Test path of recorded artifacts and cd back with child as base."""
+    settings.ARTIFACT_BASE_PATH = "subdir"
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
+    self.assertEquals(os.getcwd(), self.test_dir)
+
+  def test_base_path_is_parent_dir(self):
+    """Test path of recorded artifacts and cd back with parent as base. """
+    settings.ARTIFACT_BASE_PATH = ".."
+    os.chdir("subdir/subsubdir")
+    artifacts_dict = record_artifacts_as_dict(["."])
+    self.assertListEqual(sorted(artifacts_dict.keys()),
+        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
+    self.assertEquals(os.getcwd(),
+        os.path.join(self.test_dir, "subdir/subsubdir"))
+    os.chdir(self.test_dir)
 
   def test_empty_artifacts_list_record_nothing(self):
     """Empty list passed. Return empty dict. """
@@ -171,7 +204,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     artifacts_dict = record_artifacts_as_dict(["."])
     self.assertListEqual(sorted(artifacts_dict.keys()),
       sorted(["bar", "foo", "subdir/subsubdir/foosubsub"]))
-
 
   def test_exclude_subsubdir(self):
     """Traverse dot. Exclude subsubdir. """
@@ -312,5 +344,5 @@ class TestInTotoRecordStop(unittest.TestCase):
       open(self.link_name, "r")
     os.remove(self.link_name_unfinished)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   unittest.main()
