@@ -25,7 +25,7 @@ import unittest
 from simple_settings import settings
 
 from in_toto.models.link import Link
-from in_toto.models.layout import Step, Inspection
+from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections)
