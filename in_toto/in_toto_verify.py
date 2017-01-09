@@ -60,7 +60,7 @@ def in_toto_verify(layout_path, layout_key_paths):
     sys.exit(1)
 
 def main():
-  """ Parse arguments and call in_toto_verify. """
+  """Parse arguments and call in_toto_verify. """
   parser = argparse.ArgumentParser(
       description="Verifies in-toto final product")
 
