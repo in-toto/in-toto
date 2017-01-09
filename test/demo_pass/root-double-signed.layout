@@ -1,0 +1,109 @@
+{
+    "_type": "layout",
+    "expires": "2017-02-09T12:45:57.512742Z",
+    "inspect": [
+        {
+            "_type": "inspection",
+            "material_matchrules": [
+                [
+                    "MATCH",
+                    "PRODUCT",
+                    "foo.tar.gz",
+                    "FROM",
+                    "package"
+                ],
+                [
+                    "CREATE",
+                    "*"
+                ]
+            ],
+            "name": "untar",
+            "product_matchrules": [
+                [
+                    "MATCH",
+                    "PRODUCT",
+                    "foo.py",
+                    "AS",
+                    "foo.py",
+                    "FROM",
+                    "write-code"
+                ],
+                [
+                    "CREATE",
+                    "*"
+                ]
+            ],
+            "run": "tar xfz foo.tar.gz"
+        }
+    ],
+    "keys": {
+        "3b6f185185be58a9bef924ff0e9ebe9072a1f68c4e868e069e996507b1f3d6ad": {
+            "keyid": "3b6f185185be58a9bef924ff0e9ebe9072a1f68c4e868e069e996507b1f3d6ad",
+            "keytype": "rsa",
+            "keyval": {
+                "private": "",
+                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAzgLBsMFSgwBiWTBmVsyW\n5KbJwLFSodAzdUhU2Bq6SdRz/W6UOBGdojZXibxupjRtAaEQW/eXDe+1CbKg6ENZ\nGt2D9HGFCQZgQS8ONgNDQGiNxgApMA0T21AaUhru0vEofzdN1DfEF4CAGv5AkcgK\nsalhTyONervFIjFEdXGelFZ7dVMV3Pp5WkZPG0jFQWjnmDZhUrtSxEtqbVghc3kK\nAUj9Ll/3jyi2wS92Z1j5ueN8X62hWX2xBqQ6nViOMzdujkoiYCRSwuMLRqzW2CbT\nL8hF1+S5KWKFzxl5sCVfpPe7V5HkgEHjwCILXTbCn2fCMKlaSbJ/MG2lW7qSY2Ro\nwVXWkp1wDrsJ6Ii9f2dErv9vJeOVZeO9DsooQ5EuzLCfQLEU5mn7ul7bU7rFsb8J\nxYOeudkNBatnNCgVMAkmDPiNA7E33bmL5ARRwU0iZicsqLQR32pmwdap8PjofxqQ\nk7Gtvz/iYzaLrZv33cFWWTsEOqK1gKqigSqgW9T26wO9AgMBAAE=\n-----END PUBLIC KEY-----"
+            }
+        },
+        "e02e1d7f3b51bb52db91adeb307e39c94e321d1f993eff76ae07399bb837379d": {
+            "keyid": "e02e1d7f3b51bb52db91adeb307e39c94e321d1f993eff76ae07399bb837379d",
+            "keytype": "rsa",
+            "keyval": {
+                "private": "",
+                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0Zfzonp3/FScaIP+KKuz\nB+OZNFpjbVGWjm3leqnFqHYLqrLcCw5KhlXpycJqoSvZBpO+PFCksUx8U/ryklHG\nVoDiB84pRkvZtBoVaA4b4IHDIhz1K5NqkJgieya4fwReTxmCW0a9gH7AnDicHBCX\nlzMxqEdt6OKMV5g4yjKaxf8lW72O1gSI46GSIToo+Z7UUgs3ofaM5UFIcczgCpUa\n5kEKocB6cSZ9U8PKRLSs0xO0ROjrcOTsfxMs8eV4bsRCWY5mAq1WM9EHDSV9WO8g\nqrRmanC4enNqa8jU4O3zhgJVegP9A01r9AwNt6AqgPSikwhXN/P4v1FMYV+R6N3b\nS1lsVWRAnwBq5RFz5zVvcY88JEkHbrcBqP/A4909NXae1VMXmnoJb4EzGAkyUySB\na+fHXAVJgzwyv3I48d/OIjH8NWcVmM/DQL7FtcJk3tp0YUjY5wNpcbQTnLzURtlU\nsd+MtGuvdlDxUUvtUYCIVKRdS8UzYnTPjI2xzeoSHZ2ZAgMBAAE=\n-----END PUBLIC KEY-----"
+            }
+        }
+    },
+    "signatures": [
+        {
+            "keyid": "26c4ffc608d8fe8fafe4313022b580786880b574b773654d0d71a033e33be586",
+            "method": "RSASSA-PSS",
+            "sig": "649cc2cdd939ff3234dd41b32ee357eb1bdac763967a418d73d6dc7c89cbf1c721ef9d228e8e72ab18f2f986a1692722897484db068f2c930f0db8955091f3c60ee289187eef62076edbb9dd930a4f3d9b075950fde5b204cc84f9f6c4679f6b779483b841e3ee77a73be26dbb2b904f9840397d22c271431e9f02a80a563e9e0eb0cae2bd4bda1240ccb5e8f112d825cda4d3527211460d02dad870de2e57e4edfff18b75ddf5aa3a7b8e11ff4ffe79d06038cc21b1d08ef5e38b99dc5eca844ee14be704456a872d04b7647f651b640736ab9e120fbcce25a87c8eb3104f197b0bf8b9f5e039be534889ad4f1a23378ad496b52a494881ae16e0c6f4de1fe734e2c7ef80122ba4db6adfa8bffcd34c714c3c633baf45130209bd79c6021a47460236f25bb9fbfc12c0a8abd0f2f534b88d8f9f62e2d074a3d9aeda4392ec3437082a5ca95e4422818297282d212b1deb6edd5096cce384c0291b0b08bf148978a71a407f46f93542c0e57652887202fe61958657f51e86d14be5139208cb97"
+        },
+        {
+            "keyid": "e02e1d7f3b51bb52db91adeb307e39c94e321d1f993eff76ae07399bb837379d",
+            "method": "RSASSA-PSS",
+            "sig": "c9f9663421dcd19915e15595709266df19b76ecffd0642afc8c39aec322892cef83ec0278247539315fc54f357040570e4420c14e8729bddf684451e94a5ea1e9ef7518a1853f8cdfaeef7e8e6e53ceed0e0e18771198aed8619c0d8fee9a24a6c60a6ab4cd0ce7f25132d329575602825e06a57f5ad78d46ffd3616173bf9a6b2bf55a51a71d3d57688453ba4b9f38512952b0755677e0b7325a2c1a15cf97a091e9833755a302a0b533c4bf230260e5210345882e9d5950e0122838a6df0921b71436bd30f0387d3b5f1bb3937a2c40ab352ea5a6675cad8e4a3b3f1e9e7edd983316fa50abb904719d944a1eef1e3d4938505ae2c849d5b33448c42f890c29b97adb37952b2f398def9520de880f62c190ac2afbf31cbd20c1e36cd6fa3d70834205440c71e325ac3cc49f7d01a107fd0bf24d0de5b9480bb790d3a26df6bc63a66b065108fb37517299f23000f27289971015c902e65d2e4ac6e1ff53ba2c3f796877c182593594ba63cdba8b3483d5dcc4bd61d4ec33eb09e95784a2065"
+        }
+    ],
+    "steps": [
+        {
+            "_type": "step",
+            "expected_command": "vi",
+            "material_matchrules": [],
+            "name": "write-code",
+            "product_matchrules": [
+                [
+                    "CREATE",
+                    "foo.py"
+                ]
+            ],
+            "pubkeys": [
+                "e02e1d7f3b51bb52db91adeb307e39c94e321d1f993eff76ae07399bb837379d"
+            ]
+        },
+        {
+            "_type": "step",
+            "expected_command": "tar zcvf foo.tar.gz foo.py",
+            "material_matchrules": [
+                [
+                    "MATCH",
+                    "PRODUCT",
+                    "foo.py",
+                    "FROM",
+                    "write-code"
+                ]
+            ],
+            "name": "package",
+            "product_matchrules": [
+                [
+                    "CREATE",
+                    "foo.tar.gz"
+                ]
+            ],
+            "pubkeys": [
+                "3b6f185185be58a9bef924ff0e9ebe9072a1f68c4e868e069e996507b1f3d6ad"
+            ]
+        }
+    ]
+}
