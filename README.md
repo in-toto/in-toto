@@ -14,6 +14,7 @@ The demo basically outlines three users viz., Alice (project owner), Bob (functi
 
 # Getting Started
 1. Installation
+
 *Make sure you have git, python and pip installed on your system*
 *and get in-toto*
 
@@ -39,6 +40,7 @@ export SIMPLE_SETTINGS=in_toto.settings
 pip install pycrypto cryptography
 
 2. Create layout
+
 The layout should specify 6 parts:-
   1. "_type": which defines a layout
   2. "expires": which sets the expiry date of the layout
@@ -50,6 +52,7 @@ The layout should specify 6 parts:-
 You can use the create_layout.py script or write your own script to specify a layout for your project.
 
 3. Perform software supply chain steps
+
 The following commands are used while performing software supply chain:-
   1. in-toto-record:
   This command provides an interface to start and stop link metadata recording.
@@ -60,10 +63,12 @@ The following commands are used while performing software supply chain:-
   This command provides an interface which takes a link command as input and wraps metadata recording.
 
 4. Release final product
+
 In order to verify the final product with in-toto, the verifier must have access to the layout, the *.link files,
 and the project owner's public key.
 
 5. Verify final product
+
   1. in-toto-verify:
   This command will verify that
     * the layout has not expired,
