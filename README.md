@@ -26,21 +26,26 @@ The demo basically outlines three users viz., Alice (project owner), Bob (functi
 To contribute to in-toto, follow the below mentioned steps:-
 *Make sure you have git, python and pip installed on your system*
 *and get in-toto*
+
 git clone -b develop --recursive https://github.com/in-toto/in-toto.git
 
 *Change into project root directory*
+
 cd in-toto
 
 *Install with pip in "develop mode"*
 *(we strongly recommend using Virtual Environments)*
 *http://docs.python-guide.org/en/latest/dev/virtualenvs/*
+
 pip install -e .
 
 *Export the envvar required for "simple settings"*
+
 export SIMPLE_SETTINGS=in_toto.settings
 
 *Install additional requirements that for some good reason are not in the*
 *requirements file*
+
 pip install pycrypto cryptography
 
 Submit a Pull Request and start contributing to in-toto.
