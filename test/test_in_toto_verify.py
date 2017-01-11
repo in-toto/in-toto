@@ -28,10 +28,12 @@ import tempfile
 from mock import patch
 
 from in_toto.models.link import Link
+from in_toto.models.layout import Layout
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from in_toto.in_toto_verify import in_toto_verify
 from in_toto import log
 from in_toto import exceptions
+from in_toto.util import import_rsa_key_from_file
 
 
 # Suppress all the user feedback that we print using a base logger
@@ -48,26 +50,36 @@ class TestInTotoVerifyTool(unittest.TestCase):
     """Create and change into temporary directory. """
 
     self.working_dir = os.getcwd()
-    test_base_dir = os.path.dirname(os.path.realpath(__file__))
 
-    self.demo_pass_path = os.path.join(test_base_dir, "demo_pass")
-    self.demo_fail_path = os.path.join(test_base_dir, "demo_fail")
-    self.layout_path = "root.layout"
-    self.layout_double_signed_path = "root-double-signed.layout"
-    self.alice_path = "alice.pub"
-    self.bob_path = "bob.pub"
-
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
+
     os.chdir(self.test_dir)
 
-  def tearDown(self):
-    """Remove files from temp dir after every test. """
-    for file in os.listdir("."):
-      os.remove(file)
+    # Copy demo files to test directory
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
-  def copyTestFiles(self, from_path):
-    for file in os.listdir(from_path):
-      shutil.copy(os.path.join(from_path, file), self.test_dir)
+    # Load layout template
+    layout_template = Layout.read_from_file("demo.layout.template")
+
+    self.layout_path = "root.layout"
+    self.layout_double_signed_path = "root-double-signed.layout"
+
+    # Import layout signing keys
+    alice = import_rsa_key_from_file("alice")
+    bob = import_rsa_key_from_file("bob")
+
+    # dump a single signed layout
+    layout_template.sign(alice)
+    layout_template.dump(self.layout_path)
+    # dump a double signed layout
+    layout_template.sign(bob)
+    layout_template.dump(self.layout_double_signed_path)
+
+    self.alice_path = "alice.pub"
+    self.bob_path = "bob.pub"
 
   @classmethod
   def tearDownClass(self):
@@ -77,7 +89,6 @@ class TestInTotoVerifyTool(unittest.TestCase):
 
   def test_main_required_args(self):
     """Test CLI command successful verify with required arguments. """
-    self.copyTestFiles(self.demo_pass_path)
     args = [ "in-toto-verify", "--layout", self.layout_path, "--layout-keys",
         self.alice_path]
 
@@ -91,14 +102,12 @@ class TestInTotoVerifyTool(unittest.TestCase):
       ["in-toto-verify", "--layout", self.layout_path],
       ["in-toto-verify", "--key", self.alice_path],
     ]
-
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
         in_toto_verify_main()
 
   def test_main_multiple_keys(self):
     """Test """
-    self.copyTestFiles(self.demo_pass_path)
     args = [ "in-toto-verify", "--layout", self.layout_double_signed_path,
         "--layout-keys", self.alice_path, self.bob_path]
     with patch.object(sys, 'argv', args):
@@ -106,7 +115,6 @@ class TestInTotoVerifyTool(unittest.TestCase):
 
   def test_main_verbose(self):
     """Log level with verbose flag is lesser/equal than logging.INFO. """
-    self.copyTestFiles(self.demo_pass_path)
     args = [ "in-toto-verify", "--layout", self.layout_path, "--layout-keys",
         self.alice_path, "--verbose"]
 
@@ -119,16 +127,12 @@ class TestInTotoVerifyTool(unittest.TestCase):
 
   def test_in_toto_verify_pass_all(self):
     """in_toto_record_verify run through. """
-    self.copyTestFiles(self.demo_pass_path)
     in_toto_verify(self.layout_path, [self.alice_path])
 
   def test_in_toto_verify_fail(self):
     """in_toto_record_verify fail. """
-
-    self.copyTestFiles(self.demo_fail_path)
-
     with self.assertRaises(SystemExit):
-      in_toto_verify(self.layout_path, [self.alice_path])
+      in_toto_verify("wrong-layout-path", [self.alice_path])
 
 if __name__ == "__main__":
   unittest.main(buffer=True)
