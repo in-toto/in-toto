@@ -13,7 +13,7 @@ You can try in-toto by running the demo application at [demo application](https:
 The demo basically outlines three users viz., Alice (project owner), Bob (functionary) and Carl (functionary) and how in-toto helps to specify a project layout and verify that the layout has been followed in a correct manner.
 
 # Getting Started
-#### Installation
+## 1. Installation
 
 *Make sure you have git, python and pip installed on your system*
 *and get in-toto*
@@ -39,7 +39,7 @@ export SIMPLE_SETTINGS=in_toto.settings
 
 pip install pycrypto cryptography
 
-#### Create layout
+## 2. Create layout
 
 The layout should specify 6 parts:-
   1. "_type": which defines a layout
@@ -51,7 +51,7 @@ The layout should specify 6 parts:-
 
 You can use the create_layout.py script or write your own script to specify a layout for your project.
 
-#### Perform software supply chain steps
+## 3. Perform software supply chain steps
 
 The following commands are used while performing software supply chain:-
   1. in-toto-record:
@@ -62,12 +62,12 @@ The following commands are used while performing software supply chain:-
   2. in-toto-run:
   This command provides an interface which takes a link command as input and wraps metadata recording.
 
-#### Release final product
+## 4. Release final product
 
 In order to verify the final product with in-toto, the verifier must have access to the layout, the *.link files,
 and the project owner's public key.
 
-#### Verify final product
+## 5. Verify final product
 
   1. in-toto-verify:
   This command will verify that
