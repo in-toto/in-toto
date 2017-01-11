@@ -38,7 +38,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.ssl_crypto.keys
-from in_toto.exceptions import RuleVerficationFailed
+from in_toto.exceptions import (RuleVerficationFailed, LayoutExpiredError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
 
