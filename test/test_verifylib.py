@@ -590,30 +590,55 @@ class TestVerifyAllItemRules(unittest.TestCase):
 
 
 class TestInTotoVerify(unittest.TestCase):
-  """Tests verifylib.in_toto_verify(layout_path, layout_key_paths). """
+  """
+  Tests verifylib.in_toto_verify(layout_path, layout_key_paths).
+
+  Uses in-toto demo supply chain link metadata files and basic layout for
+  verification.
+
+  Copies the basic layout for different test scenarios:
+    - single-signed layout
+    - double-signed layout
+    - expired layout
+    - layout with failing link rule
+    - layout with failing step rule
+
+  """
   @classmethod
   def setUpClass(self):
-    """Create and change into temporary directory. """
+    """Creates and changes into temporary directory.
+    Copies demo files to temp dir...
+      - owner/functionary key pairs
+      - *.link metadata files
+      - layout template (not signed, no expiration date)
+      - final product
+
+    ...and dumps various layouts for different test scenarios
+    """
+    # Backup original cwd
     self.working_dir = os.getcwd()
 
+    # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
 
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
 
-    # Copy demo files to test directory
+    # Copy demo files to temp dir
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # Load layout template
     layout_template = Layout.read_from_file("demo.layout.template")
 
-    self.layout_path = "root.layout"
-    self.layout_double_signed_path = "root-double-signed.layout"
-    self.layout_expired_path = "root-expired.layout"
-    self.layout_failing_step_rule_path = "root-failing-link-rule.layout"
-    self.layout_failing_inspection_rule_path = "root-failing-inspection-rule.layout"
+    # Store various layout paths to be used in tests
+    self.layout_single_signed_path = "single-signed.layout"
+    self.layout_double_signed_path = "double-signed.layout"
+    self.layout_expired_path = "expired.layout"
+    self.layout_failing_step_rule_path = "failing-step-rule.layout"
+    self.layout_failing_inspection_rule_path = "failing-inspection-rule.layout"
 
     # Import layout signing keys
     alice = import_rsa_key_from_file("alice")
@@ -624,7 +649,7 @@ class TestInTotoVerify(unittest.TestCase):
     # dump single signed layout
     layout = copy.deepcopy(layout_template)
     layout.sign(alice)
-    layout.dump(self.layout_path)
+    layout.dump(self.layout_single_signed_path)
 
     # dump double signed layout
     layout = copy.deepcopy(layout_template)
@@ -641,55 +666,63 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing step rule
     layout = copy.deepcopy(layout_template)
-    layout.steps[0].material_matchrules.append(
+    layout.steps[0].material_matchrules.insert(0,
         ["MATCH", "PRODUCT", "does-not-exist", "FROM", "write-code"])
     layout.sign(alice)
     layout.dump(self.layout_failing_step_rule_path)
 
-    # dump layout with failing step rule
+    # dump layout with failing inspection rule
     layout = copy.deepcopy(layout_template)
-    layout.steps[0].material_matchrules.append(
+    layout.inspect[0].material_matchrules.insert(0,
         ["MATCH", "PRODUCT", "does-not-exist", "FROM", "write-code"])
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_rule_path)
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
+    """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):
-    in_toto_verify(self.layout_path, [self.alice_path])
+    """Test pass verification of single-signed layout. """
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path])
 
   def test_verify_passing_double_signed_layout(self):
+    """Test pass verification of double-signed layout. """
     in_toto_verify(self.layout_double_signed_path, [self.alice_path,
         self.bob_path])
 
   def test_verify_failing_layout_not_found(self):
+    """Test fail verification for layout not found. """
     with self.assertRaises(IOError):
       in_toto_verify("missing.layout", [self.alice_path])
 
   def test_verify_failing_key_not_found(self):
+    """Test fail verification with layout key not found. """
     with self.assertRaises(IOError):
-      in_toto_verify(self.layout_path, ["missing-key.pub"])
+      in_toto_verify(self.layout_single_signed_path, ["missing-key.pub"])
 
   def test_verify_failing_wrong_key(self):
+    """Test fail verification with wrong layout key. """
     with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(self.layout_path, [self.bob_path])
+      in_toto_verify(self.layout_single_signed_path, [self.bob_path])
 
   def test_verify_failing_missing_key(self):
+    """Test fail verification with missing layout key. """
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(self.layout_double_signed_path, [self.bob_path])
 
   def test_verify_failing_layout_expired(self):
+    """Test fail verification with expired layout. """
     with self.assertRaises(LayoutExpiredError):
       in_toto_verify(self.layout_expired_path, [self.alice_path, self.bob_path])
 
   def test_verify_failing_link_metadata_files(self):
+    """Test fail verification with link metadata files not found. """
     os.rename("package.link", "package.link.bak")
     with self.assertRaises(IOError):
-      in_toto_verify(self.layout_path, [self.alice_path])
+      in_toto_verify(self.layout_single_signed_path, [self.alice_path])
     os.rename("package.link.bak", "package.link")
 
   def test_verify_failing_inspection_exits_non_zero(self):
@@ -697,12 +730,15 @@ class TestInTotoVerify(unittest.TestCase):
     pass
 
   def test_verify_failing_step_rules(self):
+    """Test fail verification with failing step matchrule. """
     with self.assertRaises(RuleVerficationFailed):
       in_toto_verify(self.layout_failing_step_rule_path, [self.alice_path])
 
   def test_verify_failing_inspection_rules(self):
+    """Test fail verification with failing inspection matchrule. """
     with self.assertRaises(RuleVerficationFailed):
-      in_toto_verify(self.layout_failing_inspection_rule_path, [self.alice_path])
+      in_toto_verify(self.layout_failing_inspection_rule_path,
+          [self.alice_path])
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main(buffer=False)
