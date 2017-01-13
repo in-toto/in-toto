@@ -35,10 +35,6 @@ from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.in_toto_run import in_toto_run
 from in_toto.runlib import FILENAME_FORMAT
 
-
-
-WORKING_DIR = os.getcwd()
-
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
 
@@ -50,6 +46,9 @@ class TestInTotoRunTool(unittest.TestCase):
   def setUpClass(self):
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
+
+    self.working_dir = os.getcwd()
+
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 
@@ -65,7 +64,7 @@ class TestInTotoRunTool(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
-    os.chdir(WORKING_DIR)
+    os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
   def tearDown(self):
@@ -73,7 +72,6 @@ class TestInTotoRunTool(unittest.TestCase):
       os.remove(self.test_link)
     except OSError:
       pass
-
 
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
@@ -84,7 +82,6 @@ class TestInTotoRunTool(unittest.TestCase):
       in_toto_run_main()
 
     self.assertTrue(os.path.exists(self.test_link))
-
 
   def test_main_optional_args(self):
     """Test CLI command with optional arguments. """
@@ -98,7 +95,6 @@ class TestInTotoRunTool(unittest.TestCase):
 
     self.assertTrue(os.path.exists(self.test_link))
 
-
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
 
@@ -106,10 +102,8 @@ class TestInTotoRunTool(unittest.TestCase):
       ["in_toto_run.py"],
       ["in_toto_run.py", "--step-name", "some"],
       ["in_toto_run.py", "--key", self.key_path],
-      ["in_toto_run.py", "--step-name", "test-step", "--key",
-        self.key_path],
-      ["in_toto_record.py", "--", "echo", "blub"]
-    ]
+      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path],
+      ["in_toto_record.py", "--", "echo", "blub"]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
@@ -138,7 +132,6 @@ class TestInTotoRunTool(unittest.TestCase):
     with patch.object(sys, 'argv', args ):
       in_toto_run_main()
     self.assertTrue(os.path.exists(self.test_link))
-
 
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
     # Reset log level
