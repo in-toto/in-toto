@@ -32,9 +32,7 @@
 import os
 import sys
 import argparse
-from in_toto import util
-from in_toto import runlib
-from in_toto import log
+from in_toto import (util, runlib, log)
 from in_toto.models.link import Link
 
 def in_toto_run(step_name, material_list, product_list,
