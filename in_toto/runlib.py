@@ -49,6 +49,7 @@ import in_toto.log as log
 
 import in_toto.ssl_crypto.hash
 import in_toto.ssl_crypto.formats
+from in_toto.ssl_commons.exceptions import FormatError
 
 FILENAME_FORMAT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
@@ -354,6 +355,13 @@ def in_toto_run(name, material_list, product_list,
   fn = FILENAME_FORMAT.format(step_name=name)
 
   log.doing("Running '{}'...".format(name))
+
+  # If a key is passed, it has to match the format
+  if key:
+    in_toto.ssl_crypto.formats.KEY_SCHEMA.check_match(key)
+    #FIXME: Add private key format check to ssl_crypto formats
+    if not key["keyval"].get("private"):
+      raise FormatError("Signing key needs to be a private key.")
 
   if material_list:
     log.doing("Recording materials '{}'...".format(", ".join(material_list)))

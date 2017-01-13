@@ -32,7 +32,7 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     record_artifacts_as_dict, _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-
+from in_toto.ssl_commons.exceptions import FormatError
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
@@ -217,9 +217,17 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
-class TestInTotoRecordRun(unittest.TestCase):
-  """"Test in_toto_run(name, material_list, product_list,
-  link_cmd_args, key=False, record_byproducts=False). """
+class TestInTotoRun(unittest.TestCase):
+  """"
+  Tests runlib.in_toto_run() with different arguments
+
+  Calls in_toto_run library funtion inside of a temporary directory that
+  contains a test artifact and a test keypair
+
+  If the function does not fail it will dump a test step link metadata file
+  to the temp dir which is removed after every test.
+
+  """
 
   @classmethod
   def setUpClass(self):
@@ -235,6 +243,7 @@ class TestInTotoRecordRun(unittest.TestCase):
     self.key_path = "test_key"
     generate_and_write_rsa_keypair(self.key_path)
     self.key = prompt_import_rsa_key_from_file(self.key_path)
+    self.key_pub = prompt_import_rsa_key_from_file(self.key_path + ".pub")
 
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
@@ -246,7 +255,11 @@ class TestInTotoRecordRun(unittest.TestCase):
     shutil.rmtree(self.test_dir)
 
   def tearDown(self):
-    os.remove(FILENAME_FORMAT.format(step_name=self.step_name))
+    """Remove link file if it was created. """
+    try:
+      os.remove(FILENAME_FORMAT.format(step_name=self.step_name))
+    except OSError:
+      pass
 
   def test_in_toto_run_verify_signature(self):
     """Successfully run, verify signed metadata. """
@@ -286,6 +299,17 @@ class TestInTotoRecordRun(unittest.TestCase):
     self.assertEqual(link.materials.keys(),
         link.products.keys(), [self.test_artifact])
 
+  def test_in_toto_bad_signing_key_format(self):
+    """Fail run, passed key is not properly formatted. """
+    with self.assertRaises(FormatError):
+      in_toto_run(self.step_name, None, None,
+          ["echo", "test"], "this-is-not-a-key", True)
+
+  def test_in_toto_wrong_key(self):
+    """Fail run, passed key is a public key. """
+    with self.assertRaises(FormatError):
+      in_toto_run(self.step_name, None, None,
+          ["echo", "test"], self.key_pub, True)
 
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
