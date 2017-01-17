@@ -620,6 +620,11 @@ def in_toto_verify(layout_path, layout_key_paths):
        10.  Verify rules defined in each Inspection's material_matchrules and
             product_matchrules field.
 
+    Note, this function will read the following files from disk:
+      - software supply chain layout
+      - project owner public key(s)
+      - link metadata files
+
   <Arguments>
     layout_path:
             Path to the layout that is being verified.
@@ -632,9 +637,7 @@ def in_toto_verify(layout_path, layout_key_paths):
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    Reads layout from disk
-    Reads project owner public key(s) from disk
-    Reads link metadata files from disk
+    None.
 
   """
 
