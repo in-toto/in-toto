@@ -608,7 +608,7 @@ def in_toto_verify(layout_path, layout_key_paths):
             name plus the extension '.link' in the current directory.
             E.g. a step of name 'foo' is expected to be found in the current
             directory at 'foo.link'.
-        6.  For link metadata signatures
+        6.  Verify functionary signature for every Link.
         7.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
         8.  Execute Inspection commands
