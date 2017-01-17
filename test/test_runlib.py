@@ -27,11 +27,12 @@ from simple_settings import settings
 from in_toto import ssl_crypto
 from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
-from in_toto.runlib import (in_toto_record_start, in_toto_record_stop,
-    UNFINISHED_FILENAME_FORMAT, record_artifacts_as_dict,
-    _apply_exclude_patterns)
+from in_toto.runlib import (in_toto_run, in_toto_record_start,
+    in_toto_record_stop, UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+    record_artifacts_as_dict, _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
+from in_toto.ssl_commons.exceptions import FormatError
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
@@ -216,6 +217,99 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
+class TestInTotoRun(unittest.TestCase):
+  """"
+  Tests runlib.in_toto_run() with different arguments
+
+  Calls in_toto_run library funtion inside of a temporary directory that
+  contains a test artifact and a test keypair
+
+  If the function does not fail it will dump a test step link metadata file
+  to the temp dir which is removed after every test.
+
+  """
+
+  @classmethod
+  def setUpClass(self):
+    """Create and change into temporary directory, generate key pair and dummy
+    material, read key pair. """
+
+    self.working_dir = os.getcwd()
+
+    self.test_dir = tempfile.mkdtemp()
+    os.chdir(self.test_dir)
+
+    self.step_name = "test_step"
+    self.key_path = "test_key"
+    generate_and_write_rsa_keypair(self.key_path)
+    self.key = prompt_import_rsa_key_from_file(self.key_path)
+    self.key_pub = prompt_import_rsa_key_from_file(self.key_path + ".pub")
+
+    self.test_artifact = "test_artifact"
+    open(self.test_artifact, "w").close()
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def tearDown(self):
+    """Remove link file if it was created. """
+    try:
+      os.remove(FILENAME_FORMAT.format(step_name=self.step_name))
+    except OSError:
+      pass
+
+  def test_in_toto_run_verify_signature(self):
+    """Successfully run, verify signed metadata. """
+    link = in_toto_run(self.step_name, None, None,
+        ["echo", "test"], self.key, True)
+    link.verify_signatures({self.key["keyid"] : self.key})
+
+  def test_in_toto_run_no_signature(self):
+    """Successfully run, verify empty signature field. """
+    link = in_toto_run(self.step_name, None, None, ["echo", "test"])
+    self.assertFalse(len(link.signatures))
+
+  def test_in_toto_run_with_byproduct(self):
+    """Successfully run, verify recorded byproduct. """
+    link = in_toto_run(self.step_name, None, None, ["echo", "test"],
+        record_byproducts=True)
+    self.assertTrue("test" in link.byproducts.get("stdout"))
+
+  def test_in_toto_run_without_byproduct(self):
+    """Successfully run, verify byproduct is not recorded. """
+    link = in_toto_run(self.step_name, None, None, ["echo", "test"],
+        record_byproducts=False)
+    self.assertFalse(len(link.byproducts.get("stdout")))
+
+  def test_in_toto_run_compare_dumped_with_returned_link(self):
+    """Successfully run, compare dumped link is equal to returned link. """
+    link = in_toto_run(self.step_name, [self.test_artifact],
+        [self.test_artifact], ["echo", "test"], self.key, True)
+    link_dump = Link.read_from_file(
+        FILENAME_FORMAT.format(step_name=self.step_name))
+    self.assertEquals(repr(link), repr(link_dump))
+
+  def test_in_toto_run_verify_recorded_artifacts(self):
+    """Successfully run, verify properly recorded artifacts. """
+    link = in_toto_run(self.step_name, [self.test_artifact],
+        [self.test_artifact], ["echo", "test"])
+    self.assertEqual(link.materials.keys(),
+        link.products.keys(), [self.test_artifact])
+
+  def test_in_toto_bad_signing_key_format(self):
+    """Fail run, passed key is not properly formatted. """
+    with self.assertRaises(FormatError):
+      in_toto_run(self.step_name, None, None,
+          ["echo", "test"], "this-is-not-a-key", True)
+
+  def test_in_toto_wrong_key(self):
+    """Fail run, passed key is a public key. """
+    with self.assertRaises(FormatError):
+      in_toto_run(self.step_name, None, None,
+          ["echo", "test"], self.key_pub, True)
 
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """

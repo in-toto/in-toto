@@ -32,66 +32,61 @@
 import os
 import sys
 import argparse
-import in_toto.util
-import in_toto.runlib
-import in_toto.log as log
+from in_toto import (util, runlib, log)
 from in_toto.models.link import Link
 
-def _die(msg, exitcode=1):
-  log.error(msg)
-  sys.exit(exitcode)
+def in_toto_run(step_name, material_list, product_list,
+    link_cmd_args, key, record_byproducts):
+  """
+  <Purpose>
+    Calls runlib.in_toto_run and catches exceptions
 
+  <Arguments>
+    step_name:
+            A unique name to relate link metadata with a step defined in the
+            layout.
+    material_list:
+            List of file or directory paths that should be recorded as
+            materials.
+    product_list:
+            List of file or directory paths that should be recorded as
+            products.
+    link_cmd_args:
+            A list where the first element is a command and the remaining
+            elements are arguments passed to that command.
+    key:
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
+    record_byproducts:
+            A bool that specifies whether to redirect standard output and
+            and standard error to a temporary file which is returned to the
+            caller (True) or not (False).
 
-def in_toto_run(step_name, key_path, material_list, product_list,
-    link_cmd_args, record_byproducts=False):
+  <Exceptions>
+    SystemExit if any exception occurs
+
+  <Side Effects>
+    Calls sys.exit(1) if an exception is raised
+
+  <Returns>
+    None.
+  """
+
   """Load link signing private keys from disk and runs passed command, storing
   its materials, by-products and return value, and products into link metadata
   file. The link metadata file is signed and stored to disk. """
-  try:
-    log.doing("load link signing key...")
-    key = in_toto.util.prompt_import_rsa_key_from_file(key_path)
-  except Exception, e:
-    _die("in load key - %s" % e)
 
   try:
-    log.doing("record materials...")
-    materials_dict = in_toto.runlib.record_artifacts_as_dict(material_list)
-  except Exception, e:
-    _die("in record materials - %s" % e)
-
-  try:
-    log.doing("run command...")
-    byproducts, return_value = in_toto.runlib.execute_link(link_cmd_args,
-        record_byproducts)
-  except Exception, e:
-    _die("in run command - %s" % e)
-
-  try:
-    log.doing("record products...")
-    products_dict = in_toto.runlib.record_artifacts_as_dict(product_list)
-  except Exception, e:
-    _die("in record products - %s" % e)
-
-  try:
-    log.doing("create link metadata...")
-    link = in_toto.runlib.create_link_metadata(step_name, materials_dict,
-        products_dict, link_cmd_args, byproducts, return_value)
-  except Exception, e:
-    raise e
-
-  try:
-    log.doing("sign metadata...")
-    link.sign(key)
-  except Exception, e:
-    _die("in sign metadata - %s" % e)
-
-  try:
-    log.doing("store metadata...")
-    link.dump()
-  except Exception, e:
-    _die("in store metadata - %s" % e)
+    runlib.in_toto_run(step_name, material_list, product_list,
+        link_cmd_args, key, record_byproducts)
+  except Exception as e:
+    log.error("in toto run - {}".format(e))
+    sys.exit(1)
 
 def main():
+  """Parse arguments, load key from disk (prompts for password if key is
+  encrypted) and call in_toto_run. """
+
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata")
   # Whitespace padding to align with program name
@@ -102,37 +97,53 @@ def main():
                " --key <functionary private key path>\n{0}"
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
-               "[--record-byproducts] -- <cmd> [args]\n\n"
+               "[--record-byproducts]\n{0}"
+               "[--verbose] -- <cmd> [args]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
-  # FIXME: Name has to be unique!!! Where will we check this?
+
   # FIXME: Do we limit the allowed characters for the name?
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
   in_toto_args.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
+
   in_toto_args.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
 
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  in_toto_args.add_argument("-b", "--record-byproducts", dest='record_byproducts',
+  in_toto_args.add_argument("-b", "--record-byproducts",
       help="If set redirects stdout/stderr and stores to link metadata",
-      default=False, action='store_true')
+      dest="record_byproducts", default=False, action="store_true")
 
-  link_args = parser.add_argument_group("Link command")
+  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", default=False, action="store_true")
+
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
-  link_args.add_argument("link_cmd", nargs="+",
+  in_toto_args.add_argument("link_cmd", nargs="+",
     help="Link command to be executed with options and arguments")
 
   args = parser.parse_args()
 
-  in_toto_run(args.step_name, args.key, args.materials, args.products,
-      args.link_cmd, args.record_byproducts)
+  # Turn on all the `log.doing()` in the library
+  if args.verbose:
+    log.logging.getLogger().setLevel(log.logging.INFO)
 
-if __name__ == '__main__':
+  # We load the key here because it might prompt the user for a password in
+  # case the key is encrypted. Something that should not happen in the library.
+  try:
+    key = util.prompt_import_rsa_key_from_file(args.key)
+  except Exception as e:
+    log.error("in load key - {}".format(args.key))
+    sys.exit(1)
+
+  in_toto_run(args.step_name, args.materials, args.products,
+      args.link_cmd, key, args.record_byproducts)
+
+if __name__ == "__main__":
   main()

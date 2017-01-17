@@ -49,7 +49,9 @@ import in_toto.log as log
 
 import in_toto.ssl_crypto.hash
 import in_toto.ssl_crypto.formats
+from in_toto.ssl_commons.exceptions import FormatError
 
+FILENAME_FORMAT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
@@ -310,48 +312,80 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
   return  in_toto.models.link.Link.read(link_dict)
 
 
-def run_link(link_name, materials_list, products_list, link_cmd_args,
-    record_byproducts=False):
+def in_toto_run(name, material_list, product_list,
+    link_cmd_args, key=False, record_byproducts=False):
   """
   <Purpose>
-    Wrapper to record materials, execute a link, record products and create
-    and return a Link metadata object.
+    Calls function to run command passed as link_cmd_args argument, storing
+    its materials, by-products and return value, and products into a link
+    metadata file. The link metadata file is signed with the passed key and
+    stored to disk.
 
   <Arguments>
-    link_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    materials_list:
-            A list of file or directory paths used as materials for
-            the link command.
-    products_list:
-            A list of file or directory paths used as materials for
-            the link command.
+    name:
+            A unique name to relate link metadata with a step or inspection
+            defined in the layout.
+    material_list:
+            List of file or directory paths that should be recorded as
+            materials.
+    product_list:
+            List of file or directory paths that should be recorded as
+            products.
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    record_byproducts:
+    key: (optional)
+            Private key to sign link metadata.
+            Format is ssl_crypto.formats.KEY_SCHEMA
+    record_byproducts: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
 
   <Exceptions>
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    None.
 
   <Side Effects>
-    - Calls function to record materials.
-    - Calls function to execute link command.
-    - Calls function to record products.
-    - Calls function to create Link object.
+    Writes newly created link metadata file to disk "<name>.link"
 
   <Returns>
-    A Link metadata object
+    Newly created Link object
   """
-  materials_dict = record_artifacts_as_dict(materials_list)
+
+  fn = FILENAME_FORMAT.format(step_name=name)
+
+  log.doing("Running '{}'...".format(name))
+
+  # If a key is passed, it has to match the format
+  if key:
+    in_toto.ssl_crypto.formats.KEY_SCHEMA.check_match(key)
+    #FIXME: Add private key format check to ssl_crypto formats
+    if not key["keyval"].get("private"):
+      raise FormatError("Signing key needs to be a private key.")
+
+  if material_list:
+    log.doing("Recording materials '{}'...".format(", ".join(material_list)))
+  materials_dict = record_artifacts_as_dict(material_list)
+
+  log.doing("Running command '{}'...".format(" ".join(link_cmd_args)))
   byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
-  products_dict = record_artifacts_as_dict(products_list)
-  return create_link_metadata(link_name, materials_dict, products_dict,
+
+  if product_list:
+    log.doing("Recording products '{}'...".format(", ".join(product_list)))
+  products_dict = record_artifacts_as_dict(product_list)
+
+  log.doing("Creating link metadata...")
+  link = create_link_metadata(name, materials_dict, products_dict,
       link_cmd_args, byproducts, return_value)
+
+  if key:
+    log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
+    link.sign(key)
+
+  log.doing("Storing link metadata to '{}'...".format(fn))
+  link.dump()
+
+  return link
 
 
 def in_toto_record_start(step_name, key, material_list):
@@ -384,18 +418,19 @@ def in_toto_record_start(step_name, key, material_list):
   """
 
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
-  log.doing("Recording '{}'...".format(step_name))
+  log.doing("Start recording '{}'...".format(step_name))
 
-  log.doing("Recording materials...")
+  if material_list:
+    log.doing("Recording materials '{}'...".format(", ".join(material_list)))
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.doing("Creating preliminary link metadata...")
   link = create_link_metadata(step_name, materials_dict)
 
-  log.doing("Signing metadata...")
+  log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
   link.sign(key)
 
-  log.doing("Storing metadata in '{0}'...".format(unfinished_fn))
+  log.doing("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link.dump(unfinished_fn)
 
 
@@ -429,26 +464,29 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
+  fn = FILENAME_FORMAT.format(step_name=step_name)
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
+  log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
-  log.doing("Loading unfinished link file...")
+  log.doing("Loading preliminary link metadata '{}'...".format(unfinished_fn))
   link = in_toto.models.link.Link.read_from_file(unfinished_fn)
 
   # The file must have been signed by the same key
-  log.doing("Verifying unfinished link signature...")
+  log.doing("Verifying preliminary link signature...")
   keydict = {key["keyid"] : key}
   link.verify_signatures(keydict)
 
-  log.doing("Recording products...")
+  if product_list:
+    log.doing("Recording products '{}'...".format(", ".join(product_list)))
   link.products = record_artifacts_as_dict(product_list)
 
-  log.doing("Updating signature...")
+  log.doing("Updating signature with key '{:.8}...'...".format(key["keyid"]))
   link.signatures = []
   link.sign(key)
 
-  log.doing("Storing metadata to file...")
+  log.doing("Storing link metadata to '{}'...".format(fn))
   link.dump()
 
-  log.doing("Removing unfinished file...")
+  log.doing("Removing unfinished link metadata '{}'...".format(fn))
   os.remove(unfinished_fn)
