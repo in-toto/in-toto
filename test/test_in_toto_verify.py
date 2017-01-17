@@ -50,8 +50,8 @@ class TestInTotoVerifyTool(unittest.TestCase):
   verification:
 
   Copies the basic layout for different test scenarios:
-    - single-signed layout
-    - double-signed layout
+    - signed layout
+    - multiple signed layout (using two project owner keys)
   """
 
   @classmethod
