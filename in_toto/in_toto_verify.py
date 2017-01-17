@@ -26,85 +26,41 @@
 """
 import sys
 import argparse
-import in_toto.util
-import in_toto.verifylib
-import in_toto.log as log
-from in_toto.models.layout import Layout
 
-def _die(msg, exitcode=1):
-  log.failing(msg)
-  sys.exit(exitcode)
+from in_toto import verifylib
+from in_toto import log
 
 def in_toto_verify(layout_path, layout_key_paths):
-  """Loads layout file and layout keys from disk and performs all in-toto
-  verifications."""
+  """
+  <Purpose>
+    Calls verifylib.in_toto_verify and handles exceptions
 
+  <Arguments>
+    layout_path:
+            Path to the layout that is being verified.
+
+    layout_key_paths:
+            List of paths to project owner public keys, used to verify the
+            layout's signature.
+
+  <Exceptions>
+    SystemExit if any exception occurs
+
+  <Side Effects>
+    Calls sys.exit(1) if an exception is raised
+
+  <Returns>
+    None.
+
+  """
   try:
-    log.doing("load layout...")
-    layout = Layout.read_from_file(layout_path)
-  except Exception, e:
-    _die("in load layout - %s" % e)
-
-  try:
-    log.doing("verify layout expiration")
-    in_toto.verifylib.verify_layout_expiration(layout)
-  except Exception, e:
-    _die("in verify layout expiration - %s" % e)
-
-  try:
-    log.doing("load layout keys...")
-    layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-        layout_key_paths)
-  except Exception, e:
-    _die("in load layout keys - %s" % e)
-
-  try:
-    log.doing("verify layout signatures...")
-    in_toto.verifylib.verify_layout_signatures(layout, layout_key_dict)
-  except Exception, e:
-    _die("in verify layout signatures - %s" % e)
-
-  try:
-    log.doing("load link metadata for steps...")
-    step_link_dict = layout.import_step_metadata_from_files_as_dict()
-  except Exception, e:
-    _die("in load link metadata - %s" % e)
-
-  try:
-    log.doing("verify all step command alignments...")
-    in_toto.verifylib.verify_all_steps_command_alignment(layout, step_link_dict)
-  except Exception, e:
-    _die("command alignments - %s" % e)
-
-  try:
-    log.doing("verify signatures for all links...")
-    in_toto.verifylib.verify_all_steps_signatures(layout, step_link_dict)
-  except Exception, e:
-    _die("in verify link signatures - %s" % e)
-
-  try:
-    log.doing("run all inspections...")
-    inspection_link_dict = in_toto.verifylib.run_all_inspections(layout)
-  except Exception, e:
-    _die("in run inspections - %s" % e)
-
-  try:
-    log.doing("verify all step matchrules...")
-    in_toto.verifylib.verify_all_item_rules(layout.steps, step_link_dict)
-  except Exception, e:
-    _die("in verify all step matchrules - %s" % e)
-
-  try:
-    log.doing("verify all inspection matchrules...")
-    in_toto.verifylib.verify_all_item_rules(layout.inspect, inspection_link_dict,
-        step_link_dict)
-  except Exception, e:
-    _die("in verify all inspection matchrules - %s" % e)
-
-  log.passing("all verification")
+    verifylib.in_toto_verify(layout_path, layout_key_paths)
+  except Exception as e:
+    log.error("in in-toto verify - {}".format(e))
+    sys.exit(1)
 
 def main():
-
+  """Parse arguments and call in_toto_verify. """
   parser = argparse.ArgumentParser(
       description="Verifies in-toto final product")
 
@@ -113,7 +69,8 @@ def main():
 
   parser.usage = ("\n"
       "%(prog)s --layout <layout path>\n{0}"
-               "--layout-keys (<layout pubkey path>,...)\n\n"
+               "--layout-keys <filepath>[ <filepath> ...]\n{0}"
+               "[--verbose]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -122,12 +79,18 @@ def main():
       help="Root layout to use for verification")
 
   in_toto_args.add_argument("-k", "--layout-keys", type=str, required=True,
-    help="Key(s) to verify root layout signature (separated ',')")
+    nargs="+", help="Key(s) to verify root layout signature")
+
+  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", default=False, action="store_true")
 
   args = parser.parse_args()
 
-  layout_key_paths = args.layout_keys.split(',')
-  in_toto_verify(args.layout, layout_key_paths)
+  # Turn on all the `log.doing()` in the library
+  if args.verbose:
+    log.logging.getLogger().setLevel(log.logging.INFO)
 
-if __name__ == '__main__':
+  in_toto_verify(args.layout, args.layout_keys)
+
+if __name__ == "__main__":
   main()
