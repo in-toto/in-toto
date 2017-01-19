@@ -29,10 +29,6 @@ pip install -e .
 # Export the envvar required for "simple settings"
 export SIMPLE_SETTINGS=in_toto.settings
 
-# Install additional requirements that for some good reason are not in the
-# requirements file
-pip install pycrypto cryptography
-
 # Change into the demo directoy and you are ready to start
 cd demo
 ```

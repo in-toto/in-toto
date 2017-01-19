@@ -24,7 +24,6 @@ import shutil
 import tempfile
 from simple_settings import settings
 
-from in_toto import ssl_crypto
 from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
@@ -32,7 +31,9 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     record_artifacts_as_dict, _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-from in_toto.ssl_commons.exceptions import FormatError
+
+import securesystemslib.formats
+import securesystemslib.exceptions
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
@@ -168,7 +169,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     artifacts_dict = record_artifacts_as_dict(["."])
 
     for key, val in artifacts_dict.iteritems():
-      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
       sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2",
@@ -179,7 +180,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
     for key, val in artifacts_dict.iteritems():
-      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
       sorted(["foo", "subdir/foosub1", "subdir/foosub2",
@@ -190,7 +191,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     settings.ARTIFACT_EXCLUDES = ["*foo*"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
-    ssl_crypto.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
+    securesystemslib.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
     self.assertListEqual(artifacts_dict.keys(), ["bar"])
 
   def test_exclude_subdir(self):
@@ -212,7 +213,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     artifacts_dict = record_artifacts_as_dict(["."])
 
     for key, val in artifacts_dict.iteritems():
-      ssl_crypto.formats.HASHDICT_SCHEMA.check_match(val)
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
@@ -301,13 +302,13 @@ class TestInTotoRun(unittest.TestCase):
 
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
           ["echo", "test"], "this-is-not-a-key", True)
 
   def test_in_toto_wrong_key(self):
     """Fail run, passed key is a public key. """
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
           ["echo", "test"], self.key_pub, True)
 

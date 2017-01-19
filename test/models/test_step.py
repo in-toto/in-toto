@@ -20,8 +20,8 @@
 import unittest
 import datetime
 from in_toto.models.layout import Step
-from in_toto.ssl_commons.exceptions import FormatError
-import in_toto.ssl_crypto
+import securesystemslib.keys
+import securesystemslib.exceptions
 
 class TestStepValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
@@ -34,10 +34,10 @@ class TestStepValidator(unittest.TestCase):
     """Test the type field within Validate()."""
 
     self.step._type = "wrong"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_type()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step._type = "step"
@@ -49,10 +49,10 @@ class TestStepValidator(unittest.TestCase):
 
     # no, python is not *this* smart
     self.step.threshold = "Ten"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_threshold()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step.threshold = 10
@@ -63,17 +63,17 @@ class TestStepValidator(unittest.TestCase):
     """Test that the material matchrule validators catch malformed ones."""
 
     self.step.material_matchrules = [["NONFOO"]]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_material_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step.material_matchrules = "PFF"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_material_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     # for more thorough tests, check the test_matchrule.py module
@@ -85,17 +85,17 @@ class TestStepValidator(unittest.TestCase):
     """Test that the product matchrule validators catch malformed ones."""
 
     self.step.product_matchrules = [["NONFOO"]]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_product_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step.product_matchrules = "PFF"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_product_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     # for more thorough tests, check the test_matchrule.py module
@@ -107,15 +107,15 @@ class TestStepValidator(unittest.TestCase):
     # FIXME: generating keys for each test are expensive processes, maybe we
     # should have an asset/fixture folder/loader?
 
-    rsa_key_one = in_toto.ssl_crypto.keys.generate_rsa_key()
-    rsa_key_two = in_toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_one = securesystemslib.keys.generate_rsa_key()
+    rsa_key_two = securesystemslib.keys.generate_rsa_key()
 
     self.step.pubkeys = ['bad-keyid']
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_pubkeys()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step.pubkeys = [rsa_key_one['keyid'], rsa_key_two['keyid']]
@@ -126,10 +126,10 @@ class TestStepValidator(unittest.TestCase):
     """Test that the expected command validator catches malformed ones."""
 
     self.step.expected_command = -1
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step._validate_expected_command()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
     self.step.expected_command = "somecommand"

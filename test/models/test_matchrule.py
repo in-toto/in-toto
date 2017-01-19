@@ -19,8 +19,9 @@
 """
 
 import unittest
-from in_toto.ssl_commons.exceptions import FormatError
 from in_toto.matchrule_validators import check_matchrule_syntax
+import securesystemslib.exceptions
+
 
 class TestMatchruleSyntax(unittest.TestCase):
   """Test matchrule syntax validators """
@@ -30,15 +31,15 @@ class TestMatchruleSyntax(unittest.TestCase):
 
     # test for non-existing generic rule
     rule = ["SUBVERT", "foo"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["CREATE", "foo", "AND", "bar"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["CREATE"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     # test proper generic rule
@@ -55,23 +56,23 @@ class TestMatchruleSyntax(unittest.TestCase):
     """Check the MATCH variant of the matchrules."""
 
     rule = ["MATCH"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "NOTFROM", "step"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "NOT-AS", "otherpath", "FROM", "step"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "FROM"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "AS", "FROM", "step"]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       check_matchrule_syntax(rule)
 
     rule = ["MATCH", "PRODUCT", "foo", "FROM", "step"]

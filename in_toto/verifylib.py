@@ -37,7 +37,6 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
-import in_toto.ssl_crypto.keys
 from in_toto.exceptions import (RuleVerficationFailed, LayoutExpiredError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
@@ -127,7 +126,7 @@ def verify_layout_signatures(layout, keys_dict):
             A Layout object whose signatures are verified.
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            ssl_crypto.formats.KEYDICT_SCHEMA.
+            securesystemslib.formats.KEYDICT_SCHEMA.
 
   <Exceptions>
     Raises an exception if a needed key can not be found in the passed
@@ -152,7 +151,7 @@ def verify_link_signatures(link, keys_dict):
             A Link object whose signatures are verified.
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            ssl_crypto.formats.KEYDICT_SCHEMA.
+            securesystemslib.formats.KEYDICT_SCHEMA.
 
   <Exceptions>
     Raises an exception if a needed key can not be found in the passed

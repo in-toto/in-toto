@@ -62,7 +62,7 @@ def in_toto_record_start(step_name, key, material_list):
             layout.
     key:
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     material_list:
             List of file or directory paths that should be recorded as
             materials.
@@ -95,7 +95,7 @@ def in_toto_record_stop(step_name, key, product_list):
             layout.
     key:
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     product_list:
             List of file or directory paths that should be recorded as products.
 

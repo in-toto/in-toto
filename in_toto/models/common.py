@@ -28,8 +28,8 @@ import attr
 import canonicaljson
 import inspect
 
+import securesystemslib.keys
 from in_toto.exceptions import SignatureVerificationError
-from in_toto.ssl_crypto import keys
 
 @attr.s(repr=False)
 class Metablock(object):
@@ -71,7 +71,7 @@ class Metablock(object):
 class Signable(Metablock):
   """Objects with base class Signable can sign their payload (a canonical
   pretty printed JSON string not containing the signatures attribute) and store
-  the signature (signature format: ssl_crypto__formats.SIGNATURE_SCHEMA) """
+  the signature (signature format: securesystemslib.formats.SIGNATURE_SCHEMA) """
   signatures = attr.ib(default=attr.Factory(list))
 
   @property
@@ -86,7 +86,7 @@ class Signable(Metablock):
 
     # XXX LP: Todo: Verify key format
 
-    signature = keys.create_signature(key, self.payload)
+    signature = securesystemslib.keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
   def verify_signatures(self, keys_dict):
@@ -102,6 +102,7 @@ class Signable(Metablock):
       except:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
-      if not keys.verify_signature(key, signature, self.payload):
+      if not securesystemslib.keys.verify_signature(
+          key, signature, self.payload):
         raise SignatureVerificationError("Invalid signature")
 

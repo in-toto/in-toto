@@ -1,5 +1,3 @@
-pycrypto
-cryptography
 pytest
 PyNaCl
 coverage
