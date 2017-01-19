@@ -41,8 +41,8 @@ def generate_and_write_rsa_keypair(filepath, password=None):
 
   rsa_key = in_toto.ssl_crypto.keys.generate_rsa_key()
 
-  public = rsa_key['keyval']['public']
-  private = rsa_key['keyval']['private']
+  public = rsa_key["keyval"]["public"]
+  private = rsa_key["keyval"]["private"]
 
   if password:
     private_pem = in_toto.ssl_crypto.keys.create_rsa_encrypted_pem(private,
@@ -50,11 +50,11 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   else:
     private_pem = private
 
-  with open(filepath + '.pub', 'w') as fo_public:
-    fo_public.write(public.encode('utf-8'))
+  with open(filepath + ".pub", "w") as fo_public:
+    fo_public.write(public.encode("utf-8"))
 
-  with open(filepath, 'w') as fo_private:
-    fo_private.write(private_pem.encode('utf-8'))
+  with open(filepath, "w") as fo_private:
+    fo_private.write(private_pem.encode("utf-8"))
 
 
 def import_rsa_key_from_file(filepath, password=None):
@@ -83,8 +83,8 @@ def import_rsa_key_from_file(filepath, password=None):
   """
   in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
 
-  with open(filepath, 'rb') as fo_pem:
-    rsa_pem = fo_pem.read().decode('utf-8')
+  with open(filepath, "rb") as fo_pem:
+    rsa_pem = fo_pem.read().decode("utf-8")
 
   if in_toto.ssl_crypto.keys.is_pem_private(rsa_pem):
     rsa_key = in_toto.ssl_crypto.keys.import_rsakey_from_pem(rsa_pem, password)
@@ -92,8 +92,8 @@ def import_rsa_key_from_file(filepath, password=None):
   elif in_toto.ssl_crypto.keys.is_pem_public(rsa_pem):
     rsa_key = in_toto.ssl_crypto.keys.format_rsakey_from_pem(rsa_pem)
   else:
-    raise in_toto.ssl_commons.exceptions.FormatError('The key has to be either'
-            'a private or public RSA key in PEM format')
+    raise in_toto.ssl_commons.exceptions.FormatError("The key has to be either"
+            " a private or public RSA key in PEM format")
 
   return rsa_key
 
@@ -103,7 +103,11 @@ def import_rsa_public_keys_from_files_as_dict(filepaths):
   key_dict = {}
   for filepath in filepaths:
     key = import_rsa_key_from_file(filepath)
-    keyid = key['keyid']
+    #FIXME: Add public key format check to ssl_crypto formats
+    if key["keyval"].get("private"):
+      raise in_toto.ssl_commons.exceptions.FormatError(
+          "Public keys should not have a private portion.")
+    keyid = key["keyid"]
     key_dict[keyid] = key
   return key_dict
 
