@@ -99,7 +99,7 @@ class Signable(Metablock):
       keyid = signature["keyid"]
       try:
         key = keys_dict[keyid]
-      except:
+      except KeyError:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
       if not securesystemslib.keys.verify_signature(

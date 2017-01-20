@@ -156,7 +156,7 @@ class Layout(models__common.Signable):
       date = parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
           self.expires)
-    except:
+    except Exception:
       raise securesystemslib.exceptions.FormatError(
           "Malformed date string in layout!")
 
@@ -262,7 +262,7 @@ class Step(models__common.Metablock):
       # int(self.threshold)
       # FIXME: we don't have support for threshold yet
       pass
-    except:
+    except Exception:
       raise securesystemslib.exceptions.FormatError(
           "Invalid threshold value for this step")
 
