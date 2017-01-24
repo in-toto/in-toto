@@ -29,6 +29,7 @@ import canonicaljson
 import inspect
 
 import securesystemslib.keys
+import securesystemslib.formats
 from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False)
@@ -84,13 +85,15 @@ class Signable(Metablock):
     """Signs the canonical JSON representation of itself (without the
     signatures property) and adds the signatures to its signature properties."""
 
-    # XXX LP: Todo: Verify key format
+    securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
   def verify_signatures(self, keys_dict):
     """Verifies all signatures of the object using the passed key_dict."""
+
+    securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
 
     if not self.signatures or len(self.signatures) <= 0:
       raise SignatureVerificationError("No signatures found")
