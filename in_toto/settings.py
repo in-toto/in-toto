@@ -12,30 +12,33 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  A global settings file used througout the entire package, inspired
-  by Django's settings system.
+  Mostly for things that will eventually be moved to
+  separate configuration files or command line arguments.
 
+  Note:
+  This used to be a global settings file for in_toto and its submodules using
+  `simple_settings`. Since submodules were removed `simple_settings` is no
+  longer needed.
 
-<Pre-requisites>
-  To make this work we use the simple-settings module available on Pypi.
-  http://simple-settings.readthedocs.io/en/master/
+  The former submodule and now external dependency `securesystemslib` has its
+  own settings file, that should henceforth be used programmatically.
 
-  $ pip install simple-settings
-  $ export SIMPLE_SETTINGS=toto.settings
-
-  To access a settings:
-  from simple_settings import settings
+  E.g.:
+  ```
+  import securesystemslib.settings
+  securesystemslib.settings.RSA_CRYPTO_LIBRARY = "pyca-cryptography" # default
+  ```
 
 """
 import logging
-
-# FIXME: Add as command line argument or to config file, e.g .in-toto-ignore
-ARTIFACT_EXCLUDES=["*.link*", ".git", "*.pyc", "*~"]
 
 # Debug level INFO shows a bunch of stuff that is happening
 LOG_LEVEL = logging.INFO
 # Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
+
+# FIXME: Add as command line argument or to config file, e.g .in-toto-ignore
+ARTIFACT_EXCLUDES = ["*.link*", ".git", "*.pyc", "*~"]
 
 # Used as base path for --materials and --products arguments when running
 # in-toto-run/in-toto-record

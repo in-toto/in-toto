@@ -24,10 +24,10 @@ import copy
 import tempfile
 import unittest
 from mock import patch
-from simple_settings import settings
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+import in_toto.settings
 from in_toto.models.link import Link
 from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
@@ -73,14 +73,14 @@ class TestRunAllInspections(unittest.TestCase):
     ignore_dir = os.path.realpath(tempfile.mkdtemp())
     ignore_foo = os.path.join(ignore_dir, "ignore_foo")
     open(ignore_foo, "w").write("ignore foo")
-    settings.ARTIFACT_BASE_PATH = ignore_dir
+    in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
     run_all_inspections(self.layout)
     link = Link.read_from_file("touch-bar.link")
     self.assertListEqual(link.materials.keys(), ["foo"])
     self.assertListEqual(sorted(link.products.keys()), sorted(["foo", "bar"]))
 
-    settings.ARTIFACT_BASE_PATH = None
+    in_toto.settings.ARTIFACT_BASE_PATH = None
     shutil.rmtree(ignore_dir)
 
 
