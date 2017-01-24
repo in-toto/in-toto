@@ -27,13 +27,6 @@ cd in-toto
 
 # Install with pip in "develop mode"
 pip install -e .
-
-# Export the envvar required for "simple settings"
-export SIMPLE_SETTINGS=in_toto.settings
-
-# Install additional requirements that for some good reason are not in the
-# requirements file
-pip install pycrypto cryptography
 ```
 ### Create layout, run supply chain steps and verify final product
 

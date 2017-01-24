@@ -31,8 +31,8 @@ import datetime
 import iso8601
 import fnmatch
 from dateutil import tz
-from simple_settings import settings
 
+import in_toto.settings
 import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
@@ -69,8 +69,8 @@ def run_all_inspections(layout):
   for inspection in layout.inspect:
     # FIXME: We don't want to use the base path for runlib so we patch this
     # for now. This will not stay!
-    base_path_backup = settings.ARTIFACT_BASE_PATH
-    settings.ARTIFACT_BASE_PATH = None
+    base_path_backup = in_toto.settings.ARTIFACT_BASE_PATH
+    in_toto.settings.ARTIFACT_BASE_PATH = None
 
     # FIXME: What should we record as material/product?
     # Is the current directory a sensible default? In general?
@@ -86,7 +86,7 @@ def run_all_inspections(layout):
     # Keep in mind that this pollutes the verfier's (client's) filesystem.
     link.dump()
 
-    settings.ARTIFACT_BASE_PATH = base_path_backup
+    in_toto.settings.ARTIFACT_BASE_PATH = base_path_backup
 
   return inspection_links_dict
 

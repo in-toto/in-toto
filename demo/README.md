@@ -26,9 +26,6 @@ cd in-toto
 # http://docs.python-guide.org/en/latest/dev/virtualenvs/
 pip install -e .
 
-# Export the envvar required for "simple settings"
-export SIMPLE_SETTINGS=in_toto.settings
-
 # Change into the demo directoy and you are ready to start
 cd demo
 ```

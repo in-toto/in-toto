@@ -1,7 +1,6 @@
 securesystemslib==0.10.4
 sphinx
 attrs
-simple-settings
 python-dateutil
 iso8601
 canonicaljson

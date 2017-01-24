@@ -30,8 +30,6 @@ import tempfile
 import logging
 import fnmatch
 
-from simple_settings import settings
-
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
 if os.name == 'posix' and sys.version_info[0] < 3:
@@ -44,6 +42,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
 else:
   import subprocess
 
+import in_toto.settings
 import in_toto.models.link
 import in_toto.log as log
 
@@ -137,10 +136,10 @@ def record_artifacts_as_dict(artifacts):
     return artifacts_dict
 
   # Temporarily change into base path dir if set
-  if settings.ARTIFACT_BASE_PATH:
+  if in_toto.settings.ARTIFACT_BASE_PATH:
     original_cwd = os.getcwd()
     try:
-      os.chdir(settings.ARTIFACT_BASE_PATH)
+      os.chdir(in_toto.settings.ARTIFACT_BASE_PATH)
     except OSError as e:
       raise OSError("Review your ARTIFACT_BASE_PATH setting - {}".format(e))
 
@@ -152,7 +151,7 @@ def record_artifacts_as_dict(artifacts):
   # Iterate over remaining normalized artifact paths after
   # having applied exclusion patterns
   for artifact in _apply_exclude_patterns(norm_artifacts,
-        settings.ARTIFACT_EXCLUDES):
+        in_toto.settings.ARTIFACT_EXCLUDES):
 
     if not os.path.exists(artifact):
       log.warning("path: {} does not exist, skipping..".format(artifact))
@@ -172,7 +171,7 @@ def record_artifacts_as_dict(artifacts):
           dirpaths.append(norm_dirpath)
 
         # Apply exlcude patterns on normalized dirpaths
-        dirpaths = _apply_exclude_patterns(dirpaths, settings.ARTIFACT_EXCLUDES)
+        dirpaths = _apply_exclude_patterns(dirpaths, in_toto.settings.ARTIFACT_EXCLUDES)
 
         # Reset and refill dirs with remaining names after exclusion
         # Modify (not reassign) dirnames to only recurse into remaining dirs
@@ -192,11 +191,11 @@ def record_artifacts_as_dict(artifacts):
         # store each remaining normalized filepath with it's files hash to
         # the resulting artifact dict
         for filepath in _apply_exclude_patterns(filepaths,
-            settings.ARTIFACT_EXCLUDES):
+            in_toto.settings.ARTIFACT_EXCLUDES):
           artifacts_dict[filepath] = _hash_artifact(filepath)
 
   # Change back to where original current working dir
-  if settings.ARTIFACT_BASE_PATH:
+  if in_toto.settings.ARTIFACT_BASE_PATH:
     os.chdir(original_cwd)
 
   return artifacts_dict

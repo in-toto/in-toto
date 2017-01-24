@@ -16,9 +16,9 @@
 """
 
 import logging
-from simple_settings import settings
+import in_toto.settings
 
-logging.basicConfig(level=settings.LOG_LEVEL, format='%(message)s')
+logging.basicConfig(level=in_toto.settings.LOG_LEVEL, format='%(message)s')
 
 def doing(msg):
   """Logs things that are currently being done """
