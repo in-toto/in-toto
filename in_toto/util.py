@@ -108,10 +108,7 @@ def import_rsa_public_keys_from_files_as_dict(filepaths):
   key_dict = {}
   for filepath in filepaths:
     key = import_rsa_key_from_file(filepath)
-    #FIXME: Add public key format check to securesystemslib formats
-    if key["keyval"].get("private"):
-      raise securesystemslib.exceptions.FormatError(
-          "Public keys should not have a private portion.")
+    securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
     keyid = key["keyid"]
     key_dict[keyid] = key
   return key_dict

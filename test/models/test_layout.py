@@ -93,6 +93,8 @@ class TestLayoutValidator(unittest.TestCase):
       self.layout.validate()
 
     self.layout.keys = {}
+    del rsa_key_one["keyval"]["private"]
+    del rsa_key_two["keyval"]["private"]
     self.layout.keys[rsa_key_one['keyid']] = rsa_key_one
     self.layout.keys[rsa_key_two['keyid']] = rsa_key_two
 

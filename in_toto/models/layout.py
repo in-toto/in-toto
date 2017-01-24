@@ -169,9 +169,7 @@ class Layout(models__common.Signable):
     securesystemslib.formats.KEYDICT_SCHEMA.check_match(self.keys)
 
     for keyid, key in six.iteritems(self.keys):
-      if 'private' in key and key['private'] != '':
-        raise securesystemslib.exceptions.FormatError(
-            "key: {} contains a private key part!".format(keyid))
+      securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
 
   def _validate_steps_and_inspections(self):
     """Private method to verify that the list of steps and inspections are

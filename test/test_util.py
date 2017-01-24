@@ -58,8 +58,8 @@ class TestUtil(unittest.TestCase):
 
     securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
     self.assertTrue(private_key["keyval"].get("private"))
-    securesystemslib.formats.KEY_SCHEMA.check_match(public_key)
-    self.assertFalse(public_key["keyval"].get("private"))
+    self.assertTrue(
+        securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
 
   def test_create_and_import_encrypted_rsa(self):
     """Create ecrypted RSA key and import private and public key separately. """
@@ -71,8 +71,8 @@ class TestUtil(unittest.TestCase):
 
     securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
     self.assertTrue(private_key["keyval"].get("private"))
-    securesystemslib.formats.KEY_SCHEMA.check_match(public_key)
-    self.assertFalse(public_key["keyval"].get("private"))
+    self.assertTrue(
+        securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
 
   def test_create_and_import_encrypted_rsa_no_password(self):
     """Try import encrypted RSA key without or wrong pw, raises exception. """
