@@ -25,7 +25,8 @@ def _validate_match_rule(keywords):
 
   if not isinstance(keywords, list):
     raise securesystemslib.exceptions.FormatError(
-        "this matching rule is not a list")
+        "Wrong rule format, must be a list.\n\t"
+        "Got: {}".format(keywords))
 
   if len(keywords) == 5:
     rule, artifact, path_pattern, from_keyword, step = keywords
@@ -37,26 +38,29 @@ def _validate_match_rule(keywords):
         step) = keywords
   else:
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-      " should be: MATCH (MATERIAL/PRODUCT)"
+      " should be: MATCH (MATERIAL | PRODUCT)"
       " <path_pattern> [AS <target_path_pattern>] FROM <step>.\n\t"
-      "Got: {}".format(" ".join(keywords)))
+      "Got: {}".format(keywords))
 
   if rule != "MATCH" and rule.upper() != "MATCH":
-    raise securesystemslib.exceptions.FormatError(
-        "Wrong rule to verify! {}".format(rule))
+    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
+        "Got: {}".format(keywords))
 
   if from_keyword != "FROM" and from_keyword.upper() != "FROM":
-    raise securesystemslib.exceptions.FormatError(
-        "FROM should come before step")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " FROM should come before step.\n\t"
+        "Got: {}".format(keywords))
 
   if as_keyword != "AS" and as_keyword.upper() != "AS":
-    raise securesystemslib.exceptions.FormatError(
-        "AS should come after the step name")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        "AS should come after the step name.\n\t"
+        "Got: {}".format(keywords))
 
   if artifact not in MATERIAL_OR_PRODUCT and \
       artifact.upper() not in MATERIAL_OR_PRODUCT:
-    raise securesystemslib.exceptions.FormatError(
-        "Target should be either MATERIAL or PRODUCT!")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " target artifact type should be either MATERIAL or PRODUCT.\n\t"
+        "Got: {}".format(keywords))
 
 def _validate_generic_rule(keywords):
   """ private helper that verifies the syntax of the other rules """
@@ -64,19 +68,21 @@ def _validate_generic_rule(keywords):
   VALID_OPERATIONS = {'CREATE', 'MODIFY', 'DELETE',}
 
   if not isinstance(keywords, list):
-    raise securesystemslib.exceptions.FormatError(
-        "this matching rule is not a list")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " rule must be a list.\n\t"
+        "Got: {}".format(keywords))
 
   if len(keywords) != 2:
-    raise securesystemslib.exceptions.FormatError("Wrong rule format")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
+        "Got: {}".format(keywords))
 
   rule, artifact = keywords
 
   securesystemslib.formats.PATH_SCHEMA.check_match(artifact)
 
   if rule not in VALID_OPERATIONS and rule.upper() not in VALID_OPERATIONS:
-    raise securesystemslib.exceptions.FormatError(
-        "{} is not a valid rule!".format(rule))
+    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
+        "Got: {}".format(keywords))
 
 def check_matchrule_syntax(keywords):
   """
@@ -102,13 +108,14 @@ def check_matchrule_syntax(keywords):
   }
 
   if not isinstance(keywords, list):
-    raise securesystemslib.exceptions.FormatError(
-        "Product and Material matchers should be a list!")
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " must be a list.\n\t"
+        "Got: {}".format(keywords))
 
   rule = keywords[0].upper()
   if rule not in RULE_DISPATCHERS:
-    raise securesystemslib.exceptions.FormatError(
-        "error in {}.\n\trule should be one of {}"
-        .format(rule, RULE_DISPATCHERS.keys()))
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " must start with one of {}.\n\t"
+        "Got: {}".format(RULE_DISPATCHERS.keys(), keywords))
 
   return RULE_DISPATCHERS[rule](keywords)
