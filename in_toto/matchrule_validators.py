@@ -1,6 +1,6 @@
 """
 <Module Name>
-  in_toto/models/validators.py
+  in_toto/matchrule_validators.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
