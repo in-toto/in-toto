@@ -335,7 +335,7 @@ class Inspection(models__common.Metablock):
     """Private method to ensure that the type field is set to inspection."""
     if self._type != "inspection":
       raise securesystemslib.exceptions.FormatError(
-          "The _type field should be aset to inspection!")
+          "The _type field must be set to 'inspection'!")
 
   def _validate_material_matchrules(self):
     """Private method to check that the material matchrules are correct."""
