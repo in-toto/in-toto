@@ -43,7 +43,8 @@ def _validate_match_rule(keywords):
       "Got: {}".format(keywords))
 
   if rule != "MATCH" and rule.upper() != "MATCH":
-    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " first keyword should me 'MATCH' (case insensitive) \n\t"
         "Got: {}".format(keywords))
 
   if from_keyword != "FROM" and from_keyword.upper() != "FROM":
@@ -73,7 +74,8 @@ def _validate_generic_rule(keywords):
         "Got: {}".format(keywords))
 
   if len(keywords) != 2:
-    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " rule should consist of two items.\n\t"
         "Got: {}".format(keywords))
 
   rule, artifact = keywords
@@ -81,8 +83,9 @@ def _validate_generic_rule(keywords):
   securesystemslib.formats.PATH_SCHEMA.check_match(artifact)
 
   if rule not in VALID_OPERATIONS and rule.upper() not in VALID_OPERATIONS:
-    raise securesystemslib.exceptions.FormatError("Wrong rule format.\n\t"
-        "Got: {}".format(keywords))
+    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " first item in rule should be one of '{0}' (case insensitive)\n\t"
+        "Got: {1}".format(", ".join(VALID_OPERATIONS), keywords))
 
 def check_matchrule_syntax(keywords):
   """
