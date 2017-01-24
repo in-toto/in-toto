@@ -1,3 +1,4 @@
+securesystemslib==0.10.4
 sphinx
 attrs
 simple-settings

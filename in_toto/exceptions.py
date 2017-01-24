@@ -1,4 +1,4 @@
-from in_toto.ssl_commons.exceptions import Error
+from securesystemslib.exceptions import Error
 
 class SignatureVerificationError(Error):
   """Indicates a signature verification Error. """
@@ -8,6 +8,6 @@ class LayoutExpiredError(Error):
   """Indicates that the layout expired. """
   pass
 
-class RuleVerficationFailed(Error):
+class RuleVerficationError(Error):
   """Indicates that a match rule verification failed. """
   pass

@@ -4,10 +4,11 @@ import pickle
 import json
 import getpass
 
-import in_toto.ssl_crypto.keys
-import in_toto.ssl_crypto.formats
-import in_toto.ssl_commons.exceptions
-import in_toto.log as log
+from in_toto import log
+import securesystemslib.formats
+import securesystemslib.hash
+import securesystemslib.keys
+import securesystemslib.exceptions
 
 
 def generate_and_write_rsa_keypair(filepath, password=None):
@@ -29,7 +30,8 @@ def generate_and_write_rsa_keypair(filepath, password=None):
       If specified the password is used to encrypt the private key
 
   <Exceptions>
-    ssl_commons.FormatError, if the arguments are improperly formatted
+    securesystemslib.exceptions.FormatError, if the arguments are
+    improperly formatted
 
   <Side Effects>
     Writes key files to '<filepath>' and '<filepath>.pub'
@@ -37,16 +39,16 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   <Returns>
     None.
   """
-  in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
+  securesystemslib.formats.PATH_SCHEMA.check_match(filepath)
 
-  rsa_key = in_toto.ssl_crypto.keys.generate_rsa_key()
+  rsa_key = securesystemslib.keys.generate_rsa_key()
 
   public = rsa_key["keyval"]["public"]
   private = rsa_key["keyval"]["private"]
 
   if password:
-    private_pem = in_toto.ssl_crypto.keys.create_rsa_encrypted_pem(private,
-        password)
+    private_pem = securesystemslib.keys.create_rsa_encrypted_pem(
+        private, password)
   else:
     private_pem = private
 
@@ -73,7 +75,8 @@ def import_rsa_key_from_file(filepath, password=None):
       If a password is specified, the imported private key will be decrypted
 
   <Exceptions>
-    ssl_commons.FormatError, if the arguments are improperly formatted
+    securesystemslib.exceptions.FormatError, if the arguments are
+    improperly formatted
 
   <Side Effects>
     'filepath' is read and its contents extracted
@@ -81,32 +84,31 @@ def import_rsa_key_from_file(filepath, password=None):
   <Returns>
     An RSA key object conformant to 'tuf.formats.RSAKEY_SCHEMA'
   """
-  in_toto.ssl_crypto.formats.PATH_SCHEMA.check_match(filepath)
+  securesystemslib.formats.PATH_SCHEMA.check_match(filepath)
 
   with open(filepath, "rb") as fo_pem:
     rsa_pem = fo_pem.read().decode("utf-8")
 
-  if in_toto.ssl_crypto.keys.is_pem_private(rsa_pem):
-    rsa_key = in_toto.ssl_crypto.keys.import_rsakey_from_pem(rsa_pem, password)
+  if securesystemslib.keys.is_pem_private(rsa_pem):
+    rsa_key = securesystemslib.keys.import_rsakey_from_private_pem(
+        rsa_pem, password)
 
-  elif in_toto.ssl_crypto.keys.is_pem_public(rsa_pem):
-    rsa_key = in_toto.ssl_crypto.keys.format_rsakey_from_pem(rsa_pem)
+  elif securesystemslib.keys.is_pem_public(rsa_pem):
+    rsa_key = securesystemslib.keys.import_rsakey_from_public_pem(rsa_pem)
   else:
-    raise in_toto.ssl_commons.exceptions.FormatError("The key has to be either"
-            " a private or public RSA key in PEM format")
+    raise securesystemslib.exceptions.FormatError(
+        "The key has to be clear either a private or"
+        " public RSA key in PEM format")
 
   return rsa_key
 
 def import_rsa_public_keys_from_files_as_dict(filepaths):
   """Takes a list of filepaths to RSA public keys and returns them as a
-  dictionary conformant with ssl_crypto.formats.KEYDICT_SCHEMA."""
+  dictionary conformant with securesystemslib.formats.KEYDICT_SCHEMA."""
   key_dict = {}
   for filepath in filepaths:
     key = import_rsa_key_from_file(filepath)
-    #FIXME: Add public key format check to ssl_crypto formats
-    if key["keyval"].get("private"):
-      raise in_toto.ssl_commons.exceptions.FormatError(
-          "Public keys should not have a private portion.")
+    securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
     keyid = key["keyid"]
     key_dict[keyid] = key
   return key_dict
@@ -122,7 +124,7 @@ def prompt_import_rsa_key_from_file(filepath):
   password = None
   try:
     import_rsa_key_from_file(filepath)
-  except in_toto.ssl_commons.exceptions.CryptoError, e:
+  except securesystemslib.exceptions.CryptoError, e:
     password = prompt_password()
   return import_rsa_key_from_file(filepath, password)
 
@@ -158,7 +160,8 @@ def flatten_and_invert_artifact_dict(artifact_dict, hash_algorithm="sha256"):
       Use the hash generated with the specified hash_algorithm.
 
   <Exceptions>
-    ssl_commons.FormatError, if the arguments are improperly formatted
+    securesystemslib.exceptions.FormatError, if the arguments are
+    improperly formatted
 
   <Side Effects>
     None.
@@ -166,11 +169,12 @@ def flatten_and_invert_artifact_dict(artifact_dict, hash_algorithm="sha256"):
   <Returns>
     A dictionary with artifact hashes as keys and artifact paths as values.
   """
-  in_toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match([hash_algorithm])
+  securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(
+      [hash_algorithm])
 
   inverted_dict = {}
   for file_path, hash_dict in artifact_dict.iteritems():
-    in_toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
     file_hash = hash_dict[hash_algorithm]
     inverted_dict[file_hash] = file_path
 

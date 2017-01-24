@@ -47,9 +47,9 @@ else:
 import in_toto.models.link
 import in_toto.log as log
 
-import in_toto.ssl_crypto.hash
-import in_toto.ssl_crypto.formats
-from in_toto.ssl_commons.exceptions import FormatError
+import securesystemslib.formats
+import securesystemslib.hash
+import securesystemslib.exceptions
 
 FILENAME_FORMAT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
@@ -57,15 +57,15 @@ UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
-  with ssl_crypto.formats.HASHDICT_SCHEMA. """
-  in_toto.ssl_crypto.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
+  with securesystemslib.formats.HASHDICT_SCHEMA. """
+  securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
   for algorithm in hash_algorithms:
-    digest_object = in_toto.ssl_crypto.hash.digest_filename(filepath, algorithm)
+    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
-  in_toto.ssl_crypto.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+  securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 
   return hash_dict
 
@@ -336,7 +336,7 @@ def in_toto_run(name, material_list, product_list,
             elements are arguments passed to that command.
     key: (optional)
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     record_byproducts: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
@@ -358,10 +358,11 @@ def in_toto_run(name, material_list, product_list,
 
   # If a key is passed, it has to match the format
   if key:
-    in_toto.ssl_crypto.formats.KEY_SCHEMA.check_match(key)
-    #FIXME: Add private key format check to ssl_crypto formats
+    securesystemslib.formats.KEY_SCHEMA.check_match(key)
+    #FIXME: Add private key format check to securesystemslib formats
     if not key["keyval"].get("private"):
-      raise FormatError("Signing key needs to be a private key.")
+      raise securesystemslib.exceptions.FormatError(
+          "Signing key needs to be a private key.")
 
   if material_list:
     log.doing("Recording materials '{}'...".format(", ".join(material_list)))
@@ -401,7 +402,7 @@ def in_toto_record_start(step_name, key, material_list):
             layout.
     key:
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     material_list:
             List of file or directory paths that should be recorded as
             materials.
@@ -449,7 +450,7 @@ def in_toto_record_stop(step_name, key, product_list):
             layout.
     key:
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     product_list:
             List of file or directory paths that should be recorded as products.
 

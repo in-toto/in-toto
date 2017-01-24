@@ -1,6 +1,3 @@
-pycrypto
-cryptography
 pytest
-PyNaCl
 coverage
 mock

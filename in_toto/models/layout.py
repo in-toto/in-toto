@@ -33,14 +33,13 @@ import json
 import attr
 import six
 
-import in_toto.ssl_crypto.formats
-import in_toto.matchrule_validators
-
-from in_toto.ssl_commons.exceptions import FormatError
-
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
+
+import in_toto.matchrule_validators
+import securesystemslib.exceptions
+import securesystemslib.formats
 
 # import validators
 from . import common as models__common
@@ -71,7 +70,7 @@ class Layout(models__common.Signable):
     keys:
         A dictionary of public keys used to verify the signature of link
         metadata file related to a step. Format is
-        ssl_crypto.formats.KEYDICT_SCHEMA
+        securesystemslib.formats.KEYDICT_SCHEMA
 
     expires:
         the expiration date of a layout
@@ -148,26 +147,29 @@ class Layout(models__common.Signable):
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
     if self._type != "layout":
-      raise FormatError("Invalid _type value for layout (Should be 'layout')")
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid _type value for layout (Should be 'layout')")
 
   def _validate_expires(self):
     """Priavte method to verify the expiration field."""
     try:
       date = parse(self.expires)
-      in_toto.ssl_crypto.formats.ISO8601_DATETIME_SCHEMA.check_match(self.expires)
-    except:
-      raise FormatError("Malformed date string in layout!")
+      securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
+          self.expires)
+    except Exception as e:
+      raise securesystemslib.exceptions.FormatError(
+          "Malformed date string in layout. Exception: {}".format(e))
 
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
     if type(self.keys) != dict:
-      raise FormatError("keys dictionary is malformed!")
+      raise securesystemslib.exceptions.FormatError(
+          "keys dictionary is malformed!")
 
-    in_toto.ssl_crypto.formats.KEYDICT_SCHEMA.check_match(self.keys)
+    securesystemslib.formats.KEYDICT_SCHEMA.check_match(self.keys)
 
     for keyid, key in six.iteritems(self.keys):
-      if 'private' in key and key['private'] != '':
-        raise FormatError("key: {} contains a private key part!".format(keyid))
+      securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
 
   def _validate_steps_and_inspections(self):
     """Private method to verify that the list of steps and inspections are
@@ -175,31 +177,35 @@ class Layout(models__common.Signable):
 
     names_seen = set()
     if type(self.steps) != list:
-      raise FormatError("the steps section should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "the steps section should be a list!")
 
     for step in self.steps:
       if not isinstance(step, Step):
-        raise FormatError("The steps list should only contain steps!")
+        raise securesystemslib.exceptions.FormatError(
+            "The steps list should only contain steps!")
 
       step.validate()
 
       if step.name in names_seen:
-        raise FormatError("There is a repeated name in the steps! "
-                          "{}".format(step.name))
+        raise securesystemslib.exceptions.FormatError(
+            "There is a repeated name in the steps! {}".format(step.name))
       names_seen.add(step.name)
 
     if type(self.inspect) != list:
-      raise FormatError("The inspect field should a be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "The inspect field should a be a list!")
 
     for inspection in self.inspect:
       if not isinstance(inspection, Inspection):
-        raise FormatError("The inspect list should only contain inspections!")
+        raise securesystemslib.exceptions.FormatError(
+            "The inspect list should only contain inspections!")
 
       inspection.validate()
 
       if inspection.name in names_seen:
-        raise FormatError("There is a repeated name in the steps! "
-                          "{}".format(inspection.name))
+        raise securesystemslib.exceptions.FormatError(
+            "There is a repeated name in the steps! {}".format(inspection.name))
       names_seen.add(inspection.name)
 
 @attr.s(repr=False)
@@ -245,7 +251,8 @@ class Step(models__common.Metablock):
   def _validate_type(self):
     """Private method to ensure that the type field is set to step."""
     if self._type != "step":
-      raise FormatError("Invalid _type value for step (Should be 'step')")
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid _type value for step (Should be 'step')")
 
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
@@ -253,13 +260,15 @@ class Step(models__common.Metablock):
       # int(self.threshold)
       # FIXME: we don't have support for threshold yet
       pass
-    except:
-      raise FormatError("Invalid threshold value for this step")
+    except Exception as e:
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid threshold value for this step. Exception: {}".format(e))
 
   def _validate_material_matchrules(self):
     """Private method to check the material matchrules are correctly formed."""
     if type(self.material_matchrules) != list:
-      raise FormatError("Material matchrules should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "Material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
       in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
@@ -267,7 +276,8 @@ class Step(models__common.Metablock):
   def _validate_product_matchrules(self):
     """Private method to check the product matchrules are correctly formed."""
     if type(self.product_matchrules) != list:
-      raise FormatError("Product matchrules should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "Product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
       in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
@@ -275,15 +285,17 @@ class Step(models__common.Metablock):
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
     if type(self.pubkeys) != list:
-      raise FormatError("The pubkeys field should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "The pubkeys field should be a list!")
 
     for keyid in self.pubkeys:
-      in_toto.ssl_crypto.formats.KEYID_SCHEMA.check_match(keyid)
+      securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
 
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
     if type(self.expected_command) != str:
-      raise FormatError("The expected command field is malformed!")
+      raise securesystemslib.exceptions.FormatError(
+          "The expected command field is malformed!")
 
 @attr.s(repr=False)
 class Inspection(models__common.Metablock):
@@ -320,12 +332,14 @@ class Inspection(models__common.Metablock):
   def _validate_type(self):
     """Private method to ensure that the type field is set to inspection."""
     if self._type != "inspection":
-      raise FormatError("The _type field should be aset to inspection!")
+      raise securesystemslib.exceptions.FormatError(
+          "The _type field must be set to 'inspection'!")
 
   def _validate_material_matchrules(self):
     """Private method to check that the material matchrules are correct."""
     if type(self.material_matchrules) != list:
-      raise FormatError("The material matchrules should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "The material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
       in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
@@ -333,7 +347,8 @@ class Inspection(models__common.Metablock):
   def _validate_product_matchrules(self):
     """Private method to check that the product matchrules are correct."""
     if type(self.product_matchrules) != list:
-      raise FormatError("The product matchrules should be a list!")
+      raise securesystemslib.exceptions.FormatError(
+          "The product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
       in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
@@ -341,4 +356,5 @@ class Inspection(models__common.Metablock):
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
     if type(self.run) != str:
-      raise FormatError("The run field is malformed!")
+      raise securesystemslib.exceptions.FormatError(
+          "The run field is malformed!")

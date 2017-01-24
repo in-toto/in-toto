@@ -28,8 +28,9 @@ import attr
 import canonicaljson
 import inspect
 
+import securesystemslib.keys
+import securesystemslib.formats
 from in_toto.exceptions import SignatureVerificationError
-from in_toto.ssl_crypto import keys
 
 @attr.s(repr=False)
 class Metablock(object):
@@ -71,7 +72,7 @@ class Metablock(object):
 class Signable(Metablock):
   """Objects with base class Signable can sign their payload (a canonical
   pretty printed JSON string not containing the signatures attribute) and store
-  the signature (signature format: ssl_crypto__formats.SIGNATURE_SCHEMA) """
+  the signature (signature format: securesystemslib.formats.SIGNATURE_SCHEMA) """
   signatures = attr.ib(default=attr.Factory(list))
 
   @property
@@ -84,13 +85,15 @@ class Signable(Metablock):
     """Signs the canonical JSON representation of itself (without the
     signatures property) and adds the signatures to its signature properties."""
 
-    # XXX LP: Todo: Verify key format
+    securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    signature = keys.create_signature(key, self.payload)
+    signature = securesystemslib.keys.create_signature(key, self.payload)
     self.signatures.append(signature)
 
   def verify_signatures(self, keys_dict):
     """Verifies all signatures of the object using the passed key_dict."""
+
+    securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
 
     if not self.signatures or len(self.signatures) <= 0:
       raise SignatureVerificationError("No signatures found")
@@ -99,9 +102,10 @@ class Signable(Metablock):
       keyid = signature["keyid"]
       try:
         key = keys_dict[keyid]
-      except:
+      except KeyError:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
-      if not keys.verify_signature(key, signature, self.payload):
+      if not securesystemslib.keys.verify_signature(
+          key, signature, self.payload):
         raise SignatureVerificationError("Invalid signature")
 

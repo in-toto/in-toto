@@ -20,8 +20,7 @@
 import unittest
 import datetime
 from in_toto.models.layout import Layout, Step, Inspection
-from in_toto.ssl_commons.exceptions import FormatError
-import in_toto.ssl_crypto
+import securesystemslib.exceptions
 
 class TestLayoutValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
@@ -34,7 +33,7 @@ class TestLayoutValidator(unittest.TestCase):
   def test_wrong_type(self):
     """Test that the type field is validated properly."""
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._type = "wrong"
       self.layout._validate_type()
       self.layout.validate()
@@ -46,25 +45,25 @@ class TestLayoutValidator(unittest.TestCase):
     """Test the expires field is properly populated."""
 
     self.layout.expires = ''
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._validate_expires()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.expires = '-1'
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._validate_expires()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     # notice the wrong month
     self.layout.expires = '2016-13-18T16:44:55Z'
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._validate_expires()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.expires = '2016-11-18T16:44:55Z'
@@ -73,27 +72,29 @@ class TestLayoutValidator(unittest.TestCase):
 
   def test_wrong_key_dictionary(self):
     """Test that the keys dictionary is properly populated."""
-    rsa_key_one = in_toto.ssl_crypto.keys.generate_rsa_key()
-    rsa_key_two = in_toto.ssl_crypto.keys.generate_rsa_key()
+    rsa_key_one = securesystemslib.keys.generate_rsa_key()
+    rsa_key_two = securesystemslib.keys.generate_rsa_key()
 
     # FIXME: attr.ib reutilizes the default dictionary, so future constructor
     # are not empty...
     self.layout.keys = {"kek": rsa_key_one}
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._validate_keys()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.keys = {}
     self.layout.keys[rsa_key_two['keyid']] = "kek"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout._validate_keys()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.keys = {}
+    del rsa_key_one["keyval"]["private"]
+    del rsa_key_two["keyval"]["private"]
     self.layout.keys[rsa_key_one['keyid']] = rsa_key_one
     self.layout.keys[rsa_key_two['keyid']] = rsa_key_two
 
@@ -104,11 +105,11 @@ class TestLayoutValidator(unittest.TestCase):
     """Check that the validate method checks the steps' correctness."""
     self.layout.steps = "not-a-step"
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     test_step = Step("this-is-a-step")
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       test_step.material_matchrules = ['this is a malformed step']
       self.layout.steps = [test_step]
       self.layout.validate()
@@ -124,13 +125,13 @@ class TestLayoutValidator(unittest.TestCase):
     """Check that the validate method checks the inspections' correctness."""
 
     self.layout.inspect = "not-an-inspection"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     test_inspection = Inspection("this-is-a-step")
     test_inspection.material_matchrules = ['this is a malformed matchrule']
     self.layout.inspect = [test_inspection]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     test_inspection = Inspection("this-is-a-step")
@@ -142,12 +143,12 @@ class TestLayoutValidator(unittest.TestCase):
     """Check that only unique names exist in the steps and inspect lists"""
 
     self.layout.steps = [Step("name"), Step("name")]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.steps = [Step("name")]
     self.layout.inspect = [Inspection("name")]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     self.layout.step = [Step("name"), Step("othername")]

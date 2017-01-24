@@ -1,3 +1,0 @@
-[submodule "in_toto/ssl_crypto"]
-	path = in_toto/ssl_crypto
-	url = https://github.com/santiagotorres/ssl_crypto.git

@@ -33,7 +33,7 @@ from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections,  in_toto_verify)
-from in_toto.exceptions import (RuleVerficationFailed,
+from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError)
 from in_toto.util import import_rsa_key_from_file
 
@@ -129,7 +129,7 @@ class TestVerifyDeleteRule(unittest.TestCase):
     """["DELETE", "foo"], matches foo (not deleted), fails. """
 
     rule = ["DELETE", "foo"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_delete_rule(rule, self.artifact_queue)
 
 
@@ -137,7 +137,7 @@ class TestVerifyDeleteRule(unittest.TestCase):
     """["DELETE", "*"], matches * in non-empty queue (not deleted), fails. """
 
     rule = ["DELETE", "*"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
         verify_delete_rule(rule, self.artifact_queue)
 
 
@@ -184,7 +184,7 @@ class TestVerifyCreateRule(unittest.TestCase):
     """["CREATE", "bar"], does not mach bar (not created), fails. """
 
     rule = ["CREATE", "bar"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_create_rule(rule, self.artifact_queue)
 
 
@@ -192,7 +192,7 @@ class TestVerifyCreateRule(unittest.TestCase):
     """["CREATE", "*"], does not match * (nothing created), fails. """
 
     rule = ["CREATE", "*"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
         verify_create_rule(rule, self.artifact_queue_empty)
 
 
@@ -380,7 +380,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     pattern bar does not match any materials in target, fails. """
 
     rule = ["MATCH", "MATERIAL", "bar", "FROM", "link-1"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, [], [], self.links)
 
 
@@ -389,7 +389,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     pattern foo does not match any products in target, fails. """
 
     rule = ["MATCH", "PRODUCT", "foo", "FROM", "link-1"]
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       # Pass an empty artifacts queue and artifacts dictionary
       # to match nothing
       verify_match_rule(rule, [], [], self.links)
@@ -404,7 +404,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": self.sha256_bar},
     }
     queue = artifacts.keys()
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
 
@@ -417,7 +417,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
     }
     queue = []
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
 
@@ -430,7 +430,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
     }
     queue = artifacts.keys()
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
 
@@ -476,7 +476,7 @@ class TestVerifyItemRules(unittest.TestCase):
       ["CREATE", "foo"]
     ]
 
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_item_rules(self.item_name, rules, self.artifacts, self.links)
 
 
@@ -484,7 +484,7 @@ class TestVerifyItemRules(unittest.TestCase):
     """Fail with unmatched artifacts after executing all rules. """
 
     rules = []
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       verify_item_rules(self.item_name, rules, self.artifacts, {})
 
 
@@ -731,12 +731,12 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step matchrule. """
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       in_toto_verify(self.layout_failing_step_rule_path, [self.alice_path])
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection matchrule. """
-    with self.assertRaises(RuleVerficationFailed):
+    with self.assertRaises(RuleVerficationError):
       in_toto_verify(self.layout_failing_inspection_rule_path,
           [self.alice_path])
 

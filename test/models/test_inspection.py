@@ -19,8 +19,7 @@
 
 import unittest
 from in_toto.models.layout import Layout, Inspection
-from in_toto.ssl_commons.exceptions import FormatError
-import in_toto.ssl_crypto
+import securesystemslib.exceptions
 
 class TestInspectionValidator(unittest.TestCase):
   """Test verifylib.verify_delete_rule(rule, artifact_queue) """
@@ -33,10 +32,10 @@ class TestInspectionValidator(unittest.TestCase):
     """Test the type field within Validate()."""
 
     self.inspection._type = "wrong"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection._validate_type()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
     self.inspection._type = "inspection"
@@ -45,18 +44,18 @@ class TestInspectionValidator(unittest.TestCase):
   def test_wrong_material_matchrules(self):
     """Test that the material matchrule validators catch malformed ones."""
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.material_matchrules = [["NONFOO"]]
       self.inspection._validate_material_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.material_matchrules = "PFF"
       self.inspection._validate_material_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
     # for more thorough tests, check the test_matchrule.py module
@@ -68,17 +67,17 @@ class TestInspectionValidator(unittest.TestCase):
     """Test that the product matchrule validators catch malformed values."""
 
     self.inspection.product_matchrules = [["NONFOO"]]
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection._validate_product_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
     self.inspection.product_matchrules = "PFF"
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection._validate_product_matchrules()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
     # for more thorough tests, check the test_matchrule.py module
@@ -90,10 +89,10 @@ class TestInspectionValidator(unittest.TestCase):
     """Test that the run validators catch malformed values."""
 
     self.inspection.run = -1
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection._validate_run()
 
-    with self.assertRaises(FormatError):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
     self.inspection.run = "somecommand"

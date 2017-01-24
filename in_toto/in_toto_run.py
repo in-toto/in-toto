@@ -56,7 +56,7 @@ def in_toto_run(step_name, material_list, product_list,
             elements are arguments passed to that command.
     key:
             Private key to sign link metadata.
-            Format is ssl_crypto.formats.KEY_SCHEMA
+            Format is securesystemslib.formats.KEY_SCHEMA
     record_byproducts:
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
