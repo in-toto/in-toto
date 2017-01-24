@@ -8,6 +8,6 @@ class LayoutExpiredError(Error):
   """Indicates that the layout expired. """
   pass
 
-class RuleVerficationFailed(Error):
+class RuleVerficationError(Error):
   """Indicates that a match rule verification failed. """
   pass

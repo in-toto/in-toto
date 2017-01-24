@@ -37,7 +37,7 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
-from in_toto.exceptions import (RuleVerficationFailed, LayoutExpiredError)
+from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
 
@@ -318,7 +318,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
     raises an if a matchrule does not verify.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed if the source path is not in the source Link's
+    RuleVerficationError if the source path is not in the source Link's
     artifacts, or the target link is not found, or the target path is not in
     the target link's artifacts or source path and target path hashes don't
     match.
@@ -346,7 +346,7 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
       target_path_pattern)
 
   if not matched_target_artifacts:
-    raise RuleVerficationFailed("Rule {0} failed, path pattern '{1}' did not "
+    raise RuleVerficationError("Rule {0} failed, path pattern '{1}' did not "
       "match any {2}s in target link '{3}'"
       .format(rule, target_path_pattern, target_type, target_name))
 
@@ -361,17 +361,17 @@ def verify_match_rule(rule, artifact_queue, artifacts, links):
     try:
       source_path = inverted_artifacts[match_hash]
     except KeyError as e:
-      raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+      raise RuleVerficationError("Rule {0} failed, target hash of '{1}' "
           "could not be found in source artifacts".format(rule, target_path))
     else:
       # The matched source artifact's path must be in the artifact queue
       if source_path not in artifact_queue:
-        raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+        raise RuleVerficationError("Rule {0} failed, target hash of '{1}' "
             "could not be found (was matched before)".format(rule, source_path))
 
       # and it must match with path pattern.
       elif not fnmatch.filter([source_path], path_pattern):
-        raise RuleVerficationFailed("Rule {0} failed, target hash of '{1}' "
+        raise RuleVerficationError("Rule {0} failed, target hash of '{1}' "
           "matches hash of '{2}' in source artifacts but should match '{3}')"
           .format(rule, target_path, source_path, path_pattern))
 
@@ -402,7 +402,7 @@ def verify_create_rule(rule, artifact_queue):
     raises an FormatError if the rule does not conform with the rule format.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed if nothing is matched in the artifact queue.
+    RuleVerficationError if nothing is matched in the artifact queue.
 
   <Side Effects>
     Uses fnmatch.filter which translates a glob pattern to re.
@@ -415,7 +415,7 @@ def verify_create_rule(rule, artifact_queue):
   path_pattern = rule[1]
   matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
   if not matched_artifacts:
-    raise RuleVerficationFailed("Rule {0} failed, no artifacts were created"
+    raise RuleVerficationError("Rule {0} failed, no artifacts were created"
         .format(rule))
 
   return list(set(artifact_queue) - set(matched_artifacts))
@@ -441,7 +441,7 @@ def verify_delete_rule(rule, artifact_queue):
     raises FormatError if the rule does not conform with the rule format.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
-    RuleVerficationFailed if path pattern matches files in artifact queue.
+    RuleVerficationError if path pattern matches files in artifact queue.
 
   <Side Effects>
     Uses fnmatch.filter which translates a glob pattern to re.
@@ -457,7 +457,7 @@ def verify_delete_rule(rule, artifact_queue):
   path_pattern = rule[1]
   matched_artifacts = fnmatch.filter(artifact_queue, path_pattern)
   if matched_artifacts:
-    raise RuleVerficationFailed("Rule {0} failed, artifacts {1} "
+    raise RuleVerficationError("Rule {0} failed, artifacts {1} "
         "were not deleted".format(rule, matched_artifacts))
 
 
@@ -546,7 +546,7 @@ def verify_item_rules(item_name, rules, artifacts, links):
       break
 
   if artifact_queue:
-    raise RuleVerficationFailed("Artifacts {0} were not matched by any rule of "
+    raise RuleVerficationError("Artifacts {0} were not matched by any rule of "
         "item '{1}'".format(artifact_queue, item_name))
 
 
