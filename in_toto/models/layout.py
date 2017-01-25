@@ -140,8 +140,11 @@ class Layout(models__common.Signable):
     """
     step_link_dict = {}
     for step in self.steps:
-      link = models__link.Link.read_from_file(step.name + '.link')
-      step_link_dict[step.name] = link
+      key_link_dict = {}
+      for keyid in step.pubkeys:
+        link = models__link.Link.read_from_file(step.name + '.' + keyid + '.link')
+        key_link_dict[keyid] = link
+      step_link_dict[step.name] = key_link_dict
     return step_link_dict
 
   def _validate_type(self):
@@ -237,6 +240,7 @@ class Step(models__common.Metablock):
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
+  threshold = attr.ib("")
 
 
   @staticmethod
@@ -245,7 +249,8 @@ class Step(models__common.Metablock):
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"),
         pubkeys=data.get("pubkeys"),
-        expected_command=data.get("expected_command"))
+        expected_command=data.get("expected_command"),
+        threshold=data.get("threshold"))
 
 
   def _validate_type(self):
@@ -256,13 +261,9 @@ class Step(models__common.Metablock):
 
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
-    try:
-      # int(self.threshold)
-      # FIXME: we don't have support for threshold yet
-      pass
-    except Exception as e:
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid threshold value for this step. Exception: {}".format(e))
+    if type(self.threshold) != int:
+      raise FormatError("Invalid threshold '{}' value for this step."
+          .format(self.threshold))
 
   def _validate_material_matchrules(self):
     """Private method to check the material matchrules are correctly formed."""

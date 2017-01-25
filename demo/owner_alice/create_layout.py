@@ -19,8 +19,9 @@ def main():
         "name": "write-code",
         "material_matchrules": [],
         "product_matchrules": [["CREATE", "foo.py"]],
-        "pubkeys": [key_bob["keyid"]],
+        "pubkeys": [key_bob["keyid"], key_carl["keyid"]],
         "expected_command": "vi",
+        "threshold": 3,
       },
       {
         "name": "package",
@@ -32,6 +33,7 @@ def main():
         ],
         "pubkeys": [key_carl["keyid"]],
         "expected_command": "tar zcvf foo.tar.gz foo.py",
+        "threshold": 1,
       }],
     "inspect": [{
         "name": "untar",
@@ -61,6 +63,6 @@ def main():
   # Sign and dump layout to "layout.root"
   layout.sign(key_alice)
   layout.dump()
-
+  
 if __name__ == '__main__':
   main()

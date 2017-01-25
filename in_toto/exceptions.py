@@ -11,3 +11,7 @@ class LayoutExpiredError(Error):
 class RuleVerficationError(Error):
   """Indicates that a match rule verification failed. """
   pass
+
+class ThresholdVerificationError(Error):
+  """Indicates that a match rule verification failed. """
+  pass

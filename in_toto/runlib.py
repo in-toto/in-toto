@@ -382,8 +382,8 @@ def in_toto_run(name, material_list, product_list,
     log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
     link.sign(key)
 
-  log.doing("Storing link metadata to '{}'...".format(fn))
-  link.dump()
+    log.doing("Storing link metadata to '{}'...".format(name+"."+key["keyid"]+".link"))
+    link.dump(key = key)
 
   return link
 

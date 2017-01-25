@@ -37,7 +37,7 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
-from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError)
+from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError, ThresholdVerificationError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
 
@@ -81,7 +81,7 @@ def run_all_inspections(layout):
         product_list, inspection.run.split())
 
     inspection_links_dict[inspection.name] = link
-
+    
     # Dump the inpsection link file for auditing
     # Keep in mind that this pollutes the verfier's (client's) filesystem.
     link.dump()
@@ -189,15 +189,15 @@ def verify_all_steps_signatures(layout, links_dict):
   """
   for step in layout.steps:
     # Find the according link for this step
-    link = links_dict[step.name]
-
+    key_link_dict = links_dict[step.name]
+    for keyid in key_link_dict:
+      link = key_link_dict[keyid]
     # Create the dictionary of keys for this step
-    keys_dict = {}
-    for keyid in step.pubkeys:
-      keys_dict[keyid] = layout.keys[keyid]
-
+      keys_dict = {}
+      for keyid in step.pubkeys:
+        keys_dict[keyid] = layout.keys[keyid]
     # Verify link metadata file's signatures
-    verify_link_signatures(link, keys_dict)
+      verify_link_signatures(link, keys_dict)
 
 
 def verify_command_alignment(command, expected_command):
@@ -257,10 +257,12 @@ def verify_all_steps_command_alignment(layout, links_dict):
   """
   for step in layout.steps:
     # Find the according link for this step
-    link = links_dict[step.name]
-    command = link.command
     expected_command = step.expected_command.split()
-    verify_command_alignment(command, expected_command)
+    key_link_dict = links_dict[step.name]
+    for keyid in key_link_dict:
+      link = key_link_dict[keyid]
+      command = link.command
+      verify_command_alignment(command, expected_command)
 
 
 def verify_match_rule(rule, artifact_queue, artifacts, links):
@@ -582,7 +584,7 @@ def verify_all_item_rules(items, links, target_links=None):
 
   """
   if not target_links:
-    target_links = links
+      target_links = links
 
   for item in items:
     link = links[item.name]
@@ -591,6 +593,33 @@ def verify_all_item_rules(items, links, target_links=None):
     verify_item_rules(item.name, item.product_matchrules,
         link.products, target_links)
 
+def verify_threshold_equality(layout, step_link_dict):
+  target_links = {}
+  for key_link in step_link_dict:
+    key_link_dict = step_link_dict[key_link]
+    
+    for step in layout.steps:
+       if step.name is key_link:
+        threshold = step.threshold
+
+    if len(key_link_dict) >= threshold:
+      link_dict = {}
+      if len(key_link_dict) == 1:
+        for keyid in key_link_dict:
+          link_dict = key_link_dict[keyid]
+      else:
+        i = 0
+        for keyid in key_link_dict:
+          if i == 0:
+            link_dict = key_link_dict[keyid]
+            i = i + 1
+          else:
+            if link_dict.materials != key_link_dict[keyid].materials or link_dict.products != key_link_dict[keyid].products:
+              raise ThresholdVerficationFailed("Link artifacts do not match!".format())
+      target_links[key_link] = link_dict
+    else:
+      raise ThresholdVerificationFailed("Step not performed by enough functionaries!".format())
+  return target_links
 
 def in_toto_verify(layout_path, layout_key_paths):
   """
@@ -644,7 +673,7 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   log.doing("Reading layout...")
   layout = in_toto.models.layout.Layout.read_from_file(layout_path)
-
+  
   log.doing("Reading layout key(s)...")
   layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
       layout_key_paths)
@@ -667,12 +696,15 @@ def in_toto_verify(layout_path, layout_key_paths):
   log.doing("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
+  log.doing("Verifying threshold equality...")
+  step_links = verify_threshold_equality(layout, step_link_dict)
+
   log.doing("Verifying Step rules...")
-  verify_all_item_rules(layout.steps, step_link_dict)
+  verify_all_item_rules(layout.steps, step_links)
 
   log.doing("Verifying Inspection rules...")
   verify_all_item_rules(layout.inspect, inspection_link_dict,
-      step_link_dict)
+      step_links)
 
   # We made it this far without exception that means, verification passed.
   log.passing("Passing verification")

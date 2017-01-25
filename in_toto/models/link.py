@@ -65,12 +65,19 @@ class Link(models__common.Signable):
   command = attr.ib("")
   return_value = attr.ib(None)
 
-  def dump(self, filename=False):
+  def dump(self, filename=False, key=False):
     """Write pretty printed JSON represented of self to a file with filename.
     If no filename is specified, a filename will be created using the link name
     + '.link'-suffix """
     # Magic: short circuiting and string formatting
-    super(Link, self).dump(filename or "%s.link" % self.name)
+    if filename:
+      fn = filename
+    elif key:
+#      securesystemslib.formats.KEY_SCHEMA.check_matches(key)
+      fn = "{}.{}.link".format(self.name, key['keyid'])
+    else:
+      fn = "{}.link".format(self.name)
+    super(Link, self).dump(fn)
 
   @staticmethod
   def read_from_file(filename):
