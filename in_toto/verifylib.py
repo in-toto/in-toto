@@ -37,9 +37,48 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
-from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError)
+from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
+    BadReturnValueError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
+
+def _raise_on_bad_retval(return_value, command=None):
+  """
+  <Purpose>
+    Internal function that checks return values of shell commands, e.g. from
+    inspections. Raises exception if the passed value is non-int and non-zero.
+
+  <Arguments>
+    return_value:
+            The return value to be verified
+    command: (optional)
+            The command whose execution returned the value, used for exception
+            message.
+
+  <Exceptions>
+    BadReturnValueError if the return_value is non-int and non-zero
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    None.
+  """
+
+  msg = "Got non-{what} " + "return value '{}'".format(return_value)
+  if command:
+    msg = "{0} from command '{1}'.".format(msg, command)
+  else:
+    msg = "{0}.".format(msg)
+
+  if not isinstance(return_value, int):
+    raise BadReturnValueError(msg.format(what="int"))
+
+  # TODO: in-toto specification suggests special behavior on
+  # return_value < 127, but does not fully define that behavior yet
+
+  if return_value != 0:
+    raise BadReturnValueError(msg.format(what="zero"))
 
 
 def run_all_inspections(layout):
@@ -50,13 +89,15 @@ def run_all_inspections(layout):
     run field using in-toto runlib.  This producces link metadata which is
     returned as a dictionary with the according inspection names as keys and
     the Link metadata objects as values.
+    If a link command returns non-zero the verification is aborted.
 
   <Arguments>
     layout:
             A Layout object which is used to extract the Inpsections.
 
   <Exceptions>
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    Calls function that raises BadReturnValueError if an inspection returned
+    non-int or non-zero.
 
   <Side Effects>
     Executes the Inspection command and produces Link metadata.
@@ -74,16 +115,18 @@ def run_all_inspections(layout):
 
     # FIXME: What should we record as material/product?
     # Is the current directory a sensible default? In general?
-    # If so, we should propably make it a default in run_link
+    # If so, we should probably make it a default in run_link
     # We could use matchrule paths.
     material_list = product_list = ["."]
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
         product_list, inspection.run.split())
 
+    _raise_on_bad_retval(link.return_value, inspection.run)
+
     inspection_links_dict[inspection.name] = link
 
-    # Dump the inpsection link file for auditing
-    # Keep in mind that this pollutes the verfier's (client's) filesystem.
+    # Dump the inspection link file for auditing
+    # Keep in mind that this pollutes the verifier's (client's) filesystem.
     link.dump()
 
     in_toto.settings.ARTIFACT_BASE_PATH = base_path_backup
