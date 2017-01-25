@@ -11,3 +11,7 @@ class LayoutExpiredError(Error):
 class RuleVerficationError(Error):
   """Indicates that a match rule verification failed. """
   pass
+
+class BadReturnValueError(Error):
+  """Indicates that a ran command exited with non-int or non-zero return
+  value. """
