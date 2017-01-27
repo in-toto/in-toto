@@ -21,7 +21,7 @@ def main():
         "product_matchrules": [["CREATE", "foo.py"]],
         "pubkeys": [key_bob["keyid"], key_carl["keyid"]],
         "expected_command": "vi",
-        "threshold": 3,
+        "threshold": 2,
       },
       {
         "name": "package",

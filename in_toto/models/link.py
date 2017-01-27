@@ -21,6 +21,7 @@
 import attr
 import json
 from . import common as models__common
+import securesystemslib.formats
 
 @attr.s(repr=False)
 class Link(models__common.Signable):
@@ -73,7 +74,7 @@ class Link(models__common.Signable):
     if filename:
       fn = filename
     elif key:
-#      securesystemslib.formats.KEY_SCHEMA.check_matches(key)
+      securesystemslib.formats.KEY_SCHEMA.check_match(key)
       fn = "{}.{}.link".format(self.name, key['keyid'])
     else:
       fn = "{}.link".format(self.name)

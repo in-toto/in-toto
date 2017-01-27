@@ -594,6 +594,32 @@ def verify_all_item_rules(items, links, target_links=None):
         link.products, target_links)
 
 def verify_threshold_equality(layout, step_link_dict):
+  """
+  <Purpose>
+    Iteratively verifies threshold conditions and link artifacts of
+    passed dictionary (step_link_dict).
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    step_link_dict:
+            A dictionary of key-link pair with step names as keys. For each
+            step name, there are one or more keyids and corresponding
+            link objects.
+
+  <Exceptions>
+    raises an Exception if threshold is not verified.
+    ThresholdVerificationError()
+
+  <Side Effects>
+    None.
+  
+  <Returns>
+    A dictionary containing one Link metadata object per step only if
+    the link artifacts of all link objects are identical for a step.
+  """
   target_links = {}
   for key_link in step_link_dict:
     key_link_dict = step_link_dict[key_link]
@@ -615,10 +641,10 @@ def verify_threshold_equality(layout, step_link_dict):
             i = i + 1
           else:
             if link_dict.materials != key_link_dict[keyid].materials or link_dict.products != key_link_dict[keyid].products:
-              raise ThresholdVerficationFailed("Link artifacts do not match!".format())
+              raise ThresholdVerificationError("Link artifacts do not match!".format())
       target_links[key_link] = link_dict
     else:
-      raise ThresholdVerificationFailed("Step not performed by enough functionaries!".format())
+      raise ThresholdVerificationError("Step not performed by enough functionaries!".format())
   return target_links
 
 def in_toto_verify(layout_path, layout_key_paths):
