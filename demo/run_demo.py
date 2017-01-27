@@ -34,6 +34,13 @@ def supply_chain():
   subprocess.call(write_code_cmd.split())
   copyfile("foo.py", "../functionary_carl/foo.py")
 
+  prompt_key("Write code (Carl)")
+  os.chdir("../functionary_carl")
+  write_code_cmd = ("in-toto-run" +
+                    " --step-name write-code --products foo.py" +
+                    " --key carl -- vi foo.py")
+  print write_code_cmd
+  subprocess.call(write_code_cmd.split())
 
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
@@ -49,8 +56,12 @@ def supply_chain():
   prompt_key("Create final product")
   os.chdir("..")
   copyfile("owner_alice/root.layout", "final_product/root.layout")
-  copyfile("functionary_bob/write-code.link", "final_product/write-code.link")
-  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_bob/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link",
+    "final_product/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link")
+  copyfile("functionary_carl/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+    "final_product/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link")
+  copyfile("functionary_carl/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+    "final_product/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link")
   copyfile("functionary_carl/foo.tar.gz", "final_product/foo.tar.gz")
 
 
@@ -90,8 +101,12 @@ def supply_chain():
   prompt_key("Create final product")
   os.chdir("..")
   copyfile("owner_alice/root.layout", "final_product/root.layout")
-  copyfile("functionary_bob/write-code.link", "final_product/write-code.link")
-  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_bob/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link",
+    "final_product/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link")
+  copyfile("functionary_carl/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+    "final_product/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link")
+  copyfile("functionary_carl/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+    "final_product/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link")
   copyfile("functionary_carl/foo.tar.gz", "final_product/foo.tar.gz")
 
 
@@ -118,16 +133,18 @@ def main():
   if args.clean:
     files_to_delete = [
       "owner_alice/root.layout",
-      "functionary_bob/write-code.link",
+      "functionary_bob/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link",
       "functionary_bob/foo.py",
-      "functionary_carl/package.link",
-      "functionary_carl/foo.tar.gz",
+      "functionary_carl/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
       "functionary_carl/foo.py",
+      "functionary_carl/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+      "functionary_carl/foo.tar.gz",
       "final_product/alice.pub",
       "final_product/foo.py",
       "final_product/foo.tar.gz",
-      "final_product/package.link",
-      "final_product/write-code.link",
+      "final_product/package.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
+      "final_product/write-code.0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117.link",
+      "final_product/write-code.c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8.link",
       "final_product/tar.link",
       "final_product/root.layout"
     ]
