@@ -351,7 +351,10 @@ def in_toto_run(name, material_list, product_list,
     Newly created Link object
   """
 
-  fn = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
+#  if key:
+#    fn = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
+#  else:
+#    fn = FILENAME_FORMAT.format(step_name=name, keyid=None)
 
   log.doing("Running '{}'...".format(name))
 
@@ -383,7 +386,7 @@ def in_toto_run(name, material_list, product_list,
     link.sign(key)
 
     log.doing("Storing link metadata to '{}'...".format(name+"."+key["keyid"]+".link"))
-    link.dump(key = key)
+    link.dump(key=key)
 
   return link
 
@@ -431,10 +434,12 @@ def in_toto_record_start(step_name, key, material_list):
   link.sign(key)
 
   log.doing("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
-  link.dump(unfinished_fn)
+  link.dump(filename=unfinished_fn)
 
+  return unfinished_fn
+  
 
-def in_toto_record_stop(step_name, key, product_list):
+def in_toto_record_stop(step_name, key, product_list, unfinished_fn):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -465,7 +470,8 @@ def in_toto_record_stop(step_name, key, product_list):
 
   """
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  if unfinished_fn is None:
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
@@ -486,7 +492,7 @@ def in_toto_record_stop(step_name, key, product_list):
   link.sign(key)
 
   log.doing("Storing link metadata to '{}'...".format(fn))
-  link.dump()
+  link.dump(key=key)
 
   log.doing("Removing unfinished link metadata '{}'...".format(fn))
   os.remove(unfinished_fn)

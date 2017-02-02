@@ -53,13 +53,11 @@ def in_toto_verify(layout_path, layout_key_paths):
     None.
 
   """
-  verifylib.in_toto_verify(layout_path, layout_key_paths)
-
-  # try:
-  #   verifylib.in_toto_verify(layout_path, layout_key_paths)
-  # except Exception as e:
-  #   log.error("in in-toto verify - {}".format(e))
-  #   sys.exit(1)
+  try:
+    verifylib.in_toto_verify(layout_path, layout_key_paths)
+  except Exception as e:
+    log.error("in in-toto verify - {}".format(e))
+    sys.exit(1)
 
 def main():
   """Parse arguments and call in_toto_verify. """

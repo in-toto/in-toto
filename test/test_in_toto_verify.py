@@ -91,7 +91,6 @@ class TestInTotoVerifyTool(unittest.TestCase):
     alice = import_rsa_key_from_file("alice")
     bob = import_rsa_key_from_file("bob")
     self.alice_path = "alice.pub"
-    print self.alice_path
     self.bob_path = "bob.pub"
 
     # dump a single signed layout

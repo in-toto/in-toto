@@ -720,10 +720,10 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
-    os.rename("package.link", "package.link.bak")
+    os.rename("package.2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd.link", "package.link.bak")
     with self.assertRaises(IOError):
       in_toto_verify(self.layout_single_signed_path, [self.alice_path])
-    os.rename("package.link.bak", "package.link")
+    os.rename("package.link.bak", "package.2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd.link")
 
   def test_verify_failing_inspection_exits_non_zero(self):
     """FIXME implement raise exception on inspection fail. """
