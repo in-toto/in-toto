@@ -38,7 +38,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
 import in_toto.matchrule_validators
-import securesystemslib.exceptions
+from securesystemslib.exceptions import FormatError
 import securesystemslib.formats
 
 # import validators
@@ -240,7 +240,7 @@ class Step(models__common.Metablock):
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
-  threshold = attr.ib("")
+  threshold = attr.ib(default=attr.Factory(int))
 
 
   @staticmethod

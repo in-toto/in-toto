@@ -55,9 +55,10 @@ class TestInTotoRunTool(unittest.TestCase):
     self.key_path = "test_key"
     generate_and_write_rsa_keypair(self.key_path)
     self.key = prompt_import_rsa_key_from_file(self.key_path)
+    print "HELLO " + str(self.key)
 
     self.test_step = "test_step"
-    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step)
+    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.key["keyid"])
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 

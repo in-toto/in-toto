@@ -50,8 +50,8 @@ import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 
-FILENAME_FORMAT = "{step_name}.link"
-UNFINISHED_FILENAME_FORMAT = ".{step_name}.link-unfinished"
+FILENAME_FORMAT = "{step_name}.{keyid}.link"
+UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid}.link-unfinished"
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
@@ -351,7 +351,7 @@ def in_toto_run(name, material_list, product_list,
     Newly created Link object
   """
 
-  fn = FILENAME_FORMAT.format(step_name=name)
+  fn = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
 
   log.doing("Running '{}'...".format(name))
 
@@ -417,7 +417,7 @@ def in_toto_record_start(step_name, key, material_list):
 
   """
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Start recording '{}'...".format(step_name))
 
   if material_list:
@@ -464,8 +464,8 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name)
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name)
+  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
