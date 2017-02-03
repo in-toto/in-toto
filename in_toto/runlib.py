@@ -435,11 +435,9 @@ def in_toto_record_start(step_name, key, material_list):
 
   log.doing("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link.dump(filename=unfinished_fn)
-
-  return unfinished_fn
   
 
-def in_toto_record_stop(step_name, key, product_list, unfinished_fn):
+def in_toto_record_stop(step_name, key, product_list):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -470,8 +468,7 @@ def in_toto_record_stop(step_name, key, product_list, unfinished_fn):
 
   """
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  if unfinished_fn is None:
-    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir

@@ -398,24 +398,24 @@ class TestInTotoRecordStop(unittest.TestCase):
 
   def test_create_metadata_with_expected_product(self):
     """Test record stop records expected product. """
-    unfinished_fn = in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [self.test_product], unfinished_fn)
+    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [self.test_product])
     link = Link.read_from_file(self.link_name)
     self.assertEquals(link.products.keys(), [self.test_product])
     os.remove(self.link_name)
 
   def test_create_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
-    unfinished_fn = in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [], unfinished_fn)
+    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [])
     link = Link.read_from_file(self.link_name)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name)
 
   def test_replace_unfinished_metadata(self):
     """Test record stop removes unfinished file and creates link file. """
-    unfinished_fn = in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [], unfinished_fn)
+    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [])
     with self.assertRaises(IOError):
       open(self.link_name_unfinished, "r")
     open(self.link_name, "r")
@@ -424,15 +424,15 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_missing_unfinished_file(self):
     """Test record stop exits on missing unfinished file, no link recorded. """
     with self.assertRaises(IOError):
-      in_toto_record_stop(self.step_name, self.key, [], None)
+      in_toto_record_stop(self.step_name, self.key, [])
     with self.assertRaises(IOError):
       open(self.link_name, "r")
 
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
-    unfinished_fn = in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_start(self.step_name, self.key, [])
     with self.assertRaises(SignatureVerificationError):
-      in_toto_record_stop(self.step_name, self.key2, [], unfinished_fn)
+      in_toto_record_stop(self.step_name, self.key2, [])
     with self.assertRaises(IOError):
       open(self.link_name, "r")
     os.remove(self.link_name_unfinished)
