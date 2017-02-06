@@ -431,10 +431,14 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
     in_toto_record_start(self.step_name, self.key, [])
+    link_name = str("."+ self.step_name + "." + self.key["keyid"] + ".link-unfinished")
+    changed_link_name = str("."+ self.step_name + "." + self.key2["keyid"] + ".link-unfinished")
+    os.rename(link_name, changed_link_name)
     with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, self.key2, [])
     with self.assertRaises(IOError):
       open(self.link_name, "r")
+    os.rename(changed_link_name, link_name)
     os.remove(self.link_name_unfinished)
 
 if __name__ == "__main__":
