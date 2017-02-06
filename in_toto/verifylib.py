@@ -75,7 +75,7 @@ def _raise_on_bad_retval(return_value, command=None):
     raise BadReturnValueError(msg.format(what="int"))
 
   # TODO: in-toto specification suggests special behavior on
-  # return_value < 127, but does not fully define that behavior yet
+  # return_value == 127, but does not fully define that behavior yet
 
   if return_value != 0:
     raise BadReturnValueError(msg.format(what="zero"))
