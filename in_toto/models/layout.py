@@ -37,7 +37,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
-import in_toto.matchrule_validators
+import in_toto.artifact_rules
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -93,6 +93,7 @@ class Layout(models__common.Signable):
   def read_from_file(filename='root.layout'):
     """Static method to instantiate a new Layout object from a
     canonical JSON serialized file """
+    print filename
     with open(filename, 'r') as fp:
       return Layout.read(json.load(fp))
 
@@ -271,7 +272,7 @@ class Step(models__common.Metablock):
           "Material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
-      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.artifact_rules.unpack_rule(matchrule)
 
   def _validate_product_matchrules(self):
     """Private method to check the product matchrules are correctly formed."""
@@ -280,7 +281,7 @@ class Step(models__common.Metablock):
           "Product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
-      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.artifact_rules.unpack_rule(matchrule)
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
@@ -342,7 +343,7 @@ class Inspection(models__common.Metablock):
           "The material matchrules should be a list!")
 
     for matchrule in self.material_matchrules:
-      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.artifact_rules.unpack_rule(matchrule)
 
   def _validate_product_matchrules(self):
     """Private method to check that the product matchrules are correct."""
@@ -351,7 +352,7 @@ class Inspection(models__common.Metablock):
           "The product matchrules should be a list!")
 
     for matchrule in self.product_matchrules:
-      in_toto.matchrule_validators.check_matchrule_syntax(matchrule)
+      in_toto.artifact_rules.unpack_rule(matchrule)
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""

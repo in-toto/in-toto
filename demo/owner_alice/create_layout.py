@@ -31,7 +31,7 @@ def main():
       },{
         "name": "package",
         "material_matchrules": [
-            ["MATCH", "PRODUCT", "demo-project/*", "FROM", "update-version"],
+            ["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "update-version"],
         ],
         "product_matchrules": [
             ["CREATE", "demo-project.tar.gz"],
@@ -42,7 +42,7 @@ def main():
     "inspect": [{
         "name": "untar",
         "material_matchrules": [
-            ["MATCH", "PRODUCT", "demo-project.tar.gz", "FROM", "package"],
+            ["MATCH", "demo-project.tar.gz", "WITH", "PRODUCTS", "FROM", "package"],
             # FIXME: Without the "allow everything else" rule here
             # inspection would fail because of the metadata and other files
             # (.DS_STORE, layout key, ...) in the directory where the Inspection
@@ -50,13 +50,12 @@ def main():
             # The behavior is actually wanted in order to prevent sneaking
             # files. But we do have to think of a way to ignore
             # irrelevant files.
-            ["CREATE", "*"],
+            ["ALLOW", "*"],
         ],
         "product_matchrules": [
-            ["MATCH", "PRODUCT", "demo-project/foo.py",
-                "FROM", "update-version"],
+            ["MATCH", "demo-project/foo.py", "WITH", "PRODUCTS", "FROM", "update-version"],
             # FIXME: See material_matchrules above
-            ["CREATE", "*"],
+            ["ALLOW", "*"],
 
         ],
         "run": "tar xzf demo-project.tar.gz",
