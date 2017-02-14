@@ -23,6 +23,9 @@ import json
 from . import common as models__common
 import securesystemslib.formats
 
+FILENAME_FORMAT = "{step_name}.{short_keyid}.link"
+UNFINISHED_FILENAME_FORMAT = ".{step_name}.{short_keyid}.link-unfinished"
+
 @attr.s(repr=False)
 class Link(models__common.Signable):
   """
@@ -67,15 +70,21 @@ class Link(models__common.Signable):
   return_value = attr.ib(None)
 
   def dump(self, filename=False, key=False):
-    """Write pretty printed JSON represented of self to a file with filename.
-    If no filename is specified, a filename will be created using the link name
-    + '.link'-suffix """
-    # Magic: short circuiting and string formatting
+    """
+    Method to dump the link metdata files
+    If filename is provided, link is stored with that name
+    If key is provided, then the usual [step-name].[keyid].link
+    format is used to store the link
+    If nothing is provided (during inspection), link is stored
+    as [step-name].link
+    If both filename and key are provided, the key gets ignored
+    as first preference is given to the filename.
+    """
     if filename:
       fn = filename
     elif key:
       securesystemslib.formats.KEY_SCHEMA.check_match(key)
-      fn = "{}.{}.link".format(self.name, key['keyid'])
+      fn = FILENAME_FORMAT.format(step_name=self.name, short_keyid="{:.8}".format(key["keyid"]))
     else:
       fn = "{}.link".format(self.name)
     super(Link, self).dump(fn)

@@ -1,0 +1,52 @@
+{
+    "_type": "Link",
+    "byproducts": {
+        "stderr": "",
+        "stdout": ""
+    },
+    "command": [
+        "tar",
+        "xvf",
+        "foo.tar.gz"
+    ],
+    "materials": {
+        ".DS_Store": {
+            "sha256": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+        },
+        ".keep": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "alice.pub": {
+            "sha256": "54d66a3cda423bb31027f388ffb6753a37e7bd5d9d883140fb818dac73456695"
+        },
+        "foo.tar.gz": {
+            "sha256": "92eb2fbad684f800268cceed5924b0a8eabd0432256a3f9f63f149f539978cc9"
+        },
+        "root.layout": {
+            "sha256": "f625374b99a82b864b0c15044c0e05479ea47a5703e9e2506ffc122b8fc5b78a"
+        }
+    },
+    "name": "untar",
+    "products": {
+        ".DS_Store": {
+            "sha256": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+        },
+        ".keep": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "alice.pub": {
+            "sha256": "54d66a3cda423bb31027f388ffb6753a37e7bd5d9d883140fb818dac73456695"
+        },
+        "foo.py": {
+            "sha256": "7c6afe6d30a43fc7f13925f4dc51763305402dc07bd5fffcaf3e8bbee2d2321f"
+        },
+        "foo.tar.gz": {
+            "sha256": "92eb2fbad684f800268cceed5924b0a8eabd0432256a3f9f63f149f539978cc9"
+        },
+        "root.layout": {
+            "sha256": "f625374b99a82b864b0c15044c0e05479ea47a5703e9e2506ffc122b8fc5b78a"
+        }
+    },
+    "return_value": 0,
+    "signatures": []
+}

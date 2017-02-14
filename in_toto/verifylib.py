@@ -192,11 +192,11 @@ def verify_all_steps_signatures(layout, links_dict):
     key_link_dict = links_dict[step.name]
     for keyid in key_link_dict:
       link = key_link_dict[keyid]
-    # Create the dictionary of keys for this step
+      # Create the dictionary of keys for this step
       keys_dict = {}
       for keyid in step.pubkeys:
         keys_dict[keyid] = layout.keys[keyid]
-    # Verify link metadata file's signatures
+      # Verify link metadata file's signatures
       verify_link_signatures(link, keys_dict)
 
 
@@ -584,7 +584,7 @@ def verify_all_item_rules(items, links, target_links=None):
 
   """
   if not target_links:
-      target_links = links
+    target_links = links
 
   for item in items:
     link = links[item.name]
@@ -596,8 +596,10 @@ def verify_all_item_rules(items, links, target_links=None):
 def verify_threshold_equality(layout, step_link_dict):
   """
   <Purpose>
-    Iteratively verifies threshold conditions and link artifacts of
-    passed dictionary (step_link_dict).
+    Iteratively verifies threshold conditions (if a step has been
+    performed and signed by enough number of functionaries) and link
+    artifacts (materials and products of a step is same for different
+    fucntionaries) of passed dictionary (step_link_dict).
 
   <Arguments>
     layout:
@@ -611,11 +613,13 @@ def verify_threshold_equality(layout, step_link_dict):
 
   <Exceptions>
     raises an Exception if threshold is not verified.
-    ThresholdVerificationError()
+    ThresholdVerificationError if the step is not performed by enough
+    functionaries or if the materials and products for a step are not same
+    for all functionaries.
 
   <Side Effects>
     None.
-  
+
   <Returns>
     A dictionary containing one Link metadata object per step only if
     the link artifacts of all link objects are identical for a step.
@@ -623,7 +627,7 @@ def verify_threshold_equality(layout, step_link_dict):
   target_links = {}
   for key_link in step_link_dict:
     key_link_dict = step_link_dict[key_link]
-    
+
     for step in layout.steps:
        if step.name is key_link:
         threshold = step.threshold
@@ -699,7 +703,7 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   log.doing("Reading layout...")
   layout = in_toto.models.layout.Layout.read_from_file(layout_path)
-  
+
   log.doing("Reading layout key(s)...")
   layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
       layout_key_paths)

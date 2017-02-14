@@ -38,7 +38,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
 import in_toto.matchrule_validators
-from securesystemslib.exceptions import FormatError
+import securesystemslib.exceptions
 import securesystemslib.formats
 
 # import validators
@@ -122,8 +122,9 @@ class Layout(models__common.Signable):
     """
     <Purpose>
       Iteratively loads link metadata files for each Step of the Layout
-      from disk and returns a dict with Link names as keys and Link objects
-      as values.
+      from disk and returns a dict with Link names as keys and a dict
+      as values. The inner dict contains key_id as keys and link
+      objects as values.
 
     <Arguments>
       None
@@ -135,14 +136,18 @@ class Layout(models__common.Signable):
       Calls functions to read files from disk
 
     <Returns>
-      A dictionary with Link names as keys and Link objects as values.
+      A dictionary with Link names as keys and a dict (key_id Link objects)
+      as values.
 
     """
     step_link_dict = {}
     for step in self.steps:
       key_link_dict = {}
       for keyid in step.pubkeys:
-        link = models__link.Link.read_from_file(step.name + '.' + keyid + '.link')
+        try:
+          link = models__link.Link.read_from_file(step.name + '.' + '{:.8}'.format(keyid) + '.link')
+        except IOError as e:
+          raise IOError("Link file not found. Exception: {}".format(e))
         key_link_dict[keyid] = link
       step_link_dict[step.name] = key_link_dict
     return step_link_dict
@@ -240,7 +245,7 @@ class Step(models__common.Metablock):
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
-  threshold = attr.ib(default=attr.Factory(int))
+  threshold = attr.ib(default=0)
 
 
   @staticmethod
@@ -262,7 +267,8 @@ class Step(models__common.Metablock):
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
     if type(self.threshold) != int:
-      raise FormatError("Invalid threshold '{}' value for this step."
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid threshold '{}' value, must be an int."
           .format(self.threshold))
 
   def _validate_material_matchrules(self):

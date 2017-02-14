@@ -33,7 +33,7 @@ from in_toto.util import (generate_and_write_rsa_keypair,
 from in_toto.models.link import Link
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.in_toto_run import in_toto_run
-from in_toto.runlib import FILENAME_FORMAT
+from in_toto.models.link import FILENAME_FORMAT
 
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
@@ -57,7 +57,7 @@ class TestInTotoRunTool(unittest.TestCase):
     self.key = prompt_import_rsa_key_from_file(self.key_path)
 
     self.test_step = "test_step"
-    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.key["keyid"])
+    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, short_keyid="{:.8}".format(self.key["keyid"]))
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 

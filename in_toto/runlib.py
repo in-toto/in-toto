@@ -43,15 +43,12 @@ else:
   import subprocess
 
 import in_toto.settings
-import in_toto.models.link
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 import in_toto.log as log
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
-
-FILENAME_FORMAT = "{step_name}.{keyid}.link"
-UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid}.link-unfinished"
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
@@ -351,11 +348,6 @@ def in_toto_run(name, material_list, product_list,
     Newly created Link object
   """
 
-#  if key:
-#    fn = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
-#  else:
-#    fn = FILENAME_FORMAT.format(step_name=name, keyid=None)
-
   log.doing("Running '{}'...".format(name))
 
   # If a key is passed, it has to match the format
@@ -385,7 +377,8 @@ def in_toto_run(name, material_list, product_list,
     log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
     link.sign(key)
 
-    log.doing("Storing link metadata to '{}'...".format(name+"."+key["keyid"]+".link"))
+    log.doing("Storing link metadata to '{}'...".format(
+        FILENAME_FORMAT.format(step_name=name, short_keyid="{:.8}".format(key["keyid"]))))
     link.dump(key=key)
 
   return link
@@ -420,7 +413,7 @@ def in_toto_record_start(step_name, key, material_list):
 
   """
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
   log.doing("Start recording '{}'...".format(step_name))
 
   if material_list:
@@ -435,7 +428,7 @@ def in_toto_record_start(step_name, key, material_list):
 
   log.doing("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link.dump(filename=unfinished_fn)
-  
+
 
 def in_toto_record_stop(step_name, key, product_list):
   """
@@ -467,8 +460,8 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  fn = FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
   log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir

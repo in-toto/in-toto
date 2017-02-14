@@ -1,0 +1,26 @@
+{
+    "_type": "Link",
+    "byproducts": {
+        "stderr": "",
+        "stdout": ""
+    },
+    "command": [
+        "vi",
+        "foo.py"
+    ],
+    "materials": {},
+    "name": "write-code",
+    "products": {
+        "foo.py": {
+            "sha256": "7c6afe6d30a43fc7f13925f4dc51763305402dc07bd5fffcaf3e8bbee2d2321f"
+        }
+    },
+    "return_value": 0,
+    "signatures": [
+        {
+            "keyid": "0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117",
+            "method": "RSASSA-PSS",
+            "sig": "3c4e1e0069b6a2099e5a18cc94f3c1a3bceca08a4dece183ee41038dde199f6b4353bea1d018980e8479909173628ab02851c23fcfde7f4d08a8a0b30b1e28374dd4d9cfdbb9699c7045566d90825e7e562719ffb29ccdf8c892c40a7224e2f18677407558812de18eea31ae8c7debc76178e27198c3898d599daf0660b2fd638128e72fb544b468a01d6c3cadca4a712ee7b6ae253570ef551f5a54b0d7dbc23c035fe82657941784d4e0d3a230d18618b5660c5717343ca40d59665dd1f1520ef2947824501cad3c39a5713c098c2ccc116c646b6c0fff47e72b46f4f7d3a8557c9fb9cbc9e39f9e925febee6f68fa4f090eaeded7ce0c98efb01c3b66213e16958143458e6a815e4feae1915d60792db76094bd97d0a682c7ba0c6780fc4695cfe0909747df374692ab35cf52c066661a734d61eb94879a6aef420950ed0c94581aa2c711df27f4886908ea4db64db95d78bcc7d09de5d0fc6722e78762d76ef9d0fe886bba0563f41501d9f5992090051c464e0cba589e0173f81f06fb4d"
+        }
+    ]
+}
