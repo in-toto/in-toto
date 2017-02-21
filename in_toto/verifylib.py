@@ -187,13 +187,14 @@ def verify_all_steps_signatures(layout, links_dict):
     Verifies cryptographic Link signatures related to Steps of a Layout.
 
   """
+  key_link_dict = {}
+  keys_dict = {}
   for step in layout.steps:
     # Find the according link for this step
     key_link_dict = links_dict[step.name]
     for keyid in key_link_dict:
       link = key_link_dict[keyid]
       # Create the dictionary of keys for this step
-      keys_dict = {}
       for keyid in step.pubkeys:
         keys_dict[keyid] = layout.keys[keyid]
       # Verify link metadata file's signatures
@@ -626,18 +627,27 @@ def verify_threshold_equality(layout, step_link_dict):
   """
   target_links = {}
   for key_link in step_link_dict:
+    # fetch the key-link pair in step_link_dict
     key_link_dict = step_link_dict[key_link]
 
     for step in layout.steps:
-       if step.name is key_link:
+      # fetch the threshold for step-name in step_link_dict
+      if step.name is key_link:
         threshold = step.threshold
 
+    # check if no of link objects satisfy the threshold
     if len(key_link_dict) >= threshold:
       link_dict = {}
+      # if only 1 link object (threshold is 1)
+      # fetch that object
+      # create a dict {step-name:link-object}
       if len(key_link_dict) == 1:
         for keyid in key_link_dict:
           link_dict = key_link_dict[keyid]
       else:
+        # if more than 1 link objects
+        # fetch one object and iteratively compare it with
+        # the rest link objects
         i = 0
         for keyid in key_link_dict:
           if i == 0:
@@ -646,6 +656,9 @@ def verify_threshold_equality(layout, step_link_dict):
           else:
             if link_dict.materials != key_link_dict[keyid].materials or link_dict.products != key_link_dict[keyid].products:
               raise ThresholdVerificationError("Link artifacts do not match!".format())
+      # if all the link objects are identical
+      # fetch that object (the first one)
+      # create a dict {step-name:link-object}
       target_links[key_link] = link_dict
     else:
       raise ThresholdVerificationError("Step not performed by enough functionaries!".format())
