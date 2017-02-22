@@ -39,7 +39,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, SignatureVerificationError)
+    ThresholdVerificationError, BadReturnValueError)
 from in_toto.matchrule_validators import check_matchrule_syntax
 import in_toto.log as log
 
@@ -622,27 +622,20 @@ def verify_threshold_equality(layout, chain_link_dict):
   <Side Effects>
     None.
 
-  <Returns>
-    A dictionary containing one Link metadata object per step only if
-    the link artifacts of all link objects are identical for a step.
   """
 
-  reduced_chain_link_dict = {}
   # We are only interested in links that are related to steps defined in the
   # Layout, so iterate over layout.steps
   for step in layout.steps:
+    # Skip steps that don't require multiple functionaries
+    if step.threshold <= 1:
+      continue
+
     # Extract the key_link_dict for this step from the passed chain_link_dict
     key_link_dict = chain_link_dict[step.name]
 
     # take one exemplary link (e.g. the first in the step_link_dict)
     compare_link = key_link_dict.values()[0]
-
-    # form the reduced_chain_link_dict to return
-    reduced_chain_link_dict[step.name] = compare_link
-
-    # Skip steps that don't require multiple functionaries
-    if step.threshold <= 1:
-      continue
 
     # Check if we have at least <threshold> links for this step
     if len(key_link_dict) < step.threshold:
@@ -662,6 +655,49 @@ def verify_threshold_equality(layout, chain_link_dict):
       # compare their properties
       if compare_link.materials != link.materials or compare_link.products != link.products:
         raise ThresholdVerificationError("Link artifacts do not match!".format())
+
+
+def reduce_chain_links(layout, chain_link_dict):
+  """
+  <Purpose>
+    Iterates throught the passed chain_link_dict and builds a dict with
+    step-name as keys and link objects as values.
+    We already check if the links of different functionaries are
+    identical.
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    chain_link_dict:
+            A dictionary of key-link pair with step names as keys. For each
+            step name, there are one or more keyids and corresponding
+            link objects.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A dictionary containing one Link metadata object per step only if
+    the link artifacts of all link objects are identical for a step.
+
+  """
+
+  reduced_chain_link_dict = {}
+
+  for step in layout.steps:
+    # Extract the key_link_dict for this step from the passed chain_link_dict
+    key_link_dict = chain_link_dict[step.name]
+
+    # take one exemplary link (e.g. the first in the step_link_dict)
+    link = key_link_dict.values()[0]
+
+    # form the reduced_chain_link_dict to return
+    reduced_chain_link_dict[step.name] = link
 
   return reduced_chain_link_dict
 
@@ -742,7 +778,8 @@ def in_toto_verify(layout_path, layout_key_paths):
   inspection_link_dict = run_all_inspections(layout)
 
   log.doing("Verifying threshold equality...")
-  reduced_chain_link_dict = verify_threshold_equality(layout, chain_link_dict)
+  verify_threshold_equality(layout, chain_link_dict)
+  reduced_chain_link_dict = reduce_chain_links(layout, chain_link_dict)
 
   log.doing("Verifying Step rules...")
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
