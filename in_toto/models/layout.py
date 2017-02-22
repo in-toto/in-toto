@@ -245,7 +245,7 @@ class Step(models__common.Metablock):
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
-  threshold = attr.ib(default=0)
+  threshold = attr.ib(default=1)
 
 
   @staticmethod

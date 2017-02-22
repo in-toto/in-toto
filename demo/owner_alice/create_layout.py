@@ -31,9 +31,9 @@ def main():
         "product_matchrules": [
             ["CREATE", "foo.tar.gz"],
         ],
-        "pubkeys": [key_bob["keyid"], key_carl["keyid"]],
-        "expected_command": "tar cvf foo.tar.gz foo.py",
-        "threshold": 2,
+        "pubkeys": [key_carl["keyid"]],
+        "expected_command": "tar zcvf foo.tar.gz foo.py",
+        "threshold": 1,
       }],
     "inspect": [{
         "name": "untar",

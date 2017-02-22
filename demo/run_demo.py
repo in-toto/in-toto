@@ -33,18 +33,7 @@ def supply_chain():
                     " --key bob -- vi foo.py")
   print write_code_cmd
   subprocess.call(write_code_cmd.split())
-  # time.sleep(2)
   copyfile("foo.py", "../functionary_carl/foo.py")
-
-  prompt_key("Package (Bob)")
-  os.chdir("../functionary_bob")
-  package_cmd = ("in-toto-run" +
-                 " --step-name package --materials foo.py" +
-                 " --products foo.tar.gz" +
-                 " --key bob --record-byproducts" +
-                 " -- tar cvf foo.tar.gz foo.py")
-  print package_cmd
-  subprocess.call(package_cmd.split())
 
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
@@ -62,8 +51,6 @@ def supply_chain():
   copyfile("owner_alice/root.layout", "final_product/root.layout")
   copyfile("functionary_bob/write-code.0c6c50a1.link",
     "final_product/write-code.0c6c50a1.link")
-  copyfile("functionary_bob/package.0c6c50a1.link",
-    "final_product/package.0c6c50a1.link")
   copyfile("functionary_carl/package.c1ae1e51.link",
     "final_product/package.c1ae1e51.link")
   copyfile("functionary_carl/foo.tar.gz", "final_product/foo.tar.gz")
@@ -105,8 +92,6 @@ def supply_chain():
   prompt_key("Create final product")
   os.chdir("..")
   copyfile("owner_alice/root.layout", "final_product/root.layout")
-  copyfile("functionary_bob/write-code.0c6c50a1.link",
-    "final_product/write-code.0c6c50a1.link")
   copyfile("functionary_bob/write-code.0c6c50a1.link",
     "final_product/write-code.0c6c50a1.link")
   copyfile("functionary_carl/package.c1ae1e51.link",
