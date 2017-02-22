@@ -38,15 +38,15 @@ tree
 # ├── README.md
 # ├── final_product
 # ├── functionary_bob
-# │   ├── bob
-# │   └── bob.pub
+# │   ├── bob
+# │   └── bob.pub
 # ├── functionary_carl
-# │   ├── carl
-# │   └── carl.pub
+# │   ├── carl
+# │   └── carl.pub
 # ├── owner_alice
-# │   ├── alice
-# │   ├── alice.pub
-# │   └── create_layout.py
+# │   ├── alice
+# │   ├── alice.pub
+# │   └── create_layout.py
 # └── run_demo.py
 ```
 
@@ -55,12 +55,9 @@ First, we will need to define the software supply chain layout. To simplify this
 process, we provide a script that generates a simple layout for the purpose of
 the demo. In this software supply chain layout, we have Alice, who is the project
 owner that creates the layout, Bob, who uses `vi` to create a Python program
-`foo.py` and `tar` to package up `foo.py`, and Carl, who uses `tar` to package up
-`foo.py` into a tarball which together with the in-toto metadata composes the
-final product that will eventually be installed and verified by the end user.
-Package will be a threshold step meaning it would be needed to be performed by
-at least as many functionaries (in this case Bob and Carl) as specified in the
-layout.
+`foo.py`, and Carl, who uses `tar` to package up `foo.py` into a tarball which
+together with the in-toto metadata composes the final product that will
+eventually be installed and verified by the end user.
 
 ```shell
 # Create and sign the software supply chain layout on behalf of Alice
@@ -102,17 +99,6 @@ Here is what happens behind the scenes:
 cp foo.py ../functionary_carl/
 ```
 
-### Package (Bob)
-Now, we will perform Bob’s `package` step.
-Execute the following commands to `tar` up Bob's
-`foo.py`:
-
-```shell
-in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key bob -- tar cvf foo.tar.gz foo.py
-```
-
-This will create another step link metadata file, called `package.[Bob's keyid].link`.
-
 ### Package (Carl)
 Now, we will perform Carl’s `package` step.
 Execute the following commands to change to Carl's directory and `tar` up Bob's
@@ -120,7 +106,7 @@ Execute the following commands to change to Carl's directory and `tar` up Bob's
 
 ```shell
 cd ../functionary_carl
-in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar cvf foo.tar.gz foo.py
+in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key carl -- tar zcvf foo.tar.gz foo.py
 ```
 
 This will create another step link metadata file, called `package.[Carl's keyid].link`.
@@ -130,10 +116,10 @@ It's time to release our software now.
 ### Verify final product (client)
 Let's first copy all relevant files into the `final_product` that is
 our software package `foo.tar.gz` and the related metadata files `root.layout`,
-`write-code.[Bob's keyid].link`, `package.[Bob's keyid].link` and `package.[Carl's keyid].link`:
+`write-code.link` and `package.link`:
 ```shell
 cd ..
-cp owner_alice/root.layout functionary_bob/write-code.0c6c50a1.link functionary_bob/package.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/foo.tar.gz final_product/
+cp owner_alice/root.layout functionary_bob/write-code.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/foo.tar.gz final_product/
 ```
 And now run verification on behalf of the client:
 ```shell
@@ -148,11 +134,10 @@ This command will verify that
  2. was signed with Alice’s private key,
 <br>and that according to the definitions in the layout
  3. each step was performed and signed by the authorized functionary
- 4. each step was performed at least as many times as specified by the threshold
- 5. the functionaries used the commands they were supposed to use (`vi`,
+ 4. the functionaries used the commands they were supposed to use (`vi`,
     `tar`)
- 6. the recorded materials and products align with the matchrules and
- 7. the inspection `untar` finds what it expects.
+ 5. the recorded materials and products align with the matchrules and
+ 6. the inspection `untar` finds what it expects.
 
 
 From it, you will see the meaningful output `PASSING` and a return value
@@ -182,7 +167,7 @@ in-toto-run --step-name package --materials foo.py --products foo.tar.gz --key c
 and then again ship everything out as final product to the client:
 ```shell
 cd ..
-cp owner_alice/root.layout functionary_bob/write-code.link functionary_carl/package.link functionary_carl/foo.tar.gz final_product/
+cp owner_alice/root.layout functionary_bob/write-code.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/foo.tar.gz final_product/
 ```
 
 ### Verifying the malicious product

@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import argparse
+import time
 from shutil import copyfile
 
 NO_PROMPT = False
@@ -32,6 +33,7 @@ def supply_chain():
                     " --key bob -- vi foo.py")
   print write_code_cmd
   subprocess.call(write_code_cmd.split())
+  # time.sleep(2)
   copyfile("foo.py", "../functionary_carl/foo.py")
 
   prompt_key("Package (Bob)")
