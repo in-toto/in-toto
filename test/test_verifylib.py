@@ -32,10 +32,36 @@ from in_toto.models.link import Link
 from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
-    verify_command_alignment, run_all_inspections,  in_toto_verify)
+    verify_command_alignment, run_all_inspections, in_toto_verify,
+    _raise_on_bad_retval)
 from in_toto.exceptions import (RuleVerficationError,
-    SignatureVerificationError, LayoutExpiredError)
+    SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
 from in_toto.util import import_rsa_key_from_file
+
+
+class Test_RaiseOnBadRetval(unittest.TestCase):
+  """ Tests internal function that raises an exception if the passed
+  "return_value" is not and integer and not zero. """
+
+  def test_zero_return_value(self):
+    """Don't raise exception on zero return value. """
+    _raise_on_bad_retval(0)
+    _raise_on_bad_retval(0, "command")
+
+  def test_non_int_return_value(self):
+    """Raise exception on non-int return value. """
+    with self.assertRaises(BadReturnValueError):
+      _raise_on_bad_retval("bad retval")
+    with self.assertRaises(BadReturnValueError):
+      _raise_on_bad_retval("bad retval", "bad command")
+
+  def test_non_zero_return_value(self):
+    """Raise exception on non-zero return value. """
+    with self.assertRaises(BadReturnValueError):
+      _raise_on_bad_retval(1)
+    with self.assertRaises(BadReturnValueError):
+      _raise_on_bad_retval(-1, "bad command")
+
 
 class TestRunAllInspections(unittest.TestCase):
   """Test verifylib.run_all_inspections(layout)"""
@@ -82,6 +108,19 @@ class TestRunAllInspections(unittest.TestCase):
 
     in_toto.settings.ARTIFACT_BASE_PATH = None
     shutil.rmtree(ignore_dir)
+
+  def test_inspection_fail_with_non_zero_retval(self):
+    """Test fail run inspections with non-zero return value. """
+    layout = Layout.read({
+      "_type": "layout",
+      "steps": [],
+      "inspect": [{
+        "name": "non-zero-inspection",
+        "run": "expr 1 / 0",
+      }]
+    })
+    with self.assertRaises(BadReturnValueError):
+      run_all_inspections(layout)
 
 
 class TestVerifyCommandAlignment(unittest.TestCase):

@@ -20,7 +20,7 @@ This metadata is used to verify the intermediate and final products with the pro
 ### Installation
 ```shell
 # Fetch in-toto sources
-git clone -b develop --recursive https://github.com/in-toto/in-toto.git
+git clone https://github.com/in-toto/in-toto.git
 
 # Change into project root directory
 cd in-toto

@@ -19,3 +19,4 @@ class ThresholdVerificationError(Error):
 class BadReturnValueError(Error):
   """Indicates that a ran command exited with non-int or non-zero return
   value. """
+  pass
