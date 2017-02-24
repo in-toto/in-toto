@@ -16,27 +16,33 @@ def main():
         key_carl["keyid"]: key_carl,
     },
     "steps": [{
-        "name": "write-code",
+        "name": "clone",
         "material_matchrules": [],
-        "product_matchrules": [["CREATE", "foo.py"]],
+        "product_matchrules": [["CREATE", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
-        "expected_command": "vi",
-      },
-      {
+        "expected_command": "git clone git@github.com:in-toto/demo-project.git",
+      },{
+        "name": "update-version",
+        "material_matchrules": [["MATCH", "PRODUCT", "demo-project/*", "FROM", "clone"]],
+        # FIXME: CREATE is more like an allow here, is fixed in next version
+        "product_matchrules": [["CREATE", "demo-project/foo.py"]],
+        "pubkeys": [key_bob["keyid"]],
+        "expected_command": "",
+      },{
         "name": "package",
         "material_matchrules": [
-            ["MATCH", "PRODUCT", "foo.py", "FROM", "write-code"],
+            ["MATCH", "PRODUCT", "demo-project/*", "FROM", "update-version"],
         ],
         "product_matchrules": [
-            ["CREATE", "foo.tar.gz"],
+            ["CREATE", "demo-project.tar.gz"],
         ],
         "pubkeys": [key_carl["keyid"]],
-        "expected_command": "tar zcvf foo.tar.gz foo.py",
+        "expected_command": "tar --exclude '.git' -zcvf demo-project.tar.gz demo-project",
       }],
     "inspect": [{
         "name": "untar",
         "material_matchrules": [
-            ["MATCH", "PRODUCT", "foo.tar.gz", "FROM", "package"],
+            ["MATCH", "PRODUCT", "demo-project.tar.gz", "FROM", "package"],
             # FIXME: Without the "allow everything else" rule here
             # inspection would fail because of the metadata and other files
             # (.DS_STORE, layout key, ...) in the directory where the Inspection
@@ -47,13 +53,13 @@ def main():
             ["CREATE", "*"],
         ],
         "product_matchrules": [
-            ["MATCH", "PRODUCT", "foo.py", "AS", "foo.py",
-                "FROM", "write-code"],
+            ["MATCH", "PRODUCT", "demo-project/foo.py",
+                "FROM", "update-version"],
             # FIXME: See material_matchrules above
             ["CREATE", "*"],
 
         ],
-        "run": "tar xfz foo.tar.gz",
+        "run": "tar xzf demo-project.tar.gz",
       }],
     "signatures": []
   })
