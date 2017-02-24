@@ -54,7 +54,7 @@ Inside the demo directory you will find four directories: `owner_alice`,
 `functionary_bob`, `functionary_carl` and `final_product`. Alice, Bob and Carl
 already have RSA keys in each of their directories. This is what you see:
 ```shell
-tree
+tree  # If you don't have tree, try 'find .' instead
 # the tree command gives you the following output
 # ├── README.md
 # ├── final_product
