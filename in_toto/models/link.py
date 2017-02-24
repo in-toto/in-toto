@@ -70,16 +70,14 @@ class Link(models__common.Signable):
   return_value = attr.ib(None)
 
   def dump(self, filename=False, key=False):
+    """Write pretty printed JSON represented of self to a file with filename.
+    If filename is specified, the link will be stored with that name.
+    If key is specified, a filename will be created using step-name and keyid.
+    If no parameter is specified (during inspection), a filename will be created
+    using the link name + '.link'-suffix
+    If both filename and key are provided, the key will be ignored.
     """
-    Method to dump the link metdata files
-    If filename is provided, link is stored with that name
-    If key is provided, then the usual [step-name].[keyid].link
-    format is used to store the link
-    If nothing is provided (during inspection), link is stored
-    as [step-name].link
-    If both filename and key are provided, the key gets ignored
-    as first preference is given to the filename.
-    """
+
     if filename:
       fn = filename
     elif key:

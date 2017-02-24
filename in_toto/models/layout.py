@@ -37,6 +37,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 import in_toto.matchrule_validators
 import securesystemslib.exceptions
 import securesystemslib.formats
@@ -143,12 +144,18 @@ class Layout(models__common.Signable):
     step_link_dict = {}
     for step in self.steps:
       key_link_dict = {}
+      link_count = 0
       for keyid in step.pubkeys:
+        link_count += 1
         try:
-          link = models__link.Link.read_from_file(step.name + '.' + '{:.8}'.format(keyid) + '.link')
+          link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
+            step_name=step.name, short_keyid="{:.8}".format(keyid)))
         except IOError as e:
           raise IOError("Link file not found. Exception: {}".format(e))
         key_link_dict[keyid] = link
+      if link_count < step.threshold:
+        raise ThresholdVerificationError("Step not performed" +
+          " by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
     return step_link_dict
 
@@ -237,6 +244,9 @@ class Step(models__common.Metablock):
 
     expected_command:
         the command expected to have performed this step
+
+    threshold:
+        the least number of functionaries expected to perform this step
 
   """
   _type = attr.ib("step", init=False)

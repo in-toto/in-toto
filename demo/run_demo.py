@@ -128,6 +128,7 @@ def main():
       "functionary_bob/foo.tar.gz",
       "functionary_carl/package.c1ae1e51.link",
       "functionary_carl/foo.tar.gz",
+      "functionary_carl/foo.py",
       "final_product/alice.pub",
       "final_product/foo.py",
       "final_product/foo.tar.gz",

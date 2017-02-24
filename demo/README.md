@@ -116,7 +116,7 @@ It's time to release our software now.
 ### Verify final product (client)
 Let's first copy all relevant files into the `final_product` that is
 our software package `foo.tar.gz` and the related metadata files `root.layout`,
-`write-code.link` and `package.link`:
+`write-code.[Bob's keyid].link` and `package.[Carl's keyid].link`:
 ```shell
 cd ..
 cp owner_alice/root.layout functionary_bob/write-code.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/foo.tar.gz final_product/

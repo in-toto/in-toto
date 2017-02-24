@@ -385,7 +385,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     self.link_name = "{}.{:.8}.link".format(self.step_name, self.key["keyid"])
     self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
         step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"]))
-    
+
     self.test_product = "test_product"
     open(self.test_product, "w").close()
 

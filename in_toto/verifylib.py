@@ -231,15 +231,17 @@ def verify_all_steps_signatures(layout, chain_link_dict):
     Verifies cryptographic Link signatures related to Steps of a Layout.
 
   """
-  key_link_dict = {}
-  keys_dict = {}
   for step in layout.steps:
+    keys_dict = {}
+
     # Find the according link for this step
     key_link_dict = chain_link_dict[step.name]
-    for keyid, link in six.iteritems(key_link_dict):
-      # Create the dictionary of keys for this step
-      for pubkeyid in step.pubkeys:
+
+    # Create the dictionary of keys for this step
+    for pubkeyid in step.pubkeys:
         keys_dict[pubkeyid] = layout.keys[pubkeyid]
+
+    for keyid, link in six.iteritems(key_link_dict):
       # Verify link metadata file's signatures
       verify_link_signatures(link, keys_dict)
 
@@ -681,7 +683,8 @@ def verify_threshold_equality(layout, chain_link_dict):
 
     # Check if we have at least <threshold> links for this step
     if len(key_link_dict) < step.threshold:
-      raise ThresholdVerificationError("Step not performed by enough functionaries!".format())
+      raise ThresholdVerificationError("Step not performed" +
+        " by enough functionaries!".format())
 
     # iterate over the remaining links to compare their properties
     for keyid, link in six.iteritems(key_link_dict):
@@ -695,14 +698,16 @@ def verify_threshold_equality(layout, chain_link_dict):
           break
 
       # compare their properties
-      if compare_link.materials != link.materials or compare_link.products != link.products:
-        raise ThresholdVerificationError("Link artifacts do not match!".format())
+      if (compare_link.materials != link.materials or
+        compare_link.products != link.products):
+        raise ThresholdVerificationError("Link artifacts do" +
+          " not match!".format())
 
 
 def reduce_chain_links(layout, chain_link_dict):
   """
   <Purpose>
-    Iterates throught the passed chain_link_dict and builds a dict with
+    Iterates through the passed chain_link_dict and builds a dict with
     step-name as keys and link objects as values.
     We already check if the links of different functionaries are
     identical.
@@ -731,15 +736,11 @@ def reduce_chain_links(layout, chain_link_dict):
 
   reduced_chain_link_dict = {}
 
-  for step in layout.steps:
+  for step_name, key_link_dict in six.iteritems(chain_link_dict):
     # Extract the key_link_dict for this step from the passed chain_link_dict
-    key_link_dict = chain_link_dict[step.name]
-
     # take one exemplary link (e.g. the first in the step_link_dict)
-    link = key_link_dict.values()[0]
-
     # form the reduced_chain_link_dict to return
-    reduced_chain_link_dict[step.name] = link
+    reduced_chain_link_dict[step_name] = key_link_dict.values()[0]
 
   return reduced_chain_link_dict
 
