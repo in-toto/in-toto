@@ -14,6 +14,26 @@ as the client who verifies the final product.
 
 
 ### Download and setup in-toto on *NIX (Linux, OS X, ..)
+__Virtual Environments (optional)__
+We highly recommend to install `in-toto` and its dependencies in a [`virtualenv`](https://virtualenv.pypa.io/en/stable/). Just copy-paste the following snippet to install
+[`virtualenvwrapper`](https://virtualenvwrapper.readthedocs.io/en/latest/) and create a virtual environment:
+
+```shell
+# Install virtualenvwrapper
+pip install virtualenvwrapper
+
+# Create directory for your virtualenvs, default is
+mkdir -p ~/.virtualenvs
+
+# Source the scripts (you may want to add this to your shell startup file)
+source /usr/local/bin/virtualenvwrapper.sh
+
+# Create and change into a virtual environment, e.g. "in-toto-demo"
+# This will add the prefix "(in-toto-demo)"" to your shell prompt
+mkvirtualenv in-toto-demo
+```
+
+__Get in-toto__
 ```shell
 # Make sure you have git, python and pip installed on your system
 # and get in-toto
