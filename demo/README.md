@@ -141,7 +141,7 @@ the package for the user.
 
 ```shell
 # Bob has to send the update sources to Carl so that he can package them
-sudo cp -r demo-project ../functionary_carl/ # XXX Might require sudo because of certain .git objects
+cp -r demo-project ../functionary_carl/
 ```
 
 ### Package (Carl)
@@ -234,13 +234,18 @@ supply chain. More complex software supply chains that contain more steps can be
 created in a similar way. You can read more about what in-toto protects against
 and how to use it on [in-toto's Github page](https://in-toto.github.io/).
 
-### Tired of copy-pasting commands?
-We provide a `run_demo.py` script that sequentially executes all commands
-listed above. Just change into the `demo` directory, run it and observe the
-output.
+### Clean slate
+If you want to run the demo again, you can use the following script to remove all the files you created above.
 
 ```shell
-# Being in in-toto root
-cd demo
+cd .. # You have to be the demo directory
+python run_demo.py -c
+```
+
+### Tired of copy-pasting commands?
+The same script can be used to sequentially execute all commands listed above. Just change into the `demo` directory, run `python run_demo.py` without flags and observe the output.
+
+```shell
+# In the demo directory
 python run_demo.py
 ```
