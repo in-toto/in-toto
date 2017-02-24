@@ -43,8 +43,6 @@ git clone https://github.com/in-toto/in-toto.git
 cd in-toto
 
 # Install with pip in "develop mode"
-# (we strongly recommend using Virtual Environments)
-# http://docs.python-guide.org/en/latest/dev/virtualenvs/
 pip install -e .
 
 # Change into the demo directoy and you are ready to start
