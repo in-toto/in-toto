@@ -378,7 +378,7 @@ def in_toto_run(name, material_list, product_list,
     link.sign(key)
 
     log.doing("Storing link metadata to '{}'...".format(
-        FILENAME_FORMAT.format(step_name=name, short_keyid="{:.8}".format(key["keyid"]))))
+        FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])))
     link.dump(key=key)
 
   return link
@@ -413,7 +413,7 @@ def in_toto_record_start(step_name, key, material_list):
 
   """
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Start recording '{}'...".format(step_name))
 
   if material_list:
@@ -460,8 +460,8 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, short_keyid="{:.8}".format(key["keyid"]))
+  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.doing("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir

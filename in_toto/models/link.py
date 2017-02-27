@@ -23,8 +23,8 @@ import json
 from . import common as models__common
 import securesystemslib.formats
 
-FILENAME_FORMAT = "{step_name}.{short_keyid}.link"
-UNFINISHED_FILENAME_FORMAT = ".{step_name}.{short_keyid}.link-unfinished"
+FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
+UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
 @attr.s(repr=False)
 class Link(models__common.Signable):
@@ -82,7 +82,7 @@ class Link(models__common.Signable):
       fn = filename
     elif key:
       securesystemslib.formats.KEY_SCHEMA.check_match(key)
-      fn = FILENAME_FORMAT.format(step_name=self.name, short_keyid="{:.8}".format(key["keyid"]))
+      fn = FILENAME_FORMAT.format(step_name=self.name, keyid=key["keyid"])
     else:
       fn = "{}.link".format(self.name)
     super(Link, self).dump(fn)

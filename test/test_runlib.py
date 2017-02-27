@@ -258,7 +258,7 @@ class TestInTotoRun(unittest.TestCase):
   def tearDown(self):
     """Remove link file if it was created. """
     try:
-      os.remove(FILENAME_FORMAT.format(step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"])))
+      os.remove(FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     except OSError:
       pass
 
@@ -290,7 +290,7 @@ class TestInTotoRun(unittest.TestCase):
     link = in_toto_run(self.step_name, [self.test_artifact],
         [self.test_artifact], ["echo", "test"], self.key, True)
     link_dump = Link.read_from_file(
-        FILENAME_FORMAT.format(step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"])))
+        FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEquals(repr(link), repr(link_dump))
 
   def test_in_toto_run_verify_recorded_artifacts(self):
@@ -329,7 +329,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     self.key = prompt_import_rsa_key_from_file(self.key_path)
 
     self.step_name = "test_step"
-    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"]))
+    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_material= "test_material"
     open(self.test_material, "w").close()
@@ -384,7 +384,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     self.step_name = "test-step"
     self.link_name = "{}.{:.8}.link".format(self.step_name, self.key["keyid"])
     self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
-        step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"]))
+        step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_product = "test_product"
     open(self.test_product, "w").close()
@@ -431,9 +431,9 @@ class TestInTotoRecordStop(unittest.TestCase):
     """Test record stop exits on wrong signature, no link recorded. """
     in_toto_record_start(self.step_name, self.key, [])
     link_name = UNFINISHED_FILENAME_FORMAT.format(
-        step_name=self.step_name, short_keyid="{:.8}".format(self.key["keyid"]))
+        step_name=self.step_name, keyid=self.key["keyid"])
     changed_link_name = UNFINISHED_FILENAME_FORMAT.format(
-        step_name=self.step_name, short_keyid="{:.8}".format(self.key2["keyid"]))
+        step_name=self.step_name, keyid=self.key2["keyid"])
     os.rename(link_name, changed_link_name)
     with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, self.key2, [])

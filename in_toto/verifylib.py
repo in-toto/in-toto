@@ -228,7 +228,8 @@ def verify_all_steps_signatures(layout, chain_link_dict):
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    Verifies cryptographic Link signatures related to Steps of a Layout.
+    Verifies cryptographic Link signatures of potentially multiple Links
+    related to Steps of a Layout.
 
   """
   for step in layout.steps:
@@ -684,24 +685,25 @@ def verify_threshold_equality(layout, chain_link_dict):
     # Check if we have at least <threshold> links for this step
     if len(key_link_dict) < step.threshold:
       raise ThresholdVerificationError("Step not performed" +
-        " by enough functionaries!".format())
+        " by enough functionaries!")
 
     # iterate over the remaining links to compare their properties
     for keyid, link in six.iteritems(key_link_dict):
-      keys_dict = {}
+      keys_dict = {keyid: layout.keys.get(keyid)}
 
       # check if the authorized functionary has signed the link
-      for key, key_link in six.iteritems(layout.keys):
-        if key == keyid:
-          keys_dict[key] = key_link
-          verify_link_signatures(link, keys_dict)
-          break
+      try:
+        verify_link_signatures(link, keys_dict)
+      except KeyError as e:
+        raise ThresholdVerificationError("Link not signed by"+
+          " authoried functionary!")
+
 
       # compare their properties
       if (compare_link.materials != link.materials or
         compare_link.products != link.products):
         raise ThresholdVerificationError("Link artifacts do" +
-          " not match!".format())
+          " not match!")
 
 
 def reduce_chain_links(layout, chain_link_dict):

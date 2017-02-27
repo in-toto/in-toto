@@ -57,7 +57,7 @@ class TestInTotoRunTool(unittest.TestCase):
     self.key = prompt_import_rsa_key_from_file(self.key_path)
 
     self.test_step = "test_step"
-    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, short_keyid="{:.8}".format(self.key["keyid"]))
+    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.key["keyid"])
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 

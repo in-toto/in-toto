@@ -149,7 +149,7 @@ class Layout(models__common.Signable):
         link_count += 1
         try:
           link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
-            step_name=step.name, short_keyid="{:.8}".format(keyid)))
+            step_name=step.name, keyid=keyid))
         except IOError as e:
           raise IOError("Link file not found. Exception: {}".format(e))
         key_link_dict[keyid] = link
