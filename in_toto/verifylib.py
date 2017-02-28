@@ -308,20 +308,6 @@ def verify_all_steps_command_alignment(layout, links_dict):
     verify_command_alignment(command, expected_command)
 
 
-def _equal_hash_dicts(hash_dict_a, hash_dict_b):
-  """Compare to hash_dict for equality, formats are
-  securesystemslib.formats.HASHDICT_SCHEMA. Return True or False. """
-
-  if set(hash_dict_a.keys()) != set(hash_dict_b.keys()):
-    return False
-
-  for key in hash_dict_a.keys():
-    if hash_dict_a[key] != hash_dict_b[key]:
-      return False
-
-  return True
-
-
 def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   """
   <Purpose>
@@ -479,7 +465,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
           rule=rule, path=full_dest_path, name=dest_name, type=dest_type))
 
     # Compare the hashes of source and destination artifacts
-    if not _equal_hash_dicts(source_artifact, dest_artifact):
+    if source_artifact != dest_artifact:
       raise RuleVerficationError("Rule {rule} failed, source artifact"
           " '{source}' and destination artifact '{dest}' hashes don't match."
           .format(rule=rule, source=full_source_path, dest=full_dest_path))
@@ -673,7 +659,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
   for path in matched_materials:
     # Is it okay to assume that path returns an artifact? The path
     # should not be in the queues, if it is not in the artifact dictionaries
-    if _equal_hash_dicts(source_materials[path], source_products[path]):
+    if source_materials[path] == source_products[path]:
       raise RuleVerficationError("Rule '{0}' failed, material and product '{1}'"
       " have the same hash (were not modified)."
       .format(rule, path))
