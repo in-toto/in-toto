@@ -23,9 +23,9 @@ def main():
         "expected_command": "git clone git@github.com:in-toto/demo-project.git",
       },{
         "name": "update-version",
-        "material_matchrules": [["MATCH", "PRODUCT", "demo-project/*", "FROM", "clone"]],
+        "material_matchrules": [["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "clone"]],
         # FIXME: CREATE is more like an allow here, is fixed in next version
-        "product_matchrules": [["CREATE", "demo-project/foo.py"]],
+        "product_matchrules": [["ALLOW", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
       },{
@@ -43,20 +43,21 @@ def main():
         "name": "untar",
         "material_matchrules": [
             ["MATCH", "demo-project.tar.gz", "WITH", "PRODUCTS", "FROM", "package"],
-            # FIXME: Without the "allow everything else" rule here
-            # inspection would fail because of the metadata and other files
-            # (.DS_STORE, layout key, ...) in the directory where the Inspection
-            # is executed, which get recorded as materials.
-            # The behavior is actually wanted in order to prevent sneaking
-            # files. But we do have to think of a way to ignore
-            # irrelevant files.
-            ["ALLOW", "*"],
+            # FIXME: If the routine running inspections would gather the
+            # materials/products to record from the rules we wouldn't have to
+            # ALLOW other files that we aren't interested in.
+            ["ALLOW", ".keep"],
+            ["ALLOW", "alice.pub"],
+            ["ALLOW", "root.layout"],
         ],
         "product_matchrules": [
             ["MATCH", "demo-project/foo.py", "WITH", "PRODUCTS", "FROM", "update-version"],
             # FIXME: See material_matchrules above
-            ["ALLOW", "*"],
-
+            ["ALLOW", "demo-project/.git/*"],
+            ["ALLOW", "demo-project.tar.gz"],
+            ["ALLOW", ".keep"],
+            ["ALLOW", "alice.pub"],
+            ["ALLOW", "root.layout"],
         ],
         "run": "tar xzf demo-project.tar.gz",
       }],
