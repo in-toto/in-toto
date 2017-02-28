@@ -17,7 +17,6 @@
   Test artifact rule unpacking.
 
 """
-
 import unittest
 from in_toto.artifact_rules import unpack_rule
 import securesystemslib.exceptions
