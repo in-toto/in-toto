@@ -287,19 +287,19 @@ class TestVerifyModifyRule(unittest.TestCase):
 
   @classmethod
   def setUpClass(self):
-    sha_1 = ("d65165279105ca6773180500688df4bd"
+    sha256_1 = ("d65165279105ca6773180500688df4bd"
                   "c69a2c7b771752f0a46ef120b7fd8ec3")
 
-    sha_2 = ("155c693a6b7481f48626ebfc545f0523"
+    sha256_2 = ("155c693a6b7481f48626ebfc545f0523"
                   "6df679f0099225d6d0bc472e6dd21155")
 
     self.materials = {
-      "foo": {"sha256": sha_1},
-      "bar": {"sha256": sha_1}
+      "foo": {"sha256": sha256_1},
+      "bar": {"sha256": sha256_1}
     }
     self.products = {
-      "foo": {"sha256": sha_2},
-      "bar": {"sha256": sha_1}
+      "foo": {"sha256": sha256_2},
+      "bar": {"sha256": sha256_1}
     }
 
   def test_pass(self):
