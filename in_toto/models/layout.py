@@ -93,7 +93,6 @@ class Layout(models__common.Signable):
   def read_from_file(filename='root.layout'):
     """Static method to instantiate a new Layout object from a
     canonical JSON serialized file """
-    print filename
     with open(filename, 'r') as fp:
       return Layout.read(json.load(fp))
 
