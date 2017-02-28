@@ -4,6 +4,7 @@
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
 
 <Started>
   Nov 18, 2016
