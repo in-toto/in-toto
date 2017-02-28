@@ -72,10 +72,15 @@ def unpack_rule(rule):
         " rules must be of type list.\n"
         "Got: \n\t'{0}'".format(rule))
 
+  for rule_elem in rule:
+    if not isinstance(rule_elem, six.string_types):
+      raise securesystemslib.exceptions.FormatError("Wrong rule format,"
+        " all rule elements must be of type string.\n"
+        "Got: \n\t{}".format(rule))
+
   rule_len = len(rule)
 
-  if (rule_len < 2 or not isinstance(rule[0], six.string_types) or
-      rule[0].lower() not in ALL_RULES):
+  if rule_len < 2 or rule[0].lower() not in ALL_RULES:
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
         " rules must start with one of '{0}' and specify a 'pattern' as"
         " second element.\n"
@@ -83,11 +88,6 @@ def unpack_rule(rule):
 
   rule_type = rule[0].lower()
   pattern = rule[1]
-
-  if not isinstance(pattern, six.string_types):
-    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " the 'pattern' (second element) must be of type string.\n"
-        "Got: \n\t'{0}'".format(rule))
 
   # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
   if rule_type in GENERIC_RULES:
@@ -150,26 +150,10 @@ def unpack_rule(rule):
           " (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>.\n"
           "Got: \n\t{}".format(rule))
 
-    if not isinstance(dest_type, six.string_types) or (
-        dest_type.lower() != "materials" and dest_type.lower() != "products"):
+    if dest_type.lower() != "materials" and dest_type.lower() != "products":
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
           " match rules must have either MATERIALS or PRODUCTS (case"
           " insensitive) as destination.\n"
-          "Got: \n\t{}".format(rule))
-
-    if not isinstance(source_prefix, six.string_types):
-      raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " the optional source-path-prefix must be of type string.\n"
-          "Got: \n\t{}".format(rule))
-
-    if not isinstance(dest_prefix, six.string_types):
-      raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " the optional destination-path-prefix must be of type string.\n"
-          "Got: \n\t{}".format(rule))
-
-    if not isinstance(dest_name, six.string_types):
-        raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " the step name must be of type string.\n"
           "Got: \n\t{}".format(rule))
 
     return {
