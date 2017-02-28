@@ -78,15 +78,22 @@ def unpack_rule(rule):
         " all rule elements must be of type string.\n"
         "Got: \n\t{}".format(rule))
 
+  # Create all lower rule copy to case insensitively parse out tokens whose
+  # position we don't know yet
+  # We keep the original rule to retain the non-token elements' case
+  rule_lower = []
+  for rule_elem in rule:
+    rule_lower.append(rule_elem.lower())
+
   rule_len = len(rule)
 
-  if rule_len < 2 or rule[0].lower() not in ALL_RULES:
+  if rule_len < 2 or rule_lower[0] not in ALL_RULES:
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
         " rules must start with one of '{0}' and specify a 'pattern' as"
         " second element.\n"
         "Got: \n\t'{1}'".format(", ".join(ALL_RULES), rule))
 
-  rule_type = rule[0].lower()
+  rule_type = rule_lower[0]
   pattern = rule[1]
 
   # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
@@ -111,35 +118,35 @@ def unpack_rule(rule):
 
     # ... IN <source-path-prefix> WITH (MATERIALS|PRODUCTS)
     # IN <destination-path-prefix> FROM <step>
-    if (rule_len == 10 and rule[2].lower() == "in" and
-        rule[4].lower() == "with" and rule[6].lower() == "in" and
-        rule[8].lower() == "from"):
+    if (rule_len == 10 and rule_lower[2] == "in" and
+        rule_lower[4] == "with" and rule_lower[6] == "in" and
+        rule_lower[8] == "from"):
       source_prefix = rule[3]
-      dest_type = rule[5]
+      dest_type = rule_lower[5]
       dest_prefix = rule[7]
       dest_name = rule[9]
 
     # ... IN <source-path-prefix> WITH (MATERIALS|PRODUCTS) FROM <step>
-    elif (rule_len == 8 and rule[2].lower() == "in" and
-        rule[4].lower() == "with" and rule[6].lower() == "from"):
+    elif (rule_len == 8 and rule_lower[2] == "in" and
+        rule_lower[4] == "with" and rule_lower[6] == "from"):
       source_prefix = rule[3]
-      dest_type = rule[5]
+      dest_type = rule_lower[5]
       dest_prefix = ""
       dest_name = rule[7]
 
     # ... WITH (MATERIALS|PRODUCTS) IN <destination-path-prefix> FROM <step>
-    elif (rule_len == 8 and rule[2].lower() == "with" and
-        rule[4].lower() == "in" and rule[6].lower() == "from"):
+    elif (rule_len == 8 and rule_lower[2] == "with" and
+        rule_lower[4] == "in" and rule_lower[6] == "from"):
       source_prefix = ""
-      dest_type = rule[3]
+      dest_type = rule_lower[3]
       dest_prefix = rule[5]
       dest_name = rule[7]
 
     # ... WITH (MATERIALS|PRODUCTS) FROM <step>
-    elif (rule_len == 6 and rule[2].lower() == "with" and
-        rule[4].lower() == "from"):
+    elif (rule_len == 6 and rule_lower[2] == "with" and
+        rule_lower[4] == "from"):
       source_prefix = ""
-      dest_type = rule[3]
+      dest_type = rule_lower[3]
       dest_prefix = ""
       dest_name = rule[5]
 
@@ -150,7 +157,7 @@ def unpack_rule(rule):
           " (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>.\n"
           "Got: \n\t{}".format(rule))
 
-    if dest_type.lower() != "materials" and dest_type.lower() != "products":
+    if dest_type != "materials" and dest_type != "products":
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
           " match rules must have either MATERIALS or PRODUCTS (case"
           " insensitive) as destination.\n"
@@ -161,7 +168,7 @@ def unpack_rule(rule):
       "pattern": pattern,
       "source_prefix": source_prefix,
       "dest_prefix": dest_prefix,
-      "dest_type" : dest_type.lower(),
+      "dest_type" : dest_type,
       "dest_name": dest_name
     }
 
