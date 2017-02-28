@@ -69,7 +69,7 @@ def unpack_rule(rule):
 
   if not isinstance(rule, list):
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " rule must be a list.\n"
+        " rules must be of type list.\n"
         "Got: \n\t'{0}'".format(rule))
 
   rule_len = len(rule)
@@ -77,7 +77,7 @@ def unpack_rule(rule):
   if (rule_len < 2 or not isinstance(rule[0], six.string_types) or
       rule[0].lower() not in ALL_RULES):
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " rule must start with one of '{0}' and specify a 'pattern' as"
+        " rules must start with one of '{0}' and specify a 'pattern' as"
         " second element.\n"
         "Got: \n\t'{1}'".format(", ".join(ALL_RULES), rule))
 
@@ -86,7 +86,7 @@ def unpack_rule(rule):
 
   if not isinstance(pattern, six.string_types):
     raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " 'pattern' (second element) must be a string.\n"
+        " the 'pattern' (second element) must be of type string.\n"
         "Got: \n\t'{0}'".format(rule))
 
   # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
@@ -159,17 +159,17 @@ def unpack_rule(rule):
 
     if not isinstance(source_prefix, six.string_types):
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " optional source-path-prefix must be of type String.\n"
+          " the optional source-path-prefix must be of type string.\n"
           "Got: \n\t{}".format(rule))
 
     if not isinstance(dest_prefix, six.string_types):
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " optional destination-path-prefix must be of type String.\n"
+          " the optional destination-path-prefix must be of type string.\n"
           "Got: \n\t{}".format(rule))
 
     if not isinstance(dest_name, six.string_types):
         raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-          " step name must be a string.\n"
+          " the step name must be of type string.\n"
           "Got: \n\t{}".format(rule))
 
     return {
