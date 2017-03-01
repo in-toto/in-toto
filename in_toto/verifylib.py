@@ -825,7 +825,7 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   log.doing("Verifying threshold equality...")
   verify_threshold_equality(layout, chain_link_dict)
-  reduced_chain_link_dict = reduce_chain_links(layout, chain_link_dict)
+  reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
   log.doing("Verifying Step rules...")
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
