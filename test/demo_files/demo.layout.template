@@ -6,13 +6,14 @@
             "material_matchrules": [
                 [
                     "MATCH",
-                    "PRODUCT",
                     "foo.tar.gz",
+                    "WITH",
+                    "PRODUCTS",
                     "FROM",
                     "package"
                 ],
                 [
-                    "CREATE",
+                    "ALLOW",
                     "*"
                 ]
             ],
@@ -20,15 +21,14 @@
             "product_matchrules": [
                 [
                     "MATCH",
-                    "PRODUCT",
                     "foo.py",
-                    "AS",
-                    "foo.py",
+                    "WITH",
+                    "PRODUCTS",
                     "FROM",
                     "write-code"
                 ],
                 [
-                    "CREATE",
+                    "ALLOW",
                     "*"
                 ]
             ],
@@ -76,8 +76,9 @@
             "material_matchrules": [
                 [
                     "MATCH",
-                    "PRODUCT",
                     "foo.py",
+                    "WITH",
+                    "PRODUCTS",
                     "FROM",
                     "write-code"
                 ]
@@ -87,6 +88,10 @@
                 [
                     "CREATE",
                     "foo.tar.gz"
+                ],
+                [
+                    "ALLOW",
+                    "foo.py"
                 ]
             ],
             "pubkeys": [

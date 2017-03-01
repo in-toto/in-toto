@@ -27,7 +27,7 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file, flatten_and_invert_artifact_dict)
+    prompt_import_rsa_key_from_file)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -139,18 +139,6 @@ class TestUtil(unittest.TestCase):
         securesystemslib.exceptions.CryptoError):
       prompt_import_rsa_key_from_file(key)
 
-  def test_flatten_and_invert_artifact_dict(self):
-    """Test basic aritfact dictionary flattening and inversion. """
-    artifacts = {
-    "foo": {
-      "sha512" : "23432df87ab",
-      "sha256" : "34324abc34df",
-      }
-    }
-    flat_artifacts = flatten_and_invert_artifact_dict(artifacts)
-    self.assertEqual(flat_artifacts, {"34324abc34df" : "foo"})
-    flat_artifacts = flatten_and_invert_artifact_dict(artifacts, "sha512")
-    self.assertEqual(flat_artifacts, {"23432df87ab" : "foo"})
 
 if __name__ == "__main__":
   unittest.main()
