@@ -213,14 +213,15 @@ def verify_all_steps_signatures(layout, chain_link_dict):
   """
   <Purpose>
     Extracts the Steps of a passed Layout and iteratively verifies the
-    the signatures of the Link object related to each Step by the name field.
+    the signatures of the Link object(s) related to each Step by the name field.
     The public keys used for verification are also extracted from the Layout.
 
   <Arguments>
     layout:
             A Layout object whose Steps are extracted and verified.
     chain_link_dict:
-            A dictionary of Link metadata objects with Link names as keys.
+            A dictionary with Link names as keys and a dict
+            (key_id Link objects) as values.
 
   <Exceptions>
     Raises an exception if a needed key can not be found in the passed
@@ -240,7 +241,7 @@ def verify_all_steps_signatures(layout, chain_link_dict):
 
     # Create the dictionary of keys for this step
     for pubkeyid in step.pubkeys:
-        keys_dict[pubkeyid] = layout.keys[pubkeyid]
+      keys_dict[pubkeyid] = layout.keys[pubkeyid]
 
     for keyid, link in six.iteritems(key_link_dict):
       # Verify link metadata file's signatures
@@ -646,7 +647,7 @@ def verify_threshold_equality(layout, chain_link_dict):
     Iteratively verifies threshold conditions (if a step has been
     performed and signed by enough number of functionaries) and link
     artifacts (materials and products of a step is same for different
-    fucntionaries) of passed dictionary (chain_link_dict).
+    functionaries) of passed dictionary (chain_link_dict).
 
   <Arguments>
     layout:
@@ -672,20 +673,20 @@ def verify_threshold_equality(layout, chain_link_dict):
   # We are only interested in links that are related to steps defined in the
   # Layout, so iterate over layout.steps
   for step in layout.steps:
-    # Skip steps that don't require multiple functionaries
-    if step.threshold <= 1:
-      continue
-
     # Extract the key_link_dict for this step from the passed chain_link_dict
     key_link_dict = chain_link_dict[step.name]
 
     # take one exemplary link (e.g. the first in the step_link_dict)
     compare_link = key_link_dict.values()[0]
 
+    # Skip steps that don't require multiple functionaries
+    if step.threshold <= 1:
+      continue
+
     # Check if we have at least <threshold> links for this step
     if len(key_link_dict) < step.threshold:
-      raise ThresholdVerificationError("Step not performed" +
-        " by enough functionaries!")
+      raise ThresholdVerificationError("Step not performed"
+          " by enough functionaries!")
 
     # iterate over the remaining links to compare their properties
     for keyid, link in six.iteritems(key_link_dict):
@@ -694,19 +695,19 @@ def verify_threshold_equality(layout, chain_link_dict):
       # check if the authorized functionary has signed the link
       try:
         verify_link_signatures(link, keys_dict)
-      except KeyError as e:
-        raise ThresholdVerificationError("Link not signed by"+
-          " authoried functionary!")
+      except SignatureVerificationError as e:
+        raise ThresholdVerificationError("Link not signed by"
+            " authorized functionary!")
 
 
       # compare their properties
       if (compare_link.materials != link.materials or
-        compare_link.products != link.products):
-        raise ThresholdVerificationError("Link artifacts do" +
-          " not match!")
+          compare_link.products != link.products):
+        raise ThresholdVerificationError("Link artifacts do"
+            " not match!")
 
 
-def reduce_chain_links(layout, chain_link_dict):
+def reduce_chain_links(chain_link_dict):
   """
   <Purpose>
     Iterates through the passed chain_link_dict and builds a dict with

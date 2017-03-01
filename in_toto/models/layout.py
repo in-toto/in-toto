@@ -144,18 +144,17 @@ class Layout(models__common.Signable):
     step_link_dict = {}
     for step in self.steps:
       key_link_dict = {}
-      link_count = 0
-      for keyid in step.pubkeys:
-        link_count += 1
+      for idx, keyid in enumerate(step.pubkeys):
         try:
           link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
-            step_name=step.name, keyid=keyid))
+              step_name=step.name, keyid=keyid))
         except IOError as e:
-          raise IOError("Link file not found. Exception: {}".format(e))
-        key_link_dict[keyid] = link
-      if link_count < step.threshold:
-        raise ThresholdVerificationError("Step not performed" +
-          " by enough functionaries!".format())
+          pass
+        else:
+          key_link_dict[keyid] = link
+      if len(key_link_dict) < step.threshold:
+        raise securesystemslib.exceptions.LinkNotFoundError("Step not"
+            " performed by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
     return step_link_dict
 
@@ -166,7 +165,7 @@ class Layout(models__common.Signable):
           "Invalid _type value for layout (Should be 'layout')")
 
   def _validate_expires(self):
-    """Priavte method to verify the expiration field."""
+    """Private method to verify the expiration field."""
     try:
       date = parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
@@ -278,7 +277,7 @@ class Step(models__common.Metablock):
     """Private method to check that the threshold field is set to an int."""
     if type(self.threshold) != int:
       raise securesystemslib.exceptions.FormatError(
-          "Invalid threshold '{}' value, must be an int."
+          "Invalid threshold '{}', value must be an int."
           .format(self.threshold))
 
   def _validate_material_matchrules(self):
