@@ -39,6 +39,7 @@ from dateutil.parser import parse
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 import in_toto.artifact_rules
+import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -153,7 +154,7 @@ class Layout(models__common.Signable):
         else:
           key_link_dict[keyid] = link
       if len(key_link_dict) < step.threshold:
-        raise securesystemslib.exceptions.LinkNotFoundError("Step not"
+        raise in_toto.exceptions.LinkNotFoundError("Step not"
             " performed by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
     return step_link_dict
