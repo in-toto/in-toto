@@ -20,7 +20,7 @@ def main():
         "material_matchrules": [],
         "product_matchrules": [["CREATE", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
-        "expected_command": "git clone git@github.com:in-toto/demo-project.git",
+        "expected_command": "git clone https://github.com/in-toto/demo-project.git",
       },{
         "name": "update-version",
         "material_matchrules": [["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "clone"]],

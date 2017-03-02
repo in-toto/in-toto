@@ -29,7 +29,7 @@ def supply_chain():
   os.chdir("../functionary_bob")
   clone_cmd = ("in-toto-run"
                     " --step-name clone --products demo-project/foo.py"
-                    " --key bob -- git clone git@github.com:in-toto/demo-project.git")
+                    " --key bob -- git clone https://github.com/in-toto/demo-project.git")
   print clone_cmd
   subprocess.call(clone_cmd.split())
 
