@@ -101,11 +101,11 @@ directory and perform the step.
 
 ```shell
 cd ../functionary_bob
-in-toto-run --step-name clone --products demo-project/foo.py --key bob -- git clone git@github.com:in-toto/demo-project.git
+in-toto-run --step-name clone --products demo-project/foo.py --key bob -- git clone https://github.com/in-toto/demo-project.git
 ```
 
 Here is what happens behind the scenes:
- 1. In-toto wraps the command `git clone git@github.com:in-toto/demo-project.git`,
+ 1. In-toto wraps the command `git clone https://github.com/in-toto/demo-project.git`,
  1. hashes the contents of the source code, i.e. `demo-project/foo.py`,
  1. adds the hash together with other information to a metadata file,
  1. signs the metadata with Bob's private key, and
