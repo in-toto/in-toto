@@ -43,7 +43,16 @@ Additionally, steps must have material and product rules which define the files 
 *Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/in-toto/blob/develop/demo/owner_alice/create_layout.py), a script that creates the in-toto demo layout.*
 
 #### Rules
-*TODO*
+
+##### Item rules
+Item rules are used to enforce and authorize artifacts reported by a link and/or to guarantee that artifacts are linked together across links.
+
+in-toto creates a materials queue and a products queue and a generic artifacts queue based on the source_type (materials or products). Each rule is then applied on the queues and the queues are updated. After applying all the rules, if the artifact queue is not empty, an exception is raised.
+
+##### Match rules
+Match rules are used to verify that for each queued source artifact there is a destination artifact and they are equal in terms of path and file hash. This guarantees that artifacts were not modified between steps/inspections.
+
+An exception is raised if link or artifact is not found or if the hashes of source and target artifacts are not equal.
 
 #### Carrying out software supply chain steps
 
