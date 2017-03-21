@@ -15,7 +15,7 @@ def prompt_key(prompt):
   while inp != "":
     try:
       inp = raw_input("\n{} -- press any key to continue".format(prompt))
-    except Exception, e:
+    except Exception:
       pass
 
 def supply_chain():

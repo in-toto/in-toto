@@ -35,7 +35,7 @@ import fnmatch
 if os.name == 'posix' and sys.version_info[0] < 3:
   try:
     import subprocess32 as subprocess
-  except Exception, e:
+  except Exception:
     logging.warning("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
         " install and use the much more recent subprocess32")
     import subprocess
