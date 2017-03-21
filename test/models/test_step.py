@@ -43,7 +43,6 @@ class TestStepValidator(unittest.TestCase):
     self.step._type = "step"
     self.step._validate_type()
 
-  @unittest.skip("Model requires changes")
   def test_wrong_threshold(self):
     """Test that the threshold value is correctly checked."""
 

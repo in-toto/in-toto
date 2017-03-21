@@ -38,8 +38,10 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
 from in_toto.util import import_rsa_key_from_file
+import in_toto.log as log
 
 import securesystemslib.exceptions
+import in_toto.exceptions
 
 
 class Test_RaiseOnBadRetval(unittest.TestCase):
@@ -95,7 +97,8 @@ class TestRunAllInspections(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    log.doing(self.test_dir)
+    #shutil.rmtree(self.test_dir)
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
     """Create new dummy test dir and set as base path, must ignore. """
@@ -933,7 +936,8 @@ class TestInTotoVerify(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    log.doing(self.test_dir)
+    #shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
@@ -971,11 +975,11 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
-    os.rename("package.link", "package.link.bak")
-    with self.assertRaises(IOError):
+    os.rename("package.2dc02526.link", "package.link.bak")
+    with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
       in_toto_verify(self.layout_single_signed_path, [self.alice_path])
-    os.rename("package.link.bak", "package.link")
-
+    os.rename("package.link.bak", "package.2dc02526.link") 
+  
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
     with self.assertRaises(BadReturnValueError):

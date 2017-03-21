@@ -27,10 +27,10 @@ import in_toto.settings
 from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
-    in_toto_record_stop, UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    record_artifacts_as_dict, _apply_exclude_patterns)
+    in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -258,7 +258,7 @@ class TestInTotoRun(unittest.TestCase):
   def tearDown(self):
     """Remove link file if it was created. """
     try:
-      os.remove(FILENAME_FORMAT.format(step_name=self.step_name))
+      os.remove(FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     except OSError:
       pass
 
@@ -290,7 +290,7 @@ class TestInTotoRun(unittest.TestCase):
     link = in_toto_run(self.step_name, [self.test_artifact],
         [self.test_artifact], ["echo", "test"], self.key, True)
     link_dump = Link.read_from_file(
-        FILENAME_FORMAT.format(step_name=self.step_name))
+        FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEquals(repr(link), repr(link_dump))
 
   def test_in_toto_run_verify_recorded_artifacts(self):
@@ -324,13 +324,12 @@ class TestInTotoRecordStart(unittest.TestCase):
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 
-    self.step_name = "test_step"
-    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
-        step_name=self.step_name)
-
     self.key_path = "test_key"
     generate_and_write_rsa_keypair(self.key_path)
     self.key = prompt_import_rsa_key_from_file(self.key_path)
+
+    self.step_name = "test_step"
+    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_material= "test_material"
     open(self.test_material, "w").close()
@@ -344,7 +343,7 @@ class TestInTotoRecordStart(unittest.TestCase):
   def test_unfinished_filename_format(self):
     """Test if the unfinished filname format. """
     self.assertTrue(self.link_name_unfinished ==
-        ".{}.link-unfinished".format(self.step_name))
+        ".{}.{:.8}.link-unfinished".format(self.step_name, self.key["keyid"]))
 
   def test_create_unfinished_metadata_with_expected_material(self):
     """Test record start creates metadata with expected material. """
@@ -375,17 +374,17 @@ class TestInTotoRecordStop(unittest.TestCase):
     self.test_dir = tempfile.mkdtemp()
     os.chdir(self.test_dir)
 
-    self.step_name = "test-step"
-    self.link_name = "{}.link".format(self.step_name)
-    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
-        step_name=self.step_name)
-
     self.key_path = "test-key"
     self.key_path2 = "test-key2"
     generate_and_write_rsa_keypair(self.key_path)
     generate_and_write_rsa_keypair(self.key_path2)
     self.key = prompt_import_rsa_key_from_file(self.key_path)
     self.key2 = prompt_import_rsa_key_from_file(self.key_path2)
+
+    self.step_name = "test-step"
+    self.link_name = "{}.{:.8}.link".format(self.step_name, self.key["keyid"])
+    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_product = "test_product"
     open(self.test_product, "w").close()
@@ -399,8 +398,7 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_create_metadata_with_expected_product(self):
     """Test record stop records expected product. """
     in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(
-        self.step_name, self.key, [self.test_product])
+    in_toto_record_stop(self.step_name, self.key, [self.test_product])
     link = Link.read_from_file(self.link_name)
     self.assertEquals(link.products.keys(), [self.test_product])
     os.remove(self.link_name)
@@ -408,8 +406,7 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_create_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(
-        self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [])
     link = Link.read_from_file(self.link_name)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name)
@@ -433,10 +430,16 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
     in_toto_record_start(self.step_name, self.key, [])
+    link_name = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=self.step_name, keyid=self.key["keyid"])
+    changed_link_name = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=self.step_name, keyid=self.key2["keyid"])
+    os.rename(link_name, changed_link_name)
     with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, self.key2, [])
     with self.assertRaises(IOError):
       open(self.link_name, "r")
+    os.rename(changed_link_name, link_name)
     os.remove(self.link_name_unfinished)
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ import os
 import datetime
 import iso8601
 import fnmatch
+import six
 from dateutil import tz
 
 import securesystemslib.exceptions
@@ -40,7 +41,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    BadReturnValueError)
+    ThresholdVerificationError, BadReturnValueError)
 import in_toto.artifact_rules
 import in_toto.log as log
 
@@ -210,18 +211,19 @@ def verify_link_signatures(link, keys_dict):
   link.verify_signatures(keys_dict)
 
 
-def verify_all_steps_signatures(layout, links_dict):
+def verify_all_steps_signatures(layout, chain_link_dict):
   """
   <Purpose>
     Extracts the Steps of a passed Layout and iteratively verifies the
-    the signatures of the Link object related to each Step by the name field.
+    the signatures of the Link object(s) related to each Step by the name field.
     The public keys used for verification are also extracted from the Layout.
 
   <Arguments>
     layout:
             A Layout object whose Steps are extracted and verified.
-    links_dict:
-            A dictionary of Link metadata objects with Link names as keys.
+    chain_link_dict:
+            A dictionary with Link names as keys and a dict
+            (key_id Link objects) as values.
 
   <Exceptions>
     Raises an exception if a needed key can not be found in the passed
@@ -229,20 +231,23 @@ def verify_all_steps_signatures(layout, links_dict):
     TBA (see https://github.com/in-toto/in-toto/issues/6)
 
   <Side Effects>
-    Verifies cryptographic Link signatures related to Steps of a Layout.
+    Verifies cryptographic Link signatures of potentially multiple Links
+    related to Steps of a Layout.
 
   """
   for step in layout.steps:
+    keys_dict = {}
+
     # Find the according link for this step
-    link = links_dict[step.name]
+    key_link_dict = chain_link_dict[step.name]
 
     # Create the dictionary of keys for this step
-    keys_dict = {}
-    for keyid in step.pubkeys:
-      keys_dict[keyid] = layout.keys[keyid]
+    for pubkeyid in step.pubkeys:
+      keys_dict[pubkeyid] = layout.keys[pubkeyid]
 
-    # Verify link metadata file's signatures
-    verify_link_signatures(link, keys_dict)
+    for keyid, link in six.iteritems(key_link_dict):
+      # Verify link metadata file's signatures
+      verify_link_signatures(link, keys_dict)
 
 
 def verify_command_alignment(command, expected_command):
@@ -280,7 +285,7 @@ def verify_command_alignment(command, expected_command):
         .format(command, expected_command))
 
 
-def verify_all_steps_command_alignment(layout, links_dict):
+def verify_all_steps_command_alignment(layout, chain_link_dict):
   """
   <Purpose>
     Iteratively checks if all expected commands as defined in the
@@ -290,7 +295,7 @@ def verify_all_steps_command_alignment(layout, links_dict):
   <Arguments>
     layout:
             A Layout object to extract the expected commands from.
-    links_dict:
+    chain_link_dict:
             A dictionary of Link metadata objects with Link names as keys.
 
   <Exceptions>
@@ -302,10 +307,11 @@ def verify_all_steps_command_alignment(layout, links_dict):
   """
   for step in layout.steps:
     # Find the according link for this step
-    link = links_dict[step.name]
-    command = link.command
     expected_command = step.expected_command.split()
-    verify_command_alignment(command, expected_command)
+    key_link_dict = chain_link_dict[step.name]
+    for keyid, link in six.iteritems(key_link_dict):
+      command = link.command
+      verify_command_alignment(command, expected_command)
 
 
 def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
@@ -903,6 +909,112 @@ def verify_all_item_rules(items, links):
     verify_item_rules(item.name, "products", item.product_matchrules, links)
 
 
+def verify_threshold_equality(layout, chain_link_dict):
+  """
+  <Purpose>
+    Iteratively verifies threshold conditions (if a step has been
+    performed and signed by enough number of functionaries) and link
+    artifacts (materials and products of a step is same for different
+    functionaries) of passed dictionary (chain_link_dict).
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    chain_link_dict:
+            A dictionary of key-link pair with step names as keys. For each
+            step name, there are one or more keyids and corresponding
+            link objects.
+
+  <Exceptions>
+    raises an Exception if threshold is not verified.
+    ThresholdVerificationError if the step is not performed by enough
+    functionaries or if the materials and products for a step are not same
+    for all functionaries.
+
+  <Side Effects>
+    None.
+
+  """
+
+  # We are only interested in links that are related to steps defined in the
+  # Layout, so iterate over layout.steps
+  for step in layout.steps:
+    # Skip steps that don't require multiple functionaries
+    if step.threshold <= 1:
+      continue
+
+    # Extract the key_link_dict for this step from the passed chain_link_dict
+    key_link_dict = chain_link_dict[step.name]
+
+    # Check if we have at least <threshold> links for this step
+    if len(key_link_dict) < step.threshold:
+      raise ThresholdVerificationError("Step not performed"
+          " by enough functionaries!")
+
+    # take one exemplary link (e.g. the first in the step_link_dict)
+    compare_link = key_link_dict.values()[0]
+
+    # iterate over the remaining links to compare their properties
+    for keyid, link in six.iteritems(key_link_dict):
+      keys_dict = {keyid: layout.keys.get(keyid)}
+
+      # check if the authorized functionary has signed the link
+      try:
+        verify_link_signatures(link, keys_dict)
+      except SignatureVerificationError as e:
+        raise ThresholdVerificationError("Link not signed by"
+            " authorized functionary!")
+
+      # compare their properties
+      if (compare_link.materials != link.materials or
+          compare_link.products != link.products):
+        raise ThresholdVerificationError("Link artifacts do"
+            " not match!")
+
+
+def reduce_chain_links(chain_link_dict):
+  """
+  <Purpose>
+    Iterates through the passed chain_link_dict and builds a dict with
+    step-name as keys and link objects as values.
+    We already check if the links of different functionaries are
+    identical.
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    chain_link_dict:
+            A dictionary of key-link pair with step names as keys. For each
+            step name, there are one or more keyids and corresponding
+            link objects.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A dictionary containing one Link metadata object per step only if
+    the link artifacts of all link objects are identical for a step.
+
+  """
+
+  reduced_chain_link_dict = {}
+
+  for step_name, key_link_dict in six.iteritems(chain_link_dict):
+    # Extract the key_link_dict for this step from the passed chain_link_dict
+    # take one exemplary link (e.g. the first in the step_link_dict)
+    # form the reduced_chain_link_dict to return
+    reduced_chain_link_dict[step_name] = key_link_dict.values()[0]
+
+  return reduced_chain_link_dict
+
+
 def in_toto_verify(layout_path, layout_key_paths):
   """
   <Purpose>
@@ -967,20 +1079,24 @@ def in_toto_verify(layout_path, layout_key_paths):
   verify_layout_expiration(layout)
 
   log.doing("Reading link metadata files...")
-  step_link_dict = layout.import_step_metadata_from_files_as_dict()
+  chain_link_dict = layout.import_step_metadata_from_files_as_dict()
 
   log.doing("Verifying link metadata signatures...")
-  verify_all_steps_signatures(layout, step_link_dict)
+  verify_all_steps_signatures(layout, chain_link_dict)
 
   log.doing("Verifying alignment of reported commands...")
-  verify_all_steps_command_alignment(layout, step_link_dict)
+  verify_all_steps_command_alignment(layout, chain_link_dict)
 
   log.doing("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
+  log.doing("Verifying threshold equality...")
+  verify_threshold_equality(layout, chain_link_dict)
+  reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
+
   # Combine step links and inspection links for rule verification
   # (Python 2 only)
-  link_dict = dict(step_link_dict.items() + inspection_link_dict.items())
+  link_dict = dict(reduced_chain_link_dict.items() + inspection_link_dict.items())
 
   log.doing("Verifying Step rules...")
   verify_all_item_rules(layout.steps, link_dict)

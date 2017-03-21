@@ -5,7 +5,7 @@ def main():
   # Load Alice's private key to later sign the layout
   key_alice = import_rsa_key_from_file("alice")
   # Fetch and load Bob's and Carl's public keys
-  # to specify that they are athorized to perform certain step in the layout
+  # to specify that they are authorized to perform certain step in the layout
   key_bob = import_rsa_key_from_file("../functionary_bob/bob.pub")
   key_carl = import_rsa_key_from_file("../functionary_carl/carl.pub")
 
@@ -21,6 +21,7 @@ def main():
         "product_matchrules": [["CREATE", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "git clone https://github.com/in-toto/demo-project.git",
+        "threshold": 1,
       },{
         "name": "update-version",
         "material_matchrules": [["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "clone"]],
@@ -28,6 +29,7 @@ def main():
         "product_matchrules": [["ALLOW", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
+        "threshold": 1,
       },{
         "name": "package",
         "material_matchrules": [
@@ -38,6 +40,7 @@ def main():
         ],
         "pubkeys": [key_carl["keyid"]],
         "expected_command": "tar --exclude '.git' -zcvf demo-project.tar.gz demo-project",
+        "threshold": 1,
       }],
     "inspect": [{
         "name": "untar",

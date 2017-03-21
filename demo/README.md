@@ -57,15 +57,15 @@ tree  # If you don't have tree, try 'find .' instead
 # ├── README.md
 # ├── final_product
 # ├── functionary_bob
-# │   ├── bob
-# │   └── bob.pub
+# │   ├── bob
+# │   └── bob.pub
 # ├── functionary_carl
-# │   ├── carl
-# │   └── carl.pub
+# │   ├── carl
+# │   └── carl.pub
 # ├── owner_alice
-# │   ├── alice
-# │   ├── alice.pub
-# │   └── create_layout.py
+# │   ├── alice
+# │   ├── alice.pub
+# │   └── create_layout.py
 # └── run_demo.py
 ```
 
@@ -109,7 +109,7 @@ Here is what happens behind the scenes:
  1. hashes the contents of the source code, i.e. `demo-project/foo.py`,
  1. adds the hash together with other information to a metadata file,
  1. signs the metadata with Bob's private key, and
- 1. stores everything to `clone.link`.
+ 1. stores everything to `clone.[Bob's keyid].link`.
 
 ### Update version number (Bob)
 Before Carl packages the source code, Bob will update
@@ -130,7 +130,7 @@ VERSION = "foo-v1"
 ```
 
 And finally he records the state of files after the modification and produces
-a link metadata file called `update-version.link`.
+a link metadata file called `update-version.[Bob's keyid].link`.
 ```shell
 # In functionary_bob directory
 in-toto-record --step-name update-version --key bob stop --products demo-project/foo.py
@@ -153,17 +153,17 @@ cd ../functionary_carl
 in-toto-run --step-name package --materials demo-project/foo.py --products demo-project.tar.gz --key carl -- tar --exclude ".git" -zcvf demo-project.tar.gz demo-project
 ```
 
-This will create the package and another link metadata file, called `package.link`.
+This will create another step link metadata file, called `package.[Carl's keyid].link`.
 It's time to release our software now.
 
 
 ### Verify final product (client)
 Let's first copy all relevant files into the `final_product` that is
 our software package `demo-project.tar.gz` and the related metadata files `root.layout`,
-`clone.link`, `update-version.link` and `package.link`:
+`clone.[Bob's keyid].link`, `update-version.[Bob's keyid].link` and `package.[Carl's keyid].link`:
 ```shell
 cd ..
-cp owner_alice/root.layout functionary_bob/clone.link functionary_bob/update-version.link functionary_carl/package.link functionary_carl/demo-project.tar.gz final_product/
+cp owner_alice/root.layout functionary_bob/clone.0c6c50a1.link functionary_bob/update-version.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/demo-project.tar.gz final_product/
 ```
 And now run verification on behalf of the client:
 ```shell
@@ -209,7 +209,7 @@ in-toto-run --step-name package --materials demo-project/foo.py --products demo-
 and ships everything out as final product to the client:
 ```shell
 cd ..
-cp owner_alice/root.layout functionary_bob/clone.link functionary_bob/update-version.link functionary_carl/package.link functionary_carl/demo-project.tar.gz final_product/
+cp owner_alice/root.layout functionary_bob/clone.0c6c50a1.link functionary_bob/update-version.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/demo-project.tar.gz final_product/
 ```
 
 ### Verifying the malicious product

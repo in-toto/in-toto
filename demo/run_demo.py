@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import argparse
+import time
 from shutil import copyfile, copytree, rmtree
 
 NO_PROMPT = False
@@ -58,7 +59,6 @@ def supply_chain():
 
   copytree("demo-project", "../functionary_carl/demo-project")
 
-
   prompt_key("Package (Carl)")
   os.chdir("../functionary_carl")
   package_cmd = ("in-toto-run"
@@ -73,9 +73,9 @@ def supply_chain():
   prompt_key("Create final product")
   os.chdir("..")
   copyfile("owner_alice/root.layout", "final_product/root.layout")
-  copyfile("functionary_bob/clone.link", "final_product/clone.link")
-  copyfile("functionary_bob/update-version.link", "final_product/update-version.link")
-  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_bob/clone.0c6c50a1.link", "final_product/clone.0c6c50a1.link")
+  copyfile("functionary_bob/update-version.0c6c50a1.link", "final_product/update-version.0c6c50a1.link")
+  copyfile("functionary_carl/package.c1ae1e51.link", "final_product/package.c1ae1e51.link")
   copyfile("functionary_carl/demo-project.tar.gz", "final_product/demo-project.tar.gz")
 
 
@@ -113,9 +113,9 @@ def supply_chain():
   prompt_key("Create final product")
   os.chdir("..")
   copyfile("owner_alice/root.layout", "final_product/root.layout")
-  copyfile("functionary_bob/clone.link", "final_product/clone.link")
-  copyfile("functionary_bob/update-version.link", "final_product/update-version.link")
-  copyfile("functionary_carl/package.link", "final_product/package.link")
+  copyfile("functionary_bob/clone.0c6c50a1.link", "final_product/clone.0c6c50a1.link")
+  copyfile("functionary_bob/update-version.0c6c50a1.link", "final_product/update-version.0c6c50a1.link")
+  copyfile("functionary_carl/package.c1ae1e51.link", "final_product/package.c1ae1e51.link")
   copyfile("functionary_carl/demo-project.tar.gz", "final_product/demo-project.tar.gz")
 
 
@@ -142,17 +142,17 @@ def main():
   if args.clean:
     files_to_delete = [
       "owner_alice/root.layout",
-      "functionary_bob/clone.link",
-      "functionary_bob/update-version.link",
+      "functionary_bob/clone.0c6c50a1.link",
+      "functionary_bob/update-version.0c6c50a1.link",
       "functionary_bob/demo-project",
-      "functionary_carl/package.link",
+      "functionary_carl/package.c1ae1e51.link",
       "functionary_carl/demo-project.tar.gz",
       "functionary_carl/demo-project",
       "final_product/alice.pub",
       "final_product/demo-project.tar.gz",
-      "final_product/package.link",
-      "final_product/clone.link",
-      "final_product/update-version.link",
+      "final_product/package.c1ae1e51.link",
+      "final_product/clone.0c6c50a1.link",
+      "final_product/update-version.0c6c50a1.link",
       "final_product/untar.link",
       "final_product/root.layout",
       "final_product/demo-project",

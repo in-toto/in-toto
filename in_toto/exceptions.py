@@ -12,6 +12,16 @@ class RuleVerficationError(Error):
   """Indicates that a match rule verification failed. """
   pass
 
+class ThresholdVerificationError(Error):
+  """Indicates that a match rule verification failed. """
+  pass
+
 class BadReturnValueError(Error):
   """Indicates that a ran command exited with non-int or non-zero return
   value. """
+  pass
+
+class LinkNotFoundError(Error):
+  """Indicates that a ran command exited with non-int or non-zero return
+  value. """
+  pass

@@ -37,7 +37,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 import in_toto.artifact_rules
+import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -122,8 +124,9 @@ class Layout(models__common.Signable):
     """
     <Purpose>
       Iteratively loads link metadata files for each Step of the Layout
-      from disk and returns a dict with Link names as keys and Link objects
-      as values.
+      from disk and returns a dict with Link names as keys and a dict
+      as values. The inner dict contains key_id as keys and link
+      objects as values.
 
     <Arguments>
       None
@@ -135,13 +138,25 @@ class Layout(models__common.Signable):
       Calls functions to read files from disk
 
     <Returns>
-      A dictionary with Link names as keys and Link objects as values.
+      A dictionary with Link names as keys and a dict (key_id Link objects)
+      as values.
 
     """
     step_link_dict = {}
     for step in self.steps:
-      link = models__link.Link.read_from_file(step.name + '.link')
-      step_link_dict[step.name] = link
+      key_link_dict = {}
+      for keyid in step.pubkeys:
+        try:
+          link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
+              step_name=step.name, keyid=keyid))
+        except IOError as e:
+          pass
+        else:
+          key_link_dict[keyid] = link
+      if len(key_link_dict) < step.threshold:
+        raise in_toto.exceptions.LinkNotFoundError("Step not"
+            " performed by enough functionaries!".format())
+      step_link_dict[step.name] = key_link_dict
     return step_link_dict
 
   def _validate_type(self):
@@ -151,7 +166,7 @@ class Layout(models__common.Signable):
           "Invalid _type value for layout (Should be 'layout')")
 
   def _validate_expires(self):
-    """Priavte method to verify the expiration field."""
+    """Private method to verify the expiration field."""
     try:
       date = parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
@@ -230,6 +245,9 @@ class Step(models__common.Metablock):
     expected_command:
         the command expected to have performed this step
 
+    threshold:
+        the least number of functionaries expected to perform this step
+
   """
   _type = attr.ib("step", init=False)
   name = attr.ib()
@@ -237,6 +255,7 @@ class Step(models__common.Metablock):
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
   expected_command = attr.ib("")
+  threshold = attr.ib(default=1)
 
 
   @staticmethod
@@ -245,7 +264,8 @@ class Step(models__common.Metablock):
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"),
         pubkeys=data.get("pubkeys"),
-        expected_command=data.get("expected_command"))
+        expected_command=data.get("expected_command"),
+        threshold=data.get("threshold"))
 
 
   def _validate_type(self):
@@ -256,13 +276,10 @@ class Step(models__common.Metablock):
 
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
-    try:
-      # int(self.threshold)
-      # FIXME: we don't have support for threshold yet
-      pass
-    except Exception as e:
+    if type(self.threshold) != int:
       raise securesystemslib.exceptions.FormatError(
-          "Invalid threshold value for this step. Exception: {}".format(e))
+          "Invalid threshold '{}', value must be an int."
+          .format(self.threshold))
 
   def _validate_material_matchrules(self):
     """Private method to check the material matchrules are correctly formed."""

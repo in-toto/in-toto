@@ -68,7 +68,8 @@
             ],
             "pubkeys": [
                 "c8650e01ec099466cec16b0c61db1793574d0561152f49aa8334ac8b4408a421"
-            ]
+            ],
+            "threshold": 1
         },
         {
             "_type": "step",
@@ -96,7 +97,8 @@
             ],
             "pubkeys": [
                 "2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd"
-            ]
+            ],
+            "threshold": 1
         }
     ]
 }
