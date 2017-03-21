@@ -145,7 +145,7 @@ class Layout(models__common.Signable):
     step_link_dict = {}
     for step in self.steps:
       key_link_dict = {}
-      for idx, keyid in enumerate(step.pubkeys):
+      for keyid in step.pubkeys:
         try:
           link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
               step_name=step.name, keyid=keyid))
