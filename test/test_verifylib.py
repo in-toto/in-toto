@@ -97,7 +97,7 @@ class TestRunAllInspections(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
-    log.doing(self.test_dir)
+    log.info(self.test_dir)
     #shutil.rmtree(self.test_dir)
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
@@ -146,7 +146,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
 
     with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
-      mock_logging.warning.assert_called_with("Run command '{0}'"
+      mock_logging.warn.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
           .format(self.command, expected_command))
 
@@ -156,7 +156,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
 
     with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
-      mock_logging.warning.assert_called_with("Run command '{0}'"
+      mock_logging.warn.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
           .format(self.command, expected_command))
 
@@ -936,7 +936,7 @@ class TestInTotoVerify(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
-    log.doing(self.test_dir)
+    log.info(self.test_dir)
     #shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):

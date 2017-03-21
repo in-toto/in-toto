@@ -111,7 +111,7 @@ def run_all_inspections(layout):
   """
   inspection_links_dict = {}
   for inspection in layout.inspect:
-    log.doing("Executing command for inspection '{}'...".format(
+    log.info("Executing command for inspection '{}'...".format(
         inspection.name))
 
     # FIXME: We don't want to use the base path for runlib so we patch this
@@ -249,7 +249,7 @@ def verify_all_steps_signatures(layout, chain_link_dict):
       keys_dict[pubkeyid] = layout.keys[pubkeyid]
 
     for keyid, link in six.iteritems(key_link_dict):
-      log.doing("Verifying signature(s) for '{0}'...".format(
+      log.info("Verifying signature(s) for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
 
@@ -287,7 +287,7 @@ def verify_command_alignment(command, expected_command):
   # https://github.com/in-toto/in-toto/pull/47
   # We chose the simplest solution for now, i.e. Warn if they do not align.
   if command != expected_command:
-    log.warning("Run command '{0}' differs from expected command '{1}'"
+    log.warn("Run command '{0}' differs from expected command '{1}'"
         .format(command, expected_command))
 
 
@@ -319,7 +319,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
     # FIXME: I think we could do this for one link per step only
     # providing that we verify command alignment AFTER threshold equality
     for keyid, link in six.iteritems(key_link_dict):
-      log.doing("Verifying command alignment for '{0}'...".format(
+      log.info("Verifying command alignment for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
 
@@ -833,7 +833,7 @@ def verify_item_rules(source_name, source_type, rules, links):
   # Apply (verify) all rule
   for rule in rules:
 
-    log.doing("Verifying '{}'...".format(" ".join(rule)))
+    log.info("Verifying '{}'...".format(" ".join(rule)))
 
     # Unpack rules for dispatching and rule format verification
     rule_data = in_toto.artifact_rules.unpack_rule(rule)
@@ -919,10 +919,10 @@ def verify_all_item_rules(items, links):
   for item in items:
 
     link = links[item.name]
-    log.doing("Verifying material rules for '{}'...".format(item.name))
+    log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.material_matchrules, links)
 
-    log.doing("Verifying product rules for '{}'...".format(item.name))
+    log.info("Verifying product rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "products", item.product_matchrules, links)
 
 
@@ -960,11 +960,11 @@ def verify_threshold_equality(layout, chain_link_dict):
   for step in layout.steps:
     # Skip steps that don't require multiple functionaries
     if step.threshold <= 1:
-      log.doing("Skipping threshold verification for step '{0}' with"
+      log.info("Skipping threshold verification for step '{0}' with"
           " threshold '{1}'...".format(step.name, step.threshold))
       continue
 
-    log.doing("Verifying threshold for step '{0}' with"
+    log.info("Verifying threshold for step '{0}' with"
         " threshold '{1}'...".format(step.name, step.threshold))
     # Extract the key_link_dict for this step from the passed chain_link_dict
     key_link_dict = chain_link_dict[step.name]
@@ -1092,34 +1092,34 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   """
 
-  log.doing("Verifying software supply chain...")
+  log.info("Verifying software supply chain...")
 
-  log.doing("Reading layout...")
+  log.info("Reading layout...")
   layout = in_toto.models.layout.Layout.read_from_file(layout_path)
 
-  log.doing("Reading layout key(s)...")
+  log.info("Reading layout key(s)...")
   layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
       layout_key_paths)
 
-  log.doing("Verifying layout signatures...")
+  log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
-  log.doing("Verifying layout expiration... ")
+  log.info("Verifying layout expiration... ")
   verify_layout_expiration(layout)
 
-  log.doing("Reading link metadata files...")
+  log.info("Reading link metadata files...")
   chain_link_dict = layout.import_step_metadata_from_files_as_dict()
 
-  log.doing("Verifying link metadata signatures...")
+  log.info("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
 
-  log.doing("Verifying alignment of reported commands...")
+  log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
-  log.doing("Executing Inspection commands...")
+  log.info("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
-  log.doing("Verifying threshold contraints...")
+  log.info("Verifying threshold contraints...")
   verify_threshold_equality(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
@@ -1127,11 +1127,11 @@ def in_toto_verify(layout_path, layout_key_paths):
   # (Python 2 only)
   link_dict = dict(reduced_chain_link_dict.items() + inspection_link_dict.items())
 
-  log.doing("Verifying Step rules...")
+  log.info("Verifying Step rules...")
   verify_all_item_rules(layout.steps, link_dict)
 
-  log.doing("Verifying Inspection rules...")
+  log.info("Verifying Inspection rules...")
   verify_all_item_rules(layout.inspect, link_dict)
 
   # We made it this far without exception that means, verification passed.
-  log.passing("Passing verification")
+  log.pass_verification("The software product has passed verification.")
