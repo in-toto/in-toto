@@ -160,10 +160,10 @@ It's time to release our software now.
 ### Verify final product (client)
 Let's first copy all relevant files into the `final_product` that is
 our software package `demo-project.tar.gz` and the related metadata files `root.layout`,
-`clone.[Bob's keyid].link`, `update-version.[Bob's keyid].link` and `package.[Carl's keyid].link`:
+`clone.link`, `update-version.link` and `package.link`:
 ```shell
 cd ..
-cp owner_alice/root.layout functionary_bob/clone.0c6c50a1.link functionary_bob/update-version.0c6c50a1.link functionary_carl/package.c1ae1e51.link functionary_carl/demo-project.tar.gz final_product/
+cp owner_alice/root.layout functionary_bob/clone.link functionary_bob/update-version.link functionary_carl/package.link functionary_carl/demo-project.tar.gz final_product/
 ```
 And now run verification on behalf of the client:
 ```shell
