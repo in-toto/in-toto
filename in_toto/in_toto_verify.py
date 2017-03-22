@@ -29,9 +29,6 @@ import argparse
 
 from in_toto import log
 from in_toto import verifylib
-from in_toto.exceptions import (SignatureVerificationError, LayoutExpiredError,
-    RuleVerficationError, ThresholdVerificationError, BadReturnValueError,
-    LinkNotFoundError)
 
 def in_toto_verify(layout_path, layout_key_paths):
   """
@@ -59,16 +56,8 @@ def in_toto_verify(layout_path, layout_key_paths):
   try:
     verifylib.in_toto_verify(layout_path, layout_key_paths)
 
-  except (SignatureVerificationError, LayoutExpiredError,
-      RuleVerficationError, ThresholdVerificationError,
-      BadReturnValueError, LinkNotFoundError) as e:
-
-    # Log exception name and message
-    log.fail_verification("{0} - {1}".format(type(e).__name__, e))
-    sys.exit(1)
-
   except Exception as e:
-    log.error("in in-toto verify - {}".format(e))
+    log.fail_verification("{0} - {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 def main():

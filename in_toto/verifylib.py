@@ -1134,4 +1134,4 @@ def in_toto_verify(layout_path, layout_key_paths):
   verify_all_item_rules(layout.inspect, link_dict)
 
   # We made it this far without exception that means, verification passed.
-  log.pass_verification("The software product has passed verification.")
+  log.pass_verification("The software product passed all verification.")

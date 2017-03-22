@@ -34,8 +34,8 @@ def error(msg):
 
 def pass_verification(msg):
   """Prints passing verification routines. """
-  logging.critical("PASSING VERIFICATION: {}".format(msg))
+  logging.critical("PASSING: {}".format(msg))
 
 def fail_verification(msg):
   """Prints failing verification. """
-  logging.critical("FAILING VERIFICATION: {}".format(msg))
+  logging.critical("FAILING: {}".format(msg))
