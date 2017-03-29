@@ -187,6 +187,9 @@ def record_artifacts_as_dict(artifacts):
           # result in an error later when trying to read the file
           if os.path.isfile(norm_filepath):
             filepaths.append(norm_filepath)
+          else:
+            log.warning("File '{}' appears to be a broken symlink. Skipping..."
+                .format(norm_filepath))
 
         # Apply exclude patterns on normalized filepaths and
         # store each remaining normalized filepath with it's files hash to
