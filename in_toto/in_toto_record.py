@@ -115,7 +115,6 @@ def in_toto_record_stop(step_name, key, product_list):
     log.error("in stop record - {}".format(e))
     sys.exit(1)
 
-
 def main():
   """ Parse arguments, load key from disk and call either in_toto_record_start
   or in_toto_record_stop. """
@@ -157,7 +156,7 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.doing()` in the library
+  # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 

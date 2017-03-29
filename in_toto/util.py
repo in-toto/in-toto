@@ -124,7 +124,7 @@ def prompt_import_rsa_key_from_file(filepath):
   password = None
   try:
     import_rsa_key_from_file(filepath)
-  except securesystemslib.exceptions.CryptoError, e:
+  except securesystemslib.exceptions.CryptoError:
     password = prompt_password()
   return import_rsa_key_from_file(filepath, password)
 

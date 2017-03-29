@@ -111,6 +111,9 @@ def run_all_inspections(layout):
   """
   inspection_links_dict = {}
   for inspection in layout.inspect:
+    log.info("Executing command for inspection '{}'...".format(
+        inspection.name))
+
     # FIXME: We don't want to use the base path for runlib so we patch this
     # for now. This will not stay!
     base_path_backup = in_toto.settings.ARTIFACT_BASE_PATH
@@ -246,6 +249,10 @@ def verify_all_steps_signatures(layout, chain_link_dict):
       keys_dict[pubkeyid] = layout.keys[pubkeyid]
 
     for keyid, link in six.iteritems(key_link_dict):
+      log.info("Verifying signature(s) for '{0}'...".format(
+          in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
+              keyid=keyid)))
+
       # Verify link metadata file's signatures
       verify_link_signatures(link, keys_dict)
 
@@ -279,9 +286,8 @@ def verify_command_alignment(command, expected_command):
   # https://github.com/in-toto/in-toto/issues/46 and
   # https://github.com/in-toto/in-toto/pull/47
   # We chose the simplest solution for now, i.e. Warn if they do not align.
-
   if command != expected_command:
-    log.warning("Run command '{0}' differs from expected command '{1}'"
+    log.warn("Run command '{0}' differs from expected command '{1}'"
         .format(command, expected_command))
 
 
@@ -309,7 +315,14 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
     # Find the according link for this step
     expected_command = step.expected_command.split()
     key_link_dict = chain_link_dict[step.name]
+
+    # FIXME: I think we could do this for one link per step only
+    # providing that we verify command alignment AFTER threshold equality
     for keyid, link in six.iteritems(key_link_dict):
+      log.info("Verifying command alignment for '{0}'...".format(
+          in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
+              keyid=keyid)))
+
       command = link.command
       verify_command_alignment(command, expected_command)
 
@@ -413,9 +426,9 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   try:
     dest_link = links[dest_name]
   except Exception as e:
-    raise RuleVerficationError("Rule {rule} failed, destination link"
+    raise RuleVerficationError("Rule '{rule}' failed, destination link"
         " '{dest_link}' not found in link dictionary".format(
-        rule=rule, dest_link=dest_name))
+            rule=" ".join(rule), dest_link=dest_name))
 
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
@@ -466,15 +479,17 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     try:
       dest_artifact = dest_artifacts[full_dest_path]
     except Exception:
-      raise RuleVerficationError("Rule {rule} failed, destination artifact"
-          " '{path}' not found in {type} of '{name}'".format(
-          rule=rule, path=full_dest_path, name=dest_name, type=dest_type))
+      raise RuleVerficationError("Rule '{rule}' failed, destination artifact"
+          " '{path}' not found in {type} of '{name}'"
+              .format(rule=" ".join(rule), path=full_dest_path, name=dest_name,
+                  type=dest_type))
 
     # Compare the hashes of source and destination artifacts
     if source_artifact != dest_artifact:
-      raise RuleVerficationError("Rule {rule} failed, source artifact"
+      raise RuleVerficationError("Rule '{rule}' failed, source artifact"
           " '{source}' and destination artifact '{dest}' hashes don't match."
-          .format(rule=rule, source=full_source_path, dest=full_dest_path))
+              .format(rule=" ".join(rule), source=full_source_path,
+                  dest=full_dest_path))
 
     # Matching went well, let's remove the path from the queue. Subsequent rules
     # won't see this artifact anymore.
@@ -536,7 +551,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
     if matched_product in source_materials_queue:
       raise RuleVerficationError("Rule '{0}' failed, product '{1}' was found"
           " in materials but should have been newly created."
-          .format(rule, matched_product))
+              .format(" ".join(rule), matched_product))
 
   return list(set(source_products_queue) - set(matched_products))
 
@@ -593,7 +608,7 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
     if matched_material in source_products_queue:
       raise RuleVerficationError("Rule '{0}' failed, material '{1}' was found"
           " in products but should have been deleted."
-          .format(rule, matched_material))
+              .format(" ".join(rule), matched_material))
 
   return list(set(source_materials_queue) - set(matched_materials))
 
@@ -652,13 +667,13 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
 
   if len(matched_materials_only):
     raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
-      " as materials but not as products:\n\t{1}"
-      .format(rule, ", ".join(matched_materials_only)))
+        " as materials but not as products:\n\t{1}"
+            .format(" ".join(rule), ", ".join(matched_materials_only)))
 
   if len(matched_products_only):
     raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
-      " as products but not as materials:\n\t{1}"
-      .format(rule, ", ".join(matched_products_only)))
+        " as products but not as materials:\n\t{1}"
+            .format(" ".join(rule), ", ".join(matched_products_only)))
 
   # If we haven't failed yet the two sets are equal and we can test their
   # hash in-equalities
@@ -667,8 +682,8 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
     # should not be in the queues, if it is not in the artifact dictionaries
     if source_materials[path] == source_products[path]:
       raise RuleVerficationError("Rule '{0}' failed, material and product '{1}'"
-      " have the same hash (were not modified)."
-      .format(rule, path))
+          " have the same hash (were not modified)."
+              .format(" ".join(rule), path))
 
   return (list(set(source_materials_queue) - set(matched_materials)),
       list(set(source_products_queue) - set(matched_products)))
@@ -742,8 +757,8 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerficationError("Rule {0} failed, pattern matched disallowed"
-        " artifacts: '{1}' ".format(rule, matched_artifacts))
+    raise RuleVerficationError("Rule '{0}' failed, pattern matched disallowed"
+        " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -818,6 +833,8 @@ def verify_item_rules(source_name, source_type, rules, links):
   # Apply (verify) all rule
   for rule in rules:
 
+    log.info("Verifying '{}'...".format(" ".join(rule)))
+
     # Unpack rules for dispatching and rule format verification
     rule_data = in_toto.artifact_rules.unpack_rule(rule)
     rule_type = rule_data["type"]
@@ -871,8 +888,8 @@ def verify_item_rules(source_name, source_type, rules, links):
   # of a list and there are still artifacts in the queue, we fail.
   if source_artifacts_queue:
     raise RuleVerficationError("{0} '{1}' were not authorized by any rule"
-        " of item '{2}'".format(
-        source_type, source_artifacts_queue, source_name))
+        " of item '{2}'".format(source_type, source_artifacts_queue,
+            source_name))
 
 
 def verify_all_item_rules(items, links):
@@ -902,10 +919,10 @@ def verify_all_item_rules(items, links):
   for item in items:
 
     link = links[item.name]
-    log.doing("Verifying material rules for '{}'...".format(item.name))
+    log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.material_matchrules, links)
 
-    log.doing("Verifying product rules for '{}'...".format(item.name))
+    log.info("Verifying product rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "products", item.product_matchrules, links)
 
 
@@ -943,20 +960,26 @@ def verify_threshold_equality(layout, chain_link_dict):
   for step in layout.steps:
     # Skip steps that don't require multiple functionaries
     if step.threshold <= 1:
+      log.info("Skipping threshold verification for step '{0}' with"
+          " threshold '{1}'...".format(step.name, step.threshold))
       continue
 
+    log.info("Verifying threshold for step '{0}' with"
+        " threshold '{1}'...".format(step.name, step.threshold))
     # Extract the key_link_dict for this step from the passed chain_link_dict
     key_link_dict = chain_link_dict[step.name]
 
     # Check if we have at least <threshold> links for this step
     if len(key_link_dict) < step.threshold:
-      raise ThresholdVerificationError("Step not performed"
-          " by enough functionaries!")
+      raise ThresholdVerificationError("Step '{0}' not performed"
+          " by enough functionaries!".format(step.name))
 
-    # take one exemplary link (e.g. the first in the step_link_dict)
-    compare_link = key_link_dict.values()[0]
+    # Take a reference link (e.g. the first in the step_link_dict)
+    reference_keyid = key_link_dict.keys()[0]
+    reference_link = key_link_dict[reference_key]
 
-    # iterate over the remaining links to compare their properties
+    # Iterate over all links to check their signature and
+    # compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
       keys_dict = {keyid: layout.keys.get(keyid)}
 
@@ -964,14 +987,20 @@ def verify_threshold_equality(layout, chain_link_dict):
       try:
         verify_link_signatures(link, keys_dict)
       except SignatureVerificationError as e:
-        raise ThresholdVerificationError("Link not signed by"
-            " authorized functionary!")
+        raise ThresholdVerificationError("Link '{0}' not signed by"
+            " authorized functionary!".format(
+                in_toto.models.link.FILENAME_FORMAT.format(
+                    step_name=step.name, keyid=keyid)))
 
       # compare their properties
-      if (compare_link.materials != link.materials or
-          compare_link.products != link.products):
-        raise ThresholdVerificationError("Link artifacts do"
-            " not match!")
+      if (reference_link.materials != link.materials or
+          reference_link.products != link.products):
+        raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
+            " artifacts!".format(
+                in_toto.models.link.FILENAME_FORMAT.format(
+                    step_name=step.name, keyid=reference_keyid),
+                in_toto.models.link.FILENAME_FORMAT.format(
+                    step_name=step.name, keyid=keyid)))
 
 
 def reduce_chain_links(chain_link_dict):
@@ -1063,34 +1092,34 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   """
 
-  log.doing("Verifying software supply chain...")
+  log.info("Verifying software supply chain...")
 
-  log.doing("Reading layout...")
+  log.info("Reading layout...")
   layout = in_toto.models.layout.Layout.read_from_file(layout_path)
 
-  log.doing("Reading layout key(s)...")
+  log.info("Reading layout key(s)...")
   layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
       layout_key_paths)
 
-  log.doing("Verifying layout signatures...")
+  log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
-  log.doing("Verifying layout expiration... ")
+  log.info("Verifying layout expiration... ")
   verify_layout_expiration(layout)
 
-  log.doing("Reading link metadata files...")
+  log.info("Reading link metadata files...")
   chain_link_dict = layout.import_step_metadata_from_files_as_dict()
 
-  log.doing("Verifying link metadata signatures...")
+  log.info("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
 
-  log.doing("Verifying alignment of reported commands...")
+  log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
-  log.doing("Executing Inspection commands...")
+  log.info("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
-  log.doing("Verifying threshold equality...")
+  log.info("Verifying threshold contraints...")
   verify_threshold_equality(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
@@ -1098,11 +1127,11 @@ def in_toto_verify(layout_path, layout_key_paths):
   # (Python 2 only)
   link_dict = dict(reduced_chain_link_dict.items() + inspection_link_dict.items())
 
-  log.doing("Verifying Step rules...")
+  log.info("Verifying Step rules...")
   verify_all_item_rules(layout.steps, link_dict)
 
-  log.doing("Verifying Inspection rules...")
+  log.info("Verifying Inspection rules...")
   verify_all_item_rules(layout.inspect, link_dict)
 
   # We made it this far without exception that means, verification passed.
-  log.passing("Passing verification")
+  log.pass_verification("The software product passed all verification.")
