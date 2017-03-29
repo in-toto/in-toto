@@ -98,7 +98,7 @@ class TestRunAllInspections(unittest.TestCase):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
     log.info(self.test_dir)
-    #shutil.rmtree(self.test_dir)
+    shutil.rmtree(self.test_dir)
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
     """Create new dummy test dir and set as base path, must ignore. """
@@ -937,7 +937,7 @@ class TestInTotoVerify(unittest.TestCase):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
     log.info(self.test_dir)
-    #shutil.rmtree(self.test_dir)
+    shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
