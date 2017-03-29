@@ -1014,6 +1014,22 @@ def reduce_chain_links(chain_link_dict):
 
   return reduced_chain_link_dict
 
+def verify_delegations(chain_link_dict):
+  pass
+
+def get_return_link_file(layout, reduced_chain_link_dict):
+  return_link = in_toto.models.link.Link()
+  for step_name, link in six.iteritems(reduced_chain_link_dict):
+    if step_name == layout.steps[0].name:
+      return_link.materials = link.materials
+    if step_name == layout.steps[len(layout.steps) - 1].name:
+      return_link._type = link._type
+      return_link.name = link.name
+      return_link.products = link.products
+      return_link.byproducts = link.byproducts
+      return_link.command = link.command
+      return_link.return_value = link.return_value
+  return return_link
 
 def in_toto_verify(layout_path, layout_key_paths):
   """
@@ -1084,6 +1100,9 @@ def in_toto_verify(layout_path, layout_key_paths):
   log.doing("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
 
+#  log.doing("Verifying delegations...")
+#  verify_delegations(chain_link_dict)
+
   log.doing("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
@@ -1106,3 +1125,6 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   # We made it this far without exception that means, verification passed.
   log.passing("Passing verification")
+
+  return_link = get_return_link_file(layout, reduced_chain_link_dict)
+  print return_link

@@ -151,9 +151,16 @@ class Layout(models__common.Signable):
               step_name=step.name, keyid=keyid))
         except IOError as e:
           pass
+        except Exception as e:
+          print "hey"
+          link = Layout.read_from_file(filename=FILENAME_FORMAT.format(
+              step_name=step.name, keyid=keyid))
+          key_link_dict[keyid] = link
         else:
           key_link_dict[keyid] = link
       if len(key_link_dict) < step.threshold:
+        print len(key_link_dict)
+        print step.threshold
         raise in_toto.exceptions.LinkNotFoundError("Step not"
             " performed by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
