@@ -118,6 +118,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     open("subdir/foosub2", "w").write("foosub")
     open("subdir/subsubdir/foosubsub", "w").write("foosubsub")
 
+    # Add dead symlinks on each level, they should be excluded
+    os.symlink("this/file/does/not/exist", "deadlink")
+    os.symlink("this/file/does/not/exist", "subdir/deadlink")
+    os.symlink("this/file/does/not/exist", "subdir/subsubdir/deadlink")
+
   @classmethod
   def tearDownClass(self):
     """Change back to working dir, remove temp directory, restore settings. """
