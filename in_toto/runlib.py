@@ -188,7 +188,7 @@ def record_artifacts_as_dict(artifacts):
           if os.path.isfile(norm_filepath):
             filepaths.append(norm_filepath)
           else:
-            log.warning("File '{}' appears to be a broken symlink. Skipping..."
+            log.warn("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
 
         # Apply exclude patterns on normalized filepaths and
