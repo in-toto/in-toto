@@ -313,7 +313,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
   """
   for step in layout.steps:
     # Find the according link for this step
-    expected_command = step.expected_command.split()
+    expected_command = step.expected_command
     key_link_dict = chain_link_dict[step.name]
 
     # FIXME: I think we could do this for one link per step only
