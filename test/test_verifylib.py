@@ -928,7 +928,7 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
-    layout.inspect[0].run = "expr 1 / 0"
+    layout.inspect[0].run = ["expr",  "1", "/", "0"]
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
@@ -978,8 +978,8 @@ class TestInTotoVerify(unittest.TestCase):
     os.rename("package.2dc02526.link", "package.link.bak")
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
       in_toto_verify(self.layout_single_signed_path, [self.alice_path])
-    os.rename("package.link.bak", "package.2dc02526.link") 
-  
+    os.rename("package.link.bak", "package.2dc02526.link")
+
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
     with self.assertRaises(BadReturnValueError):

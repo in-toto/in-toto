@@ -125,7 +125,7 @@ def run_all_inspections(layout):
     # We could use matchrule paths.
     material_list = product_list = ["."]
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
-        product_list, inspection.run.split())
+        product_list, inspection.run)
 
     _raise_on_bad_retval(link.return_value, inspection.run)
 

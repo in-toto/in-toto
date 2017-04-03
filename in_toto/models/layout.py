@@ -348,12 +348,22 @@ class Inspection(models__common.Metablock):
   name = attr.ib()
   material_matchrules = attr.ib(default=attr.Factory(list))
   product_matchrules = attr.ib(default=attr.Factory(list))
-  run = attr.ib("")
+  run = attr.ib(default=attr.Factory(list))
 
 
   @staticmethod
   def read(data):
-    return Inspection(name=data.get("name"), run=data.get("run"),
+    # Accept run as string or list, if it is a string we split it using
+    # shell like syntax.
+    data_run = data.get("run")
+    if data_run:
+      if not isinstance(data_run, list):
+        data_run = shlex.split(data_run)
+
+    else:
+      data_run = []
+
+    return Inspection(name=data.get("name"), run=data_run,
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"))
 
@@ -383,6 +393,6 @@ class Inspection(models__common.Metablock):
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
-    if type(self.run) != str:
+    if type(self.run) != list:
       raise securesystemslib.exceptions.FormatError(
           "The run field is malformed!")
