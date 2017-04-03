@@ -152,7 +152,6 @@ class Layout(models__common.Signable):
         except IOError as e:
           pass
         except Exception as e:
-          print "hey"
           link = Layout.read_from_file(filename=FILENAME_FORMAT.format(
               step_name=step.name, keyid=keyid))
           key_link_dict[keyid] = link

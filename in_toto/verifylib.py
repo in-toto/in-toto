@@ -1015,15 +1015,15 @@ def reduce_chain_links(chain_link_dict):
 
   return reduced_chain_link_dict
 
-def verify_delegations(chain_link_dict):
+def verify_delegations(layout, chain_link_dict):
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
-    for key_id, link in six.iteritems(key_link_dict):
+    for keyid, link in six.iteritems(key_link_dict):
       if link._type == "layout":
-        layout_path = FILENAME_FORMAT.format(step_name=step_name, keyid=key_id)
+        layout_path = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
         layout_key_paths = ["bob.pub"]
         return_link = in_toto_verify(layout_path, layout_key_paths)
-        key_link_dict[key_id] = return_link
-  print chain_link_dict
+        return_link.signatures = link.signatures
+        key_link_dict[keyid] = return_link
   return chain_link_dict
 
 def get_return_link_file(layout, reduced_chain_link_dict):
@@ -1110,7 +1110,7 @@ def in_toto_verify(layout_path, layout_key_paths):
   verify_all_steps_signatures(layout, chain_link_dict)
 
   log.doing("Verifying delegations...")
-  chain_link_dict = verify_delegations(chain_link_dict)
+  chain_link_dict = verify_delegations(layout, chain_link_dict)
 
   log.doing("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
