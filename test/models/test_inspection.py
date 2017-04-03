@@ -95,7 +95,7 @@ class TestInspectionValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    self.inspection.run = "somecommand"
+    self.inspection.run = ["somecommand"]
     self.inspection._validate_run()
     self.inspection.validate()
 

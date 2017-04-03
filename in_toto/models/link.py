@@ -66,7 +66,7 @@ class Link(models__common.Signable):
   materials = attr.ib(default=attr.Factory(dict))
   products = attr.ib(default=attr.Factory(dict))
   byproducts = attr.ib(default=attr.Factory(dict))
-  command = attr.ib("")
+  command = attr.ib(default=attr.Factory(list))
   return_value = attr.ib(None)
 
   def dump(self, filename=False, key=False):

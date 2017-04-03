@@ -32,6 +32,7 @@
 import json
 import attr
 import six
+import shlex
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -254,17 +255,27 @@ class Step(models__common.Metablock):
   material_matchrules = attr.ib(default=attr.Factory(list))
   product_matchrules = attr.ib(default=attr.Factory(list))
   pubkeys = attr.ib(default=attr.Factory(list))
-  expected_command = attr.ib("")
+  expected_command = attr.ib(default=attr.Factory(list))
   threshold = attr.ib(default=1)
 
 
   @staticmethod
   def read(data):
+    # Accept expected command as string or list, if it is a string we split it using
+    # shell like syntax.
+    data_expected_cmd = data.get("expected_command")
+    if data_expected_cmd:
+      if not isinstance(data_expected_cmd, list):
+        data_expected_cmd = shlex.split(data_expected_cmd)
+
+    else:
+      data_expected_cmd = []
+
     return Step(name=data.get("name"),
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"),
         pubkeys=data.get("pubkeys"),
-        expected_command=data.get("expected_command"),
+        expected_command=data_expected_cmd,
         threshold=data.get("threshold"))
 
 
@@ -310,7 +321,7 @@ class Step(models__common.Metablock):
 
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
-    if type(self.expected_command) != str:
+    if type(self.expected_command) != list:
       raise securesystemslib.exceptions.FormatError(
           "The expected command field is malformed!")
 
@@ -337,12 +348,22 @@ class Inspection(models__common.Metablock):
   name = attr.ib()
   material_matchrules = attr.ib(default=attr.Factory(list))
   product_matchrules = attr.ib(default=attr.Factory(list))
-  run = attr.ib("")
+  run = attr.ib(default=attr.Factory(list))
 
 
   @staticmethod
   def read(data):
-    return Inspection(name=data.get("name"), run=data.get("run"),
+    # Accept run as string or list, if it is a string we split it using
+    # shell like syntax.
+    data_run = data.get("run")
+    if data_run:
+      if not isinstance(data_run, list):
+        data_run = shlex.split(data_run)
+
+    else:
+      data_run = []
+
+    return Inspection(name=data.get("name"), run=data_run,
         material_matchrules=data.get("material_matchrules"),
         product_matchrules=data.get("product_matchrules"))
 
@@ -372,6 +393,6 @@ class Inspection(models__common.Metablock):
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
-    if type(self.run) != str:
+    if type(self.run) != list:
       raise securesystemslib.exceptions.FormatError(
           "The run field is malformed!")

@@ -265,8 +265,8 @@ def execute_link(link_cmd_args, record_byproducts):
 
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
 
-def create_link_metadata(link_name, materials_dict={}, products_dict={},
-    link_cmd_args="", byproducts={}, return_value=None):
+def create_link_metadata(link_name, materials_dict=None, products_dict=None,
+    link_cmd_args=None, byproducts=None, return_value=None):
   """
   <Purpose>
     Takes the state of the materials (before link command execution), the state
@@ -303,6 +303,18 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
   <Returns>
     - A Link metadata object
   """
+  if not materials_dict:
+    materials_dict = {}
+
+  if not products_dict:
+    products_dict = {}
+
+  if not link_cmd_args:
+    link_cmd_args = []
+
+  if not byproducts:
+    byproducts = {}
+
   link_dict = {
     "name" : link_name,
     "materials" : materials_dict,
@@ -312,7 +324,7 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
     "return_value" : return_value
   }
 
-  return  in_toto.models.link.Link.read(link_dict)
+  return in_toto.models.link.Link.read(link_dict)
 
 
 def in_toto_run(name, material_list, product_list,

@@ -131,7 +131,7 @@ class TestStepValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
-    self.step.expected_command = "somecommand"
+    self.step.expected_command = ["somecommand"]
     self.step._validate_expected_command()
     self.step.validate()
 
