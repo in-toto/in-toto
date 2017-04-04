@@ -1,5 +1,6 @@
 import os
 import sys
+import shlex
 import subprocess
 import argparse
 import time
@@ -14,8 +15,8 @@ def prompt_key(prompt):
   inp = False
   while inp != "":
     try:
-      inp = raw_input("\n%s -- press any key to continue" % prompt)
-    except Exception, e:
+      inp = raw_input("\n{} -- press any key to continue".format(prompt))
+    except Exception:
       pass
 
 def supply_chain():
@@ -24,7 +25,7 @@ def supply_chain():
   os.chdir("owner_alice")
   create_layout_cmd = "python create_layout.py"
   print create_layout_cmd
-  subprocess.call(create_layout_cmd.split())
+  subprocess.call(shlex.split(create_layout_cmd))
 
   prompt_key("Clone source code (Bob)")
   os.chdir("../functionary_bob")
@@ -32,7 +33,7 @@ def supply_chain():
                     " --step-name clone --products demo-project/foo.py"
                     " --key bob -- git clone https://github.com/in-toto/demo-project.git")
   print clone_cmd
-  subprocess.call(clone_cmd.split())
+  subprocess.call(shlex.split(clone_cmd))
 
   prompt_key("Update version number (Bob)")
   update_version_start_cmd = ("in-toto-record"
@@ -42,7 +43,7 @@ def supply_chain():
                     " --materials demo-project/foo.py")
 
   print update_version_start_cmd
-  subprocess.call(update_version_start_cmd.split())
+  subprocess.call(shlex.split(update_version_start_cmd))
 
   update_version = "echo 'VERSION = \"foo-v1\"\n\nprint(\"Hello in-toto\")\n' > demo-project/foo.py"
   print update_version
@@ -55,7 +56,7 @@ def supply_chain():
                     " --products demo-project/foo.py")
 
   print update_version_stop_cmd
-  subprocess.call(update_version_stop_cmd.split())
+  subprocess.call(shlex.split(update_version_stop_cmd))
 
   copytree("demo-project", "../functionary_carl/demo-project")
 
@@ -67,7 +68,7 @@ def supply_chain():
                  " --key carl --record-byproducts"
                  " -- tar --exclude '.git' -zcvf demo-project.tar.gz demo-project")
   print package_cmd
-  subprocess.call(package_cmd.split())
+  subprocess.call(shlex.split(package_cmd))
 
 
   prompt_key("Create final product")
@@ -86,7 +87,7 @@ def supply_chain():
                 " --layout root.layout"
                 " --layout-key alice.pub")
   print verify_cmd
-  retval = subprocess.call(verify_cmd.split())
+  retval = subprocess.call(shlex.split(verify_cmd))
   print "Return value: " + str(retval)
 
 
@@ -107,7 +108,7 @@ def supply_chain():
                  " --key carl --record-byproducts"
                  " -- tar --exclude '.git' -zcvf demo-project.tar.gz demo-project")
   print package_cmd
-  subprocess.call(package_cmd.split())
+  subprocess.call(shlex.split(package_cmd))
 
 
   prompt_key("Create final product")
@@ -127,7 +128,7 @@ def supply_chain():
                 " --layout-key alice.pub")
 
   print verify_cmd
-  retval = subprocess.call(verify_cmd.split())
+  retval = subprocess.call(shlex.split(verify_cmd))
   print "Return value: " + str(retval)
 
 

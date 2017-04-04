@@ -146,16 +146,19 @@ class Layout(models__common.Signable):
     for step in self.steps:
       key_link_dict = {}
       for keyid in step.pubkeys:
+        filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
         try:
-          link = models__link.Link.read_from_file(FILENAME_FORMAT.format(
-              step_name=step.name, keyid=keyid))
+          with open(filename, 'r') as fp:
+            file = json.load(fp)
         except IOError as e:
           pass
-        except Exception as e:
-          link = Layout.read_from_file(filename=FILENAME_FORMAT.format(
-              step_name=step.name, keyid=keyid))
-          key_link_dict[keyid] = link
         else:
+          if file["_type"] == "Link":
+            link = models__link.Link.read(file)
+          elif file["_type"] == "layout":
+            link = Layout.read(file)
+          else:
+            raise in_toto.exceptions.LinkNotFoundError("Invalid format".format())
           key_link_dict[keyid] = link
       if len(key_link_dict) < step.threshold:
         print len(key_link_dict)

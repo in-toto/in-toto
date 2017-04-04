@@ -1019,10 +1019,11 @@ def verify_delegations(layout, chain_link_dict):
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
     for keyid, link in six.iteritems(key_link_dict):
       if link._type == "layout":
-        layout_path = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
-        layout_key_paths = ["bob.pub"]
-        return_link = in_toto_verify(layout_path, layout_key_paths)
-        return_link.signatures = link.signatures
+        layout_key_dict = {}
+        for key, key_obj in six.iteritems(layout.keys):
+          if key == keyid:
+            layout_key_dict[key] = key_obj
+        return_link = in_toto_verify(layout, layout_key_dict)
         key_link_dict[keyid] = return_link
   return chain_link_dict
 
@@ -1040,7 +1041,7 @@ def get_return_link_file(layout, reduced_chain_link_dict):
       return_link.return_value = link.return_value
   return return_link
 
-def in_toto_verify(layout_path, layout_key_paths):
+def in_toto_verify(layout, layout_key_dict):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1087,15 +1088,6 @@ def in_toto_verify(layout_path, layout_key_paths):
     None.
 
   """
-
-  log.doing("Verifying software supply chain...")
-
-  log.doing("Reading layout...")
-  layout = in_toto.models.layout.Layout.read_from_file(layout_path)
-
-  log.doing("Reading layout key(s)...")
-  layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-      layout_key_paths)
 
   log.doing("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
