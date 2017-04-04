@@ -1118,7 +1118,7 @@ def in_toto_verify(layout, layout_key_dict):
 
   """
 
-  log.doing("Verifying layout signatures...")
+  log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
   log.info("Verifying layout expiration... ")
@@ -1130,10 +1130,10 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
 
-  log.doing("Verifying delegations...")
+  log.info("Verifying delegations...")
   chain_link_dict = verify_delegations(layout, chain_link_dict)
 
-  log.doing("Verifying alignment of reported commands...")
+  log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
   log.info("Executing Inspection commands...")
@@ -1154,7 +1154,7 @@ def in_toto_verify(layout, layout_key_dict):
   verify_all_item_rules(layout.inspect, link_dict)
 
   # We made it this far without exception that means, verification passed.
-  log.passing("Passing verification")
+  log.pass_verification("The software product passed all verification.")
 
   return_link = get_return_link_file(layout, reduced_chain_link_dict)
   return return_link

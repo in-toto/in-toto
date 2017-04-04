@@ -27,7 +27,7 @@
 import sys
 import argparse
 
-from in_toto import log
+import in_toto.log as log
 import in_toto.models.layout
 import in_toto.util
 from in_toto import verifylib
@@ -56,12 +56,12 @@ def in_toto_verify(layout_path, layout_key_paths):
 
   """
   try:
-    log.doing("Verifying software supply chain...")
+    log.info("Verifying software supply chain...")
 
-    log.doing("Reading layout...")
+    log.info("Reading layout...")
     layout = in_toto.models.layout.Layout.read_from_file(layout_path)
 
-    log.doing("Reading layout key(s)...")
+    log.info("Reading layout key(s)...")
     layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
         layout_key_paths)
 
