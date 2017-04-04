@@ -27,10 +27,10 @@
 import sys
 import argparse
 
-from in_toto import verifylib
 from in_toto import log
 import in_toto.models.layout
 import in_toto.util
+from in_toto import verifylib
 
 def in_toto_verify(layout_path, layout_key_paths):
   """
@@ -67,7 +67,7 @@ def in_toto_verify(layout_path, layout_key_paths):
 
     verifylib.in_toto_verify(layout, layout_key_dict)
   except Exception as e:
-    log.error("in in-toto verify - {}".format(e))
+    log.fail_verification("{0} - {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 def main():
@@ -97,7 +97,7 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.doing()` in the library
+  # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 

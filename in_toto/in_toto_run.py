@@ -130,7 +130,7 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.doing()` in the library
+  # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 

@@ -27,28 +27,28 @@
 import sys
 import os
 import tempfile
-import logging
 import fnmatch
+
+import in_toto.settings
+from in_toto import log
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+
+import securesystemslib.formats
+import securesystemslib.hash
+import securesystemslib.exceptions
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
 if os.name == 'posix' and sys.version_info[0] < 3:
   try:
     import subprocess32 as subprocess
-  except Exception, e:
-    logging.warning("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
+  except ImportError:
+    log.warn("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
         " install and use the much more recent subprocess32")
     import subprocess
 else:
   import subprocess
 
-import in_toto.settings
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
-import in_toto.log as log
-
-import securesystemslib.formats
-import securesystemslib.hash
-import securesystemslib.exceptions
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
@@ -151,7 +151,7 @@ def record_artifacts_as_dict(artifacts):
         in_toto.settings.ARTIFACT_EXCLUDES):
 
     if not os.path.exists(artifact):
-      log.warning("path: {} does not exist, skipping..".format(artifact))
+      log.warn("path: {} does not exist, skipping..".format(artifact))
       continue
 
     if os.path.isfile(artifact):
@@ -182,7 +182,14 @@ def record_artifacts_as_dict(artifacts):
         filepaths = []
         for filename in files:
           norm_filepath = os.path.normpath(os.path.join(root, filename))
-          filepaths.append(norm_filepath)
+
+          # `os.walk` could also list dead symlinks, which would
+          # result in an error later when trying to read the file
+          if os.path.isfile(norm_filepath):
+            filepaths.append(norm_filepath)
+          else:
+            log.warn("File '{}' appears to be a broken symlink. Skipping..."
+                .format(norm_filepath))
 
         # Apply exclude patterns on normalized filepaths and
         # store each remaining normalized filepath with it's files hash to
@@ -258,8 +265,8 @@ def execute_link(link_cmd_args, record_byproducts):
 
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
 
-def create_link_metadata(link_name, materials_dict={}, products_dict={},
-    link_cmd_args="", byproducts={}, return_value=None):
+def create_link_metadata(link_name, materials_dict=None, products_dict=None,
+    link_cmd_args=None, byproducts=None, return_value=None):
   """
   <Purpose>
     Takes the state of the materials (before link command execution), the state
@@ -296,6 +303,18 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
   <Returns>
     - A Link metadata object
   """
+  if not materials_dict:
+    materials_dict = {}
+
+  if not products_dict:
+    products_dict = {}
+
+  if not link_cmd_args:
+    link_cmd_args = []
+
+  if not byproducts:
+    byproducts = {}
+
   link_dict = {
     "name" : link_name,
     "materials" : materials_dict,
@@ -305,7 +324,7 @@ def create_link_metadata(link_name, materials_dict={}, products_dict={},
     "return_value" : return_value
   }
 
-  return  in_toto.models.link.Link.read(link_dict)
+  return in_toto.models.link.Link.read(link_dict)
 
 
 def in_toto_run(name, material_list, product_list,
@@ -348,7 +367,7 @@ def in_toto_run(name, material_list, product_list,
     Newly created Link object
   """
 
-  log.doing("Running '{}'...".format(name))
+  log.info("Running '{}'...".format(name))
 
   # If a key is passed, it has to match the format
   if key:
@@ -359,25 +378,25 @@ def in_toto_run(name, material_list, product_list,
           "Signing key needs to be a private key.")
 
   if material_list:
-    log.doing("Recording materials '{}'...".format(", ".join(material_list)))
+    log.info("Recording materials '{}'...".format(", ".join(material_list)))
   materials_dict = record_artifacts_as_dict(material_list)
 
-  log.doing("Running command '{}'...".format(" ".join(link_cmd_args)))
+  log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
   byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
 
   if product_list:
-    log.doing("Recording products '{}'...".format(", ".join(product_list)))
+    log.info("Recording products '{}'...".format(", ".join(product_list)))
   products_dict = record_artifacts_as_dict(product_list)
 
-  log.doing("Creating link metadata...")
+  log.info("Creating link metadata...")
   link = create_link_metadata(name, materials_dict, products_dict,
       link_cmd_args, byproducts, return_value)
 
   if key:
-    log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
+    log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
     link.sign(key)
 
-    log.doing("Storing link metadata to '{}'...".format(
+    log.info("Storing link metadata to '{}'...".format(
         FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])))
     link.dump(key=key)
 
@@ -414,19 +433,19 @@ def in_toto_record_start(step_name, key, material_list):
   """
 
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  log.doing("Start recording '{}'...".format(step_name))
+  log.info("Start recording '{}'...".format(step_name))
 
   if material_list:
-    log.doing("Recording materials '{}'...".format(", ".join(material_list)))
+    log.info("Recording materials '{}'...".format(", ".join(material_list)))
   materials_dict = record_artifacts_as_dict(material_list)
 
-  log.doing("Creating preliminary link metadata...")
+  log.info("Creating preliminary link metadata...")
   link = create_link_metadata(step_name, materials_dict)
 
-  log.doing("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
+  log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
   link.sign(key)
 
-  log.doing("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
+  log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link.dump(filename=unfinished_fn)
 
 
@@ -462,27 +481,27 @@ def in_toto_record_stop(step_name, key, product_list):
   """
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  log.doing("Stop recording '{}'...".format(step_name))
+  log.info("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
-  log.doing("Loading preliminary link metadata '{}'...".format(unfinished_fn))
+  log.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
   link = in_toto.models.link.Link.read_from_file(unfinished_fn)
 
   # The file must have been signed by the same key
-  log.doing("Verifying preliminary link signature...")
+  log.info("Verifying preliminary link signature...")
   keydict = {key["keyid"] : key}
   link.verify_signatures(keydict)
 
   if product_list:
-    log.doing("Recording products '{}'...".format(", ".join(product_list)))
+    log.info("Recording products '{}'...".format(", ".join(product_list)))
   link.products = record_artifacts_as_dict(product_list)
 
-  log.doing("Updating signature with key '{:.8}...'...".format(key["keyid"]))
+  log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
   link.signatures = []
   link.sign(key)
 
-  log.doing("Storing link metadata to '{}'...".format(fn))
+  log.info("Storing link metadata to '{}'...".format(fn))
   link.dump(key=key)
 
-  log.doing("Removing unfinished link metadata '{}'...".format(fn))
+  log.info("Removing unfinished link metadata '{}'...".format(fn))
   os.remove(unfinished_fn)

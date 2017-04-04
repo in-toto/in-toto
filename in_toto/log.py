@@ -20,22 +20,22 @@ import in_toto.settings
 
 logging.basicConfig(level=in_toto.settings.LOG_LEVEL, format='%(message)s')
 
-def doing(msg):
-  """Logs things that are currently being done """
-  logging.info("DOING:   %s" % str(msg))
+def info(msg):
+  """Verbose user feedback. """
+  logging.info("{}".format(msg))
 
-def warning(msg):
-  """Logs things the user should be warned about """
-  logging.warn("WARNING: %s" % str(msg))
-
-def passing(msg):
-  """Logs verification routines that pass """
-  logging.critical("PASSING: %s" % str(msg))
-
-def failing(msg):
-  """Logs verification routines that fail """
-  logging.critical("FAILING: %s" % str(msg))
+def warn(msg):
+  """Verbose user warning. """
+  logging.warn("WARNING: {}".format(msg))
 
 def error(msg):
-  """Logs program failures """
-  logging.error("EXCEPTION: %s" % str(msg))
+  """Prints unexpected errors """
+  logging.error("ERROR: {}".format(msg))
+
+def pass_verification(msg):
+  """Prints passing verification routines. """
+  logging.critical("PASSING: {}".format(msg))
+
+def fail_verification(msg):
+  """Prints failing verification. """
+  logging.critical("FAILING: {}".format(msg))
