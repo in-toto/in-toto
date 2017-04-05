@@ -240,16 +240,17 @@ def verify_all_steps_signatures(layout, chain_link_dict):
 
   """
   for step in layout.steps:
-    keys_dict = {}
-
     # Find the according link for this step
     key_link_dict = chain_link_dict[step.name]
 
-    # Create the dictionary of keys for this step
-    for pubkeyid in step.pubkeys:
-      keys_dict[pubkeyid] = layout.keys[pubkeyid]
-
     for keyid, link in six.iteritems(key_link_dict):
+      keys_dict = {}
+
+      # Create the dictionary of keys for this step
+      for pubkeyid in step.pubkeys:
+          if pubkeyid == keyid:
+            keys_dict[pubkeyid] = layout.keys[pubkeyid]
+
       log.info("Verifying signature(s) for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
