@@ -162,8 +162,6 @@ class Layout(models__common.Signable):
             raise in_toto.exceptions.LinkNotFoundError("Invalid format".format())
           key_link_dict[keyid] = link
       if len(key_link_dict) < step.threshold:
-        print len(key_link_dict)
-        print step.threshold
         raise in_toto.exceptions.LinkNotFoundError("Step not"
             " performed by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
