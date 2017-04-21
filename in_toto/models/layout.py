@@ -93,7 +93,9 @@ class Layout(models__common.Signable):
 
     # Assign a default expiration (on month) if not specified
     self.expires = kwargs.get("expires", (datetime.today() +
-        relativedelta(months=1)).isoformat() + 'Z')
+        relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    self.validate()
 
   def dump(self, filename='root.layout'):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -281,6 +283,7 @@ class Step(models__common.Metablock):
 
     self.threshold = kwargs.get("threshold", 1)
 
+    self.validate()
 
   @staticmethod
   def read(data):
@@ -375,6 +378,7 @@ class Inspection(models__common.Metablock):
     else:
       self.run = []
 
+    self.validate()
 
   @staticmethod
   def read(data):

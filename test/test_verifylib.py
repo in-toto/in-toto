@@ -907,8 +907,8 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump expired layout
     layout = copy.deepcopy(layout_template)
-    layout.expires = (datetime.today()
-       + relativedelta(months=-1)).isoformat() + "Z"
+    layout.expires = (datetime.today() +
+        relativedelta(months=-1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     layout.sign(alice)
     layout.dump(self.layout_expired_path)
 
