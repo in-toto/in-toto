@@ -47,7 +47,7 @@ import securesystemslib.formats
 # import validators
 from . import common as models__common
 from . import link as models__link
-@attr.s(repr=False)
+@attr.s(repr=False, init=False)
 class Layout(models__common.Signable):
   """
   The layout specifies each of the different steps and the requirements for
@@ -78,13 +78,24 @@ class Layout(models__common.Signable):
     expires:
         the expiration date of a layout
   """
+  _type = attr.ib()
+  steps = attr.ib()
+  inspect = attr.ib()
+  keys = attr.ib()
+  expires = attr.ib()
 
-  _type = attr.ib("layout", init=False)
-  steps = attr.ib(default=attr.Factory(list))
-  inspect = attr.ib(default=attr.Factory(list))
-  keys = attr.ib(default=attr.Factory(dict))
-  expires = attr.ib("")
+  def __init__(self, **kwargs):
+    super(Layout, self).__init__(**kwargs)
+    self._type = "layout"
+    self.steps = kwargs.get("steps", [])
+    self.inspect = kwargs.get("inspect", [])
+    self.keys = kwargs.get("keys", {})
 
+    # Assign a default expiration (on month) if not specified
+    self.expires = kwargs.get("expires", (datetime.today() +
+        relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    self.validate()
 
   def dump(self, filename='root.layout'):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -103,23 +114,17 @@ class Layout(models__common.Signable):
   @staticmethod
   def read(data):
     """Static method to instantiate a new Layout from a Python dictionary """
-    layout = Layout()
-    tmp_steps = []
-    tmp_inspect = []
-
+    steps = []
     for step_data in data.get("steps"):
-      tmp_steps.append(Step.read(step_data))
+      steps.append(Step.read(step_data))
+    data["steps"] = steps
+
+    inspections = []
     for inspect_data in data.get("inspect"):
-      tmp_inspect.append(Inspection.read(inspect_data))
+      inspections.append(Inspection.read(inspect_data))
+    data["inspect"] = inspections
 
-    expires = data.get("expires")
-    if not expires:
-      # Set a month from now with Zulu offset as expiration date default
-      expires = (datetime.today() + relativedelta(months=1)).isoformat() + 'Z'
-
-    return Layout(steps=tmp_steps, inspect=tmp_inspect,
-        keys=data.get("keys"), expires=expires,
-        signatures=data.get("signatures"))
+    return Layout(**data)
 
   def import_step_metadata_from_files_as_dict(self):
     """
@@ -224,7 +229,7 @@ class Layout(models__common.Signable):
             "There is a repeated name in the steps! {}".format(inspection.name))
       names_seen.add(inspection.name)
 
-@attr.s(repr=False)
+@attr.s(repr=False, init=False)
 class Step(models__common.Metablock):
   """
   Represents a step of the supply chain performed by a functionary.
@@ -250,34 +255,39 @@ class Step(models__common.Metablock):
         the least number of functionaries expected to perform this step
 
   """
-  _type = attr.ib("step", init=False)
+  _type = attr.ib()
   name = attr.ib()
-  material_matchrules = attr.ib(default=attr.Factory(list))
-  product_matchrules = attr.ib(default=attr.Factory(list))
-  pubkeys = attr.ib(default=attr.Factory(list))
-  expected_command = attr.ib(default=attr.Factory(list))
-  threshold = attr.ib(default=1)
+  material_matchrules = attr.ib()
+  product_matchrules = attr.ib()
+  pubkeys = attr.ib()
+  expected_command = attr.ib()
+  threshold = attr.ib()
 
+  def __init__(self, **kwargs):
+    super(Step, self).__init__()
+    self._type = "step"
+    self.name = kwargs.get("name")
+    self.material_matchrules = kwargs.get("material_matchrules", [])
+    self.product_matchrules = kwargs.get("product_matchrules", [])
+    self.pubkeys = kwargs.get("pubkeys", [])
+
+    # Accept expected command as string or list, if it is a string we split it
+    # using shell like syntax.
+    self.expected_command = kwargs.get("expected_command")
+    if self.expected_command:
+      if not isinstance(self.expected_command, list):
+        self.expected_command = shlex.split(self.expected_command)
+
+    else:
+      self.expected_command = []
+
+    self.threshold = kwargs.get("threshold", 1)
+
+    self.validate()
 
   @staticmethod
   def read(data):
-    # Accept expected command as string or list, if it is a string we split it using
-    # shell like syntax.
-    data_expected_cmd = data.get("expected_command")
-    if data_expected_cmd:
-      if not isinstance(data_expected_cmd, list):
-        data_expected_cmd = shlex.split(data_expected_cmd)
-
-    else:
-      data_expected_cmd = []
-
-    return Step(name=data.get("name"),
-        material_matchrules=data.get("material_matchrules"),
-        product_matchrules=data.get("product_matchrules"),
-        pubkeys=data.get("pubkeys"),
-        expected_command=data_expected_cmd,
-        threshold=data.get("threshold"))
-
+    return Step(**data)
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to step."""
@@ -325,7 +335,9 @@ class Step(models__common.Metablock):
       raise securesystemslib.exceptions.FormatError(
           "The expected command field is malformed!")
 
-@attr.s(repr=False)
+
+
+@attr.s(repr=False, init=False)
 class Inspection(models__common.Metablock):
   """
   Represents an inspection which performs a command during layout verification.
@@ -343,29 +355,34 @@ class Inspection(models__common.Metablock):
         the command to execute during layout verification
 
   """
-
-  _type = attr.ib("inspection", init=False)
+  _type = attr.ib()
   name = attr.ib()
-  material_matchrules = attr.ib(default=attr.Factory(list))
-  product_matchrules = attr.ib(default=attr.Factory(list))
-  run = attr.ib(default=attr.Factory(list))
+  material_matchrules = attr.ib()
+  product_matchrules = attr.ib()
+  run = attr.ib()
 
+  def __init__(self, **kwargs):
+    super(Inspection, self).__init__()
+
+    self._type = "inspection"
+    self.name = kwargs.get("name")
+    self.material_matchrules = kwargs.get("material_matchrules", [])
+    self.product_matchrules = kwargs.get("product_matchrules", [])
+
+    # Accept run command as string or list, if it is a string we split it
+    # using shell like syntax.
+    self.run = kwargs.get("run")
+    if self.run:
+      if not isinstance(self.run, list):
+        self.run = shlex.split(self.run)
+    else:
+      self.run = []
+
+    self.validate()
 
   @staticmethod
   def read(data):
-    # Accept run as string or list, if it is a string we split it using
-    # shell like syntax.
-    data_run = data.get("run")
-    if data_run:
-      if not isinstance(data_run, list):
-        data_run = shlex.split(data_run)
-
-    else:
-      data_run = []
-
-    return Inspection(name=data.get("name"), run=data_run,
-        material_matchrules=data.get("material_matchrules"),
-        product_matchrules=data.get("product_matchrules"))
+    return Inspection(**data)
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to inspection."""

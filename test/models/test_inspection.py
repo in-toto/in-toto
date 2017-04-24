@@ -26,7 +26,7 @@ class TestInspectionValidator(unittest.TestCase):
 
   def setUp(self):
     """Populate a base layout that we can use."""
-    self.inspection = Inspection("some-inspection")
+    self.inspection = Inspection(name="some-inspection")
 
   def test_wrong_type(self):
     """Test the type field within Validate()."""

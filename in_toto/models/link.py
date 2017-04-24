@@ -26,7 +26,7 @@ import securesystemslib.formats
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
-@attr.s(repr=False)
+@attr.s(repr=False, init=False)
 class Link(models__common.Signable):
   """
   A link is the metadata representation of a supply chain step performed
@@ -60,14 +60,25 @@ class Link(models__common.Signable):
     return_value:
         the return value of the executed command
    """
+  _type = attr.ib()
+  name = attr.ib()
+  materials = attr.ib()
+  products = attr.ib()
+  byproducts = attr.ib()
+  command = attr.ib()
+  return_value = attr.ib()
 
-  _type = attr.ib("Link", init=False)
-  name = attr.ib("")
-  materials = attr.ib(default=attr.Factory(dict))
-  products = attr.ib(default=attr.Factory(dict))
-  byproducts = attr.ib(default=attr.Factory(dict))
-  command = attr.ib(default=attr.Factory(list))
-  return_value = attr.ib(None)
+  def __init__(self, **kwargs):
+    super(Link, self).__init__(**kwargs)
+
+    self._type = "Link"
+    self.name = kwargs.get("name")
+    self.materials = kwargs.get("materials", {})
+    self.products = kwargs.get("products", {})
+    self.byproducts = kwargs.get("byproducts", {})
+    self.command = kwargs.get("command", [])
+    self.return_value = kwargs.get("return_value", None)
+
 
   def dump(self, filename=False, key=False):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -97,8 +108,4 @@ class Link(models__common.Signable):
   @staticmethod
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
-    # XXX LP: ugly workaround for attrs underscore strip
-    # but _type is exempted from __init__ anyway
-    if data.get("_type"):
-      data.pop(u"_type")
     return Link(**data)

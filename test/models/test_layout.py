@@ -108,14 +108,14 @@ class TestLayoutValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
-    test_step = Step("this-is-a-step")
+    test_step = Step(name="this-is-a-step")
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       test_step.material_matchrules = ['this is a malformed step']
       self.layout.steps = [test_step]
       self.layout.validate()
 
 
-    test_step = Step("this-is-a-step")
+    test_step = Step(name="this-is-a-step")
     test_step.material_matchrules = [["CREATE", "foo"]]
     test_step.threshold = 1
     self.layout.steps = [test_step]
@@ -128,13 +128,13 @@ class TestLayoutValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
-    test_inspection = Inspection("this-is-a-step")
+    test_inspection = Inspection(name="this-is-a-step")
     test_inspection.material_matchrules = ['this is a malformed matchrule']
     self.layout.inspect = [test_inspection]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
-    test_inspection = Inspection("this-is-a-step")
+    test_inspection = Inspection(name="this-is-a-step")
     test_inspection.material_matchrules = [["CREATE", "foo"]]
     self.layout.inspect = [test_inspection]
     self.layout.validate()
@@ -142,17 +142,17 @@ class TestLayoutValidator(unittest.TestCase):
   def test_repeated_step_names(self):
     """Check that only unique names exist in the steps and inspect lists"""
 
-    self.layout.steps = [Step("name"), Step("name")]
+    self.layout.steps = [Step(name="name"), Step(name="name")]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
-    self.layout.steps = [Step("name")]
-    self.layout.inspect = [Inspection("name")]
+    self.layout.steps = [Step(name="name")]
+    self.layout.inspect = [Inspection(name="name")]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
-    self.layout.step = [Step("name"), Step("othername")]
-    self.layout.inspect = [Inspection("thirdname")]
+    self.layout.step = [Step(name="name"), Step(name="othername")]
+    self.layout.inspect = [Inspection(name="thirdname")]
     self.layout.validate()
 
 if __name__ == '__main__':

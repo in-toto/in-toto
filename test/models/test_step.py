@@ -28,7 +28,7 @@ class TestStepValidator(unittest.TestCase):
 
   def setUp(self):
     """Populate a base layout that we can use."""
-    self.step = Step("this-step")
+    self.step = Step(name="this-step")
 
   def test_wrong_type(self):
     """Test the type field within Validate()."""
