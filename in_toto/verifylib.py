@@ -240,17 +240,16 @@ def verify_all_steps_signatures(layout, chain_link_dict):
 
   """
   for step in layout.steps:
+    keys_dict = {}
+
     # Find the according link for this step
     key_link_dict = chain_link_dict[step.name]
 
+    # Create the dictionary of keys for this step
+    for pubkeyid in step.pubkeys:
+      keys_dict[pubkeyid] = layout.keys[pubkeyid]
+
     for keyid, link in six.iteritems(key_link_dict):
-      keys_dict = {}
-
-      # Create the dictionary of keys for this step
-      for pubkeyid in step.pubkeys:
-          if pubkeyid == keyid:
-            keys_dict[pubkeyid] = layout.keys[pubkeyid]
-
       log.info("Verifying signature(s) for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
@@ -1046,29 +1045,101 @@ def reduce_chain_links(chain_link_dict):
   return reduced_chain_link_dict
 
 def verify_delegations(layout, chain_link_dict):
+  """
+  <Purpose>
+    Checks if any step has been delegated by the functionary, recurses into
+    the delegation and replaces the layout object in the chain_link_dict
+    by an equivalent link object
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    chain_link_dict:
+            A dictionary of key-link pair with step names as keys. For each
+            step name, there are one or more keyids and corresponding
+            link objects.
+
+  <Exceptions>
+    raises an Exception if verification of the delegated step fails.
+
+  <Side Effects>
+    None.
+
+  """
+
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
+
     for keyid, link in six.iteritems(key_link_dict):
+
+      # Extract keyid and link from the passed chain_link_dict
+      # Check if the link object is of type 'layout'
       if link._type == "layout":
         layout_key_dict = {}
+
         for key, key_obj in six.iteritems(layout.keys):
+
+          # Extract the key object from the passed layout
           if key == keyid:
+            # Extract the key object of the key corresponding
+            # to the link object
             layout_key_dict[key] = key_obj
-        return_link = in_toto_verify(layout, layout_key_dict)
+
+        # Make a recursive call to in_toto_verify with the
+        # layout and the extracted key object
+        return_link = in_toto_verify(link, layout_key_dict)
+
+        # Replace the layout object in the passed chain_link_dict
+        # with the link file returned by in-toto-verify
         key_link_dict[keyid] = return_link
+
   return chain_link_dict
 
 def get_return_link_file(layout, reduced_chain_link_dict):
+  """
+  <Purpose>
+    Merges the materials of the first step (as mentioned in the layout)
+    and the products of the last step and returns a new link file which
+    defines the entire software supply chain
+
+  <Arguments>
+    layout:
+            The layout specified by the project owner against which the
+            threshold will be verified.
+
+    reduced_chain_link_dict:
+            A dictionary of step-link pair with step names as keys.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  """
+
+  # Create a new link object to return
   return_link = in_toto.models.link.Link()
+
   for step_name, link in six.iteritems(reduced_chain_link_dict):
+    # Extract the step and its link from the passed chain_link_dict
+    # Check if this step is the first step in the layout
     if step_name == layout.steps[0].name:
+      # Copy the materials to the return link
       return_link.materials = link.materials
+
+    # Check if this step is the last step in the layout
     if step_name == layout.steps[len(layout.steps) - 1].name:
+      # Copy the products and other properties
+      # to the return link
       return_link._type = link._type
       return_link.name = link.name
       return_link.products = link.products
       return_link.byproducts = link.byproducts
       return_link.command = link.command
       return_link.return_value = link.return_value
+
   return return_link
 
 def in_toto_verify(layout, layout_key_dict):
@@ -1157,5 +1228,7 @@ def in_toto_verify(layout, layout_key_dict):
   # We made it this far without exception that means, verification passed.
   log.pass_verification("The software product passed all verification.")
 
+  # Since the verification is successful, return a link file which defines
+  # the entire software supply chain
   return_link = get_return_link_file(layout, reduced_chain_link_dict)
   return return_link
