@@ -68,12 +68,16 @@ class Metablock(object):
         if method[0].startswith("_validate_"):
           method[1]()
 
-@attr.s(repr=False)
+@attr.s(repr=False, init=False)
 class Signable(Metablock):
   """Objects with base class Signable can sign their payload (a canonical
   pretty printed JSON string not containing the signatures attribute) and store
   the signature (signature format: securesystemslib.formats.SIGNATURE_SCHEMA) """
-  signatures = attr.ib(default=attr.Factory(list))
+  signatures = attr.ib()
+
+  def __init__(self, **kwargs):
+    super(Signable, self).__init__()
+    self.signatures =  kwargs.get("signatures", [])
 
   @property
   def payload(self):
