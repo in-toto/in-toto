@@ -250,7 +250,7 @@ def verify_all_steps_signatures(layout, chain_link_dict):
       # filename is added to the dictionary which ensures
       # that the link has been signed by that key
       if keyid in step.pubkeys:
-            keys_dict[keyid] = layout.keys[keyid]
+        keys_dict[keyid] = layout.keys[keyid]
       else:
         raise AuthorizationError("Unauthorized Key! '{0}'".format(keyid))
 

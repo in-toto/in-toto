@@ -22,11 +22,9 @@ class BadReturnValueError(Error):
   pass
 
 class LinkNotFoundError(Error):
-  """Indicates that a ran command exited with non-int or non-zero return
-  value. """
+  """Indicates that a link file was not found. """
   pass
 
 class AuthorizationError(Error):
-  """Indicates that a ran command exited with non-int or non-zero return
-  value. """
+  """Indicates that the link was signed by a non-authorized functionary. """
   pass
