@@ -129,10 +129,12 @@ class Layout(models__common.Signable):
   def import_step_metadata_from_files_as_dict(self):
     """
     <Purpose>
-      Iteratively loads link metadata files for each Step of the Layout
-      from disk and returns a dict with Link names as keys and a dict
-      as values. The inner dict contains key_id as keys and link
-      objects as values.
+      Iteratively loads metadata files for each Step of the Layout
+      from disk, checks whether they are of type link or layout
+      and loads them with the according function.
+      Returns a dict with Link names as keys and a dict as values.
+      The inner dict contains key_id as keys and link objects
+      as values.
 
     <Arguments>
       None
@@ -149,27 +151,38 @@ class Layout(models__common.Signable):
 
     """
     step_link_dict = {}
+    # Iterate over all the steps in the layout
     for step in self.steps:
       key_link_dict = {}
+
       for keyid in step.pubkeys:
         filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+
+        # load the link object from the file
         try:
           with open(filename, 'r') as fp:
-            file = json.load(fp)
+            link_obj = json.load(fp)
+        # pass the IOError since all functionaries are
+        # not required to have performed the step (thresholds)
         except IOError as e:
           pass
         else:
-          if file["_type"] == "Link":
-            link = models__link.Link.read(file)
-          elif file["_type"] == "layout":
-            link = Layout.read(file)
+          # Check whether the object is of type link or layout
+          # and load it accordingly
+          if link_obj["_type"] == "Link":
+            link = models__link.Link.read(link_obj)
+          elif link_obj["_type"] == "layout":
+            link = Layout.read(link_obj)
           else:
             raise in_toto.exceptions.LinkNotFoundError("Invalid format".format())
           key_link_dict[keyid] = link
+
+      # Check if the step has been performed by enough number of functionaries
       if len(key_link_dict) < step.threshold:
         raise in_toto.exceptions.LinkNotFoundError("Step not"
             " performed by enough functionaries!".format())
       step_link_dict[step.name] = key_link_dict
+
     return step_link_dict
 
   def _validate_type(self):

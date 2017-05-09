@@ -1044,17 +1044,16 @@ def reduce_chain_links(chain_link_dict):
 
   return reduced_chain_link_dict
 
-def verify_delegations(layout, chain_link_dict):
+def verify_sublayouts(layout, chain_link_dict):
   """
   <Purpose>
     Checks if any step has been delegated by the functionary, recurses into
     the delegation and replaces the layout object in the chain_link_dict
-    by an equivalent link object
+    by an equivalent link object.
 
   <Arguments>
     layout:
-            The layout specified by the project owner against which the
-            threshold will be verified.
+            The layout specified by the project owner.
 
     chain_link_dict:
             A dictionary of key-link pair with step names as keys. For each
@@ -1067,6 +1066,10 @@ def verify_delegations(layout, chain_link_dict):
   <Side Effects>
     None.
 
+  <Returns>
+    A dictionary of key-link pair with step names as keys. For each
+    step name, there are one or more keyids and corresponding
+    link objects.
   """
 
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
@@ -1078,35 +1081,31 @@ def verify_delegations(layout, chain_link_dict):
       if link._type == "layout":
         layout_key_dict = {}
 
-        for key, key_obj in six.iteritems(layout.keys):
-
-          # Extract the key object from the passed layout
-          if key == keyid:
-            # Extract the key object of the key corresponding
-            # to the link object
-            layout_key_dict[key] = key_obj
+        # Retrieve the entire key object for the keyid
+        # corresponding to the link
+        layout_key_dict = {keyid: layout.keys.get(keyid)}
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        return_link = in_toto_verify(link, layout_key_dict)
+        summary_link = in_toto_verify(link, layout_key_dict)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
-        key_link_dict[keyid] = return_link
+        key_link_dict[keyid] = summary_link
 
   return chain_link_dict
 
-def get_return_link_file(layout, reduced_chain_link_dict):
+def get_summary_link(layout, reduced_chain_link_dict):
   """
   <Purpose>
     Merges the materials of the first step (as mentioned in the layout)
-    and the products of the last step and returns a new link file which
-    defines the entire software supply chain
+    and the products of the last step and returns a new link.
+    This link reports the materials and products and summarizes the
+    overall software supply chain.
 
   <Arguments>
     layout:
-            The layout specified by the project owner against which the
-            threshold will be verified.
+            The layout specified by the project owner.
 
     reduced_chain_link_dict:
             A dictionary of step-link pair with step names as keys.
@@ -1117,69 +1116,64 @@ def get_return_link_file(layout, reduced_chain_link_dict):
   <Side Effects>
     None.
 
+  <Returns>
+    A link which summarizes the materials and products of the overall
+    software supply chain.
   """
 
   # Create a new link object to return
-  return_link = in_toto.models.link.Link()
+  summary_link = in_toto.models.link.Link()
 
-  for step_name, link in six.iteritems(reduced_chain_link_dict):
-    # Extract the step and its link from the passed chain_link_dict
-    # Check if this step is the first step in the layout
-    if step_name == layout.steps[0].name:
-      # Copy the materials to the return link
-      return_link.materials = link.materials
+  first_step_link = reduced_chain_link_dict[layout.steps[0].name]
+  last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-    # Check if this step is the last step in the layout
-    if step_name == layout.steps[len(layout.steps) - 1].name:
-      # Copy the products and other properties
-      # to the return link
-      return_link._type = link._type
-      return_link.name = link.name
-      return_link.products = link.products
-      return_link.byproducts = link.byproducts
-      return_link.command = link.command
-      return_link.return_value = link.return_value
+  # Copy _type, name and materials from the first step link
+  summary_link.materials = first_step_link.materials
+  summary_link._type = first_step_link._type
+  summary_link.name = first_step_link.name
 
-  return return_link
+  # Copy products, byproducts and command from the last step link
+  # as these properties would be used by the subsequent steps
+  summary_link.products = last_step_link.products
+  summary_link.byproducts = last_step_link.byproducts
+  summary_link.command = last_step_link.command
+  summary_link.return_value = last_step_link.return_value
+
+  return summary_link
 
 def in_toto_verify(layout, layout_key_dict):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
     by performing the following actions:
-        1.  Load root layout as specified by 'layout_path'
-        2.  Load root layout signing key(s) (project owner public key(s)) as
-            specified by 'layout_key_paths'
-        3.  Verify layout signature(s)
-        4.  Verify layout expiration
-        5.  Load link metadata for every Step defined in the layout
+        1.  Verify layout signature(s)
+        2.  Verify layout expiration
+        3.  Load link metadata for every Step defined in the layout
             NOTE: in_toto_verify searches for link metadata files by their step
             name plus the extension '.link' in the current directory.
             E.g. a step of name 'foo' is expected to be found in the current
             directory at 'foo.link'.
-        6.  Verify functionary signature for every Link.
-        7.  Verify alignment of defined (Step) and reported (Link) commands
+        4.  Verify functionary signature for every Link.
+        5.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
-        8.  Execute Inspection commands
+        6.  Execute Inspection commands
             NOTE: Inspections, similar to Steps executed with 'in-toto-run',
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
-        9.  Verify rules defined in each Step's material_matchrules and
+        7.  Verify rules defined in each Step's material_matchrules and
             product_matchrules field.
-       10.  Verify rules defined in each Inspection's material_matchrules and
+        8.  Verify rules defined in each Inspection's material_matchrules and
             product_matchrules field.
 
     Note, this function will read the following files from disk:
-      - software supply chain layout
-      - project owner public key(s)
       - link metadata files
 
   <Arguments>
-    layout_path:
-            Path to the layout that is being verified.
+    layout:
+            Layout object that is being verified.
 
-    layout_key_paths:
-            List of paths to project owner public keys, used to verify the
+    layout_key_dict:
+            Dictionary of project owner public keys, used to verify the
             layout's signature.
 
   <Exceptions>
@@ -1188,12 +1182,15 @@ def in_toto_verify(layout, layout_key_dict):
   <Side Effects>
     None.
 
+  <Returns>
+    A link which summarizes the materials and products of the overall
+    software supply chain.
   """
 
   log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
-  log.info("Verifying layout expiration... ")
+  log.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
 
   log.info("Reading link metadata files...")
@@ -1202,8 +1199,8 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
 
-  log.info("Verifying delegations...")
-  chain_link_dict = verify_delegations(layout, chain_link_dict)
+  log.info("Verifying sublayouts...")
+  chain_link_dict = verify_sublayouts(layout, chain_link_dict)
 
   log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
@@ -1211,7 +1208,7 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
-  log.info("Verifying threshold contraints...")
+  log.info("Verifying threshold constraints...")
   verify_threshold_equality(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
@@ -1228,7 +1225,7 @@ def in_toto_verify(layout, layout_key_dict):
   # We made it this far without exception that means, verification passed.
   log.pass_verification("The software product passed all verification.")
 
-  # Since the verification is successful, return a link file which defines
+  # Since the verification is successful, return a link file which summarizes
   # the entire software supply chain
-  return_link = get_return_link_file(layout, reduced_chain_link_dict)
-  return return_link
+  summary_link = get_summary_link(layout, reduced_chain_link_dict)
+  return summary_link

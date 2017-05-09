@@ -35,7 +35,8 @@ from in_toto import verifylib
 def in_toto_verify(layout_path, layout_key_paths):
   """
   <Purpose>
-    Calls verifylib.in_toto_verify and handles exceptions
+    Loads the layout and the layout keys from the paths and
+    calls verifylib.in_toto_verify and handles exceptions.
 
   <Arguments>
     layout_path:
