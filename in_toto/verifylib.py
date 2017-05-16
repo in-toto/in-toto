@@ -240,16 +240,21 @@ def verify_all_steps_signatures(layout, chain_link_dict):
 
   """
   for step in layout.steps:
-    keys_dict = {}
-
     # Find the according link for this step
     key_link_dict = chain_link_dict[step.name]
 
-    # Create the dictionary of keys for this step
-    for pubkeyid in step.pubkeys:
-      keys_dict[pubkeyid] = layout.keys[pubkeyid]
-
     for keyid, link in six.iteritems(key_link_dict):
+      keys_dict = {}
+
+      # Create the dictionary of keys for this step
+      # Only one key with the matching keyid in the
+      # filename is added to the dictionary which ensures
+      # that the link has been signed by that key
+      if keyid in step.pubkeys:
+        keys_dict[keyid] = layout.keys[keyid]
+      else:
+        raise AuthorizationError("Unauthorized Key! '{0}'".format(keyid))
+
       log.info("Verifying signature(s) for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
@@ -983,15 +988,6 @@ def verify_threshold_equality(layout, chain_link_dict):
     # compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
       keys_dict = {keyid: layout.keys.get(keyid)}
-
-      # check if the authorized functionary has signed the link
-      try:
-        verify_link_signatures(link, keys_dict)
-      except SignatureVerificationError as e:
-        raise ThresholdVerificationError("Link '{0}' not signed by"
-            " authorized functionary!".format(
-                in_toto.models.link.FILENAME_FORMAT.format(
-                    step_name=step.name, keyid=keyid)))
 
       # compare their properties
       if (reference_link.materials != link.materials or
