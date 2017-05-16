@@ -1074,11 +1074,11 @@ def verify_sublayouts(layout, chain_link_dict):
 
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
 
+    # Extract keyid and link from the passed chain_link_dict
     for keyid, link in six.iteritems(key_link_dict):
 
-      # Extract keyid and link from the passed chain_link_dict
-      # Check if the link object is of type 'layout'
       if link._type == "layout":
+        log.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
         # Retrieve the entire key object for the keyid
@@ -1102,6 +1102,10 @@ def get_summary_link(layout, reduced_chain_link_dict):
     and the products of the last step and returns a new link.
     This link reports the materials and products and summarizes the
     overall software supply chain.
+    NOTE: The assumption is that the steps mentioned in the layout are
+    to be performed sequentially. So, the first step mentioned in the
+    layout denotes what comes into the supply chain and the last step
+    denotes what goes out.
 
   <Arguments>
     layout:
@@ -1127,13 +1131,10 @@ def get_summary_link(layout, reduced_chain_link_dict):
   first_step_link = reduced_chain_link_dict[layout.steps[0].name]
   last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-  # Copy _type, name and materials from the first step link
   summary_link.materials = first_step_link.materials
   summary_link._type = first_step_link._type
   summary_link.name = first_step_link.name
 
-  # Copy products, byproducts and command from the last step link
-  # as these properties would be used by the subsequent steps
   summary_link.products = last_step_link.products
   summary_link.byproducts = last_step_link.byproducts
   summary_link.command = last_step_link.command
@@ -1154,15 +1155,20 @@ def in_toto_verify(layout, layout_key_dict):
             E.g. a step of name 'foo' is expected to be found in the current
             directory at 'foo.link'.
         4.  Verify functionary signature for every Link.
-        5.  Verify alignment of defined (Step) and reported (Link) commands
+        5.  Verify sublayouts, if any.
+            NOTE: Replaces the layout object in the chain_link_dict with an
+            unsigned summary link. So, link signatures are verified before
+            this step and command alignments, thresholds and inspections are
+            verified later on.
+        6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
-        6.  Execute Inspection commands
+        7.  Execute Inspection commands
             NOTE: Inspections, similar to Steps executed with 'in-toto-run',
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
-        7.  Verify rules defined in each Step's material_matchrules and
+        8.  Verify rules defined in each Step's material_matchrules and
             product_matchrules field.
-        8.  Verify rules defined in each Inspection's material_matchrules and
+        9.  Verify rules defined in each Inspection's material_matchrules and
             product_matchrules field.
 
     Note, this function will read the following files from disk:

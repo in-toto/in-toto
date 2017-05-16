@@ -151,6 +151,7 @@ class Layout(models__common.Signable):
 
     """
     step_link_dict = {}
+
     # Iterate over all the steps in the layout
     for step in self.steps:
       key_link_dict = {}
@@ -162,11 +163,14 @@ class Layout(models__common.Signable):
         try:
           with open(filename, 'r') as fp:
             link_obj = json.load(fp)
-        # pass the IOError since all functionaries are
-        # not required to have performed the step (thresholds)
+
+        # We try to load a link for every authorized functionary, but don't fail
+        # if the file does not exist (authorized != required)
+        # FIXME: Should we really pass on IOError, or just skip inexistent links
         except IOError as e:
           pass
         else:
+
           # Check whether the object is of type link or layout
           # and load it accordingly
           if link_obj["_type"] == "Link":
@@ -181,6 +185,7 @@ class Layout(models__common.Signable):
       if len(key_link_dict) < step.threshold:
         raise in_toto.exceptions.LinkNotFoundError("Step not"
             " performed by enough functionaries!".format())
+
       step_link_dict[step.name] = key_link_dict
 
     return step_link_dict
