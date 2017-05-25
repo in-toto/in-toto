@@ -115,4 +115,4 @@ You can try in-toto by running the [demo application](https://github.com/in-toto
 The demo basically outlines three users viz., Alice (project owner), Bob (functionary) and Carl (functionary) and how in-toto helps to specify a project layout and verify that the layout has been followed in a correct manner.
 
 ## Specification
-You can read more about how in-toto works by taking a look at the [specification](https://github.com/toto-framework/toto-framework.github.io/raw/master/toto-spec.pdf).
+You can read more about how in-toto works by taking a look at the [specification](https://github.com/in-toto/docs/raw/master/in-toto-spec.pdf).
