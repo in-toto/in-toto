@@ -37,7 +37,7 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     _raise_on_bad_retval)
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
-from in_toto.util import import_rsa_key_from_file
+from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
 import in_toto.log as log
 
 import securesystemslib.exceptions
@@ -941,60 +941,80 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
-    in_toto_verify(self.layout_single_signed_path, [self.alice_path])
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
+    in_toto_verify(layout, layout_key_dict)
 
   def test_verify_passing_double_signed_layout(self):
     """Test pass verification of double-signed layout. """
-    in_toto_verify(self.layout_double_signed_path, [self.alice_path,
-        self.bob_path])
+    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
+    in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_not_found(self):
     """Test fail verification for layout not found. """
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(IOError):
-      in_toto_verify("missing.layout", [self.alice_path])
+      layout = Layout.read_from_file("missing.layout")
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_key_not_found(self):
     """Test fail verification with layout key not found. """
+    layout = Layout.read_from_file(self.layout_single_signed_path)
     with self.assertRaises(IOError):
-      in_toto_verify(self.layout_single_signed_path, ["missing-key.pub"])
+      layout_key_dict = import_rsa_public_keys_from_files_as_dict(["missing-key.pub"])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_wrong_key(self):
     """Test fail verification with wrong layout key. """
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(self.layout_single_signed_path, [self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_missing_key(self):
     """Test fail verification with missing layout key. """
+    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(self.layout_double_signed_path, [self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
     """Test fail verification with expired layout. """
+    layout = Layout.read_from_file(self.layout_expired_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
     with self.assertRaises(LayoutExpiredError):
-      in_toto_verify(self.layout_expired_path, [self.alice_path, self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
     os.rename("package.2dc02526.link", "package.link.bak")
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
-      in_toto_verify(self.layout_single_signed_path, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
     os.rename("package.link.bak", "package.2dc02526.link")
 
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
+    layout = Layout.read_from_file(self.layout_failing_inspection_retval)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(BadReturnValueError):
-      in_toto_verify(self.layout_failing_inspection_retval, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step matchrule. """
+    layout = Layout.read_from_file(self.layout_failing_step_rule_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
-      in_toto_verify(self.layout_failing_step_rule_path, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection matchrule. """
+    layout = Layout.read_from_file(self.layout_failing_inspection_rule_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
-      in_toto_verify(self.layout_failing_inspection_rule_path,
-          [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
 
 if __name__ == "__main__":
   unittest.main(buffer=True)
