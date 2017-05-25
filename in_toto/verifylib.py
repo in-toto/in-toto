@@ -932,7 +932,7 @@ def verify_all_item_rules(items, links):
     verify_item_rules(item.name, "products", item.product_matchrules, links)
 
 
-def verify_threshold_equality(layout, chain_link_dict):
+def verify_threshold_constraints(layout, chain_link_dict):
   """
   <Purpose>
     Iteratively verifies threshold conditions (if a step has been
@@ -1070,7 +1070,6 @@ def verify_sublayouts(layout, chain_link_dict):
 
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
 
-    # Extract keyid and link from the passed chain_link_dict
     for keyid, link in six.iteritems(key_link_dict):
 
       if link._type == "layout":
@@ -1162,9 +1161,10 @@ def in_toto_verify(layout, layout_key_dict):
             NOTE: Inspections, similar to Steps executed with 'in-toto-run',
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
-        8.  Verify rules defined in each Step's material_matchrules and
+        8.  Verify threshold constraints
+        9.  Verify rules defined in each Step's material_matchrules and
             product_matchrules field.
-        9.  Verify rules defined in each Inspection's material_matchrules and
+        10. Verify rules defined in each Inspection's material_matchrules and
             product_matchrules field.
 
     Note, this function will read the following files from disk:
@@ -1211,7 +1211,7 @@ def in_toto_verify(layout, layout_key_dict):
   inspection_link_dict = run_all_inspections(layout)
 
   log.info("Verifying threshold constraints...")
-  verify_threshold_equality(layout, chain_link_dict)
+  verify_threshold_constraints(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
   # Combine step links and inspection links for rule verification
