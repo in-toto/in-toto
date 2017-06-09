@@ -91,7 +91,7 @@ osc meta pkg -e home:$username connman
 ```
 
 osc will open a template xml, fill out name, title, description.
-You can see your package here https://build.opensuse.org/package/show/home:$username/connman. Remember replace $username with your actual username.
+You can see your package here https://build.opensuse.org/package/show/home:$username/connman (replace $username in url with actual username).
 
 Update the local copy from the central server. you will get a new connman directory
 ```
@@ -119,11 +119,12 @@ directory and perform the step.
 ```
 cd ../functionary_bob
 mv ../owner_alice/home:$username/ ./
-in-toto-record --step-name update-changelog --key bob start
-git clone https://github.com/shikherverma/connman.git
-mv connman/* home:$username/connman/
-rm -r connman/
-in-toto-record --step-name clone --key bob stop --products home:$username/connman/_service home:$username/connman/connman-1.30.tar.gz home:$username/connman/connman-1.30.tar.sign home:$username/connman/connman-rpmlintrc home:$username/connman/connman.changes home:$username/connman/connman.keyring home:$username/connman/connman.spec
+cd home:$username
+in-toto-record --step-name clone --key ../bob start
+git clone https://github.com/shikherverma/connman.git connman-src
+mv connman-src/* connman/
+rm -r connman-src/
+in-toto-record --step-name clone --key ../bob stop --products connman/_service connman/connman-1.30.tar.gz connman/connman-1.30.tar.sign connman/connman-rpmlintrc connman/connman.changes connman/connman.keyring connman/connman.spec
 ```
 
 Here is what happens behind the scenes:
@@ -136,22 +137,23 @@ Here is what happens behind the scenes:
 ### Update-changelog (Bob)
 Before Carl tests and commits the source code, Bob will update the changelog saved in `connman.changes`. He does this using the `in-toto-record` command, which produces the same link metadata file as above but does not require Bob to wrap his action in a single command. So first Bob records the state of the files he will modify:
 ```
-in-toto-record --step-name update-changelog --key bob start --materials home:$username/connman/connman.changes
+in-toto-record --step-name update-changelog --key bob start --materials connman/connman.changes
 ```
 
 Then Bob uses an editor of his choice to update the changelog e.g.:
 ```
-vim home:$username/connman/connman.changes
+vim connman/connman.changes
 ```
 
 And finally he records the state of files after the modification and produces
 a link metadata file called `update-changelog.[Bob's keyid].link`.
 ```
-in-toto-record --step-name update-changelog --key bob stop --products home:$username/connman/connman.changes
+in-toto-record --step-name update-changelog --key ../bob stop --products connman/connman.changes
 ```
 
 Bob has done his work and can send over the sources to Carl.
 ```
+cd ..
 mv home:$username/ ../functionary_carl/
 ```
 
@@ -159,37 +161,43 @@ mv home:$username/ ../functionary_carl/
 Now, we will perform Carl’s `test` step by executing the following commands to change to Carl's directory.
 
 ```
-cd ../functionary_carl/
-cd home:$username
+cd ../functionary_carl/home:$username/
 in-toto-run --step-name test --key ../carl -- osc build openSUSE_Factory x86_64 connman/connman.spec
-mv test.c1ae1e51.link ..
-cd ..
 ```
+It will prompt you to trust the gpg key for `openSUSE:Factory`, Choose 1
+```
+Would you like to ...
+0 - quit (default)
+1 - always trust packages from 'openSUSE:Factory'
+2 - trust packages just this time
+? 1
+``` 
+
 This will create a step link metadata file, called `test.[Carl's keyid].link`.
 
 ### Package (Carl)
 Now we will execute the package step.
 ```
-in-toto-record --step-name package --key carl start --materials home:$username/connman/*
+in-toto-record --step-name package --key ../carl start --materials connman/*
 ```
 
 Commit changes, this would trigger an automatic build on open build server.
 ```
-cd home:$username/connman
+cd connman
 osc add *
 osc commit
 ```
 
 Download the build RPM from server
 ```
-cd ../../
-wget http://download.opensuse.org/repositories/home:/shikher/openSUSE_Factory/src/connman-1.30-1.1.src.rpm
+cd ../
+wget http://download.opensuse.org/repositories/home:/$username/openSUSE_Factory/src/connman-1.30-1.1.src.rpm
 ```
 
 And finally he records the state of files after the modification and produces
 a link metadata file, called `package.[Carl's keyid].link`.
 ```
-in-toto-record --step-name package --key carl stop --products connman-1.30-1.1.src.rpm
+in-toto-record --step-name package --key ../carl stop --products connman-1.30-1.1.src.rpm
 ```
 
 ### Verify final product (client)
@@ -197,8 +205,8 @@ Let's first copy all relevant files into the `final_product` that is
 our software package `<srcpackage.rpm>` and the related metadata files `root.layout`,
 `clone.[Bob's keyid].link`, `update-changelog.[Bob's keyid].link`, `test.[Carl's keyid].link` and `package.[Carl's keyid].link`:
 ```
-cd ..
-cp owner_alice/root.layout functionary_bob/clone.0c6c50a1.link functionary_bob/update-changelog.0c6c50a1.link functionary_carl/test.c1ae1e51.link functionary_carl/package.c1ae1e51.link functionary_carl/connman-1.30-1.1.src.rpm final_product/
+cd ../../
+cp owner_alice/root.layout functionary_carl/home:$username/clone.0c6c50a1.link functionary_carl/home:$username/update-changelog.0c6c50a1.link functionary_carl/home:$username/test.c1ae1e51.link functionary_carl/home:$username/package.c1ae1e51.link functionary_carl/home:$username/connman-1.30-1.1.src.rpm final_product/
 ```
 And now run verification on behalf of the client:
 ```
@@ -223,6 +231,13 @@ echo $?
 # should output 0
 ```
 
+### Wrapping up
+Congratulations! You have completed the in-toto opensuse demo!
+
+Your package can now be installed in openSUSE systems. Instructions to do so can be found here https://software.opensuse.org//download.html?project=home%3A$username&package=connman (replace $username in url with actual username). If in-toto was integrated with Open Build System and `zypper`, testing and packaging step would be done on Open Build System. In-toto meta data would be hosted on http://download.opensuse.org/repositories/home:/$username/ (replace $username in url with actual username) along with the build RPMs. `zypper` would download and verify in-toto metadata along with the downloaded RPMs.
+
+This exercise shows a very simple case in how in-toto can protect the different steps within the software supply chain. More complex software supply chains that contain more steps can be created in a similar way. You can read more about what in-toto protects against and how to use it on [in-toto's Github page](https://in-toto.github.io/).
+
 ### Clean up
 We will delete the connman package from your home project now.
 ```
@@ -230,7 +245,4 @@ cd ../functionary_carl/home:$username
 osc delete connman
 osc ci -m "remove package"
 ```
-
-### Wrapping up
-Congratulations! You have completed the in-toto opensuse demo! This exercise shows a very simple case in how in-toto can protect the different steps within the software supply chain. More complex software supply chains that contain more steps can be created in a similar way. You can read more about what in-toto protects against and how to use it on [in-toto's Github page](https://in-toto.github.io/).
 
