@@ -1120,9 +1120,11 @@ def get_summary_link(layout, reduced_chain_link_dict):
     software supply chain.
   """
 
-  # Create a new link object to return
+  # Create empty link object
   summary_link = in_toto.models.link.Link()
 
+  # Take first and last link in the order the corresponding
+  # steps appear in the layout
   first_step_link = reduced_chain_link_dict[layout.steps[0].name]
   last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
@@ -1152,9 +1154,9 @@ def in_toto_verify(layout, layout_key_dict):
         4.  Verify functionary signature for every Link.
         5.  Verify sublayouts, if any.
             NOTE: Replaces the layout object in the chain_link_dict with an
-            unsigned summary link. So, link signatures are verified before
-            this step and command alignments, thresholds and inspections are
-            verified later on.
+            unsigned summary link (the actual links of the sublayouts are
+            verified). The summary link is used just like a regular link
+            to verify command alignments, thresholds and inspections below.
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
         7.  Execute Inspection commands
@@ -1224,10 +1226,10 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Verifying Inspection rules...")
   verify_all_item_rules(layout.inspect, link_dict)
 
-  # We made it this far without exception that means, verification passed.
+  # We made it this far without exception that means, verification passed
   log.pass_verification("The software product passed all verification.")
 
-  # Since the verification is successful, return a link file which summarizes
-  # the entire software supply chain
-  summary_link = get_summary_link(layout, reduced_chain_link_dict)
-  return summary_link
+  # Return a link file which summarizes the entire software supply chain
+  # This is mostly relevant if the currently verified supply chain is embedded
+  # in another supply chain
+  return get_summary_link(layout, reduced_chain_link_dict)

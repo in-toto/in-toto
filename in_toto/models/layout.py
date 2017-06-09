@@ -169,14 +169,16 @@ class Layout(models__common.Signable):
         # FIXME: Should we really pass on IOError, or just skip inexistent links
         except IOError as e:
           pass
-        else:
 
+        else:
           # Check whether the object is of type link or layout
           # and load it accordingly
           if link_obj["_type"] == "Link":
             link = models__link.Link.read(link_obj)
+
           elif link_obj["_type"] == "layout":
             link = Layout.read(link_obj)
+
           else:
             raise in_toto.exceptions.LinkNotFoundError("Invalid format".format())
           key_link_dict[keyid] = link
