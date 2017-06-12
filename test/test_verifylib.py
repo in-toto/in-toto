@@ -949,20 +949,6 @@ class TestInTotoVerify(unittest.TestCase):
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
     in_toto_verify(layout, layout_key_dict)
 
-  def test_verify_failing_layout_not_found(self):
-    """Test fail verification for layout not found. """
-    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
-    with self.assertRaises(IOError):
-      layout = Layout.read_from_file("missing.layout")
-      in_toto_verify(layout, layout_key_dict)
-
-  def test_verify_failing_key_not_found(self):
-    """Test fail verification with layout key not found. """
-    layout = Layout.read_from_file(self.layout_single_signed_path)
-    with self.assertRaises(IOError):
-      layout_key_dict = import_rsa_public_keys_from_files_as_dict(["missing-key.pub"])
-      in_toto_verify(layout, layout_key_dict)
-
   def test_verify_failing_wrong_key(self):
     """Test fail verification with wrong layout key. """
     layout = Layout.read_from_file(self.layout_single_signed_path)
