@@ -17,9 +17,12 @@
 
 """
 
+import os
 import unittest
 import datetime
 from in_toto.models.layout import Layout, Step, Inspection
+import in_toto.models.link
+import in_toto.exceptions
 import securesystemslib.exceptions
 
 class TestLayoutValidator(unittest.TestCase):
@@ -155,6 +158,27 @@ class TestLayoutValidator(unittest.TestCase):
     self.layout.inspect = [Inspection(name="thirdname")]
     self.layout.validate()
 
-if __name__ == '__main__':
+  def test_import_step_metadata_wrong_type(self):
+    functionary_key = securesystemslib.keys.generate_rsa_key()
+    name = "name"
 
+    # Create and dump a link file with a wrong type
+    link_name = in_toto.models.link.FILENAME_FORMAT.format(
+        step_name=name, keyid=functionary_key["keyid"])
+    link_path = os.path.abspath(link_name)
+    link = in_toto.models.link.Link(name=name)
+    link._type = "wrong-type"
+    link.dump(link_path)
+
+    # Add the single step to the test layout and try to read the failing link
+    self.layout.steps.append(Step(
+        name=name, pubkeys=[functionary_key["keyid"]]))
+
+    with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
+      self.layout.import_step_metadata_from_files_as_dict()
+
+    # Clean up
+    os.remove(link_path)
+
+if __name__ == "__main__":
   unittest.main()
