@@ -28,13 +28,13 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import in_toto.settings
-from in_toto.models.link import Link
+from in_toto.models.link import Link, FILENAME_FORMAT
 from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections, in_toto_verify,
-    _raise_on_bad_retval)
+    verify_sublayouts, _raise_on_bad_retval)
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
@@ -1013,6 +1013,71 @@ class TestInTotoVerify(unittest.TestCase):
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
+
+
+class TestVerifySublayouts(unittest.TestCase):
+  """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
+  Call with one-step super layout that has a sublayout (demo layout). """
+
+  @classmethod
+  def setUpClass(self):
+    """Creates and changes into temporary directory and prepares two layouts.
+    The superlayout, which has one step and its sublayout, which is the usual
+    demo layout (write code, package, inspect tar). """
+
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    # Import sub layout signing (private) and verifying (public) keys
+    alice = import_rsa_key_from_file("alice")
+    alice_pub = import_rsa_key_from_file("alice.pub")
+
+    # Copy, sign and dump sub layout as link from template
+    layout_template = Layout.read_from_file("demo.layout.template")
+    sub_layout = copy.deepcopy(layout_template)
+    sub_layout_name = "sub_layout"
+    sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
+        keyid=alice_pub["keyid"])
+    sub_layout.sign(alice)
+    sub_layout.dump(sub_layout_path)
+
+    # Create super layout that has only one step, the sublayout
+    self.super_layout = Layout()
+    self.super_layout.keys[alice_pub["keyid"]] = alice_pub
+    sub_layout_step = Step(
+        name=sub_layout_name,
+        pubkeys=[alice_pub["keyid"]]
+      )
+    self.super_layout.steps.append(sub_layout_step)
+
+    # Load the super layout links (i.e. the sublayout)
+    self.super_layout_links = \
+        self.super_layout.import_step_metadata_from_files_as_dict()
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp dir. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_verify_demo_as_sublayout(self):
+    """Test super layout's passing sublayout verification. """
+    verify_sublayouts(
+        self.super_layout, self.super_layout_links)
+
+
 
 if __name__ == "__main__":
   unittest.main(buffer=True)
