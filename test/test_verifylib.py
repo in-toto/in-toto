@@ -34,7 +34,7 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections, in_toto_verify,
-    verify_sublayouts, _raise_on_bad_retval)
+    verify_sublayouts, get_summary_link, _raise_on_bad_retval)
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
@@ -1077,6 +1077,59 @@ class TestVerifySublayouts(unittest.TestCase):
     verify_sublayouts(
         self.super_layout, self.super_layout_links)
 
+
+class TestGetSummaryLink(unittest.TestCase):
+  """Tests verifylib.get_summary_link(layout, reduced_chain_link_dict).
+  Pass two step demo layout and according link files and verify the
+  returned summary link.
+  """
+
+  @classmethod
+  def setUpClass(self):
+    """Creates and changes into temporary directory and prepares two layouts.
+    The superlayout, which has one step and its sublayout, which is the usual
+    demo layout (write code, package, inspect tar). """
+
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    self.demo_layout = Layout.read_from_file("demo.layout.template")
+    self.code_link = Link.read_from_file("package.2dc02526.link")
+    self.package_link = Link.read_from_file("write-code.c8650e01.link")
+    self.demo_links = {
+        "write-code": self.code_link,
+        "package": self.package_link
+      }
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp dir. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_get_summary_link_from_demo_layout(self):
+    """Create summary link from demo link files and compare properties. """
+    sum_link = get_summary_link(self.demo_layout, self.demo_links)
+    self.assertEquals(sum_link._type, self.code_link._type)
+    self.assertEquals(sum_link.name, self.code_link.name)
+    self.assertEquals(sum_link.materials, self.code_link.materials)
+
+    self.assertEquals(sum_link.products, self.package_link.products)
+    self.assertEquals(sum_link.command, self.package_link.command)
+    self.assertEquals(sum_link.byproducts, self.package_link.byproducts)
+    self.assertEquals(sum_link.return_value, self.package_link.return_value)
 
 
 if __name__ == "__main__":
