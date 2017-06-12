@@ -28,16 +28,16 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import in_toto.settings
-from in_toto.models.link import Link
+from in_toto.models.link import Link, FILENAME_FORMAT
 from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections, in_toto_verify,
-    _raise_on_bad_retval)
+    verify_sublayouts, get_summary_link, _raise_on_bad_retval)
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
-from in_toto.util import import_rsa_key_from_file
+from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
 import in_toto.log as log
 
 import securesystemslib.exceptions
@@ -97,7 +97,6 @@ class TestRunAllInspections(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
-    log.info(self.test_dir)
     shutil.rmtree(self.test_dir)
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
@@ -936,65 +935,188 @@ class TestInTotoVerify(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
-    log.info(self.test_dir)
     shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
-    in_toto_verify(self.layout_single_signed_path, [self.alice_path])
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
+    in_toto_verify(layout, layout_key_dict)
 
   def test_verify_passing_double_signed_layout(self):
     """Test pass verification of double-signed layout. """
-    in_toto_verify(self.layout_double_signed_path, [self.alice_path,
-        self.bob_path])
-
-  def test_verify_failing_layout_not_found(self):
-    """Test fail verification for layout not found. """
-    with self.assertRaises(IOError):
-      in_toto_verify("missing.layout", [self.alice_path])
-
-  def test_verify_failing_key_not_found(self):
-    """Test fail verification with layout key not found. """
-    with self.assertRaises(IOError):
-      in_toto_verify(self.layout_single_signed_path, ["missing-key.pub"])
+    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
+    in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_wrong_key(self):
     """Test fail verification with wrong layout key. """
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(self.layout_single_signed_path, [self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_missing_key(self):
     """Test fail verification with missing layout key. """
+    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(self.layout_double_signed_path, [self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
     """Test fail verification with expired layout. """
+    layout = Layout.read_from_file(self.layout_expired_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
     with self.assertRaises(LayoutExpiredError):
-      in_toto_verify(self.layout_expired_path, [self.alice_path, self.bob_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
     os.rename("package.2dc02526.link", "package.link.bak")
+    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
-      in_toto_verify(self.layout_single_signed_path, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
     os.rename("package.link.bak", "package.2dc02526.link")
 
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
+    layout = Layout.read_from_file(self.layout_failing_inspection_retval)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(BadReturnValueError):
-      in_toto_verify(self.layout_failing_inspection_retval, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step matchrule. """
+    layout = Layout.read_from_file(self.layout_failing_step_rule_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
-      in_toto_verify(self.layout_failing_step_rule_path, [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection matchrule. """
+    layout = Layout.read_from_file(self.layout_failing_inspection_rule_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
-      in_toto_verify(self.layout_failing_inspection_rule_path,
-          [self.alice_path])
+      in_toto_verify(layout, layout_key_dict)
+
+
+class TestVerifySublayouts(unittest.TestCase):
+  """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
+  Call with one-step super layout that has a sublayout (demo layout). """
+
+  @classmethod
+  def setUpClass(self):
+    """Creates and changes into temporary directory and prepares two layouts.
+    The superlayout, which has one step and its sublayout, which is the usual
+    demo layout (write code, package, inspect tar). """
+
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    # Import sub layout signing (private) and verifying (public) keys
+    alice = import_rsa_key_from_file("alice")
+    alice_pub = import_rsa_key_from_file("alice.pub")
+
+    # Copy, sign and dump sub layout as link from template
+    layout_template = Layout.read_from_file("demo.layout.template")
+    sub_layout = copy.deepcopy(layout_template)
+    sub_layout_name = "sub_layout"
+    sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
+        keyid=alice_pub["keyid"])
+    sub_layout.sign(alice)
+    sub_layout.dump(sub_layout_path)
+
+    # Create super layout that has only one step, the sublayout
+    self.super_layout = Layout()
+    self.super_layout.keys[alice_pub["keyid"]] = alice_pub
+    sub_layout_step = Step(
+        name=sub_layout_name,
+        pubkeys=[alice_pub["keyid"]]
+      )
+    self.super_layout.steps.append(sub_layout_step)
+
+    # Load the super layout links (i.e. the sublayout)
+    self.super_layout_links = \
+        self.super_layout.import_step_metadata_from_files_as_dict()
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp dir. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_verify_demo_as_sublayout(self):
+    """Test super layout's passing sublayout verification. """
+    verify_sublayouts(
+        self.super_layout, self.super_layout_links)
+
+
+class TestGetSummaryLink(unittest.TestCase):
+  """Tests verifylib.get_summary_link(layout, reduced_chain_link_dict).
+  Pass two step demo layout and according link files and verify the
+  returned summary link.
+  """
+
+  @classmethod
+  def setUpClass(self):
+    """Creates and changes into temporary directory and prepares two layouts.
+    The superlayout, which has one step and its sublayout, which is the usual
+    demo layout (write code, package, inspect tar). """
+
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    self.demo_layout = Layout.read_from_file("demo.layout.template")
+    self.code_link = Link.read_from_file("package.2dc02526.link")
+    self.package_link = Link.read_from_file("write-code.c8650e01.link")
+    self.demo_links = {
+        "write-code": self.code_link,
+        "package": self.package_link
+      }
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp dir. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_get_summary_link_from_demo_layout(self):
+    """Create summary link from demo link files and compare properties. """
+    sum_link = get_summary_link(self.demo_layout, self.demo_links)
+    self.assertEquals(sum_link._type, self.code_link._type)
+    self.assertEquals(sum_link.name, self.code_link.name)
+    self.assertEquals(sum_link.materials, self.code_link.materials)
+
+    self.assertEquals(sum_link.products, self.package_link.products)
+    self.assertEquals(sum_link.command, self.package_link.command)
+    self.assertEquals(sum_link.byproducts, self.package_link.byproducts)
+    self.assertEquals(sum_link.return_value, self.package_link.return_value)
+
 
 if __name__ == "__main__":
   unittest.main(buffer=True)
