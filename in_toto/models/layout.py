@@ -173,14 +173,16 @@ class Layout(models__common.Signable):
         else:
           # Check whether the object is of type link or layout
           # and load it accordingly
-          if link_obj["_type"] == "Link":
+          if link_obj.get("_type") == "Link":
             link = models__link.Link.read(link_obj)
 
-          elif link_obj["_type"] == "layout":
+          elif link_obj.get("_type") == "layout":
             link = Layout.read(link_obj)
 
           else:
-            raise in_toto.exceptions.LinkNotFoundError("Invalid format".format())
+            raise in_toto.exceptions.LinkNotFoundError("Invalid format. '{0}'"
+                " is not a valid in-toto 'Link' or 'Layout' metadata file."
+                .format(filename))
 
           key_link_dict[keyid] = link
 
