@@ -97,7 +97,6 @@ class TestRunAllInspections(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
-    log.info(self.test_dir)
     shutil.rmtree(self.test_dir)
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
@@ -936,7 +935,6 @@ class TestInTotoVerify(unittest.TestCase):
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
-    log.info(self.test_dir)
     shutil.rmtree(self.test_dir)
 
   def test_verify_passing(self):
