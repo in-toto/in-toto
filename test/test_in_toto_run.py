@@ -102,8 +102,7 @@ class TestInTotoRunTool(unittest.TestCase):
       ["in_toto_run.py"],
       ["in_toto_run.py", "--step-name", "some"],
       ["in_toto_run.py", "--key", self.key_path],
-      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path],
-      ["in_toto_record.py", "--", "echo", "blub"]]
+      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
@@ -145,7 +144,7 @@ class TestInTotoRunTool(unittest.TestCase):
     self.assertTrue(os.path.exists(self.test_link))
 
   def test_in_toto_run_bad_key_error_exit(self):
-    """Error exit in_toto_record_start with bad key. """
+    """Error exit in_toto_run with bad key. """
     with self.assertRaises(SystemExit):
       in_toto_run(self.test_step, [self.test_artifact],
         [self.test_artifact], ["echo", "test"], "bad-key", False)

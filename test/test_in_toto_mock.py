@@ -81,8 +81,7 @@ class TestInTotoMockTool(unittest.TestCase):
     wrong_args_list = [
       ["in_toto_mock.py"],
       ["in_toto_mock.py", "--name", "test-step"],
-      ["in_toto_mock.py", "--", "echo", "blub"],
-      ["in_toto_record.py", "--", "echo", "blub"]]
+      ["in_toto_mock.py", "--", "echo", "blub"]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
