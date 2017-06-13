@@ -75,18 +75,6 @@ class TestInTotoMockTool(unittest.TestCase):
 
     self.assertTrue(os.path.exists(self.test_link))
 
-  def test_main_optional_args(self):
-    """Test CLI command with optional arguments. """
-
-    args = [ "in_toto_mock.py", "--name", self.test_step, "--materials",
-        self.test_artifact, "--products", self.test_artifact,
-        "--record-byproducts", "--", "echo", "test"]
-
-    with patch.object(sys, 'argv', args):
-      in_toto_mock_main()
-
-    self.assertTrue(os.path.exists(self.test_link))
-
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
 
@@ -101,29 +89,16 @@ class TestInTotoMockTool(unittest.TestCase):
         in_toto_mock_main()
       self.assertFalse(os.path.exists(self.test_link))
 
-  def test_main_verbose(self):
-    """Log level with verbose flag is lesser/equal than logging.INFO. """
-
-    args = [ "in_toto_mock.py", "--name", self.test_step, "--materials",
-        self.test_artifact, "--products",
-        self.test_artifact, "--record-byproducts", "--verbose",
-        "--", "echo", "test"]
-
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args ):
-      in_toto_mock_main()
-    self.assertTrue(os.path.exists(self.test_link))
-
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
-
   def test_successful_in_toto_mock(self):
     """Call in_toto_mock successfully """
-    in_toto_mock(self.test_step, [self.test_artifact],
-      [self.test_artifact], ["echo", "test"], True)
+    in_toto_mock(self.test_step, ["echo", "test"])
 
     self.assertTrue(os.path.exists(self.test_link))
+
+  def test_in_toto_run_bad_command_exit(self):
+    """Error exit in_toto_mock for bad command. """
+    with self.assertRaises(SystemExit):
+      in_toto_mock(self.test_step, ["exit", "1"])
 
 if __name__ == "__main__":
   unittest.main(buffer=True)
