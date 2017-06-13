@@ -6,7 +6,6 @@
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
   Santiago Torres <santiago@nyu.edu>
-  Shikher Verma <root@shikherverma.com>
 
 <Started>
   Sep 23, 2016
@@ -21,12 +20,11 @@
 
 import attr
 import json
-from . import common as models__common
+import in_toto.models.common as models__common
 import securesystemslib.formats
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
-MOCK_FILENAME_FORMAT = "{step_name}.link-mock"
 
 @attr.s(repr=False, init=False)
 class Link(models__common.Signable):

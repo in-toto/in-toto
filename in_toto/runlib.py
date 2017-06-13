@@ -32,6 +32,7 @@ import fnmatch
 import in_toto.settings
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.mock_link import MOCK_FILENAME_FORMAT
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -325,6 +326,67 @@ def create_link_metadata(link_name, materials_dict=None, products_dict=None,
   }
 
   return in_toto.models.link.Link.read(link_dict)
+
+
+def in_toto_mock(name, link_cmd_args):
+  """
+  <Purpose>
+    Calls function to run command passed as link_cmd_args argument. Storing
+    current directory as materials and products. Materials, products,
+    by-products and return value are stored unsigned in a mock link metadata
+    file which is stored to disk.
+
+  <Arguments>
+    name:
+            A unique name to relate mock link metadata with a step or inspection
+            defined in the layout.
+    link_cmd_args:
+            A list where the first element is a command and the remaining
+            elements are arguments passed to that command.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Writes newly created mock link metadata file to disk "<name>.mock-link"
+
+  <Returns>
+    Newly created Mock link object
+  """
+
+  log.info("Running '{}'...".format(name))
+
+  # Fixed values for in_toto_mock command
+  material_list=['.']
+  product_list=['.']
+
+  log.info("Recording materials '{}'...".format(", ".join(material_list)))
+  materials_dict = record_artifacts_as_dict(material_list)
+
+  log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
+  byproducts, return_value = execute_link(link_cmd_args, record_byproducts=True)
+
+  log.info("Recording products '{}'...".format(", ".join(product_list)))
+  products_dict = record_artifacts_as_dict(product_list)
+
+  log.info("Creating mock link metadata...")
+
+  mock_link_dict = {
+    "name" : name,
+    "materials" : materials_dict,
+    "products" : products_dict,
+    "command" : link_cmd_args,
+    "byproducts" : byproducts,
+    "return_value" : return_value,
+    "working_directory" : os.getcwd()
+  }
+
+  mock_link = in_toto.models.mock_link.MockLink.read(mock_link_dict)
+  mock_fn = MOCK_FILENAME_FORMAT.format(step_name=name)
+  log.info("Storing mock link metadata to '{}'...".format(mock_fn))
+  mock_link.dump()
+
+  return mock_link
 
 
 def in_toto_run(name, material_list, product_list,
