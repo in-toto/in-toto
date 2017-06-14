@@ -12,6 +12,8 @@
   See LICENSE for licensing information.
 
 <Purpose>
+  A CLI tool for adding, replacing, verifying signatures in link
+  metadata files.
 
 """
 import os
@@ -27,62 +29,115 @@ import securesystemslib.formats
 
 def add_sign(link, key):
     """
-    <Purpose>
-    <Arguments>
-    <Exceptions>
-    <Returns>
-    """
 
+    <Purpose>
+      Signs the given link file with the corresponding key,
+    adds the signature to the file, and dumps it using the
+    link name + '.link'-suffix
+
+    <Arguments>
+      link - path to the signable link file
+      key - the key to be used for signing
+
+    <Exceptions>
+      None
+
+    <Returns>
+      None
+
+    """
+    # reading the file from the given link and making an object
     signable_object = link_import.read_from_file(link)
+
+    # checking if the given key follows the format
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
+
+    # create the signature using the key, and the link file
     signature = securesystemslib.keys.create_signature(key, signable_object.payload)
+
+    # append the signature into the file
     signable_object.signatures.append(signature)
+
+    # dump the file with link name + '.link'
     signable_object.dump()
 
-def replace_old_sign(link,key):
+
+def replace_old_sign(link, key):
     """
     <Purpose>
+      Replaces all the exisiting signature with the new signature,
+      signs the file, and dumps it with link name + '.link'
+
     <Arguments>
+      link - path to the key file
+      key - the key to be used for signing
+
     <Exceptions>
+      None
+
     <Returns>
+      None
+
     """
-    #importing the signable object
+    # reading the link file and making an object
     signable_object = link_import.read_from_file(link)
 
-    #checking if the key corresponds to the correct format
+    # check if the key corresponds to the correct format
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    #core working
+    # core working
     signature = securesystemslib.keys.create_signature(key, signable_object.payload)
     signable_object.signatures = []
     signable_object.signatures["keyid"] = key
     signable_object.signatures["sig"] = signature
     signable_object.signatures["method"] = "RSASSA-PSS"
+
+    # dump the file with link name + '.link'
     signable_object.dump()
+    os.remove(link)
 
 
-def add_infix(link,key):
+def add_infix(link, key):
     """
     <Purpose>
+      Infixes the keyID in the filename
+
     <Arguments>
+      link - the path to the link file
+      key - the key whose keyID needs to be infixed in the filename
+
     <Exceptions>
+      None
+
     <Returns>
+      None
+
     """
 
     signable_object = link_import.read_from_file(link)
 
-    #securesystemslib.formats.KEY_SCHEMA.check_match(key)
-    #signature = securesystemslib.keys.create_signature(key, signable_object.payload)
+    # securesystemslib.formats.KEY_SCHEMA.check_match(key)
+    # signature = securesystemslib.keys.create_signature(key, signable_object.payload)
 
-    signable_object.dump(key= key)
+    signable_object.dump(key=key)
     os.remove(link)
 
-def verify_sign(link,key_pub):
+
+def verify_sign(link, key_pub):
     """
     <Purpose>
+      Verifies the signature field in the link file, given a public key
+
     <Arguments>
+      link - path to the link file
+      key_pub - public key to be used to verification
+
     <Exceptions>
+      None
+
     <Returns>
+      None
+
     """
 
     link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
@@ -90,9 +145,7 @@ def verify_sign(link,key_pub):
     link.verify_link_signatures(link_key_dict)
 
 
-
 def parse_args():
-
     """
     <Purpose>
       A function which parses the user supplied arguments.
@@ -129,13 +182,13 @@ def parse_args():
     in_toto_args.add_argument("operator", type=str,
                               help="sign or verify")
 
-    in_toto_args.add_argument("-r", "--replaceall", required = False,
+    in_toto_args.add_argument("-r", "--replaceall", required=False,
                               type=str, help="Whether to replace"
-                              "all the old signatures or not")
+                                             "all the old signatures or not")
 
-    in_toto_args.add_argument("-i", "--keyidinfix", required = False,
+    in_toto_args.add_argument("-i", "--keyidinfix", required=False,
                               type=str, help="whether to add"
-                              "key id infix in the file name")
+                                             "key id infix in the file name")
 
     in_toto_args.add_argument("signablepath", type=str,
                               help="path to the signable file")
@@ -151,60 +204,59 @@ def parse_args():
 
 
 def main():
-  """
+    """
 
   """
-  args = parse_args()
+    args = parse_args()
 
+    if args.verbose:
+        log.logging.getLogger.setLevel(log.logging.INFO)
 
-  if args.verbose:
-    log.logging.getLogger.setLevel(log.logging.INFO)
+    if args.operator == 'sign':
 
-  if args.operator == 'sign':
+        try:
 
-    try:
+            if not args.replaceall:
 
-      if not args.replaceall:
+                if not args.keyidinfix:
+                    add_sign(args.signablepath, args.key)
+                    sys.exit(0)
 
-        if not args.keyidinfix:
-          add_sign(args.signablepath, args.key)
-          sys.exit(0)
+                else:
+                    add_sign(args.signablepath, args.key)
+                    add_infix(args.signablepath, args.key)
+                    sys.exit(0)
 
-        else:
-          add_sign(args.signablepath, args.key)
-          add_infix(args.signablepath, args.key)
-          sys.exit(0)
+            else:
 
-      else:
+                if not args.keyidinfix:
+                    replace_old_sign(args.signablepath, args.key)
+                    sys.exit(0)
 
-        if not args.keyidinfix:
-          replace_old_sign(args.signablepath, args.key)
-          sys.exit(0)
+                else:
+                    replace_old_sign(args.signablepath, args.key)
+                    add_infix(args.signablepath, args.key)
+                    sys.exit(0)
 
-        else:
-          replace_old_sign(args.signablepath, args.key)
-          add_infix(args.signablepath, args.key)
-          sys.exit(0)
+        except Exception as e:
+            print('The following error occured while signing', e)
+            sys.exit(2)
 
-    except Exception as e:
-      print('The following error occured while signing',e)
-      sys.exit(2)
+    elif args.operator == 'verify':
 
-  elif args.operator == 'verify':
+        try:
+            if verify_sign(args.signablepath, args.key):
+                sys.exit(0)
+            else:
+                sys.exit(1)
 
-     try:
-       if verify_sign(args.signablepath,args.key):
-         sys.exit(0)
-       else:
-         sys.exit(1)
+        except Exception as e:
+            print('The following error occured while verification', e)
+            sys.exit(3)
 
-     except Exception as e:
-       print('The following error occured while verification', e)
-       sys.exit(3)
-
-  else:
-    raise Exception('Invalid Operator Supplied')
-    sys.exit(4)
+    else:
+        raise Exception('Invalid Operator Supplied')
+        sys.exit(4)
 
 
 if __name__ == "__main__":
