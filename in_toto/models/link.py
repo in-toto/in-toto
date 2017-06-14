@@ -108,11 +108,4 @@ class Link(models__common.Signable):
   @staticmethod
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
-<<<<<<< HEAD:in_toto/models/link.py
-=======
-    # FIXME: ugly workaround for attrs underscore strip
-    # but _type is exempted from __init__ anyway
-    if data.get("_type"):
-      data.pop(u"_type")
->>>>>>> 3697e8b19a08ffb1537835f606a5cfedbeaa7244:toto/models/link.py
     return Link(**data)
