@@ -23,7 +23,7 @@
   or simpy <filename>.link
 
   General Usage:
-  python in_toto_sign.py --key <path/to/key> <sign/verify>  [-r] y [-i] y
+  python in_toto_sign.py --key <path/to/key> <sign/verify> [-r] [-i]
     <path/to/link/file>
 
   Example Usage:
@@ -32,7 +32,7 @@
   by infixing the keyID in it. Then his command would be-
 
   python in_toto_sign.py --key /bob/mykeys/bob_pvt_key
-    sign  -r yes -i yes  /bob/software/in-toto/test/package.link
+    sign -r -i  /bob/software/in-toto/test/package.link
 
 """
 import os
@@ -182,13 +182,13 @@ def parse_args():
     in_toto_args.add_argument("operator", type=str, choices=['sign', 'verify'],
                               help="sign or verify")
 
-    in_toto_args.add_argument("-r", "--replaceall", required= False,
-                              type=str, help="Whether to replace"
-                              "all the old signatures or not")
+    in_toto_args.add_argument("-r", "--replaceall", action="store_true",
+                              help = "Whether to replace all the old signatures"
+                              "or not")
 
-    in_toto_args.add_argument("-i", "--infixkeyid", required= False,
-                              type=str, help="whether to"
-                             "infix keyid in the file name")
+    in_toto_args.add_argument("-i", "--infixkeyid", action="store_true",
+                              help = "whether to infix keyID in the file name"
+                              "or not")
 
     in_toto_args.add_argument("signablepath", type=str,
                               help="path to the signable file")
