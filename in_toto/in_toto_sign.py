@@ -13,7 +13,27 @@
 
 <Purpose>
   A CLI tool for adding, replacing, verifying signatures in link
-  metadata files.
+  metadata files. It takes the following inputs - path to the signable
+  object, and path to the key file. Also there are two optional inputs
+  based on which it decides whether to sign the file without replacement
+  of the existing signature, or sign it but without replacement and then
+  appends the new signature in the file. Further in each of the two cases,
+  depending on the arguments it then dumps the file either by infixing
+  the keyID i.e. <filename>.<8-initial-characters-from-the-keyID>.link
+  or simpy <filename>.link
+
+  General Usage:
+  python in_toto_sign.py --key <path/to/key> <sign/verify>  [-r] y [-i] y
+    <path/to/link/file>
+
+  Example Usage:
+  Suppose Bob wants to sign a file called package.link, and also while signing,
+  he wants to replace all the existing signatures, and then dump the file
+  by infixing the keyID in it. Then his command would be-
+
+  python in_toto_sign.py --key /bob/mykeys/bob_pvt_key
+    sign  -r yes -i yes  /bob/software/in-toto/test/package.link
+
 """
 import os
 import sys
