@@ -19,6 +19,7 @@ import os
 import sys
 import argparse
 import in_toto.log
+import in_toto.util
 from in_toto.models.common import Signable as signable_object
 from in_toto.models.link import Link as link_import
 import securesystemslib.exceptions
@@ -129,9 +130,10 @@ def verify_sign(link, key_pub):
     <Returns>
       None
     """
+    signable_object = link_import.read_from_file(link)
     link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
         key_pub)
-    link.verify_link_signatures(link_key_dict)
+    signable_object.verify_link_signatures(link_key_dict)
 
 
 def parse_args():
