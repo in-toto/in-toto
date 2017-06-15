@@ -116,10 +116,10 @@ def verify_sign(link, key_pub):
     <Returns>
       Boolean True when the verification is success
     """
-    
+
     signable_object = link_import.read_from_file(link)
     link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-        [key_pub])
+      [key_pub])
 
     signable_object.verify_signatures(link_key_dict)
 
@@ -185,6 +185,9 @@ def parse_args():
 
 def main():
     """
+    First calls parse_args to parse the arguments, and then calls either
+    add_sign or add_replace depending upon the arguments. Based on the
+    arguments it then dumps the corresponding file.
 
     """
     args = parse_args()
