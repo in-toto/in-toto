@@ -15,7 +15,7 @@
   A CLI tool for adding, replacing, verifying signatures in link
   metadata files. It takes the following inputs - path to the signable
   object, and path to the key file. Also there are two optional inputs
-  based on which it decides whether to sign the file without replacement
+  based on which it decides whether to sign the file with the replacement
   of the existing signature, or sign it but without replacement and then
   appends the new signature in the file. Further in each of the two cases,
   depending on the arguments it then dumps the file either by infixing
@@ -51,8 +51,8 @@ def add_sign(link, key):
     """
     <Purpose>
       Signs the given link file with the corresponding key,
-    adds the signature to the file, and dumps it using the
-    link name + '.link'-suffix
+      adds the signature to the file, and then returns, the
+      link file as an object.
 
     <Arguments>
       link - path to the signable link file
@@ -87,7 +87,7 @@ def add_replace(link, key):
     """
     <Purpose>
       Replaces all the exisiting signature with the new signature,
-      signs the file, and dumps it with link name + '.link'
+      signs the file, and then returns the link file as an object.
 
     <Arguments>
       link - path to the key file
