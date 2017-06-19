@@ -265,67 +265,6 @@ def execute_link(link_cmd_args, record_byproducts):
 
   return {"stdout": stdout_str, "stderr": stderr_str}, return_value
 
-def create_link_metadata(link_name, materials_dict=None, products_dict=None,
-    link_cmd_args=None, byproducts=None, return_value=None):
-  """
-  <Purpose>
-    Takes the state of the materials (before link command execution), the state
-    of the products (after link command execution) and the by-products and
-    return value of the link command execution and creates and returns a
-    Link metadata object.
-
-  <Arguments>
-    link_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    materials_dict: (optional)
-            A dictionary with file paths as keys and the files' hashes as
-            values.
-    products_dict: (optional)
-            A dictionary with file paths as keys and the files' hashes as
-            values.
-    link_cmd_args: (optional)
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    byproducts: (optional)
-            A dictionary in the format containing standard output and standard
-            error of the executed link command, i.e.:
-            {"stdout": "<standard output", "stderr": "<standard error>"}
-    return_value: (optional)
-            The return value of the executed command.
-
-  <Exceptions>
-    None.
-
-  <Side Effects>
-    Creates a Link object from a Python dictionary.
-
-  <Returns>
-    - A Link metadata object
-  """
-  if not materials_dict:
-    materials_dict = {}
-
-  if not products_dict:
-    products_dict = {}
-
-  if not link_cmd_args:
-    link_cmd_args = []
-
-  if not byproducts:
-    byproducts = {}
-
-  link_dict = {
-    "name" : link_name,
-    "materials" : materials_dict,
-    "products" : products_dict,
-    "command" : link_cmd_args,
-    "byproducts" : byproducts,
-    "return_value" : return_value
-  }
-
-  return in_toto.models.link.Link.read(link_dict)
-
 
 def in_toto_run(name, material_list, product_list,
     link_cmd_args, key=False, record_byproducts=False):
@@ -389,8 +328,15 @@ def in_toto_run(name, material_list, product_list,
   products_dict = record_artifacts_as_dict(product_list)
 
   log.info("Creating link metadata...")
-  link = create_link_metadata(name, materials_dict, products_dict,
-      link_cmd_args, byproducts, return_value)
+  link_dict = {
+    "name" : name,
+    "materials" : materials_dict,
+    "products" : products_dict,
+    "command" : link_cmd_args,
+    "byproducts" : byproducts,
+    "return_value" : return_value
+  }
+  link = in_toto.models.link.Link.read(link_dict)
 
   if key:
     log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
@@ -440,7 +386,15 @@ def in_toto_record_start(step_name, key, material_list):
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.info("Creating preliminary link metadata...")
-  link = create_link_metadata(step_name, materials_dict)
+  link_dict = {
+    "name" : step_name,
+    "materials" : materials_dict,
+    "products" : {},
+    "command" : [],
+    "byproducts" : {},
+    "return_value" : None
+  }
+  link = in_toto.models.link.Link.read(link_dict)
 
   log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
   link.sign(key)
