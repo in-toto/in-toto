@@ -31,8 +31,8 @@
   he wants to replace all the existing signatures, and then dump the file
   by infixing the keyID in it. Then his command would be-
 
-  python in_toto_sign.py --key /bob/mykeys/bob_pvt_key
-    sign -r -i  /bob/software/in-toto/test/package.link
+  python in_toto_sign.py sign --key /bob/mykeys/bob_pvt_key
+    -r -i  /bob/software/in-toto/test/package.link
 
 """
 import os
@@ -77,15 +77,6 @@ def add_sign(link, key):
 
   signable_object.sign(rsa_key)
 
-  '''
-  '# Create the signature using the key, and the link file
-  signature = securesystemslib.keys.create_signature(rsa_key,
-                  signable_object.payload)
-
-  # Append the signature into the file
-  signable_object.signatures.append(signature)
-  '''
-
   return signable_object
 
 
@@ -115,9 +106,6 @@ def replace_sig(link, key):
 
     # Check if the key corresponds to the correct format
     securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
-    # core working
-    # signature = securesystemslib.keys.create_signature(rsa_key,
-    # signable_object.payload)
     signable_object.signatures = []
     signable_object.sign(rsa_key)
 
@@ -140,7 +128,7 @@ def verify_sign(link, key_pub):
         - 'No Signatures Found' - when no signature exists
 
     <Returns>
-      Boolean True when the verification is success
+      None
     """
 
     signable_object = link_import.read_from_file(link)
@@ -163,9 +151,9 @@ def parse_args():
       Parsed arguments (args object)
     """
     parser = argparse.ArgumentParser(
-        description="in-toto-sign : Signs link file with/without replacement, "
-                    "and dumps with/without infixing the keyID in the "
-                    "filename")
+        description="in-toto-sign : Signs link file with/without replacement "
+                    "of the existing signatures and dumps with/without "
+                    "infixing the keyID in the filename")
 
     lpad = (len(parser.prog) + 1) * " "
 
@@ -192,8 +180,9 @@ def parse_args():
 
     in_toto_args.add_argument("-i", "--infix", action="store_true",
                               help="Infix keyID in the filename while "
-                                   "dumping, when -i the file will be dumped as"
-                                   "original.<keyID>.link, else original.link")
+                                   "dumping, when -i the file will be dumped "
+                                   "as original.<keyID>.link, "
+                                   "else original.link")
 
     in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                               help="Verbose execution.", default=False,
