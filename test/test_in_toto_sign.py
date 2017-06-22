@@ -68,7 +68,7 @@ class TestInTotoSignTool(unittest.TestCase):
     self.alice_path_pvt = "alice"
     self.alice_path = "alice.pub"
 
-    # dump a single signed layout
+    # Dump a single signed layout
     layout_template.sign(alice)
     layout_template.dump(self.layout_single_signed_path)
 
@@ -114,7 +114,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
 
   def test_main_wrong_args(self):
-    """Test CLI command record start/stop with missing arguments. """
+    """Test CLI command sign/verify with missing arguments. """
 
     wrong_args_list = [
       ["in_toto_sign.py"],
@@ -129,7 +129,7 @@ class TestInTotoSignTool(unittest.TestCase):
         in_toto_sign_main()
 
   def test_main_wrong_key_exits(self):
-    """Test CLI command record with wrong key exits and logs error """
+    """Test main with wrong key exits and logs error """
     args = ["in_toto_sign.py"]
     with patch.object(sys, 'argv', args + ["sign" , "--key",
       "non-existent-key", "-r", "-i", self.layout_single_signed_path]), \
