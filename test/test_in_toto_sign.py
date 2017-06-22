@@ -175,12 +175,14 @@ class TestInTotoSignTool(unittest.TestCase):
     with self.assertRaises(SystemExit):
       signable_object = in_toto_sign_add_sign(self.layout_single_signed_path,
                           "bad key")
+    return None
 
   def test_in_toto_sign_verify_sign_bad_key_error_exit(self):
       """Error exit in_toto_verify_sign with bad key. """
     with self.assertRaises(SystemExit):
-      signable_object = in_toto_sign_verify_sign(
+      in_toto_sign_verify_sign(
         self.layout_single_signed_path, "bad-key")
+
 
 
 if __name__ == '__main__':
