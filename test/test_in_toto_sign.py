@@ -65,8 +65,8 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Import layout signing keys
     #alice = import_rsa_key_from_file("alice")
-    self.alice_path_pvt = alice
-    self.alice_path = alice.pub
+    self.alice_path_pvt = "alice"
+    self.alice_path = "alice.pub"
 
     # dump a single signed layout
     layout_template.sign(alice)
