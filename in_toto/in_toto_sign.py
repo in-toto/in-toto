@@ -209,7 +209,7 @@ def main():
     rsa_key = in_toto.util.import_rsa_key_from_file(args.key)
 
     if args.verbose:
-      log.logging.getLogger.setLevel(log.logging.INFO)
+      log.logging.getLogger().setLevel(log.logging.INFO)
 
     try:
       if args.operator == 'sign':

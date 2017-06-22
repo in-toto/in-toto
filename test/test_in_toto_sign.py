@@ -88,7 +88,8 @@ class TestInTotoSignTool(unittest.TestCase):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
-      self.alice_path, self.layout_single_signed_path]):
+      self.alice_path, self.layout_single_signed_path]), self.assertRaises(
+      SystemExit):
        in_toto_sign_main()
 
 
@@ -169,7 +170,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    with assertRaises(exceptions.SignatureVerificationError):
+    with self.assertRaises(exceptions.SignatureVerificationError):
       verify_sign(self.layout_single_signed_path, self.alice_path)
 
 
