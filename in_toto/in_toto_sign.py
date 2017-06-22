@@ -130,12 +130,10 @@ def verify_sign(link, key_pub):
   <Returns>
     None
   """
-
-
-    signable_object = link_import.read_from_file(link)
-    link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-      [key_pub])
-    signable_object.verify_signatures(link_key_dict)
+  signable_object = link_import.read_from_file(link)
+  link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
+    [key_pub])
+  signable_object.verify_signatures(link_key_dict)
 
 def parse_args():
   """
