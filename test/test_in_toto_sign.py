@@ -64,7 +64,7 @@ class TestInTotoSignTool(unittest.TestCase):
     self.layout_double_signed_path = "double-signed.layout"
 
     # Import layout signing keys
-    #alice = import_rsa_key_from_file("alice")
+    alice = import_rsa_key_from_file("alice")
     self.alice_path_pvt = "alice"
     self.alice_path = "alice.pub"
 
@@ -83,7 +83,7 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
 
     with patch.object(sys, 'argv', args + ["sign" , "--key",
-      self.alice_path_pvt, "-r", "-i", self.layout_single_signed_path]):
+      self.alice_path_pvt, self.layout_single_signed_path]):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
