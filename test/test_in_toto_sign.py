@@ -148,11 +148,12 @@ class TestInTotoSignTool(unittest.TestCase):
     original_log_level = logging.getLogger().getEffectiveLevel()
     with patch.object(sys, 'argv', args + ["sign", "--key",
       self.alice_path_pvt , "-r", "-i", "--verbose",
-      self.layout_single_signed_path]):
+      self.layout_single_signed_path]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify", "--key",
-      self.alice_path, "--verbose", self.layout_single_signed_path]):
+      self.alice_path, "--verbose", self.layout_single_signed_path]), \
+         self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
