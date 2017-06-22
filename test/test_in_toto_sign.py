@@ -88,22 +88,26 @@ class TestInTotoSignTool(unittest.TestCase):
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
       self.alice_path, self.layout_single_signed_path]):
-        in_toto_sign_main()
+       in_toto_sign_main()
+
 
   def test_main_optional_args(self):
     """Test CLI command sign with optional arguments. """
     args = ["in_toto_sign.py"]
 
     with patch.object(sys, 'argv', args + ["sign", "--key",
-      self.alice_path_pvt, "-r", self.layout_single_signed_path]):
+      self.alice_path_pvt, "-r", self.layout_single_signed_path]),\
+      self.assertRaises(SystemExit):
+          in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign", "--key",
+      self.alice_path_pvt, "-i", self.layout_single_signed_path]),\
+         self.assertRaises(SystemExit):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["sign", "--key",
-      self.alice_path_pvt, "-i", self.layout_single_signed_path]):
-        in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign", "--key",
-      self.alice_path_pvt, self.layout_single_signed_path]):
+      self.alice_path_pvt, self.layout_single_signed_path]),\
+         self.assertRaises(SystemExit):
         in_toto_sign_main()
 
 
@@ -127,12 +131,12 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
     with patch.object(sys, 'argv', args + ["sign" , "--key",
       "non-existent-key", "-r", "-i", self.layout_single_signed_path]), \
-      self.assertRaises( SystemExit):
+      self.assertRaises(IOError):
       in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
       "non-existent-key", self.layout_single_signed_path]), \
-      self.assertRaises(SystemExit):
+      self.assertRaises(IOError):
       in_toto_sign_main()
 
   def test_main_verbose(self):
@@ -164,17 +168,18 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    verify_sign(self.layout_single_signed_path, self.alice_path)
+    with self.assertRaises(SignatureVerificationError):
+      verify_sign(self.layout_single_signed_path, self.alice_path)
 
 
   def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """
-    with self.assertRaises(SystemExit):
-      add_sign(self.layout_single_signed_path, "bad key")
+    with self.assertRaises(IOError):
+      add_sign(self.layout_single_signed_path, "bad-key")
 
   def test_verify_sign_bad_key_error_exit(self):
     """Error exit in_toto_verify_sign with bad key. """
-    with self.assertRaises(SystemExit):
+    with self.assertRaises(IOError):
       verify_sign(self.layout_single_signed_path, "bad-key")
 
 
