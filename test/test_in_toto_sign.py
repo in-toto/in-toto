@@ -83,7 +83,8 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
 
     with patch.object(sys, 'argv', args + ["sign" , "--key",
-      self.alice_path_pvt, self.layout_single_signed_path]):
+      self.alice_path_pvt, self.layout_single_signed_path]), \
+         self.assertRaises(SystemExit):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
@@ -168,7 +169,8 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    verify_sign(self.layout_single_signed_path, self.alice_path)
+    with assertRaises(exceptions.SignatureVerificationError):
+      verify_sign(self.layout_single_signed_path, self.alice_path)
 
 
   def test_add_sign_bad_key_error_exit(self):

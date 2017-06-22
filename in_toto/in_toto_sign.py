@@ -39,7 +39,7 @@ import os
 import sys
 import argparse
 import in_toto.util
-from in_toto import log as log
+from in_toto import log
 from in_toto.models.common import Signable as signable_object
 from in_toto.models.link import Link as link_import
 import securesystemslib.exceptions
@@ -209,7 +209,7 @@ def main():
     rsa_key = in_toto.util.import_rsa_key_from_file(args.key)
 
     if args.verbose:
-      logging.getLogger.setLevel(log.logging.INFO)
+      log.logging.getLogger.setLevel(log.logging.INFO)
 
     try:
       if args.operator == 'sign':
