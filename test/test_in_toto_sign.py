@@ -24,9 +24,8 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
   prompt_import_rsa_key_from_file)
 from in_toto.models.link import Link
-from in_toto.in_toto_record import main as in_toto_record_main
-from in_toto.in_toto_sign import in_toto_sign_add_sign, \
-  in_toto_sign_replace_sig, in_toto_sign_verify_sign
+from in_toto.in_toto_sign import main as in_toto_sign_main
+from in_toto.in_toto_sign import add_sign, replace_sig, verify_sign
 
 WORKING_DIR = os.getcwd()
 
@@ -154,34 +153,26 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_add_sign(self):
     """in_toto_sign_add_sign run through. """
-    signable_object = in_toto_sign_add_sign(self.layout_single_signed_path,
-                        self.alice_path_pvt)
-    return None
+    add_sign(self.layout_single_signed_path, self.alice_path_pvt)
 
   def test_in_toto_sign_replace_sig(self):
     """in_toto_sign_replace_sig run through. """
-    signable_object = in_toto_sign_replace_sig(self.layout_single_signed_path,
-                        self.alice_path_pvt)
-    return None
+    replace_sig(self.layout_single_signed_path, self.alice_path_pvt)
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    signable_object = in_toto_sign_verify_sign(self.layout_single_signed_path,
-                        self.alice_path)
-    return None
+    verify_sign(self.layout_single_signed_path, self.alice_path)
 
-  def test_in_toto_sign_add_sign_bad_key_error_exit(self):
+
+  def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """
     with self.assertRaises(SystemExit):
-      signable_object = in_toto_sign_add_sign(self.layout_single_signed_path,
-                          "bad key")
-    return None
+      add_sign(self.layout_single_signed_path, "bad key")
 
-  def test_in_toto_sign_verify_sign_bad_key_error_exit(self):
+  def test_verify_sign_bad_key_error_exit(self):
     """Error exit in_toto_verify_sign with bad key. """
     with self.assertRaises(SystemExit):
-      in_toto_sign_verify_sign(
-        self.layout_single_signed_path, "bad-key")
+      verify_sign(self.layout_single_signed_path, "bad-key")
 
 
 
