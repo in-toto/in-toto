@@ -80,7 +80,7 @@ def add_sign(link, key):
   return signable_object
 
 
-def replace_sig(link, key):
+def replace_sign(link, key):
     """
     <Purpose>
       Replaces all the existing signature with the new signature,
@@ -209,12 +209,12 @@ def main():
     rsa_key = in_toto.util.import_rsa_key_from_file(args.key)
 
     if args.verbose:
-      log.logging.getLogger.setLevel(log.logging.INFO)
+      logging.getLogger.setLevel(log.logging.INFO)
 
     try:
       if args.operator == 'sign':
-        if args.replace-sig:
-          signable_object = replace_sig(args.signablepath, args.key)
+        if args.replace_sig:
+          signable_object = replace_sign(args.signablepath, args.key)
 
         else:
           signable_object = add_sign(args.signablepath, args.key)
