@@ -20,12 +20,15 @@ import argparse
 import shutil
 import tempfile
 from mock import patch
-
+from in_toto.models.layout import Layout
 from in_toto.util import (generate_and_write_rsa_keypair,
   prompt_import_rsa_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_sign import main as in_toto_sign_main
 from in_toto.in_toto_sign import add_sign, replace_sig, verify_sign
+from in_toto import log
+from in_toto import exceptions
+from in_toto.util import import_rsa_key_from_file
 
 WORKING_DIR = os.getcwd()
 
