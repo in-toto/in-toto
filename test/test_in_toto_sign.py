@@ -22,11 +22,11 @@ import tempfile
 from mock import patch
 
 from in_toto.util import (generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
+  prompt_import_rsa_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_record import main as in_toto_record_main
 from in_toto.in_toto_sign import in_toto_sign_add_sign, \
-    in_toto_sign_replace_sig, in_toto_sign_verify_sign
+  in_toto_sign_replace_sig, in_toto_sign_verify_sign
 
 WORKING_DIR = os.getcwd()
 
@@ -118,7 +118,7 @@ class TestInTotoSignTool(unittest.TestCase):
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(
         SystemExit):
-          in_toto_sign_main()
+        in_toto_sign_main()
 
   def test_main_wrong_key_exits(self):
     """Test CLI command record with wrong key exits and logs error """
@@ -126,12 +126,12 @@ class TestInTotoSignTool(unittest.TestCase):
     with patch.object(sys, 'argv', args + ["sign" , "--key",
       "non-existent-key", "-r", "-i", self.layout_single_signed_path]), \
       self.assertRaises( SystemExit):
-        in_toto_sign_main()
+      in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
       "non-existent-key", self.layout_single_signed_path]), \
       self.assertRaises(SystemExit):
-        in_toto_sign_main()
+      in_toto_sign_main()
 
   def test_main_verbose(self):
     """Log level with verbose flag is lesser/equal than logging.INFO. """
@@ -141,11 +141,11 @@ class TestInTotoSignTool(unittest.TestCase):
     with patch.object(sys, 'argv', args + ["sign", "--key",
       self.alice_path_pvt , "-r", "-i", "--verbose",
       self.layout_single_signed_path]):
-        in_toto_sign_main()
+      in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify", "--key",
       self.alice_path, "--verbose", self.layout_single_signed_path]):
-        in_toto_sign_main()
+      in_toto_sign_main()
 
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
 
@@ -178,7 +178,7 @@ class TestInTotoSignTool(unittest.TestCase):
     return None
 
   def test_in_toto_sign_verify_sign_bad_key_error_exit(self):
-      """Error exit in_toto_verify_sign with bad key. """
+    """Error exit in_toto_verify_sign with bad key. """
     with self.assertRaises(SystemExit):
       in_toto_sign_verify_sign(
         self.layout_single_signed_path, "bad-key")
