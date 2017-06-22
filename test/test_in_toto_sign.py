@@ -64,9 +64,9 @@ class TestInTotoSignTool(unittest.TestCase):
     self.layout_double_signed_path = "double-signed.layout"
 
     # Import layout signing keys
-    alice = import_rsa_key_from_file("alice")
-    self.alice_path_pvt = "alice"
-    self.alice_path = "alice.pub"
+    #alice = import_rsa_key_from_file("alice")
+    self.alice_path_pvt = alice
+    self.alice_path = alice.pub
 
     # dump a single signed layout
     layout_template.sign(alice)
@@ -168,8 +168,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    with self.assertRaises(SignatureVerificationError):
-      verify_sign(self.layout_single_signed_path, self.alice_path)
+    verify_sign(self.layout_single_signed_path, self.alice_path)
 
 
   def test_add_sign_bad_key_error_exit(self):
