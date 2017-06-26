@@ -45,8 +45,8 @@ import securesystemslib.exceptions
 import securesystemslib.formats
 
 # import validators
-from . import common as models__common
-from . import link as models__link
+import in_toto.models.common as models__common
+import in_toto.models.link as models__link
 @attr.s(repr=False, init=False)
 class Layout(models__common.Signable):
   """
