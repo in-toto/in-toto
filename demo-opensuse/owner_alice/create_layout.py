@@ -16,6 +16,14 @@ def main():
         key_carl["keyid"]: key_carl,
     },
     "steps": [{
+        "name": "setup-project",
+        "material_matchrules": [],
+        "product_matchrules": [["CREATE", "project.meta"],
+            ["CREATE", "package.meta"]],
+        "pubkeys": [key_bob["keyid"]],
+        "expected_command": "",
+        "threshold": 1,
+      },{
         "name": "clone",
         "material_matchrules": [],
         "product_matchrules": [["CREATE", "connman/_service"],
@@ -26,7 +34,7 @@ def main():
             ["CREATE", "connman/connman.keyring"],
             ["CREATE", "connman/connman.spec"]],
         "pubkeys": [key_bob["keyid"]],
-        "expected_command": "git clone https://github.com/shikherverma/connman.git",
+        "expected_command": "",
         "threshold": 1,
       },{
         "name": "update-changelog",
@@ -80,13 +88,19 @@ def main():
             ["MATCH", "connman-rpmlintrc", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
             ["MATCH", "connman.changes", "WITH", "PRODUCTS", "IN", "connman", "FROM", "update-changelog"],
             ["MATCH", "connman.keyring", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
-            # FIXME: very weird that hash doesn't match for this file
+            # FIXME: hash doesn't match for this file because connman.spec in
+            # rpm has changelog appended to it and release number incremented.
             ["ALLOW", "connman.spec"],
             ["ALLOW", ".keep"],
             ["ALLOW", "alice.pub"],
             ["ALLOW", "root.layout"],
         ],
         "run": "unrpm connman-1.30-1.1.src.rpm",
+      },{
+        "name": "verify-signature",
+        "material_matchrules": [],
+        "product_matchrules": [],
+        "run": "gunzip connman-1.30.tar.gz && gpg --verify connman-1.30.tar.sign connman-1.30.tar",
       }],
     "signatures": []
   })

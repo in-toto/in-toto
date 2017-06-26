@@ -70,11 +70,11 @@ python create_layout.py
 The script will create a layout, add Bob's and Carl's public keys (fetched from
 their directories), sign it with Alice's private key and dump it to `root.layout`.
 In `root.layout`, you will find that (besides the signature and other information)
-there are four steps, `clone`, `update-changelog`, `test` and `package`, that
-the functionaries Bob and Carl, identified by their public keys, are authorized
-to perform.
+there are five steps, `setup-project`, `clone`, `update-changelog`, `test` and
+`package`, that the functionaries Bob and Carl, identified by their public keys,
+are authorized to perform.
 
-### Clone project source code (Bob)
+### Setup project (Bob)
 Execute the following commands to change to Bob's directory and perform the step.
 
 Checkout your default project. You will be prompted for your username and password which is stored in `~/.oscrc` as plain text.
@@ -111,6 +111,17 @@ Update the local copy from the central server. you will get a new connman direct
 osc up
 ```
 
+Now we will create a link file as a proof that Bob created the meta files for the project and package.
+The link will contain the hashes of both the meta files so in the future if something goes wrong we
+can figure out if Bob made a mistake or someone else changed the file.
+```shell
+in-toto-record --step-name setup-project --key ../bob start
+osc meta prj home:$username >> project.meta
+osc meta pkg home:$username connman >> package.meta
+in-toto-record --step-name setup-project --key ../bob stop --products project.meta package.meta
+```
+
+### Clone project source code (Bob)
 Now, we will take the role of the functionary Bob and perform the step
 `clone` on his behalf, that is we use in-toto to clone the project repo from GitHub and
 record metadata for what we do.
