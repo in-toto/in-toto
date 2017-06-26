@@ -22,13 +22,12 @@ import tempfile
 from mock import patch
 from in_toto.models.layout import Layout
 from in_toto.util import (generate_and_write_rsa_keypair,
-  prompt_import_rsa_key_from_file)
+  prompt_import_rsa_key_from_file, import_rse_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_sign import main as in_toto_sign_main
 from in_toto.in_toto_sign import add_sign, replace_sign, verify_sign
 from in_toto import log
 from in_toto import exceptions
-from in_toto.util import import_rsa_key_from_file
 
 WORKING_DIR = os.getcwd()
 
@@ -84,7 +83,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
     with patch.object(sys, 'argv', args + ["sign" , "--key",
       self.alice_path_pvt, self.layout_single_signed_path]), \
-         self.assertRaises(SystemExit):
+        self.assertRaises(SystemExit):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" , "--key",
@@ -99,17 +98,17 @@ class TestInTotoSignTool(unittest.TestCase):
 
     with patch.object(sys, 'argv', args + ["sign", "--key",
       self.alice_path_pvt, "-r", self.layout_single_signed_path]),\
-      self.assertRaises(SystemExit):
-          in_toto_sign_main()
+        self.assertRaises(SystemExit):
+        in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["sign", "--key",
       self.alice_path_pvt, "-i", self.layout_single_signed_path]),\
-         self.assertRaises(SystemExit):
+        self.assertRaises(SystemExit):
         in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["sign", "--key",
       self.alice_path_pvt, self.layout_single_signed_path]),\
-         self.assertRaises(SystemExit):
+        self.assertRaises(SystemExit):
         in_toto_sign_main()
 
 
