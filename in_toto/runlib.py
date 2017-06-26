@@ -312,6 +312,7 @@ def in_toto_mock(name, link_cmd_args):
   mock_link = in_toto.models.mock_link.MockLink(name=name, materials=materials_dict,
     products=products_dict, command=link_cmd_args, byproducts=byproducts,
     return_value=return_value, working_directory=os.getcwd())
+
   mock_fn = MOCK_FILENAME_FORMAT.format(step_name=name)
   log.info("Storing mock link metadata to '{}'...".format(mock_fn))
   mock_link.dump()

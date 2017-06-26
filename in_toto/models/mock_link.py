@@ -14,7 +14,9 @@
 
 <Purpose>
   Provides a class for mock link metadata which is information gathered when a
-  step of the supply chain is run as mock.
+  step of the supply chain is run as mock. A separate MockLink class is needed
+  because it also records current working directory which is not recorded in
+  Link class.
 """
 
 import attr
@@ -51,7 +53,7 @@ class MockLink(link.Link):
 
   def dump(self):
     """
-    Write pretty printed JSON represented of self to a file. with filename.
+    Write pretty printed JSON represented of self to a file with filename.
     A filename will be created using the link name + '.link-mock'-suffix
     """
     fn = MOCK_FILENAME_FORMAT.format(step_name=self.name)
