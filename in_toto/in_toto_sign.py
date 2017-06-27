@@ -106,7 +106,11 @@ def replace_sign(link, key):
 
   # Check if the key corresponds to the correct format
   securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
+
+  # Remove all the existing signatures
   signable_object.signatures = []
+
+  # Sign the object
   signable_object.sign(rsa_key)
 
   return signable_object
@@ -150,9 +154,9 @@ def parse_args():
     Parsed arguments (args object)
   """
   parser = argparse.ArgumentParser(
-      description="in-toto-sign : Signs link file with/without replacement "
-                    "of the existing signatures and dumps with/without "
-                    "infixing the keyID in the filename")
+    description="in-toto-sign : Signs link file with/without replacement "
+                "of the existing signatures and dumps with/without "
+                "infixing the keyID in the filename")
 
   lpad = (len(parser.prog) + 1) * " "
 
@@ -173,22 +177,22 @@ def parse_args():
                             help="Path to the key ")
 
   in_toto_args.add_argument("-r", "--replace-sig", action="store_true",
-                              help="Replace all the old signatures, sign "
-                              "with the given key, and add the new "
-                              "signature in file")
+                            help="Replace all the old signatures, sign "
+                            "with the given key, and add the new "
+                            "signature in file")
 
   in_toto_args.add_argument("-i", "--infix", action="store_true",
-                              help="Infix keyID in the filename while "
-                              "dumping, when -i the file will be dumped "
-                              "as original.<keyID>.link, "
-                              "else original.link")
+                            help="Infix keyID in the filename while "
+                            "dumping, when -i the file will be dumped "
+                            "as original.<keyID>.link, "
+                            "else original.link")
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
                             action="store_true")
 
   in_toto_args.add_argument("signablepath", type=str,
-                              help="path to the signable file")
+                            help="path to the signable file")
 
   args = parser.parse_args()
   args.operator = args.operator.lower()
