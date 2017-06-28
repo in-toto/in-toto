@@ -124,7 +124,7 @@ def parse_args():
                             help="Prompts for a password and encrypts the "
                             "private key with the same before storing")
 
-  in_toto_args.add_argument("name", type=string,
+  in_toto_args.add_argument("name", type=str,
                             help="The filename of the resulting key files",
                             metavar="<filename>")
 
