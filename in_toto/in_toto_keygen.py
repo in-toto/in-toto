@@ -86,10 +86,13 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   with open(filepath, "w") as fo_private:
     fo_private.write(private_pem.encode("utf-8"))
 
+<<<<<<< HEAD
 def prompt_password(prompt="Enter password: "):
   """Prompts for password input and returns the password. """
   return getpass.getpass(prompt, sys.stderr)
 
+=======
+>>>>>>> c541bd81ec9a6f69b89dbacfb259eb6eba595ff0
 def prompt_generate_and_write_rsa_keypair(filepath):
   """Prompts for password and calls
   generate_and_write_rsa_keypair"""
