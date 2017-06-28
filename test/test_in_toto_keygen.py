@@ -21,7 +21,7 @@ import tempfile
 from mock import patch
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
 from in_toto.in_toto_keygen import generate_and_write_rsa_keypair, \
-    prompt_generate_and_write_rsa_keypair
+    prompt_generate_and_write_rsa_keypair, prompt_password
 from in_toto import log
 from in_toto import exceptions
 
@@ -70,7 +70,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Test CLI command with missing arguments. """
     wrong_args_list = [
       ["in_toto_keygen.py"],
-      ["in_toto_keygen.py", "-p"]]
+      ["in_toto_keygen.py", "-r"]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(
