@@ -131,7 +131,6 @@ def parse_args():
                             metavar="<filename>")
 
   args = parser.parse_args()
-  args.operator = args.operator.lower()
 
   return args
 
