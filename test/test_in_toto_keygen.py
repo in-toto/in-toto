@@ -59,9 +59,10 @@ class TestInTotoKeyGenTool(unittest.TestCase):
   def test_main_optional_args(self):
     """Test CLI command keygen with optional arguments. """
     args = ["in_toto_keygen.py"]
-
+    password = "123456"
     with patch.object(sys, 'argv', args + ["-p", "bob"]), \
-      self.assertRaises(SystemExit):
+      patch("getpass.getpass", return_value=password), self.assertRaises(
+      SystemExit):
       in_toto_keygen_main()
 
 
@@ -82,7 +83,16 @@ class TestInTotoKeyGenTool(unittest.TestCase):
 
   def test_in_toto_keygen_prompt_generate_and_write_rsa_keypair(self):
     """in_toto_keygen_prompt_generate_and_write_rsa_keypair run through. """
-    prompt_generate_and_write_rsa_keypair("bob")
+    name = "bob"
+    password = "123456"
+    with patch("getpass.getpass", return_value=password):
+      prompt_generate_and_write_rsa_keypair(name)
+
+  def test_prompt_password(self):
+      """Call password prompt. """
+      password = "123456"
+      with patch("getpass.getpass", return_value=password):
+          self.assertEqual(prompt_password(), password)
 
 
 if __name__ == '__main__':
