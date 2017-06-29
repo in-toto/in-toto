@@ -26,7 +26,7 @@ from in_toto.util import (import_rsa_key_from_file,
     import_rsa_public_keys_from_files_as_dict, prompt_import_rsa_key_from_file)
 from in_toto import log
 from in_toto import exceptions
-
+import securesystemslib
 from securesystemslib.keys import generate_rsa_key
 
 WORKING_DIR = os.getcwd()
@@ -80,7 +80,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     wrong_args_list = [
       ["in_toto_keygen.py"],
       ["in_toto_keygen.py", "-r"]
-      ["in_toto_keygen.py", "-p", "bob", 1024]]
+      ["in_toto_keygen.py", "-p", "bob", "1024"]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(
@@ -110,7 +110,8 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Create ecrypted RSA key and import private and public key separately."""
     name = "key_encrypted"
     password = "123456"
-    generate_and_write_rsa_keypair(name, password)
+    bits= 3072
+    generate_and_write_rsa_keypair(name, bits, password)
     private_key = import_rsa_key_from_file(name, password)
     public_key = import_rsa_key_from_file(name + ".pub")
 
