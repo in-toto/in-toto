@@ -80,10 +80,11 @@ class TestInTotoKeyGenTool(unittest.TestCase):
       ["in_toto_keygen.py"],
       ["in_toto_keygen.py", "-r"],
       ["in_toto_keygen.py", "-p", "bob", "1024"]]
+    password="123456"
 
     for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv', wrong_args), self.assertRaises(
-        SystemExit):
+      with patch.object(sys, 'argv', wrong_args), patch("getpass.getpass",
+        return_value=password), self.assertRaises(SystemExit):
         in_toto_keygen_main()
 
   def test_in_toto_keygen_generate_and_write_rsa_keypair(self):
