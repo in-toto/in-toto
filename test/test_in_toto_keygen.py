@@ -20,10 +20,14 @@ import shutil
 import tempfile
 from mock import patch
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
-from in_toto.in_toto_keygen import generate_and_write_rsa_keypair, \
-    prompt_generate_and_write_rsa_keypair, prompt_password
+from in_toto.in_toto_keygen import (generate_and_write_rsa_keypair, \
+    prompt_generate_and_write_rsa_keypair, prompt_password)
+from in_toto.util import (import_rsa_key_from_file,
+    import_rsa_public_keys_from_files_as_dict, prompt_import_rsa_key_from_file)
 from in_toto import log
 from in_toto import exceptions
+
+from securesystemslib.keys import generate_rsa_key
 
 WORKING_DIR = os.getcwd()
 
@@ -60,7 +64,12 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Test CLI command keygen with optional arguments. """
     args = ["in_toto_keygen.py"]
     password = "123456"
+    bits = 3072
     with patch.object(sys, 'argv', args + ["-p", "bob"]), \
+      patch("getpass.getpass", return_value=password), self.assertRaises(
+      SystemExit):
+      in_toto_keygen_main()
+    with patch.object(sys, 'argv', args + ["-p", "bob", bits]), \
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
       in_toto_keygen_main()
@@ -70,7 +79,8 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Test CLI command with missing arguments. """
     wrong_args_list = [
       ["in_toto_keygen.py"],
-      ["in_toto_keygen.py", "-r"]]
+      ["in_toto_keygen.py", "-r"]
+      ["in_toto_keygen.py", "-p", "bob", 1024]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(
@@ -79,21 +89,48 @@ class TestInTotoKeyGenTool(unittest.TestCase):
 
   def test_in_toto_keygen_generate_and_write_rsa_keypair(self):
     """in_toto_keygen_generate_and_write_rsa_keypair run through. """
-    generate_and_write_rsa_keypair("bob")
+    bits = 3072
+    generate_and_write_rsa_keypair("bob", bits)
 
   def test_in_toto_keygen_prompt_generate_and_write_rsa_keypair(self):
     """in_toto_keygen_prompt_generate_and_write_rsa_keypair run through. """
     name = "bob"
     password = "123456"
+    bits = 3072
     with patch("getpass.getpass", return_value=password):
-      prompt_generate_and_write_rsa_keypair(name)
+      prompt_generate_and_write_rsa_keypair(name, bits)
 
   def test_prompt_password(self):
-      """Call password prompt. """
-      password = "123456"
-      with patch("getpass.getpass", return_value=password):
-          self.assertEqual(prompt_password(), password)
+    """Call password prompt. """
+    password = "123456"
+    with patch("getpass.getpass", return_value=password):
+      self.assertEqual(prompt_password(), password)
 
+  def test_create_and_import_encrypted_rsa(self):
+    """Create ecrypted RSA key and import private and public key separately."""
+    name = "key_encrypted"
+    password = "123456"
+    generate_and_write_rsa_keypair(name, password)
+    private_key = import_rsa_key_from_file(name, password)
+    public_key = import_rsa_key_from_file(name + ".pub")
+
+    securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
+    self.assertTrue(private_key["keyval"].get("private"))
+    self.assertTrue(
+      securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
+
+  def test_create_and_import_encrypted_rsa_nondefault_length(self):
+    name = "key_encrypted_2"
+    password = "123456"
+    bits = 2048
+    generate_and_write_rsa_keypair(name, bits, password)
+    private_key = import_rsa_key_from_file(name, password)
+    public_key = import_rsa_key_from_file(name + ".pub")
+
+    securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
+    self.assertTrue(private_key["keyval"].get("private"))
+    self.assertTrue(
+      securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
 
 if __name__ == '__main__':
   unittest.main(buffer=True)

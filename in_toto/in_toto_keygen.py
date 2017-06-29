@@ -39,8 +39,11 @@ import securesystemslib.formats
 import securesystemslib.keys
 import securesystemslib.exceptions
 
+DEFAULT_RSA_KEY_BITS = 3072
 
-def generate_and_write_rsa_keypair(filepath, password=None):
+
+def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
+                                   password=None):
   """
   <Purpose>
     Generate an RSA key keypair and store public and private portion each
@@ -56,6 +59,9 @@ def generate_and_write_rsa_keypair(filepath, password=None):
       respectively
     password: (optional)
       If specified the password is used to encrypt the private key
+     bits: (optional)
+      The key size, or key length, of the RSA key. 'bits' must be 2048, or
+      greater, and a multiple of 256.
 
   <Exceptions>
     securesystemslib.exceptions.FormatError, if the arguments are
@@ -69,7 +75,7 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   """
   securesystemslib.formats.PATH_SCHEMA.check_match(filepath)
 
-  rsa_key = securesystemslib.keys.generate_rsa_key()
+  rsa_key = securesystemslib.keys.generate_rsa_key(bits)
 
   public = rsa_key["keyval"]["public"]
   private = rsa_key["keyval"]["private"]
@@ -90,11 +96,11 @@ def prompt_password(prompt="Enter password: "):
   """Prompts for password input and returns the password. """
   return getpass.getpass(prompt, sys.stderr)
 
-def prompt_generate_and_write_rsa_keypair(filepath):
+def prompt_generate_and_write_rsa_keypair(filepath, bits):
   """Prompts for password and calls
   generate_and_write_rsa_keypair"""
   password = prompt_password()
-  generate_and_write_rsa_keypair(filepath, password)
+  generate_and_write_rsa_keypair(filepath, bits, password)
 
 
 def parse_args():
@@ -128,6 +134,11 @@ def parse_args():
                             help="The filename of the resulting key files",
                             metavar="<filename>")
 
+  in_toto_args.add_argument("bits", type=int, help="The key size, or "
+                            "key length, of the RSA key.  'bits' must be" 
+                            "2048, or greater, and a multiple of 256.",
+                            required=False)
+
   args = parser.parse_args()
 
   return args
@@ -143,10 +154,10 @@ def main():
   args = parse_args()
   try:
     if args.prompt:
-      prompt_generate_and_write_rsa_keypair(args.name)
+      prompt_generate_and_write_rsa_keypair(args.name, args.bits)
       sys.exit(0)
     else:
-      generate_and_write_rsa_keypair(args.name, password=None)
+      generate_and_write_rsa_keypair(args.name, args.bits, password=None)
       sys.exit(0)
 
   except Exception as e:
