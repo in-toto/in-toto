@@ -14,7 +14,9 @@
 
 <Purpose>
   A CLI tool for creating key files, and dumping them with <filename>,
-  <filename>.pub for private and public keys respectively.
+  <filename>.pub for private and public keys respectively. It also takes an
+  integer as an input, which specifies the length of the RSA key to be
+  generated. By default it is set as 3072.
 
   General Usage:
   python in_toto_keygen.py [-p] <filename>
@@ -136,7 +138,8 @@ def parse_args():
 
   in_toto_args.add_argument("bits", type=int, help="The key size, or "
                             "key length, of the RSA key.  'bits' must be" 
-                            "2048, or greater, and a multiple of 256.")
+                            "2048, or greater, and a multiple of 256.",
+                            metavar="<bits>")
 
   args = parser.parse_args()
 

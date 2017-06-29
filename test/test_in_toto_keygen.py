@@ -64,12 +64,11 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Test CLI command keygen with optional arguments. """
     args = ["in_toto_keygen.py"]
     password = "123456"
-    bits = 3072
     with patch.object(sys, 'argv', args + ["-p", "bob"]), \
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
       in_toto_keygen_main()
-    with patch.object(sys, 'argv', args + ["-p", "bob", bits]), \
+    with patch.object(sys, 'argv', args + ["-p", "bob", "3072"]), \
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
       in_toto_keygen_main()
@@ -79,7 +78,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Test CLI command with missing arguments. """
     wrong_args_list = [
       ["in_toto_keygen.py"],
-      ["in_toto_keygen.py", "-r"]
+      ["in_toto_keygen.py", "-r"],
       ["in_toto_keygen.py", "-p", "bob", "1024"]]
 
     for wrong_args in wrong_args_list:
