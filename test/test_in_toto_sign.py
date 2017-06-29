@@ -58,6 +58,9 @@ class TestInTotoSignTool(unittest.TestCase):
     # Load layout template
     layout_template = Layout.read_from_file("demo.layout.template")
 
+    # Store layout paths to be used in tests
+    self.layout_single_signed_path = "single-signed.layout"
+
     # Import layout signing keys
     alice = import_rsa_key_from_file("alice")
     self.alice_path_pvt = "alice"

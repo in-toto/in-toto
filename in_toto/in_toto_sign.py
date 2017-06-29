@@ -184,13 +184,13 @@ def parse_args():
   in_toto_args.add_argument("-r", "--replace-sig", action="store_true",
                             help="Replace all the old signatures, sign "
                             "with the given key, and add the new "
-                            "signature in file", default=False)
+                            "signature in file")
 
   in_toto_args.add_argument("-i", "--infix", action="store_true",
                             help="Infix keyID in the filename while "
                             "dumping, when -i the file will be dumped "
                             "as original.<keyID>.link, "
-                            "else original.link", default=False)
+                            "else original.link")
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
