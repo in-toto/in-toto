@@ -20,10 +20,12 @@
   appends the new signature in the file. Further in each of the two cases,
   depending on the arguments it then dumps the file either by infixing
   the keyID i.e. <filename>.<8-initial-characters-from-the-keyID>.link
-  or simply <filename>.link
+  or simply <filename>.link. Note that in case of signing by multiple key
+  files, when -i is specified, file is dumped by the keyID of the last key
+  supplied in the arguments.
 
   General Usage:
-  python in_toto_sign.py [sign | verify] --key <path/to/key> [-r] [-i]
+  python in_toto_sign.py [sign | verify] --keys <path/to/key> [-r] [-i]
     <path/to/link/file>
 
   Example Usage:
@@ -31,7 +33,7 @@
   he wants to replace all the existing signatures, and then dump the file
   by infixing the keyID in it. Then his command would be-
 
-  python in_toto_sign.py sign --key /bob/mykeys/bob_pvt_key
+  python in_toto_sign.py sign --keys /bob/mykeys/bob_pvt_key
     -r -i  /bob/software/in-toto/test/package.link
 
 """
@@ -40,6 +42,7 @@ import sys
 import argparse
 import in_toto.util
 from in_toto import log
+from in_toto import exceptions
 from in_toto.models.common import Signable as signable_object
 from in_toto.models.link import Link as link_import
 import securesystemslib.exceptions
@@ -47,7 +50,7 @@ import securesystemslib.keys
 import securesystemslib.formats
 
 
-def add_sign(link, key):
+def add_sign(link, key_dict):
   """
   <Purpose>
     Signs the given link file with the corresponding key,
@@ -69,18 +72,19 @@ def add_sign(link, key):
   # Reading the file from the given link and making an object
   signable_object = link_import.read_from_file(link)
 
-  # Import the rsa key from the file specified in the filepath
-  rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
+  for key in key_dict:
+    # Import the rsa key from the file specified in the filepath
+    rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
 
-  # Checking if the given key follows the format
-  securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
+    # Checking if the given key follows the format
+    securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
 
-  signable_object.sign(rsa_key)
+    signable_object.sign(rsa_key)
 
   return signable_object
 
 
-def replace_sign(link, key):
+def replace_sign(link, key_dict):
   """
   <Purpose>
     Replaces all the existing signature with the new signature,
@@ -88,7 +92,7 @@ def replace_sign(link, key):
 
   <Arguments>
     link - path to the key file
-    key - the key to be used for signing
+    key - the key/keys to be used for signing
 
   <Exceptions>
     None
@@ -102,16 +106,17 @@ def replace_sign(link, key):
   signable_object = link_import.read_from_file(link)
 
   # Import rsa key from the filepath
-  rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
+  for key in key_dict:
+    rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
 
-  # Check if the key corresponds to the correct format
-  securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
+    # Check if the key corresponds to the correct format
+    securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
 
-  # Remove all the existing signatures
-  signable_object.signatures = []
+    # Remove all the existing signatures
+    signable_object.signatures = []
 
-  # Sign the object
-  signable_object.sign(rsa_key)
+    # Sign the object
+    signable_object.sign(rsa_key)
 
   return signable_object
 
@@ -136,7 +141,7 @@ def verify_sign(link, key_pub):
   """
   signable_object = link_import.read_from_file(link)
   link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-    [key_pub])
+      key_pub)
   signable_object.verify_signatures(link_key_dict)
 
 def parse_args():
@@ -161,7 +166,7 @@ def parse_args():
   lpad = (len(parser.prog) + 1) * " "
 
   parser.usage = ("\n"
-                  "(sign | verify) --key <filepath>\n{0}"
+                  "(sign | verify) --keys <filepath/filepaths>\n{0}"
                   "[--replace-sig]\n{0}"
                   "[--infix]\n{0}"
                   "[--verbose]\n{0}"
@@ -173,19 +178,19 @@ def parse_args():
   in_toto_args.add_argument("operator", type=str, choices=['sign', 'verify'],
                             help="Sign or Verify")
 
-  in_toto_args.add_argument("-k", "--key", type=str, required=True,
-                            help="Path to the key ")
+  in_toto_args.add_argument("-k", "--keys", nargs="+", type=str, required=True,
+                            help="Path to the key file/files")
 
   in_toto_args.add_argument("-r", "--replace-sig", action="store_true",
                             help="Replace all the old signatures, sign "
                             "with the given key, and add the new "
-                            "signature in file")
+                            "signature in file", default=False)
 
   in_toto_args.add_argument("-i", "--infix", action="store_true",
                             help="Infix keyID in the filename while "
                             "dumping, when -i the file will be dumped "
                             "as original.<keyID>.link, "
-                            "else original.link")
+                            "else original.link", default=False)
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
@@ -207,18 +212,19 @@ def main():
   arguments it then dumps the corresponding file.
   """
   args = parse_args()
-  rsa_key = in_toto.util.import_rsa_key_from_file(args.key)
+  length = len(args.keys)
+  rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[length-1])
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 
-  try:
-    if args.operator == 'sign':
+  if args.operator == 'sign':
+    try:
       if args.replace_sig:
-        signable_object = replace_sign(args.signablepath, args.key)
+        signable_object = replace_sign(args.signablepath, args.keys)
 
       else:
-        signable_object = add_sign(args.signablepath, args.key)
+        signable_object = add_sign(args.signablepath, args.keys)
 
       if args.infix:
         signable_object.dump(key=rsa_key)
@@ -228,12 +234,25 @@ def main():
         signable_object.dump()
         sys.exit(0)
 
-    else:
-      verify_sign(args.signablepath, args.key)
+    except Exception as e:
+      log.error("Unable to sign. Error Occured - {}".format(e))
+      sys.exit(1)
 
-  except Exception as e:
-    print('The following error occurred', e)
-    sys.exit(1)
+  else:
+    try:
+      verify_sign(args.signablepath, args.keys)
+      log.pass_verification('Successfully verified.')
+      sys.exit(0)
+
+    except Exception as exceptions.SignatureVerificationError:
+      log.fail_verification('Verification Failed - {}'.format(type(
+          e).__name__,e))
+      sys.exit(1)
+
+    except Exception as e:
+      log.error('The following error occured while verification - {'
+                '}'.format(e))
+      sys.exit(2)
 
 if __name__ == "__main__":
     main()
