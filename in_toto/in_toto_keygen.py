@@ -136,7 +136,7 @@ def parse_args():
                             help="The filename of the resulting key files",
                             metavar="<filename>")
 
-  in_toto_args.add_argument("bits", nargs= "?", default=3072, type=int, \
+  in_toto_args.add_argument("bits", nargs= "?", default=3072, type=int,
                             help="The key size, or key length, of the RSA "
                             "key.  'bits' must be 2048, or greater, and a "
                             "multiple of 256.", metavar="<bits>")
