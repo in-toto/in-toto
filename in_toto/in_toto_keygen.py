@@ -19,16 +19,16 @@
   generated. By default it is set as 3072.
 
   General Usage:
-  python in_toto_keygen.py [-p] <filename>
+  python in_toto_keygen.py [-p] <filename> [bits]
 
   Example Usage:
-  Suppose Bob wants to create the keys and dump them with file name
-  "bob_keys". He also wants to encrypt the so created private key with his
-  choice of passphrase. The keys would then be created, the private key
+  Suppose Bob wants to create the keys of size 2048 bits and dump them with
+  file name "bob_keys". He also wants to encrypt the so created private key
+  with his choice of passphrase. The keys would then be created, the private key
   would be encrypted and dumped as "bob_keys" and public key would be dumped
-  as "bob_keys.pub".
+  as "bob_keys.pub". Bob will use the following command:
 
-  python in_toto_keygen.py -p bob_keys
+  python in_toto_keygen.py -p bob_keys 2048
 
 """
 import os
