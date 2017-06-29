@@ -16,14 +16,6 @@ def main():
         key_carl["keyid"]: key_carl,
     },
     "steps": [{
-        "name": "setup-project",
-        "material_matchrules": [],
-        "product_matchrules": [["CREATE", "project.meta"],
-            ["CREATE", "package.meta"]],
-        "pubkeys": [key_bob["keyid"]],
-        "expected_command": "",
-        "threshold": 1,
-      },{
         "name": "clone",
         "material_matchrules": [],
         "product_matchrules": [["CREATE", "connman/_service"],
@@ -43,13 +35,6 @@ def main():
         "product_matchrules": [["ALLOW", "connman/connman.changes"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
-        "threshold": 1,
-      },{
-        "name": "test",
-        "material_matchrules": [],
-        "product_matchrules": [],
-        "pubkeys": [key_carl["keyid"]],
-        "expected_command": "osc build openSUSE_Factory x86_64 connman/connman.spec",
         "threshold": 1,
       },{
         "name": "package",
@@ -89,9 +74,7 @@ def main():
             ["MATCH", "connman-rpmlintrc", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
             ["MATCH", "connman.changes", "WITH", "PRODUCTS", "IN", "connman", "FROM", "update-changelog"],
             ["MATCH", "connman.keyring", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
-            # FIXME: hash doesn't match for this file because connman.spec in
-            # rpm has changelog appended to it and release number incremented.
-            ["ALLOW", "connman.spec"],
+            ["MATCH", "connman.spec", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
             ["ALLOW", ".keep"],
             ["ALLOW", "alice.pub"],
             ["ALLOW", "verify-signature.sh"],

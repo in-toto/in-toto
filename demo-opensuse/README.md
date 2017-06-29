@@ -7,20 +7,20 @@ For the sake of demonstrating in-toto, we will have you run all parts of the sof
 Install docker
 https://docs.docker.com/engine/installation/
 
-Get in-toto
+Pull and run the docker image for this demo
 ```shell
-git clone https://github.com/in-toto/in-toto.git
+docker pull intoto/opensuse-demo
+docker run --privileged -i -t intoto/opensuse-demo:latest
 ```
 
-Build Docker image from Dockerfile
+This demo requires an account on opensuse build service. If you don't have an account you could either sign up for one easily to continue. Or you could try our [offline demo](Offline-demo.md).
+
+Signup for an account on opensuse build service at
+https://build.opensuse.org/ICSLogin/
+
+Set your username as environment variable so that you can copy paste the demo commands
 ```shell
-cd in-toto/demo-opensuse/
-docker pull opensuse
-docker build -t="in-toto-demo-opensuse" .
-```
-Run the docker image
-```shell
-docker run --privileged -i -t in-toto-demo-opensuse
+username=<username>
 ```
 
 # Change into the demo directory and you are ready to start
@@ -34,8 +34,9 @@ already have RSA keys in each of their directories. This is what you see:
 ```shell
 tree  # If you don't have tree, try 'find .' instead
 # the tree command gives you the following output
-# ├── README.md
 # ├── Dockerfile
+# ├── Offline-demo.md
+# ├── README.md
 # ├── final_product
 # ├── functionary_bob
 # │   ├── bob
@@ -46,21 +47,15 @@ tree  # If you don't have tree, try 'find .' instead
 # └── owner_alice
 #     ├── alice
 #     ├── alice.pub
-#     └── create_layout.py
+#     ├── create_layout.py
+#     ├── create_layout_offline.py
+#     └── verify-signature.sh
 ```
 
 ### Define software supply chain layout (Alice)
 First, we will create a new package on openSUSE's open build server. Next we will define the software supply chain layout. To simplify this process, we provide a script that generates a simple layout for the purpose of the demo.
 
-In this software supply chain layout, we have Alice, Bob and Carl. Alice is the project owner that creates the root layout. Bob, is the developer who clones the project's repo and performs some pre-packaging editing. Carl is the builder then tests the build and verifies that its fit to ship. Carl then commits the package which triggers open build server to build the RPMs.
-
-First, signup for an account on opensuse build service at
-https://build.opensuse.org/ICSLogin/
-
-Set your username as environment variable so that you can copy paste the demo commands
-```shell
-username=<username>
-```
+In this software supply chain layout, we have Alice, Bob and Carl. Alice is the project owner that creates the root layout. Bob, is the developer who clones the project's repo and performs some pre-packaging editing. Carl is the builder who then tests the build and verifies that its fit to ship. Carl then commits the package which triggers open build server to build the RPMs.
 
 Create and sign the software supply chain layout on behalf of Alice
 ```shell
@@ -127,9 +122,9 @@ Now, we will take the role of the functionary Bob and perform the step
 record metadata for what we do.
 ```shell
 in-toto-record --step-name clone --key ../bob start
-git clone https://github.com/shikherverma/connman.git connman-src
+git clone file:///home/connman/.git/ connman-src
 mv connman-src/* connman/
-rm -r connman-src/
+rm -r connman-src
 in-toto-record --step-name clone --key ../bob stop --products connman/_service connman/connman-1.30.tar.gz connman/connman-1.30.tar.sign connman/connman-rpmlintrc connman/connman.changes connman/connman.keyring connman/connman.spec
 ```
 
@@ -212,7 +207,7 @@ our software package `<srcpackage.rpm>` and the related metadata files `root.lay
 `clone.[Bob's keyid].link`, `update-changelog.[Bob's keyid].link`, `test.[Carl's keyid].link` and `package.[Carl's keyid].link`:
 ```shell
 cd ../../
-cp owner_alice/root.layout functionary_carl/home:$username/clone.0c6c50a1.link functionary_carl/home:$username/update-changelog.0c6c50a1.link functionary_carl/home:$username/test.c1ae1e51.link functionary_carl/home:$username/package.c1ae1e51.link functionary_carl/home:$username/connman-1.30-1.1.src.rpm final_product/
+cp owner_alice/root.layout owner_alice/verify-signature.sh functionary_carl/home:$username/setup-project.0c6c50a1.link functionary_carl/home:$username/clone.0c6c50a1.link functionary_carl/home:$username/update-changelog.0c6c50a1.link functionary_carl/home:$username/test.c1ae1e51.link functionary_carl/home:$username/package.c1ae1e51.link functionary_carl/home:$username/connman-1.30-1.1.src.rpm final_product/
 ```
 And now run verification on behalf of the client:
 ```shell
@@ -229,6 +224,7 @@ This command will verify that
  3. each step was performed and signed by the authorized functionary
  4. the recorded materials and products align with the matchrules and
  5. the inspection `unpack` finds what it expects.
+ 6. the inspection `verify-signature` checks that the signature for connman tarball is correct.
 
 From it, you will see the meaningful output `PASSING` and a return value
 of `0`, that indicates verification was successful:
