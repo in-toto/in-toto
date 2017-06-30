@@ -81,13 +81,13 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
 
     with patch.object(sys, 'argv', args + ["sign" ,
-      self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
-      self.assertRaises(SystemExit):
+        self.layout_single_signed_path, "-r", "--keys",
+        self.alice_path_pvt]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" ,
-      self.layout_single_signed_path, "--keys", self.alice_path]), \
-      self.assertRaises(SystemExit):
+        self.layout_single_signed_path, "--keys", self.alice_path]), \
+        self.assertRaises(SystemExit):
       in_toto_sign_main()
 
 

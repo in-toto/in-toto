@@ -44,13 +44,14 @@ import in_toto.util
 from in_toto import log
 from in_toto import exceptions
 from in_toto.models.common import Signable as signable_object
+from in_toto.models.layout import Layout as layout_import
 from in_toto.models.link import Link as link_import
 import securesystemslib.exceptions
 import securesystemslib.keys
 import securesystemslib.formats
 
 
-def add_sign(link, key_dict):
+def add_sign(file_path, key_dict):
   """
   <Purpose>
     Signs the given link file with the corresponding key,
@@ -69,8 +70,7 @@ def add_sign(link, key_dict):
     adding the signature
 
   """
-  # Reading the file from the given link and making an object
-  signable_object = link_import.read_from_file(link)
+  signable_object = check_file_type_and_return_object(file_path)
 
   for key in key_dict:
     # Import the rsa key from the file specified in the filepath
@@ -84,7 +84,7 @@ def add_sign(link, key_dict):
   return signable_object
 
 
-def replace_sign(link, key_dict):
+def replace_sign(file_path, key_dict):
   """
   <Purpose>
     Replaces all the existing signature with the new signature,
@@ -101,9 +101,7 @@ def replace_sign(link, key_dict):
     An object containing the contents of the link file after
     adding the signature which replaces the old signatures
   """
-
-  # Reading the link file and making an object
-  signable_object = link_import.read_from_file(link)
+  signable_object = check_file_type_and_return_object(file_path)
 
   # Remove all the existing signatures
   signable_object.signatures = []
@@ -121,7 +119,7 @@ def replace_sign(link, key_dict):
   return signable_object
 
 
-def verify_sign(link, key_pub):
+def verify_sign(file_path, key_pub):
   """
   <Purpose>
     Verifies the signature field in the link file, given a public key
@@ -139,10 +137,33 @@ def verify_sign(link, key_pub):
   <Returns>
     None
   """
-  signable_object = link_import.read_from_file(link)
-  link_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
+  signable_object = check_file_type_and_return_object(file_path)
+  key_pub_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
       key_pub)
-  signable_object.verify_signatures(link_key_dict)
+  signable_object.verify_signatures(key_pub_dict)
+
+
+def check_file_type_and_return_object(file_path):
+  with open(file_path,'r') as file_object:
+    for line in file_object:
+        if 'layout' in line:
+          signable_object = layout_import.read_from_file(file_path)
+          return signable_object
+
+        elif 'Link' in line:
+          signable_object = link_import.read_from_file(file_path)
+          return signable_object
+  file_object.close()
+
+def file_type(file_path):
+  with open(file_path, 'r') as file_object:
+    for line in file_object:
+      if 'layout' in line:
+        return 0
+
+      elif 'Link' in line:
+        return 1
+  file_object.close()
 
 def parse_args():
   """
@@ -189,15 +210,19 @@ def parse_args():
   in_toto_args.add_argument("-i", "--infix", action="store_true",
                             help="Infix keyID in the filename while "
                                  "dumping, when -i the file will be dumped "
-                                 "as original.<keyID>.link, "
-                                 "else original.link")
+                                 "as original.<keyID>.link/layout, "
+                                 "else original.link/layout")
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
                             action="store_true")
 
+  in_toto_args.add_argument("-d", "--destination", type=str, help="Filename "
+                            "of the output file")
+
   in_toto_args.add_argument("-k", "--keys", nargs="+", type=str, required=True,
                             help="Path to the key file/files")
+
 
   args = parser.parse_args()
   args.operator = args.operator.lower()
@@ -213,7 +238,12 @@ def main():
   """
   args = parse_args()
   length = len(args.keys)
+  print args.keys[length-1]
   rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[length-1])
+  FILENAME_FORMAT_LAYOUT = "{file_name}.{keyid:.8}.layout"
+  FILENAME_FORMAT_LINK = "{file_name}.{keyid:.8}.link"
+  index=args.signablepath.rfind('/')
+  source_file_name=args.signablepath[index+1:]
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
@@ -222,13 +252,32 @@ def main():
     try:
       if args.replace_sig:
         signable_object = replace_sign(args.signablepath, args.keys)
-
       else:
         signable_object = add_sign(args.signablepath, args.keys)
 
       if args.infix:
-        signable_object.dump(key=rsa_key)
-        sys.exit(0)
+        if not args.destination:
+          if file_type(args.signablepath)==0:
+              fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name,
+                keyid=rsa_key['keyid'])
+              signable_object.dump(fn)
+              sys.exit(0)
+
+          else:
+            signable_object.dump(rsa_key)
+            sys.exit(0)
+
+        else:
+          if file_type(args.signablepath)==0:
+            fn = FILENAME_FORMAT_LAYOUT.format(file_name=args.destination,
+              keyid=rsa_key['keyid'])
+            signable_object.dump(fn)
+            sys.exit(0)
+          else:
+            fn = FILENAME_FORMAT_LINK.format(file_name=args.destination,
+              keyid=rsa_key['keyid'])
+            signable_object.dump(filename=fn)
+            sys.exit(0)
 
       else:
         signable_object.dump()
@@ -244,8 +293,8 @@ def main():
       log.pass_verification('Successfully verified.')
       sys.exit(0)
 
-    except Exception as exceptions.SignatureVerificationError:
-      log.fail_verification('Verification Failed.')
+    except exceptions.SignatureVerificationError as e:
+      log.fail_verification('Verification Failed.' + str(e))
       sys.exit(1)
 
     except Exception as e:
