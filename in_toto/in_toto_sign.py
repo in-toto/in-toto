@@ -269,8 +269,28 @@ def main():
             sys.exit(0)
 
       else:
-        signable_object.dump()
-        sys.exit(0)
+        if not args.destination:
+          if signable_object._type=='layout':
+            fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name)
+            signable_object.dump(fn)
+            sys.exit(0)
+
+          else:
+            fn = FILENAME_FORMAT_LINK.format(file_name=source_file_name)
+            signable_object.dump(fn)
+            sys.exit(0)
+
+        else:
+          if signable_object._type == 'layout':
+            fn = FILENAME_FORMAT_LAYOUT.format(file_name=args.destination)
+            signable_object.dump(fn)
+            sys.exit(0)
+
+          else:
+            fn = FILENAME_FORMAT_LINK.format(file_name=args.destination)
+            signable_object.dump(fn)
+            sys.exit(0)
+
 
     except Exception as e:
       log.error("Unable to sign. Error Occured - {}".format(e))
