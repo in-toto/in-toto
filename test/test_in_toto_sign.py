@@ -169,8 +169,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_in_toto_sign_verify_sign(self):
     """in_toto_sign_verify_sign run through. """
-    with self.assertRaises(exceptions.SignatureVerificationError):
-      verify_sign(self.layout_single_signed_path, [self.alice_path])
+    verify_sign(self.layout_single_signed_path, [self.alice_path])
 
 
   def test_add_sign_bad_key_error_exit(self):

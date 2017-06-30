@@ -238,7 +238,6 @@ def main():
   """
   args = parse_args()
   length = len(args.keys)
-  print args.keys[length-1]
   rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[length-1])
   FILENAME_FORMAT_LAYOUT = "{file_name}.{keyid:.8}.layout"
   FILENAME_FORMAT_LINK = "{file_name}.{keyid:.8}.link"
@@ -258,10 +257,10 @@ def main():
       if args.infix:
         if not args.destination:
           if file_type(args.signablepath)==0:
-              fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name,
-                keyid=rsa_key['keyid'])
-              signable_object.dump(fn)
-              sys.exit(0)
+            fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name,
+              keyid=rsa_key['keyid'])
+            signable_object.dump(fn)
+            sys.exit(0)
 
           else:
             signable_object.dump(rsa_key)
