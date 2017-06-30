@@ -25,16 +25,16 @@
   supplied in the arguments.
 
   General Usage:
-  python in_toto_sign.py [sign | verify] --keys <path/to/key> [-r] [-i]
-    <path/to/link/file>
+  python in_toto_sign.py [sign | verify] <path/to/link/file> [-r] [-i] --keys
+  <path/to/key/file(s)>
 
   Example Usage:
   Suppose Bob wants to sign a file called package.link, and also while signing,
   he wants to replace all the existing signatures, and then dump the file
   by infixing the keyID in it. Then his command would be-
 
-  python in_toto_sign.py sign --keys /bob/mykeys/bob_pvt_key
-    -r -i  /bob/software/in-toto/test/package.link
+  python in_toto_sign.py sign /bob/software/in-toto/test/package.link -r -i
+  --keys /bob/mykeys/bob_pvt_key
 
 """
 import os
@@ -105,15 +105,15 @@ def replace_sign(link, key_dict):
   # Reading the link file and making an object
   signable_object = link_import.read_from_file(link)
 
-  # Import rsa key from the filepath
+  # Remove all the existing signatures
+  signable_object.signatures = []
+
   for key in key_dict:
+    # Import rsa key from the filepath
     rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
 
     # Check if the key corresponds to the correct format
     securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
-
-    # Remove all the existing signatures
-    signable_object.signatures = []
 
     # Sign the object
     signable_object.sign(rsa_key)
@@ -166,11 +166,11 @@ def parse_args():
   lpad = (len(parser.prog) + 1) * " "
 
   parser.usage = ("\n"
-                  "(sign | verify) --keys <filepath/filepaths>\n{0}"
+                  "(sign | verify) <path/to/signable>\n{0}"
                   "[--replace-sig]\n{0}"
                   "[--infix]\n{0}"
                   "[--verbose]\n{0}"
-                  "<path/to/signable>\n\n"
+                  "--keys <filepath/filepaths>\n\n"
                   .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto-sign options")
@@ -178,26 +178,26 @@ def parse_args():
   in_toto_args.add_argument("operator", type=str, choices=['sign', 'verify'],
                             help="Sign or Verify")
 
-  in_toto_args.add_argument("-k", "--keys", nargs="+", type=str, required=True,
-                            help="Path to the key file/files")
+  in_toto_args.add_argument("signablepath", type=str,
+                            help="path to the signable file")
 
   in_toto_args.add_argument("-r", "--replace-sig", action="store_true",
                             help="Replace all the old signatures, sign "
-                            "with the given key, and add the new "
-                            "signature in file")
+                                 "with the given key, and add the new "
+                                 "signature in file")
 
   in_toto_args.add_argument("-i", "--infix", action="store_true",
                             help="Infix keyID in the filename while "
-                            "dumping, when -i the file will be dumped "
-                            "as original.<keyID>.link, "
-                            "else original.link")
+                                 "dumping, when -i the file will be dumped "
+                                 "as original.<keyID>.link, "
+                                 "else original.link")
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
                             action="store_true")
 
-  in_toto_args.add_argument("signablepath", type=str,
-                            help="path to the signable file")
+  in_toto_args.add_argument("-k", "--keys", nargs="+", type=str, required=True,
+                            help="Path to the key file/files")
 
   args = parser.parse_args()
   args.operator = args.operator.lower()
@@ -245,8 +245,7 @@ def main():
       sys.exit(0)
 
     except Exception as exceptions.SignatureVerificationError:
-      log.fail_verification('Verification Failed - {}'.format(type(
-          e).__name__,e))
+      log.fail_verification('Verification Failed.')
       sys.exit(1)
 
     except Exception as e:

@@ -80,35 +80,35 @@ class TestInTotoSignTool(unittest.TestCase):
     """Test in-toto-sign CLI tool with required arguments. """
     args = ["in_toto_sign.py"]
 
-    with patch.object(sys, 'argv', args + ["sign" , "--keys",
-      self.alice_path_pvt, self.layout_single_signed_path]), \
-        self.assertRaises(SystemExit):
-        in_toto_sign_main()
+    with patch.object(sys, 'argv', args + ["sign" ,
+      self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["verify" , "--keys",
-      self.alice_path, self.layout_single_signed_path]), self.assertRaises(
-      SystemExit):
-       in_toto_sign_main()
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.layout_single_signed_path, "--keys", self.alice_path]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
 
 
   def test_main_optional_args(self):
     """Test CLI command sign with optional arguments. """
     args = ["in_toto_sign.py"]
 
-    with patch.object(sys, 'argv', args + ["sign", "--keys",
-      self.alice_path_pvt, "-r", self.layout_single_signed_path]),\
-        self.assertRaises(SystemExit):
-        in_toto_sign_main()
+    with patch.object(sys, 'argv', args + ["sign",
+      self.layout_single_signed_path, "-r",  "--keys", self.alice_path_pvt]),\
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["sign", "--keys",
-      self.alice_path_pvt, "-i", self.layout_single_signed_path]),\
-        self.assertRaises(SystemExit):
-        in_toto_sign_main()
+    with patch.object(sys, 'argv', args + ["sign",
+      self.layout_single_signed_path, "-i", "--keys", self.alice_path_pvt]),\
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["sign", "--keys",
-      self.alice_path_pvt, self.layout_single_signed_path]),\
-        self.assertRaises(SystemExit):
-        in_toto_sign_main()
+    with patch.object(sys, 'argv', args + ["sign" ,
+      self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
 
 
   def test_main_wrong_args(self):
@@ -129,13 +129,13 @@ class TestInTotoSignTool(unittest.TestCase):
   def test_main_wrong_key_exits(self):
     """Test main with wrong key exits and logs error """
     args = ["in_toto_sign.py"]
-    with patch.object(sys, 'argv', args + ["sign" , "--keys",
-      "non-existent-key", "-r", "-i", self.layout_single_signed_path]), \
-      self.assertRaises(IOError):
+    with patch.object(sys, 'argv', args + ["sign" ,
+      self.layout_single_signed_path, "-r", "-i", "--keys",
+      "non-existent-key"]), self.assertRaises(IOError):
       in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["verify" , "--keys",
-      "non-existent-key", self.layout_single_signed_path]), \
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.layout_single_signed_path, "--keys", "non-existent-key"]), \
       self.assertRaises(IOError):
       in_toto_sign_main()
 
@@ -144,14 +144,14 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
 
     original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args + ["sign", "--keys",
-      self.alice_path_pvt , "-r", "-i", "--verbose",
-      self.layout_single_signed_path]), self.assertRaises(SystemExit):
+    with patch.object(sys, 'argv', args + ["sign",
+      self.layout_single_signed_path, "-r", "-i", "--verbose", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["verify", "--keys",
-      self.alice_path, "--verbose", self.layout_single_signed_path]), \
-         self.assertRaises(SystemExit):
+    with patch.object(sys, 'argv', args + ["verify",
+      self.layout_single_signed_path "--verbose", "--keys",
+      self.alice_path]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
@@ -176,12 +176,12 @@ class TestInTotoSignTool(unittest.TestCase):
   def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """
     with self.assertRaises(IOError):
-      add_sign(self.layout_single_signed_path, "bad-key")
+      add_sign(self.layout_single_signed_path, ["bad-key"])
 
   def test_verify_sign_bad_key_error_exit(self):
     """Error exit in_toto_verify_sign with bad key. """
     with self.assertRaises(IOError):
-      verify_sign(self.layout_single_signed_path, "bad-key")
+      verify_sign(self.layout_single_signed_path, ["bad-key"])
 
 
 
