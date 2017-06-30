@@ -155,16 +155,6 @@ def check_file_type_and_return_object(file_path):
           return signable_object
   file_object.close()
 
-def file_type(file_path):
-  with open(file_path, 'r') as file_object:
-    for line in file_object:
-      if 'layout' in line:
-        return 0
-
-      elif 'Link' in line:
-        return 1
-  file_object.close()
-
 def parse_args():
   """
   <Purpose>
