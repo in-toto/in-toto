@@ -256,7 +256,7 @@ def main():
 
       if args.infix:
         if not args.destination:
-          if file_type(args.signablepath)==0:
+          if signable_object._type=='layout':
             fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name,
               keyid=rsa_key['keyid'])
             signable_object.dump(fn)
@@ -267,7 +267,7 @@ def main():
             sys.exit(0)
 
         else:
-          if file_type(args.signablepath)==0:
+          if signable_object._type=='layout':
             fn = FILENAME_FORMAT_LAYOUT.format(file_name=args.destination,
               keyid=rsa_key['keyid'])
             signable_object.dump(fn)
