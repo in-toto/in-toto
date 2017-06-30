@@ -55,7 +55,7 @@ tree  # If you don't have tree, try 'find .' instead
 ### Define software supply chain layout (Alice)
 First, we will create a new package on openSUSE's open build server. Next we will define the software supply chain layout. To simplify this process, we provide a script that generates a simple layout for the purpose of the demo.
 
-In this software supply chain layout, we have Alice, Bob and Carl. Alice is the project owner that creates the root layout. Bob, is the developer who clones the project's repo and performs some pre-packaging editing. Carl is the builder who then tests the build and verifies that its fit to ship. Carl then commits the package which triggers open build server to build the RPMs.
+Three people participate in this software supply chain, Alice, Bob and Carl. Alice is the project owner that creates the root layout. Bob is the developer, and he clones the project's repo and performs some pre-packaging edits. Carl then tests the sources and verifies that its fit to ship. Carl then commits the package which triggers open build server to build the RPMs.
 
 Create and sign the software supply chain layout on behalf of Alice
 ```shell

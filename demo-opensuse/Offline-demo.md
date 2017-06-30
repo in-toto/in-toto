@@ -1,5 +1,5 @@
 # in-toto offline openSUSE demo
-You could try this demo if you don't have or don't want to create an OpenSUSE build service account.
+You can try this demo if you don't have or don't want to create an OpenSUSE build service account.
 
 # Change into the demo directory and you are ready to start
 ```shell
@@ -33,7 +33,7 @@ tree
 ### Define software supply chain layout (Alice)
 We will define the software supply chain layout. To simplify this process, we provide a script that generates a simple layout for the purpose of the demo.
 
-In this software supply chain layout, we have Alice, Bob and Carl. Alice is the project owner that creates the root layout. Bob, is the developer who clones the project's repo and performs some pre-packaging editing. Carl is the builder who then tests the build and verifies that its fit to ship. Carl then builds the RPM.
+Like in the on-line example, Alice, Bob and Carl will carry out the steps in this software supply chain. Alice is the project owner that creates the root layout. Bob, is the developer who clones the project's repo and performs some pre-packaging edits. Carl then builds the sources and verifies that its fit to ship. Carl then packages the built binary into an RPM.
 
 Create and sign the software supply chain layout on behalf of Alice
 ```shell
@@ -148,10 +148,3 @@ Congratulations! You have completed the in-toto opensuse demo!
 
 This exercise shows a very simple case in how in-toto can protect the different steps within the software supply chain. More complex software supply chains that contain more steps can be created in a similar way. You can read more about what in-toto protects against and how to use it on [in-toto's Github page](https://in-toto.github.io/).
 
-### Clean up
-We will delete the connman package from your home project now.
-```shell
-cd ../
-git clean -f
-rm -rf functionary_carl/connman/
-```
