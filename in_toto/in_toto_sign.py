@@ -145,14 +145,19 @@ def verify_sign(file_path, key_pub):
 
 def check_file_type_and_return_object(file_path):
   with open(file_path,'r') as file_object:
+    found = -1
     for line in file_object:
         if 'layout' in line:
+          found = 0
           signable_object = layout_import.read_from_file(file_path)
           return signable_object
 
         elif 'Link' in line:
+          found = 1
           signable_object = link_import.read_from_file(file_path)
           return signable_object
+    if found==-1:
+      raise Exception("Invalid file")
   file_object.close()
 
 def parse_args():
@@ -170,9 +175,10 @@ def parse_args():
     Parsed arguments (args object)
   """
   parser = argparse.ArgumentParser(
-    description="in-toto-sign : Signs link file with/without replacement "
-                "of the existing signatures and dumps with/without "
-                "infixing the keyID in the filename")
+    description="in-toto-sign : Signs(single/multiple signing) link file "
+                "with/without replacement of the existing signatures and dumps"
+                " with/without infixing the keyID in the (user "
+                "provided/source) file name")
 
   lpad = (len(parser.prog) + 1) * " "
 
@@ -181,6 +187,7 @@ def parse_args():
                   "[--replace-sig]\n{0}"
                   "[--infix]\n{0}"
                   "[--verbose]\n{0}"
+                  "[--destination]\n{0}"
                   "--keys <filepath/filepaths>\n\n"
                   .format(lpad))
 
@@ -253,7 +260,7 @@ def main():
             sys.exit(0)
 
           else:
-            signable_object.dump(rsa_key)
+            signable_object.dump(key=rsa_key)
             sys.exit(0)
 
         else:
@@ -270,25 +277,23 @@ def main():
 
       else:
         if not args.destination:
+          fn = source_file_name
           if signable_object._type=='layout':
-            fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name)
             signable_object.dump(fn)
             sys.exit(0)
 
           else:
-            fn = FILENAME_FORMAT_LINK.format(file_name=source_file_name)
-            signable_object.dump(fn)
+            signable_object.dump(filename=fn)
             sys.exit(0)
 
         else:
+          fn = args.destination
           if signable_object._type == 'layout':
-            fn = FILENAME_FORMAT_LAYOUT.format(file_name=args.destination)
             signable_object.dump(fn)
             sys.exit(0)
 
           else:
-            fn = FILENAME_FORMAT_LINK.format(file_name=args.destination)
-            signable_object.dump(fn)
+            signable_object.dump(filename=fn)
             sys.exit(0)
 
 
