@@ -38,6 +38,7 @@
 
 """
 import os
+import json
 import sys
 import argparse
 import in_toto.util
@@ -46,6 +47,7 @@ from in_toto import exceptions
 from in_toto.models.common import Signable as signable_object
 from in_toto.models.layout import Layout as layout_import
 from in_toto.models.link import Link as link_import
+from in_toto.models.link import FILENAME_FORMAT as FILENAME_FORMAT_IMPORT
 import securesystemslib.exceptions
 import securesystemslib.keys
 import securesystemslib.formats
@@ -144,21 +146,23 @@ def verify_sign(file_path, key_pub):
 
 
 def check_file_type_and_return_object(file_path):
-  with open(file_path,'r') as file_object:
-    found = -1
-    for line in file_object:
-        if 'layout' in line:
-          found = 0
-          signable_object = layout_import.read_from_file(file_path)
-          return signable_object
+  with open(file_path,'r') as fp:
+    file_object = json.load(fp)
 
-        elif 'Link' in line:
-          found = 1
-          signable_object = link_import.read_from_file(file_path)
-          return signable_object
-    if found==-1:
-      raise Exception("Invalid file")
-  file_object.close()
+    if file_object.get("_type") == "Link":
+      signable_object = link_import.read(file_object)
+      return signable_object
+
+    elif file_object.get("_type") == "layout":
+      signable_object = layout_import.read(file_object)
+      return signable_object
+
+    else:
+      raise exceptions.LinkNotFoundError("Invalid format.'{0}' is not a "
+        "valid in-toto 'Link' or 'Layout' metadata file.".format(file_path))
+
+
+
 
 def parse_args():
   """
@@ -190,42 +194,52 @@ def parse_args():
                   "[--destination]\n{0}"
                   "--keys <filepath/filepaths>\n\n"
                   .format(lpad))
+  subparsers = parser.add_subparsers(help='in-toto sign/verify subparsers',
+                                     dest='subparser_name')
 
-  in_toto_args = parser.add_argument_group("in-toto-sign options")
+  sign_parser = subparsers.add_parser('sign', help='Sign the link/layout '
+                                      'file.')
 
-  in_toto_args.add_argument("operator", type=str, choices=['sign', 'verify'],
-                            help="Sign or Verify")
-
-  in_toto_args.add_argument("signablepath", type=str,
+  sign_parser.add_argument("signablepath", type=str,
                             help="path to the signable file")
 
-  in_toto_args.add_argument("-r", "--replace-sig", action="store_true",
+  sign_parser.add_argument("-r", "--replace-sig", action="store_true",
                             help="Replace all the old signatures, sign "
                                  "with the given key, and add the new "
                                  "signature in file")
 
-  in_toto_args.add_argument("-i", "--infix", action="store_true",
+  sign_parser.add_argument("-i", "--infix", action="store_true",
                             help="Infix keyID in the filename while "
                                  "dumping, when -i the file will be dumped "
                                  "as original.<keyID>.link/layout, "
                                  "else original.link/layout")
 
-  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
+  sign_parser.add_argument("-v", "--verbose", dest="verbose",
                             help="Verbose execution.", default=False,
                             action="store_true")
 
-  in_toto_args.add_argument("-d", "--destination", type=str, help="Filename "
-                            "of the output file")
+  sign_parser.add_argument("-d", "--destination", type=str, help="Filepath "
+                           "to which the output file should be dumped")
 
-  in_toto_args.add_argument("-k", "--keys", nargs="+", type=str, required=True,
+  sign_parser.add_argument("-k", "--keys", nargs="+", type=str, required=True,
                             help="Path to the key file/files")
+
+  verify_parser = subparsers.add_parser('verify', help='Verify the '
+                                        'link/layout file.')
+
+  verify_parser.add_argument("signablepath", type=str,
+                            help="path to the signable file")
+
+  verify_parser.add_argument("-v", "--verbose", dest="verbose",
+                            help="Verbose execution.", default=False,
+                            action="store_true")
+
+  verify_parser.add_argument("-k", "--keys", nargs="+", type=str,
+                            required=True, help="Path to the key file/files")
 
 
   args = parser.parse_args()
-  args.operator = args.operator.lower()
-
   return args
-
 
 def main():
   """
@@ -236,72 +250,65 @@ def main():
   args = parse_args()
   length = len(args.keys)
   rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[length-1])
-  FILENAME_FORMAT_LAYOUT = "{file_name}.{keyid:.8}.layout"
-  FILENAME_FORMAT_LINK = "{file_name}.{keyid:.8}.link"
-  index=args.signablepath.rfind('/')
-  source_file_name=args.signablepath[index+1:]
+  source_file_name = os.path.basename(args.signablepath)
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 
-  if args.operator == 'sign':
+  if args.subparser_name == 'sign':
     try:
-      if args.replace_sig:
-        signable_object = replace_sign(args.signablepath, args.keys)
+      if args.destination and args.infix:
+        log.error('Please specify one and only one out of infix and '
+                  'destination!')
+        sys.exit(1)
       else:
-        signable_object = add_sign(args.signablepath, args.keys)
-
-      if args.infix:
-        if not args.destination:
-          if signable_object._type=='layout':
-            fn = FILENAME_FORMAT_LAYOUT.format(file_name=source_file_name,
-              keyid=rsa_key['keyid'])
-            signable_object.dump(fn)
-            sys.exit(0)
-
-          else:
-            signable_object.dump(key=rsa_key)
-            sys.exit(0)
-
+        if args.replace_sig:
+          signable_object = replace_sign(args.signablepath, args.keys)
         else:
-          if signable_object._type=='layout':
-            fn = FILENAME_FORMAT_LAYOUT.format(file_name=args.destination,
-              keyid=rsa_key['keyid'])
+          signable_object = add_sign(args.signablepath, args.keys)
+
+        if signable_object._type == 'layout':
+          if not args.destination:
+            log.warn('Layout file, ignoring --infix while dumping...')
+            log.info('Dumping in the current working directory...')
+            signable_object.dump(source_file_name)
+            sys.exit(0)
+          else:
+            file_name = os.path.join(args.destination)
+            signable_object.dump(file_name)
+            log.info('Dumping at ' + str(file_name) + '...')
+            sys.exit(0)
+
+        if signable_object._type == 'Link':
+          if args.infix:
+            index = source_file_name.find('.')
+            root_file_name = source_file_name[0:index]
+            fn = FILENAME_FORMAT_IMPORT.format(step_name=root_file_name,
+                                        keyid=rsa_key['keyid'])
+            log.warn('Using the key of the last added signature for infix...')
+            log.info('Dumping in the current working directory in the '
+                     'format- <link_name>.<first_8_char_from_keyid>.link...')
             signable_object.dump(fn)
             sys.exit(0)
           else:
-            fn = FILENAME_FORMAT_LINK.format(file_name=args.destination,
-              keyid=rsa_key['keyid'])
-            signable_object.dump(filename=fn)
-            sys.exit(0)
+            if not args.destination:
+              fn = source_file_name
+              log.info('Dumping in the current working directory in the '
+                       'format- <link_name>.link...')
+              signable_object.dump(filename=fn)
+              sys.exit(0)
 
-      else:
-        if not args.destination:
-          fn = source_file_name
-          if signable_object._type=='layout':
-            signable_object.dump(fn)
-            sys.exit(0)
-
-          else:
-            signable_object.dump(filename=fn)
-            sys.exit(0)
-
-        else:
-          fn = args.destination
-          if signable_object._type == 'layout':
-            signable_object.dump(fn)
-            sys.exit(0)
-
-          else:
-            signable_object.dump(filename=fn)
-            sys.exit(0)
-
+            else:
+              file_name = os.path.join(args.destination)
+              log.info('Dumping at ' + str(file_name) + '...')
+              signable_object.dump(filename=file_name)
+              sys.exit(0)
 
     except Exception as e:
       log.error("Unable to sign. Error Occured - {}".format(e))
       sys.exit(1)
 
-  else:
+  elif args.subparser_name == 'verify':
     try:
       verify_sign(args.signablepath, args.keys)
       log.pass_verification('Successfully verified.')
@@ -312,9 +319,13 @@ def main():
       sys.exit(1)
 
     except Exception as e:
-      log.error('The following error occured while verification - {'
-                '}'.format(e))
+      log.error('The following error occured while verification - { '
+               '}'.format(e))
       sys.exit(2)
+
+  else:
+    log.error('Please specify either sign or verify')
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()
