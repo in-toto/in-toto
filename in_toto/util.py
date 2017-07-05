@@ -10,8 +10,10 @@ import securesystemslib.hash
 import securesystemslib.keys
 import securesystemslib.exceptions
 
+DEFAULT_RSA_KEY_BITS = 3072
 
-def generate_and_write_rsa_keypair(filepath, password=None):
+def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
+  password=None):
   """
   <Purpose>
     Generate an RSA key keypair and store public and private portion each
@@ -41,7 +43,7 @@ def generate_and_write_rsa_keypair(filepath, password=None):
   """
   securesystemslib.formats.PATH_SCHEMA.check_match(filepath)
 
-  rsa_key = securesystemslib.keys.generate_rsa_key()
+  rsa_key = securesystemslib.keys.generate_rsa_key(bits)
 
   public = rsa_key["keyval"]["public"]
   private = rsa_key["keyval"]["private"]
@@ -129,8 +131,8 @@ def prompt_import_rsa_key_from_file(filepath):
   return import_rsa_key_from_file(filepath, password)
 
 
-def prompt_generate_and_write_rsa_keypair(filepath):
-  """Prompts for password and generates and calls
+def prompt_generate_and_write_rsa_keypair(filepath, bits):
+  """Prompts for password and calls
   generate_and_write_rsa_keypair"""
   password = prompt_password()
-  generate_and_write_rsa_keypair(filepath, password)
+  generate_and_write_rsa_keypair(filepath, bits, password)

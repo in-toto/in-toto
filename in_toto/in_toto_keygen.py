@@ -41,70 +41,6 @@ import securesystemslib.formats
 import securesystemslib.keys
 import securesystemslib.exceptions
 
-DEFAULT_RSA_KEY_BITS = 3072
-
-
-def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
-                                   password=None):
-  """
-  <Purpose>
-    Generate an RSA key keypair and store public and private portion each
-    to a file in PEM format.
-    If a password is specified the private key is encrypted using that password
-    as pass phrase.
-    The private key is stored to <'filepath'> and the public key to
-    <'filepath'>.pub
-
-  <Arguments>
-    filepath:
-      The public and private key files are saved to <filepath>.pub, <filepath>
-      respectively
-    password: (optional)
-      If specified the password is used to encrypt the private key
-     bits: (optional)
-      The key size, or key length, of the RSA key. 'bits' must be 2048, or
-      greater, and a multiple of 256.
-
-  <Exceptions>
-    securesystemslib.exceptions.FormatError, if the arguments are
-    improperly formatted
-
-  <Side Effects>
-    Writes key files to '<filepath>' and '<filepath>.pub'
-
-  <Returns>
-    None.
-  """
-  securesystemslib.formats.PATH_SCHEMA.check_match(filepath)
-
-  rsa_key = securesystemslib.keys.generate_rsa_key(bits)
-
-  public = rsa_key["keyval"]["public"]
-  private = rsa_key["keyval"]["private"]
-
-  if password:
-    private_pem = securesystemslib.keys.create_rsa_encrypted_pem(
-        private, password)
-  else:
-    private_pem = private
-
-  with open(filepath + ".pub", "w") as fo_public:
-    fo_public.write(public.encode("utf-8"))
-
-  with open(filepath, "w") as fo_private:
-    fo_private.write(private_pem.encode("utf-8"))
-
-def prompt_password(prompt="Enter password: "):
-  """Prompts for password input and returns the password. """
-  return getpass.getpass(prompt, sys.stderr)
-
-def prompt_generate_and_write_rsa_keypair(filepath, bits):
-  """Prompts for password and calls
-  generate_and_write_rsa_keypair"""
-  password = prompt_password()
-  generate_and_write_rsa_keypair(filepath, bits, password)
-
-
 def parse_args():
   """
   <Purpose>
@@ -156,10 +92,11 @@ def main():
   args = parse_args()
   try:
     if args.prompt:
-      prompt_generate_and_write_rsa_keypair(args.name, args.bits)
+      in_toto.util.prompt_generate_and_write_rsa_keypair(args.name, args.bits)
       sys.exit(0)
     else:
-      generate_and_write_rsa_keypair(args.name, args.bits, password=None)
+      in_toto.util.generate_and_write_rsa_keypair(args.name, args.bits,
+        password=None)
       sys.exit(0)
 
   except Exception as e:
