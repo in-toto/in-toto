@@ -37,6 +37,7 @@ import argparse
 import json
 import getpass
 import in_toto.util
+from in_toto import log
 import securesystemslib.formats
 import securesystemslib.keys
 import securesystemslib.exceptions
@@ -74,8 +75,7 @@ def parse_args():
 
   in_toto_args.add_argument("bits", nargs= "?", default=3072, type=int,
                             help="The key size, or key length, of the RSA "
-                            "key.  'bits' must be 2048, or greater, and a "
-                            "multiple of 256.", metavar="<bits>")
+                            "key.", metavar="<bits>")
 
   args = parser.parse_args()
 
@@ -100,7 +100,7 @@ def main():
       sys.exit(0)
 
   except Exception as e:
-    print('The following error occurred', e)
+    log.error('The following error occurred - {}'.format(e))
     sys.exit(1)
 
 if __name__ == "__main__":
