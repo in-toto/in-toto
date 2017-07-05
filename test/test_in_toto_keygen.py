@@ -90,7 +90,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
   def test_in_toto_keygen_generate_and_write_rsa_keypair(self):
     """in_toto_keygen_generate_and_write_rsa_keypair run through. """
     bits = 3072
-    in_toto.util.generate_and_write_rsa_keypair("bob", bits)
+    generate_and_write_rsa_keypair("bob", bits)
 
   def test_in_toto_keygen_prompt_generate_and_write_rsa_keypair(self):
     """in_toto_keygen_prompt_generate_and_write_rsa_keypair run through. """
@@ -98,22 +98,22 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     password = "123456"
     bits = 3072
     with patch("getpass.getpass", return_value=password):
-      in_toto.util.prompt_generate_and_write_rsa_keypair(name, bits)
+      prompt_generate_and_write_rsa_keypair(name, bits)
 
   def test_prompt_password(self):
     """Call password prompt. """
     password = "123456"
     with patch("getpass.getpass", return_value=password):
-      self.assertEqual(in_toto.util.prompt_password(), password)
+      self.assertEqual(prompt_password(), password)
 
   def test_create_and_import_encrypted_rsa(self):
     """Create ecrypted RSA key and import private and public key separately."""
     name = "key_encrypted"
     password = "123456"
     bits= 3072
-    in_toto.util.generate_and_write_rsa_keypair(name, bits, password)
-    private_key = in_toto.util.import_rsa_key_from_file(name, password)
-    public_key = in_toto.util.import_rsa_key_from_file(name + ".pub")
+    generate_and_write_rsa_keypair(name, bits, password)
+    private_key = import_rsa_key_from_file(name, password)
+    public_key = import_rsa_key_from_file(name + ".pub")
 
     securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
     self.assertTrue(private_key["keyval"].get("private"))
@@ -124,9 +124,9 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     name = "key_encrypted_2"
     password = "123456"
     bits = 2048
-    in_toto.util.generate_and_write_rsa_keypair(name, bits, password)
-    private_key = in_toto.util.import_rsa_key_from_file(name, password)
-    public_key = in_toto.util.import_rsa_key_from_file(name + ".pub")
+    generate_and_write_rsa_keypair(name, bits, password)
+    private_key = import_rsa_key_from_file(name, password)
+    public_key = import_rsa_key_from_file(name + ".pub")
 
     securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
     self.assertTrue(private_key["keyval"].get("private"))
