@@ -65,7 +65,8 @@ class TestUtil(unittest.TestCase):
     """Create ecrypted RSA key and import private and public key separately. """
     name = "key2"
     password = "123456"
-    generate_and_write_rsa_keypair(name, password)
+    bits = 3072
+    generate_and_write_rsa_keypair(name, bits, password)
     private_key = import_rsa_key_from_file(name, password)
     public_key = import_rsa_key_from_file(name + ".pub")
 
@@ -78,7 +79,8 @@ class TestUtil(unittest.TestCase):
     """Try import encrypted RSA key without or wrong pw, raises exception. """
     name = "key3"
     password = "123456"
-    generate_and_write_rsa_keypair(name, password)
+    bits = 3072
+    generate_and_write_rsa_keypair(name, bits, password)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
       private_key = import_rsa_key_from_file(name)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
@@ -128,8 +130,9 @@ class TestUtil(unittest.TestCase):
     """Create and import password encrypted RSA using prompt input. """
     key = "key6"
     password = "123456"
+    bits = 3072
     with patch("getpass.getpass", return_value=password):
-      prompt_generate_and_write_rsa_keypair(key)
+      prompt_generate_and_write_rsa_keypair(key,bits)
       rsa_key = prompt_import_rsa_key_from_file(key)
       securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
       self.assertTrue(rsa_key["keyval"].get("private"))

@@ -20,6 +20,7 @@ setup(
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-mock = in_toto.in_toto_mock:main",
                         "in-toto-record = in_toto.in_toto_record:main",
-                        "in-toto-verify = in_toto.in_toto_verify:main"]
+                        "in-toto-verify = in_toto.in_toto_verify:main",
+                        "in-toto-keygen = in_toto.in_toto_keygen:main"]
   },
 )
