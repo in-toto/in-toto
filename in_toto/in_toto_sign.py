@@ -162,8 +162,6 @@ def check_file_type_and_return_object(file_path):
         "valid in-toto 'Link' or 'Layout' metadata file.".format(file_path))
 
 
-
-
 def parse_args():
   """
   <Purpose>
@@ -326,6 +324,7 @@ def main():
   else:
     log.error('Please specify either sign or verify')
     sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

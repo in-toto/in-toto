@@ -25,7 +25,8 @@ from in_toto.util import (generate_and_write_rsa_keypair,
   prompt_import_rsa_key_from_file, import_rsa_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_sign import main as in_toto_sign_main
-from in_toto.in_toto_sign import add_sign, replace_sign, verify_sign
+from in_toto.in_toto_sign import add_sign, replace_sign, verify_sign, \
+  check_file_type_and_return_object
 from in_toto import log
 from in_toto import exceptions
 
@@ -105,6 +106,16 @@ class TestInTotoSignTool(unittest.TestCase):
       self.assertRaises(SystemExit):
       in_toto_sign_main()
 
+    with patch.object(sys, 'argv', args + ["sign",
+      self.layout_single_signed_path, "-d", "test_path", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign",
+      self.layout_single_signed_path, "-r", "-d", "test_path", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
     with patch.object(sys, 'argv', args + ["sign" ,
       self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
       self.assertRaises(SystemExit):
@@ -119,6 +130,8 @@ class TestInTotoSignTool(unittest.TestCase):
       ["in_toto_sign.py", "random"],
       ["in_toto_sign.py", "sign", "--keys", self.alice_path],
       ["in_toto_sign.py", "verify", "--keys", self.alice_path_pvt],
+      ["in_toto_sign.py", "sign", "-i", "-d", "test_path", "--keys",
+       self.alice_path_pvt]
     ]
 
     for wrong_args in wrong_args_list:
@@ -137,6 +150,11 @@ class TestInTotoSignTool(unittest.TestCase):
     with patch.object(sys, 'argv', args + ["verify" ,
       self.layout_single_signed_path, "--keys", "non-existent-key"]), \
       self.assertRaises(IOError):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.layout_single_signed_path, "-d", "test_path", "--keys",
+      "non-existent-key"]), self.assertRaises(IOError):
       in_toto_sign_main()
 
   def test_main_verbose(self):
@@ -171,6 +189,10 @@ class TestInTotoSignTool(unittest.TestCase):
     """in_toto_sign_verify_sign run through. """
     verify_sign(self.layout_single_signed_path, [self.alice_path])
 
+  def test_check_file_type_and_return_object(self):
+    """check_file_type_and_return_object run through. """
+    check_file_type_and_return_object(self.layout_single_signed_path)
+
 
   def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """
@@ -182,6 +204,10 @@ class TestInTotoSignTool(unittest.TestCase):
     with self.assertRaises(IOError):
       verify_sign(self.layout_single_signed_path, ["bad-key"])
 
+  def test_check_file_type_invalid_file_error(self):
+    """Error exit in check_file_type_and_return_object """
+    with self.assertRaises(exceptions.LinkNotFoundError):
+      check_file_type_and_return_object(self.alice_path)
 
 
 if __name__ == '__main__':
