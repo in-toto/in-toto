@@ -20,7 +20,7 @@
 
 import attr
 import json
-from . import common as models__common
+import in_toto.models.common as models__common
 import securesystemslib.formats
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
