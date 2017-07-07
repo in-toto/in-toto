@@ -184,7 +184,7 @@ class TestInTotoSignTool(unittest.TestCase):
       ["in_toto_sign.py", "sign", "--keys", self.alice_path],
       ["in_toto_sign.py", "verify", "--keys", self.alice_path_pvt],
       ["in_toto_sign.py", "sign", "-i", "-d", "test_path", "--keys",
-       self.alice_path_pvt],
+       self.alice_path_pvt]
     ]
 
     for wrong_args in wrong_args_list:
