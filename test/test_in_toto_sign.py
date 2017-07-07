@@ -41,7 +41,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   @classmethod
   def setUpClass(self):
-     # Backup original cwd
+    # Backup original cwd
     self.working_dir = os.getcwd()
 
     # Find demo files
@@ -72,7 +72,7 @@ class TestInTotoSignTool(unittest.TestCase):
     layout_template.dump(self.layout_single_signed_path)
 
     # Path to the link file
-    link_file = "package.2dc02526.link"
+    self.link_file = "package.2dc02526.link"
 
   @classmethod
   def tearDownClass(self):
