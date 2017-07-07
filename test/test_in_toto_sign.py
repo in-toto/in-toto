@@ -71,6 +71,9 @@ class TestInTotoSignTool(unittest.TestCase):
     layout_template.sign(alice)
     layout_template.dump(self.layout_single_signed_path)
 
+    # Path to the link file
+    link_file = "package.2dc02526.link"
+
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
@@ -118,6 +121,41 @@ class TestInTotoSignTool(unittest.TestCase):
 
     with patch.object(sys, 'argv', args + ["sign" ,
       self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign",
+      self.link_file, "-r",  "--keys", self.alice_path_pvt]),\
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign",
+      self.link_file, "-i", "--keys", self.alice_path_pvt]),\
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign",
+      self.link_file, "-d", "test_path", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign",
+      self.link_file, "-r", "-d", "test_path", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["sign" ,
+      self.link_file, "--keys", self.alice_path_pvt]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.layout_single_signed_path, "--keys", self.alice_path]), \
+      self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.link_file, "--keys", self.alice_path]), \
       self.assertRaises(SystemExit):
       in_toto_sign_main()
 
@@ -189,9 +227,13 @@ class TestInTotoSignTool(unittest.TestCase):
     """in_toto_sign_verify_sign run through. """
     verify_sign(self.layout_single_signed_path, [self.alice_path])
 
-  def test_check_file_type_and_return_object(self):
+  def test_check_file_type_and_return_object_layout(self):
     """check_file_type_and_return_object run through. """
     check_file_type_and_return_object(self.layout_single_signed_path)
+
+  def test_check_file_type_and_return_object_link(self):
+    """check_file_type_and_return_object run through. """
+    check_file_type_and_return_object(self.link_file)
 
 
   def test_add_sign_bad_key_error_exit(self):
