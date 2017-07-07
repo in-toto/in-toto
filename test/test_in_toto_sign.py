@@ -276,7 +276,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_verify_sign_invalid_file(self):
     """Invalid input to verify_sign """
-    with self.assertRaises(SystemExit):
+    with self.assertRaises(exceptions.SignatureVerificationError):
       verify_sign(self.link_with_no_sig,[self.bob_path])
 
 if __name__ == '__main__':
