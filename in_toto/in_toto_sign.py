@@ -321,10 +321,6 @@ def main():
                '}'.format(e))
       sys.exit(2)
 
-  else:
-    log.error('Please specify either sign or verify')
-    sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

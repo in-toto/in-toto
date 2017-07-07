@@ -80,6 +80,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Change _type to some random type
     link_load._type = "random_file"
+    link_load.signatures = []
 
     # Store the file path to be used in test
     self.not_a_link_file = "not_a_link_file.link"
@@ -183,7 +184,7 @@ class TestInTotoSignTool(unittest.TestCase):
       ["in_toto_sign.py", "sign", "--keys", self.alice_path],
       ["in_toto_sign.py", "verify", "--keys", self.alice_path_pvt],
       ["in_toto_sign.py", "sign", "-i", "-d", "test_path", "--keys",
-       self.alice_path_pvt]
+       self.alice_path_pvt],
     ]
 
     for wrong_args in wrong_args_list:
@@ -266,9 +267,14 @@ class TestInTotoSignTool(unittest.TestCase):
       check_file_type_and_return_object(self.not_a_link_file)
 
   def test_verify_sign_verification_failed(self):
-    """Failed verification. """
+    """Failed verification """
     with self.assertRaises(exceptions.SignatureVerificationError):
       verify_sign(self.layout_single_signed_path, [self.bob_path])
+
+  def test_verify_sign_invalid_file(self):
+    """Invalid input to verify_sign """
+    with self.assertRaises(SystemExit):
+      verify_sign(self.not_a_link_file,[self.bob_path])
 
 if __name__ == '__main__':
   unittest.main(buffer=True)
