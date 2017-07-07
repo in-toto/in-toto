@@ -152,7 +152,7 @@ class TestInTotoSignTool(unittest.TestCase):
       self.assertRaises(IOError):
       in_toto_sign_main()
 
-    with patch.object(sys, 'argv', args + ["verify" ,
+    with patch.object(sys, 'argv', args + ["sign" ,
       self.layout_single_signed_path, "-d", "test_path", "--keys",
       "non-existent-key"]), self.assertRaises(IOError):
       in_toto_sign_main()
@@ -204,10 +204,6 @@ class TestInTotoSignTool(unittest.TestCase):
     with self.assertRaises(IOError):
       verify_sign(self.layout_single_signed_path, ["bad-key"])
 
-  def test_check_file_type_invalid_file_error(self):
-    """Error exit in check_file_type_and_return_object """
-    with self.assertRaises(exceptions.LinkNotFoundError):
-      check_file_type_and_return_object(self.alice_path)
 
 
 if __name__ == '__main__':
