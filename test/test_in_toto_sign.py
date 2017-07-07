@@ -66,6 +66,7 @@ class TestInTotoSignTool(unittest.TestCase):
     alice = import_rsa_key_from_file("alice")
     self.alice_path_pvt = "alice"
     self.alice_path = "alice.pub"
+    self.bob_path = "bob.pub"
 
     # Dump a single signed layout
     layout_template.sign(alice)
@@ -73,6 +74,19 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Path to the link file
     self.link_file = "package.2dc02526.link"
+
+    # load a link file
+    link_load = Link.read_from_file("package.2dc02526.link")
+
+    # Change _type to some random type
+    link_load._type = "random_file"
+
+    # Store the file path to be used in test
+    self.not_a_link_file = "not_a_link_file.link"
+
+    # Dump the file
+    link_load.dump(self.not_a_link_file)
+
 
   @classmethod
   def tearDownClass(self):
@@ -228,11 +242,11 @@ class TestInTotoSignTool(unittest.TestCase):
     verify_sign(self.layout_single_signed_path, [self.alice_path])
 
   def test_check_file_type_and_return_object_layout(self):
-    """check_file_type_and_return_object run through. """
+    """Check_file_type_and_return_object run through. """
     check_file_type_and_return_object(self.layout_single_signed_path)
 
   def test_check_file_type_and_return_object_link(self):
-    """check_file_type_and_return_object run through. """
+    """Check_file_type_and_return_object run through. """
     check_file_type_and_return_object(self.link_file)
 
 
@@ -246,7 +260,15 @@ class TestInTotoSignTool(unittest.TestCase):
     with self.assertRaises(IOError):
       verify_sign(self.layout_single_signed_path, ["bad-key"])
 
+  def test_check_file_type_and_return_object(self):
+    """Invalid file input to check_file_type_return_object """
+    with self.assertRaises(exceptions.LinkNotFoundError):
+      check_file_type_and_return_object(self.not_a_link_file)
 
+  def test_verify_sign_verification_failed(self):
+    """Failed verification. """
+    with self.assertRaises(exceptions.SignatureVerificationError):
+      verify_sign(self.layout_single_signed_path, [self.bob_path])
 
 if __name__ == '__main__':
   unittest.main(buffer=True)
