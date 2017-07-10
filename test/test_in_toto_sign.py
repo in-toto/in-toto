@@ -84,10 +84,13 @@ class TestInTotoSignTool(unittest.TestCase):
     # Store the file path to be used in test
     self.not_a_link_file = "not_a_link_file.link"
     self.link_with_no_sig = "link_with_no_sig.link"
+    self.link_with_modified_sig = "link_with_modified_sig.link"
 
     # Dump the file
     link_load.dump(self.not_a_link_file)
     link_load._type = "Link"
+    link_load.signatures[0]["sig"] = "modified_signature"
+    link_load.dump(self.link_with_modified_sig)
     link_load.signatures = []
     link_load.dump(self.link_with_no_sig)
 
@@ -278,6 +281,13 @@ class TestInTotoSignTool(unittest.TestCase):
     """Invalid input to verify_sign """
     with self.assertRaises(exceptions.SignatureVerificationError):
       verify_sign(self.link_with_no_sig,[self.bob_path])
+
+  def test_verify_sign_invalid_signature(self):
+    """Modified signature verification """
+    with self.assertRaises(exceptions.SignatureVerificationError):
+      verify_sign(self.link_with_modified_sig,[self.alice_path])
+
+
 
 if __name__ == '__main__':
   unittest.main(buffer=True)
