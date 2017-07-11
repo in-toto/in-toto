@@ -146,6 +146,21 @@ def verify_sign(file_path, key_pub):
 
 
 def check_file_type_and_return_object(file_path):
+  """
+  <Purpose>
+    Checks the file type of the file at file_path and returns a signable
+    object if the file is a link or a layout
+
+  <Arguments>
+    file_path - path to the file
+
+  <Exceptions>
+    Raises LinkNotFoundError when a file other than link or layout is
+    encountered.
+
+  <Returns>
+    A signable object
+  """
   with open(file_path,'r') as fp:
     file_object = json.load(fp)
 
@@ -236,9 +251,6 @@ def main():
   arguments it then dumps the corresponding file.
   """
   args = parse_args()
-  length = len(args.keys)
-  rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[length-1])
-  source_file_name = os.path.basename(args.signablepath)
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
