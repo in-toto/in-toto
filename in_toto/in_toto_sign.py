@@ -277,9 +277,6 @@ def main():
         else:
           path = args.signablepath
 
-        log.info("Dumping layout to - '{}'...".format(path))
-        signable_object.dump(path)
-        sys.exit(0)
 
       if signable_object._type == 'Link':
         if args.destination:
@@ -291,13 +288,14 @@ def main():
                   keyid=rsa_key["keyid"])
           if len(args.keys) > 1:
             log.warn('Using last key in the list of passed keys for infix...')
-              
+
         else:
           path = args.signablepath
 
-        log.info("Dumping link to - '{}'...".format(path))
-        signable_object.dump(path)
-        sys.exit(0)
+      log.info("Dumping {0} to '{1}'...".format(
+      signable_object._type.lower(),path))
+      signable_object.dump(path)
+      sys.exit(0)
 
     except Exception as e:
       log.error("Unable to sign. Error Occured - {}".format(e))
