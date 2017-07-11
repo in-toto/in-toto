@@ -19,6 +19,7 @@ import logging
 import argparse
 import shutil
 import tempfile
+import copy
 from mock import patch
 from in_toto.models.layout import Layout
 from in_toto.util import (generate_and_write_rsa_keypair,
@@ -76,23 +77,31 @@ class TestInTotoSignTool(unittest.TestCase):
     self.link_file = "package.2dc02526.link"
 
     # load a link file
-    link_load = Link.read_from_file("package.2dc02526.link")
+    link_template = Link.read_from_file("package.2dc02526.link")
+    link_template.signatures = []
 
-    # Change _type to some random type
-    link_load._type = "random_file"
+    # Change _type to some random type and dump
+    link_wrong_type = copy.deepcopy(link_template)
+    link_wrong_type._type = "random_file"
+    self.not_a_link_file = "not_a_link_file.link"
+    link_wrong_type.dump(self.not_a_link_file)
+
+    # Remove the signatures and dump
+    link_no_signatures = copy.deepcopy(link_template)
+    self.link_with_no_sig = "link_with_no_sig.link"
+    link_no_signatures.dump(self.link_with_no_sig)
+
+    # Change the contents of the link file and dump
+    link_bad_sig = copy.deepcopy(link_template)
+    self.link_with_modified_sig = "link_with_modified_sig.link"
+    link_bad_sig.sign(alice)
+    link_bad_sig.byproducts = "baaad"
+    link_bad_sig.dump(self.link_with_modified_sig)
+
 
     # Store the file path to be used in test
-    self.not_a_link_file = "not_a_link_file.link"
-    self.link_with_no_sig = "link_with_no_sig.link"
-    self.link_with_modified_sig = "link_with_modified_sig.link"
 
     # Dump the file
-    link_load.dump(self.not_a_link_file)
-    link_load._type = "Link"
-    link_load.signatures[0]["sig"] = "modified_signature"
-    link_load.dump(self.link_with_modified_sig)
-    link_load.signatures = []
-    link_load.dump(self.link_with_no_sig)
 
 
   @classmethod
