@@ -230,6 +230,13 @@ class TestInTotoSignTool(unittest.TestCase):
       "non-existent-key"]), self.assertRaises(IOError):
       in_toto_sign_main()
 
+  def test_main_verification_failed(self):
+    """Test in_toto_sign_main with failing verification """
+    args = ["in_toto_sign.py"]
+    with patch.object(sys, 'argv', args + ["verify" ,
+      self.link_file, "--keys", self.bob_path]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
   def test_main_verbose(self):
     """Log level with verbose flag is lesser/equal than logging.INFO. """
     args = ["in_toto_sign.py"]
