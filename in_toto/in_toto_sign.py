@@ -182,16 +182,6 @@ def parse_args():
                 " with/without infixing the keyID in the (user "
                 "provided/source) file name")
 
-  lpad = (len(parser.prog) + 1) * " "
-
-  parser.usage = ("\n"
-                  "(sign | verify) <path/to/signable>\n{0}"
-                  "[--replace-sig]\n{0}"
-                  "[--infix]\n{0}"
-                  "[--verbose]\n{0}"
-                  "[--destination]\n{0}"
-                  "--keys <filepath/filepaths>\n\n"
-                  .format(lpad))
   subparsers = parser.add_subparsers(help='in-toto sign/verify subparsers',
                                      dest='subparser_name')
 
@@ -259,48 +249,40 @@ def main():
         log.error('Please specify one and only one out of infix and '
                   'destination!')
         sys.exit(1)
+
+      if args.replace_sig:
+        signable_object = replace_sign(args.signablepath, args.keys)
       else:
-        if args.replace_sig:
-          signable_object = replace_sign(args.signablepath, args.keys)
+        signable_object = add_sign(args.signablepath, args.keys)
+
+      if signable_object._type == 'layout':
+        if args.infix:
+          log.warn('Ignoring option --infix for layouts...')
+
+        if args.destination:
+          path = args.destination
+
         else:
-          signable_object = add_sign(args.signablepath, args.keys)
+          path = args.signablepath
 
-        if signable_object._type == 'layout':
-          if not args.destination:
-            log.warn('Layout file, ignoring --infix while dumping...')
-            log.info('Dumping in the current working directory...')
-            signable_object.dump(source_file_name)
-            sys.exit(0)
-          else:
-            file_name = os.path.join(args.destination)
-            signable_object.dump(file_name)
-            log.info('Dumping at ' + str(file_name) + '...')
-            sys.exit(0)
+        log.info("Dumping layout to - '{}'...".format(path))
+        signable_object.dump(path)
+        sys.exit(0)
 
-        if signable_object._type == 'Link':
-          if args.infix:
-            index = source_file_name.find('.')
-            root_file_name = source_file_name[0:index]
-            fn = FILENAME_FORMAT_IMPORT.format(step_name=root_file_name,
-                                        keyid=rsa_key['keyid'])
-            log.warn('Using the key of the last added signature for infix...')
-            log.info('Dumping in the current working directory in the '
-                     'format- <link_name>.<first_8_char_from_keyid>.link...')
-            signable_object.dump(fn)
-            sys.exit(0)
-          else:
-            if not args.destination:
-              fn = source_file_name
-              log.info('Dumping in the current working directory in the '
-                       'format- <link_name>.link...')
-              signable_object.dump(filename=fn)
-              sys.exit(0)
+      if signable_object._type == 'Link':
+        if args.destination:
+          path = args.destination
+        elif args.infix:
+          path = FILENAME_FORMAT_IMPORT.format(step_name=signable_object.name,
+                                               keyid=args.keys[-1]["keyid"])
+          if len(log.keys) > 1:
+            log.warn('Using last key in the list of passed keys for infix...')
+        else:
+          path = args.signablepath
 
-            else:
-              file_name = os.path.join(args.destination)
-              log.info('Dumping at ' + str(file_name) + '...')
-              signable_object.dump(filename=file_name)
-              sys.exit(0)
+        log.info("Dumping link to - '{}'...".format(path))
+        signable_object.dump(path)
+        sys.exit(0)
 
     except Exception as e:
       log.error("Unable to sign. Error Occured - {}".format(e))
