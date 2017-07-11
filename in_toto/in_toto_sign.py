@@ -284,11 +284,14 @@ def main():
       if signable_object._type == 'Link':
         if args.destination:
           path = args.destination
+
         elif args.infix:
+          rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[-1])
           path = FILENAME_FORMAT_IMPORT.format(step_name=signable_object.name,
-                                               keyid=args.keys[-1]["keyid"])
-          if len(log.keys) > 1:
+                  keyid=rsa_key["keyid"])
+          if len(args.keys) > 1:
             log.warn('Using last key in the list of passed keys for infix...')
+              
         else:
           path = args.signablepath
 
