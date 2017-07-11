@@ -311,8 +311,8 @@ def main():
       sys.exit(1)
 
     except Exception as e:
-      log.error('The following error occured while verification - { '
-               '}'.format(e))
+      log.error("The following error occured while verification - "
+                "'{}'".format(e))
       sys.exit(2)
 
 

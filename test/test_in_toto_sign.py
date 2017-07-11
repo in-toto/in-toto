@@ -217,17 +217,17 @@ class TestInTotoSignTool(unittest.TestCase):
     args = ["in_toto_sign.py"]
     with patch.object(sys, 'argv', args + ["sign" ,
       self.layout_single_signed_path, "-r", "-i", "--keys",
-      "non-existent-key"]), self.assertRaises(IOError):
+      "non-existent-key"]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["verify" ,
       self.layout_single_signed_path, "--keys", "non-existent-key"]), \
-      self.assertRaises(IOError):
+      self.assertRaises(SystemExit):
       in_toto_sign_main()
 
     with patch.object(sys, 'argv', args + ["sign" ,
       self.layout_single_signed_path, "-d", "test_path", "--keys",
-      "non-existent-key"]), self.assertRaises(IOError):
+      "non-existent-key"]), self.assertRaises(SystemExit):
       in_toto_sign_main()
 
   def test_main_verification_failed(self):
