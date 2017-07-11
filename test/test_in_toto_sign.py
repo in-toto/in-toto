@@ -179,6 +179,11 @@ class TestInTotoSignTool(unittest.TestCase):
       self.assertRaises(SystemExit):
       in_toto_sign_main()
 
+    with patch.object(sys, 'argv', args + ["sign" ,
+      self.link_file, "-r", "-i", "-d", "test_path", "--keys",
+      self.alice_path_pvt]), self.assertRaises(SystemExit):
+      in_toto_sign_main()
+
     with patch.object(sys, 'argv', args + ["verify" ,
       self.layout_single_signed_path, "--keys", self.alice_path]), \
       self.assertRaises(SystemExit):
