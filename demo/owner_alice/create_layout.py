@@ -17,25 +17,27 @@ def main():
     },
     "steps": [{
         "name": "clone",
-        "material_matchrules": [],
-        "product_matchrules": [["CREATE", "demo-project/foo.py"]],
+        "expected_materials": [],
+        "expected_products": [["CREATE", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "git clone https://github.com/in-toto/demo-project.git",
         "threshold": 1,
       },{
         "name": "update-version",
-        "material_matchrules": [["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "clone"]],
+        "expected_materials": [["MATCH", "demo-project/*", "WITH", "PRODUCTS",
+                              "FROM", "clone"]],
         # FIXME: CREATE is more like an allow here, is fixed in next version
-        "product_matchrules": [["ALLOW", "demo-project/foo.py"]],
+        "expected_products": [["ALLOW", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
         "threshold": 1,
       },{
         "name": "package",
-        "material_matchrules": [
-            ["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM", "update-version"],
+        "expected_materials": [
+          ["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM",
+           "update-version"],
         ],
-        "product_matchrules": [
+        "expected_products": [
             ["CREATE", "demo-project.tar.gz"],
         ],
         "pubkeys": [key_carl["keyid"]],
@@ -44,7 +46,7 @@ def main():
       }],
     "inspect": [{
         "name": "untar",
-        "material_matchrules": [
+        "expected_materials": [
             ["MATCH", "demo-project.tar.gz", "WITH", "PRODUCTS", "FROM", "package"],
             # FIXME: If the routine running inspections would gather the
             # materials/products to record from the rules we wouldn't have to
@@ -53,9 +55,9 @@ def main():
             ["ALLOW", "alice.pub"],
             ["ALLOW", "root.layout"],
         ],
-        "product_matchrules": [
+        "expected_products": [
             ["MATCH", "demo-project/foo.py", "WITH", "PRODUCTS", "FROM", "update-version"],
-            # FIXME: See material_matchrules above
+            # FIXME: See expected_materials above
             ["ALLOW", "demo-project/.git/*"],
             ["ALLOW", "demo-project.tar.gz"],
             ["ALLOW", ".keep"],

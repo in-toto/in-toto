@@ -41,48 +41,48 @@ class TestInspectionValidator(unittest.TestCase):
     self.inspection._type = "inspection"
     self.inspection._validate_type()
 
-  def test_wrong_material_matchrules(self):
-    """Test that the material matchrule validators catch malformed ones."""
+  def test_wrong_expected_materials(self):
+    """Test that the material rule validators catch malformed ones."""
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.material_matchrules = [["NONFOO"]]
-      self.inspection._validate_material_matchrules()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.material_matchrules = "PFF"
-      self.inspection._validate_material_matchrules()
+      self.inspection.expected_materials = [["NONFOO"]]
+      self.inspection._validate_expected_materials()
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    # for more thorough tests, check the test_matchrule.py module
-    self.inspection.material_matchrules = [["CREATE", "foo"]]
-    self.inspection._validate_material_matchrules()
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.inspection.expected_materials = "PFF"
+      self.inspection._validate_expected_materials()
+
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.inspection.validate()
+
+    # for more thorough tests, check the test_artifact_rules.py module
+    self.inspection.expected_materials = [["CREATE", "foo"]]
+    self.inspection._validate_expected_materials()
     self.inspection.validate()
 
-  def test_wrong_product_matchrules(self):
-    """Test that the product matchrule validators catch malformed values."""
+  def test_wrong_expected_products(self):
+    """Test that the product rule validators catch malformed values."""
 
-    self.inspection.product_matchrules = [["NONFOO"]]
+    self.inspection.expected_products = [["NONFOO"]]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection._validate_product_matchrules()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    self.inspection.product_matchrules = "PFF"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection._validate_product_matchrules()
+      self.inspection._validate_expected_products()
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    # for more thorough tests, check the test_matchrule.py module
-    self.inspection.product_matchrules = [["CREATE", "foo"]]
-    self.inspection._validate_product_matchrules()
+    self.inspection.expected_products = "PFF"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.inspection._validate_expected_products()
+
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.inspection.validate()
+
+    # for more thorough tests, check the test_artifact_rules.py module
+    self.inspection.expected_products = [["CREATE", "foo"]]
+    self.inspection._validate_expected_products()
     self.inspection.validate()
 
   def test_wrong_run(self):

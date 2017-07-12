@@ -17,8 +17,8 @@ def main():
     },
     "steps": [{
         "name": "clone",
-        "material_matchrules": [],
-        "product_matchrules": [["CREATE", "connman/_service"],
+        "expected_materials": [],
+        "expected_products": [["CREATE", "connman/_service"],
             ["CREATE", "connman/connman-1.30.tar.gz"],
             ["CREATE", "connman/connman-1.30.tar.sign"],
             ["CREATE", "connman/connman-rpmlintrc"],
@@ -30,15 +30,15 @@ def main():
         "threshold": 1,
       },{
         "name": "update-changelog",
-        "material_matchrules": [["MATCH", "connman/connman.changes", "WITH", "PRODUCTS", "FROM", "clone"]],
+        "expected_materials": [["MATCH", "connman/connman.changes", "WITH", "PRODUCTS", "FROM", "clone"]],
         # FIXME: CREATE is more like an allow here, is fixed in next version
-        "product_matchrules": [["ALLOW", "connman/connman.changes"]],
+        "expected_products": [["ALLOW", "connman/connman.changes"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
         "threshold": 1,
       },{
         "name": "package",
-        "material_matchrules": [
+        "expected_materials": [
             ["MATCH", "connman/_service", "WITH", "PRODUCTS", "FROM", "clone"],
             ["MATCH", "connman/connman-1.30.tar.gz", "WITH", "PRODUCTS", "FROM", "clone"],
             ["MATCH", "connman/connman-1.30.tar.sign", "WITH", "PRODUCTS", "FROM", "clone"],
@@ -47,7 +47,7 @@ def main():
             ["MATCH", "connman/connman.keyring", "WITH", "PRODUCTS", "FROM", "clone"],
             ["MATCH", "connman/connman.spec", "WITH", "PRODUCTS", "FROM", "clone"],
         ],
-        "product_matchrules": [
+        "expected_products": [
             ["CREATE", "connman-1.30-1.1.src.rpm"],
         ],
         "pubkeys": [key_carl["keyid"]],
@@ -56,7 +56,7 @@ def main():
       }],
     "inspect": [{
         "name": "unpack",
-        "material_matchrules": [
+        "expected_materials": [
             ["MATCH", "connman-1.30-1.1.src.rpm", "WITH", "PRODUCTS", "FROM", "package"],
             # FIXME: If the routine running inspections would gather the
             # materials/products to record from the rules we wouldn't have to
@@ -66,7 +66,7 @@ def main():
             ["ALLOW", "verify-signature.sh"],
             ["ALLOW", "root.layout"],
         ],
-        "product_matchrules": [
+        "expected_products": [
             ["MATCH", "connman-1.30-1.1.src.rpm", "WITH", "PRODUCTS", "FROM", "package"],
             ["MATCH", "connman-1.30.tar.gz", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
             ["MATCH", "_service", "WITH", "PRODUCTS", "IN", "connman", "FROM", "clone"],
@@ -83,8 +83,8 @@ def main():
         "run": "unrpm connman-1.30-1.1.src.rpm",
       },{
         "name": "verify-signature",
-        "material_matchrules": [["ALLOW", "*"]],
-        "product_matchrules": [["ALLOW", "*"]],
+        "expected_materials": [["ALLOW", "*"]],
+        "expected_products": [["ALLOW", "*"]],
         "run": "./verify-signature.sh",
       }],
     "signatures": []

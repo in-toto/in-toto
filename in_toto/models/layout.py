@@ -272,9 +272,9 @@ class Step(models__common.Metablock):
     name:
         a unique name used to identify the related link metadata
 
-    material_matchrules and product_matchrules:
-        a list of matchrules used to verify if the materials or products of the
-        step (found in the according link metadata file) link correctly with
+    expected_materials and expected_products:
+        a list of artifact rules used to verify if the materials or products of
+        the step (found in the according link metadata file) link correctly with
         other steps of the supply chain
 
     pubkeys:
@@ -289,8 +289,8 @@ class Step(models__common.Metablock):
   """
   _type = attr.ib()
   name = attr.ib()
-  material_matchrules = attr.ib()
-  product_matchrules = attr.ib()
+  expected_materials = attr.ib()
+  expected_products = attr.ib()
   pubkeys = attr.ib()
   expected_command = attr.ib()
   threshold = attr.ib()
@@ -299,8 +299,8 @@ class Step(models__common.Metablock):
     super(Step, self).__init__()
     self._type = "step"
     self.name = kwargs.get("name")
-    self.material_matchrules = kwargs.get("material_matchrules", [])
-    self.product_matchrules = kwargs.get("product_matchrules", [])
+    self.expected_materials = kwargs.get("expected_materials", [])
+    self.expected_products = kwargs.get("expected_products", [])
     self.pubkeys = kwargs.get("pubkeys", [])
 
     # Accept expected command as string or list, if it is a string we split it
@@ -334,23 +334,23 @@ class Step(models__common.Metablock):
           "Invalid threshold '{}', value must be an int."
           .format(self.threshold))
 
-  def _validate_material_matchrules(self):
-    """Private method to check the material matchrules are correctly formed."""
-    if type(self.material_matchrules) != list:
+  def _validate_expected_materials(self):
+    """Private method to check that material rules are correctly formed."""
+    if type(self.expected_materials) != list:
       raise securesystemslib.exceptions.FormatError(
-          "Material matchrules should be a list!")
+          "Material rules should be a list!")
 
-    for matchrule in self.material_matchrules:
-      in_toto.artifact_rules.unpack_rule(matchrule)
+    for rule in self.expected_materials:
+      in_toto.artifact_rules.unpack_rule(rule)
 
-  def _validate_product_matchrules(self):
-    """Private method to check the product matchrules are correctly formed."""
-    if type(self.product_matchrules) != list:
+  def _validate_expected_products(self):
+    """Private method to check that product rules are correctly formed."""
+    if type(self.expected_products) != list:
       raise securesystemslib.exceptions.FormatError(
-          "Product matchrules should be a list!")
+          "Product rules should be a list!")
 
-    for matchrule in self.product_matchrules:
-      in_toto.artifact_rules.unpack_rule(matchrule)
+    for rule in self.expected_products:
+      in_toto.artifact_rules.unpack_rule(rule)
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
@@ -380,7 +380,7 @@ class Inspection(models__common.Metablock):
         link metadata for Inspections are just created and used on the fly
         and not stored to disk
 
-    material_matchrules and product_matchrules:
+    expected_materials and expected_products:
         cf. Step Attributes
 
     run:
@@ -389,8 +389,8 @@ class Inspection(models__common.Metablock):
   """
   _type = attr.ib()
   name = attr.ib()
-  material_matchrules = attr.ib()
-  product_matchrules = attr.ib()
+  expected_materials = attr.ib()
+  expected_products = attr.ib()
   run = attr.ib()
 
   def __init__(self, **kwargs):
@@ -398,8 +398,8 @@ class Inspection(models__common.Metablock):
 
     self._type = "inspection"
     self.name = kwargs.get("name")
-    self.material_matchrules = kwargs.get("material_matchrules", [])
-    self.product_matchrules = kwargs.get("product_matchrules", [])
+    self.expected_materials = kwargs.get("expected_materials", [])
+    self.expected_products = kwargs.get("expected_products", [])
 
     # Accept run command as string or list, if it is a string we split it
     # using shell like syntax.
@@ -422,23 +422,23 @@ class Inspection(models__common.Metablock):
       raise securesystemslib.exceptions.FormatError(
           "The _type field must be set to 'inspection'!")
 
-  def _validate_material_matchrules(self):
-    """Private method to check that the material matchrules are correct."""
-    if type(self.material_matchrules) != list:
+  def _validate_expected_materials(self):
+    """Private method to check that the material rules are correct."""
+    if type(self.expected_materials) != list:
       raise securesystemslib.exceptions.FormatError(
-          "The material matchrules should be a list!")
+          "The material rules should be a list!")
 
-    for matchrule in self.material_matchrules:
-      in_toto.artifact_rules.unpack_rule(matchrule)
+    for rule in self.expected_materials:
+      in_toto.artifact_rules.unpack_rule(rule)
 
-  def _validate_product_matchrules(self):
-    """Private method to check that the product matchrules are correct."""
-    if type(self.product_matchrules) != list:
+  def _validate_expected_products(self):
+    """Private method to check that the product rules are correct."""
+    if type(self.expected_products) != list:
       raise securesystemslib.exceptions.FormatError(
-          "The product matchrules should be a list!")
+          "The product rules should be a list!")
 
-    for matchrule in self.product_matchrules:
-      in_toto.artifact_rules.unpack_rule(matchrule)
+    for rule in self.expected_products:
+      in_toto.artifact_rules.unpack_rule(rule)
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""

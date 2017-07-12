@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 <Program Name>
-  test_layout.py
+  test_step.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
@@ -58,48 +58,48 @@ class TestStepValidator(unittest.TestCase):
     self.step._validate_threshold()
     self.step.validate()
 
-  def test_wrong_material_matchrules(self):
-    """Test that the material matchrule validators catch malformed ones."""
+  def test_wrong_expected_materials(self):
+    """Test that the material rule validators catch malformed ones."""
 
-    self.step.material_matchrules = [["NONFOO"]]
+    self.step.expected_materials = [["NONFOO"]]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_material_matchrules()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
-
-    self.step.material_matchrules = "PFF"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_material_matchrules()
+      self.step._validate_expected_materials()
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
-    # for more thorough tests, check the test_matchrule.py module
-    self.step.material_matchrules = [["CREATE", "foo"]]
-    self.step._validate_material_matchrules()
+    self.step.expected_materials = "PFF"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.step._validate_expected_materials()
+
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.step.validate()
+
+    # for more thorough tests, check the test_artifact_rules.py module
+    self.step.expected_materials = [["CREATE", "foo"]]
+    self.step._validate_expected_materials()
     self.step.validate()
 
-  def test_wrong_product_matchrules(self):
-    """Test that the product matchrule validators catch malformed ones."""
+  def test_wrong_expected_products(self):
+    """Test that the product rule validators catch malformed ones."""
 
-    self.step.product_matchrules = [["NONFOO"]]
+    self.step.expected_products = [["NONFOO"]]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_product_matchrules()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
-
-    self.step.product_matchrules = "PFF"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_product_matchrules()
+      self.step._validate_expected_products()
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
-    # for more thorough tests, check the test_matchrule.py module
-    self.step.product_matchrules = [["CREATE", "foo"]]
-    self.step._validate_product_matchrules()
+    self.step.expected_products = "PFF"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.step._validate_expected_products()
+
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.step.validate()
+
+    # for more thorough tests, check the test_artifact_rules.py module
+    self.step.expected_products = [["CREATE", "foo"]]
+    self.step._validate_expected_products()
     self.step.validate()
 
   def test_wrong_pubkeys(self):

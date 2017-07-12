@@ -13,8 +13,8 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  This module provides functions to ensure the syntax of the matchrules is
-  correct.
+  This module provides functions parse artifact rules and validate their
+  syntax.
 
 """
 import six

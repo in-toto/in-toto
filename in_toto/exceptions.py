@@ -9,11 +9,11 @@ class LayoutExpiredError(Error):
   pass
 
 class RuleVerficationError(Error):
-  """Indicates that a match rule verification failed. """
+  """Indicates that artifact rule verification failed. """
   pass
 
 class ThresholdVerificationError(Error):
-  """Indicates that a match rule verification failed. """
+  """Indicates that signature threshold verification failed. """
   pass
 
 class BadReturnValueError(Error):

@@ -113,13 +113,13 @@ class TestLayoutValidator(unittest.TestCase):
 
     test_step = Step(name="this-is-a-step")
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      test_step.material_matchrules = ['this is a malformed step']
+      test_step.expected_materials = ['this is a malformed step']
       self.layout.steps = [test_step]
       self.layout.validate()
 
 
     test_step = Step(name="this-is-a-step")
-    test_step.material_matchrules = [["CREATE", "foo"]]
+    test_step.expected_materials = [["CREATE", "foo"]]
     test_step.threshold = 1
     self.layout.steps = [test_step]
     self.layout.validate()
@@ -132,13 +132,13 @@ class TestLayoutValidator(unittest.TestCase):
       self.layout.validate()
 
     test_inspection = Inspection(name="this-is-a-step")
-    test_inspection.material_matchrules = ['this is a malformed matchrule']
+    test_inspection.expected_materials = ['this is a malformed artifact rule']
     self.layout.inspect = [test_inspection]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
     test_inspection = Inspection(name="this-is-a-step")
-    test_inspection.material_matchrules = [["CREATE", "foo"]]
+    test_inspection.expected_materials = [["CREATE", "foo"]]
     self.layout.inspect = [test_inspection]
     self.layout.validate()
 

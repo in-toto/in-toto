@@ -292,8 +292,9 @@ def main():
         else:
           path = args.signablepath
 
-      log.info("Dumping {0} to '{1}'...".format(
-      signable_object._type.lower(),path))
+      log.info("Dumping {0} to '{1}'...".format(signable_object._type.lower(),
+          path))
+
       signable_object.dump(path)
       sys.exit(0)
 

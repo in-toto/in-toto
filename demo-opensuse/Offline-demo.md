@@ -132,7 +132,7 @@ This command will verify that
  1. the layout has not expired,
  2. was signed with Alice’s private key, and that according to the definitions in the layout
  3. each step was performed and signed by the authorized functionary
- 4. the recorded materials and products align with the matchrules and
+ 4. the recorded materials and products follow the artifact rules and
  5. the inspection `unpack` finds what it expects.
  6. the inspection `verify-signature` checks that the signature for connman tarball is correct.
 
