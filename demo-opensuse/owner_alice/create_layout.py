@@ -39,7 +39,6 @@ def main():
       },{
         "name": "update-changelog",
         "expected_materials": [["MATCH", "connman/connman.changes", "WITH", "PRODUCTS", "FROM", "clone"]],
-        # FIXME: CREATE is more like an allow here, is fixed in next version
         "expected_products": [["ALLOW", "connman/connman.changes"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",

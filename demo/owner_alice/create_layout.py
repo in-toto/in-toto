@@ -26,7 +26,6 @@ def main():
         "name": "update-version",
         "expected_materials": [["MATCH", "demo-project/*", "WITH", "PRODUCTS",
                               "FROM", "clone"]],
-        # FIXME: CREATE is more like an allow here, is fixed in next version
         "expected_products": [["ALLOW", "demo-project/foo.py"]],
         "pubkeys": [key_bob["keyid"]],
         "expected_command": "",
