@@ -22,7 +22,8 @@
     - verify if the expected command of a step aligns with the actual command
       as recorded in the link metadata file.
     - run inspections (records link metadata)
-    - verify product or material matchrules for steps or inspections
+    - verify product or material rules (artifact rules) for steps or
+      inspections
 
 """
 
@@ -123,7 +124,7 @@ def run_all_inspections(layout):
     # FIXME: What should we record as material/product?
     # Is the current directory a sensible default? In general?
     # If so, we should probably make it a default in run_link
-    # We could use matchrule paths.
+    # We could use artifact rule paths.
     material_list = product_list = ["."]
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
         product_list, inspection.run)
@@ -791,7 +792,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     source_type:
             "materials" or "products" depending on whether the rules were in the
-            "material_matchrules" or "product_matchrules" field.
+            "expected_materials" or "expected_products" field.
 
     rules:
             The list of rules (material or product rules) for the item
@@ -901,13 +902,12 @@ def verify_item_rules(source_name, source_type, rules, links):
 def verify_all_item_rules(items, links):
   """
   <Purpose>
-    Iteratively verifies material matchrules and product matchrules of
-    passed items (Steps or Inspections).
+    Iteratively verifies artifact rules of passed items (Steps or Inspections).
 
   <Arguments>
     items:
             A list containing Step or Inspection objects whose material
-            and product matchrules will be verified.
+            and product rules will be verified.
 
     links:
             A dictionary of Link objects with Link names as keys. For each
@@ -926,10 +926,10 @@ def verify_all_item_rules(items, links):
 
     link = links[item.name]
     log.info("Verifying material rules for '{}'...".format(item.name))
-    verify_item_rules(item.name, "materials", item.material_matchrules, links)
+    verify_item_rules(item.name, "materials", item.expected_materials, links)
 
     log.info("Verifying product rules for '{}'...".format(item.name))
-    verify_item_rules(item.name, "products", item.product_matchrules, links)
+    verify_item_rules(item.name, "products", item.expected_products, links)
 
 
 def verify_threshold_constraints(layout, chain_link_dict):
@@ -1164,10 +1164,10 @@ def in_toto_verify(layout, layout_key_dict):
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
         8.  Verify threshold constraints
-        9.  Verify rules defined in each Step's material_matchrules and
-            product_matchrules field.
-        10. Verify rules defined in each Inspection's material_matchrules and
-            product_matchrules field.
+        9.  Verify rules defined in each Step's expected_materials and
+            expected_products field.
+        10. Verify rules defined in each Inspection's expected_materials and
+            expected_products field.
 
     Note, this function will read the following files from disk:
       - link metadata files

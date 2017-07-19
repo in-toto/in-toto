@@ -765,15 +765,15 @@ class TestVerifyAllItemRules(unittest.TestCase):
 
     self.steps = [
         Step(name="write-code",
-            product_matchrules=[
+            expected_products=[
                 ["CREATE", "foo"]
             ],
         ),
         Step(name="package",
-            material_matchrules=[
+            expected_materials=[
                 ["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "write-code"]
             ],
-            product_matchrules=[
+            expected_products=[
                 ["CREATE", "foo.tar.gz"],
                 ["DELETE", "foo"]
             ],
@@ -782,10 +782,10 @@ class TestVerifyAllItemRules(unittest.TestCase):
 
     self.inspections = [
         Inspection(name="untar",
-            material_matchrules=[
+            expected_materials=[
                 ["MATCH", "foo.tar.gz", "WITH", "PRODUCTS", "FROM", "package"]
             ],
-            product_matchrules=[
+            expected_products=[
                 ["MATCH", "foo", "IN", "dir", "WITH", "PRODUCTS",
                     "FROM", "write-code"]
             ]
@@ -913,14 +913,14 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing step rule
     layout = copy.deepcopy(layout_template)
-    layout.steps[0].product_matchrules.insert(0,
+    layout.steps[0].expected_products.insert(0,
         ["MODIFY", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_step_rule_path)
 
     # dump layout with failing inspection rule
     layout = copy.deepcopy(layout_template)
-    layout.inspect[0].material_matchrules.insert(0,
+    layout.inspect[0].expected_materials.insert(0,
         ["MODIFY", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_rule_path)
@@ -987,14 +987,14 @@ class TestInTotoVerify(unittest.TestCase):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_step_rules(self):
-    """Test fail verification with failing step matchrule. """
+    """Test fail verification with failing step artifact rule. """
     layout = Layout.read_from_file(self.layout_failing_step_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
-    """Test fail verification with failing inspection matchrule. """
+    """Test fail verification with failing inspection artifact rule. """
     layout = Layout.read_from_file(self.layout_failing_inspection_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):

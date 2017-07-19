@@ -178,7 +178,7 @@ This command will verify that
  2. was signed with Alice’s private key,
 <br>and that according to the definitions in the layout
  3. each step was performed and signed by the authorized functionary
- 4. the recorded materials and products align with the matchrules and
+ 4. the recorded materials and products follow the artifact rules and
  5. the inspection `untar` finds what it expects.
 
 

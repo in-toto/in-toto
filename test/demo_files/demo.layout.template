@@ -3,7 +3,7 @@
     "inspect": [
         {
             "_type": "inspection",
-            "material_matchrules": [
+            "expected_materials": [
                 [
                     "MATCH",
                     "foo.tar.gz",
@@ -18,7 +18,7 @@
                 ]
             ],
             "name": "untar",
-            "product_matchrules": [
+            "expected_products": [
                 [
                     "MATCH",
                     "foo.py",
@@ -58,9 +58,9 @@
         {
             "_type": "step",
             "expected_command": "",
-            "material_matchrules": [],
+            "expected_materials": [],
             "name": "write-code",
-            "product_matchrules": [
+            "expected_products": [
                 [
                     "CREATE",
                     "foo.py"
@@ -74,7 +74,7 @@
         {
             "_type": "step",
             "expected_command": "tar zcvf foo.tar.gz foo.py",
-            "material_matchrules": [
+            "expected_materials": [
                 [
                     "MATCH",
                     "foo.py",
@@ -85,7 +85,7 @@
                 ]
             ],
             "name": "package",
-            "product_matchrules": [
+            "expected_products": [
                 [
                     "CREATE",
                     "foo.tar.gz"
