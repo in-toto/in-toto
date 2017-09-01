@@ -126,18 +126,18 @@ class TestInTotoRecordTool(unittest.TestCase):
 
   def test_in_toto_record_start_stop(self):
     """in_toto_record_start/stop run through. """
-    in_toto_record_start("test-step", self.key, self.test_artifact)
-    in_toto_record_stop("test-step", self.key, self.test_artifact)
+    in_toto_record_start("test-step", self.key, [self.test_artifact])
+    in_toto_record_stop("test-step", self.key, [self.test_artifact])
 
   def test_in_toto_record_start_bad_key_error_exit(self):
     """Error exit in_toto_record_start with bad key. """
     with self.assertRaises(SystemExit):
-      in_toto_record_start("test-step", "bad-key", self.test_artifact)
+      in_toto_record_start("test-step", "bad-key", [self.test_artifact])
 
   def test_in_toto_record_stop_missing_unfinished_link_exit(self):
     """Error exit in_toto_record_stop with missing unfinished link file. """
     with self.assertRaises(SystemExit):
-      in_toto_record_stop("test-step", self.key, self.test_artifact)
+      in_toto_record_stop("test-step", self.key, [self.test_artifact])
 
 
 if __name__ == '__main__':
