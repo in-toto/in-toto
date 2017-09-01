@@ -219,6 +219,13 @@ class Layout(models__common.Signable):
       raise securesystemslib.exceptions.FormatError(
           "Malformed date string in layout. Exception: {}".format(e))
 
+  def _validate_readme(self):
+    """Private method to check that the readme field is a string."""
+    if not isinstance(self.readme, basestring):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid readme '{}', value must be a string."
+          .format(self.readme))
+
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
     if type(self.keys) != dict:
