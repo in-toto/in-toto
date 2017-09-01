@@ -1,6 +1,33 @@
 #!/usr/bin/env python
 """
-  TODO: this
+<Program Name>
+  setup.py
+
+<Author>
+  Santiago Torres <santiago@nyu.edu>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+
+<Started>
+  May 23, 2016
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  setup.py script to install in-toto framework and in-toto scripts
+
+  # System Dependencies
+    - Python2.7 (www.python.org)
+    - OpenSSL (www.openssl.org)
+    - git (git-scm.com)
+    - pip (pip.pypa.io)
+    - virtualenvs - optional but strongly recommended!
+      (http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+
+  # Installation from GitHub
+    ```
+    pip install git+git://github.com/in-toto/in-toto@develop
+    ```
 """
 from setuptools import setup, find_packages
 
