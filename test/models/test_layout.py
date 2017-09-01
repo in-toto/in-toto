@@ -44,6 +44,15 @@ class TestLayoutValidator(unittest.TestCase):
     self.layout._type = "layout"
     self.layout._validate_type()
 
+  def test_validate_readme_field(self):
+    """Tests the readme field data type validator. """
+    self.layout.readme = 1
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.layout._validate_readme()
+
+    self.layout.readme = "This is a test supply chain"
+    self.layout._validate_readme()
+
   def test_wrong_expires(self):
     """Test the expires field is properly populated."""
 
@@ -179,6 +188,8 @@ class TestLayoutValidator(unittest.TestCase):
 
     # Clean up
     os.remove(link_path)
+
+
 
 if __name__ == "__main__":
   unittest.main()
