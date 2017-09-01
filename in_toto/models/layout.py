@@ -77,12 +77,17 @@ class Layout(models__common.Signable):
 
     expires:
         the expiration date of a layout
+
+    readme:
+        Can be used to provide a human-readable description of the supply
+        chain
   """
   _type = attr.ib()
   steps = attr.ib()
   inspect = attr.ib()
   keys = attr.ib()
   expires = attr.ib()
+  readme = attr.ib()
 
   def __init__(self, **kwargs):
     super(Layout, self).__init__(**kwargs)
@@ -90,6 +95,7 @@ class Layout(models__common.Signable):
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])
     self.keys = kwargs.get("keys", {})
+    self.readme = kwargs.get("readme", "")
 
     # Assign a default expiration (on month) if not specified
     self.expires = kwargs.get("expires", (datetime.today() +
