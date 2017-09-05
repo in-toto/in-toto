@@ -71,7 +71,7 @@ class Link(models__common.Signable):
   def __init__(self, **kwargs):
     super(Link, self).__init__(**kwargs)
 
-    self._type = "Link"
+    self._type = "link"
     self.name = kwargs.get("name")
     self.materials = kwargs.get("materials", {})
     self.products = kwargs.get("products", {})

@@ -173,7 +173,7 @@ class Layout(models__common.Signable):
         else:
           # Check whether the object is of type link or layout
           # and load it accordingly
-          if link_obj.get("_type") == "Link":
+          if link_obj.get("_type") == "link":
             link = models__link.Link.read(link_obj)
 
           elif link_obj.get("_type") == "layout":
