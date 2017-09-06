@@ -19,6 +19,8 @@
   # System Dependencies
     - Python2.7 (www.python.org)
     - OpenSSL (www.openssl.org)
+
+  # Recommended Tools
     - git (git-scm.com)
     - pip (pip.pypa.io)
     - virtualenvs - optional but strongly recommended!
