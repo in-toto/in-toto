@@ -77,12 +77,17 @@ class Layout(models__common.Signable):
 
     expires:
         the expiration date of a layout
+
+    readme:
+        Can be used to provide a human-readable description of the supply
+        chain
   """
   _type = attr.ib()
   steps = attr.ib()
   inspect = attr.ib()
   keys = attr.ib()
   expires = attr.ib()
+  readme = attr.ib()
 
   def __init__(self, **kwargs):
     super(Layout, self).__init__(**kwargs)
@@ -90,6 +95,7 @@ class Layout(models__common.Signable):
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])
     self.keys = kwargs.get("keys", {})
+    self.readme = kwargs.get("readme", "")
 
     # Assign a default expiration (on month) if not specified
     self.expires = kwargs.get("expires", (datetime.today() +
@@ -212,6 +218,13 @@ class Layout(models__common.Signable):
     except Exception as e:
       raise securesystemslib.exceptions.FormatError(
           "Malformed date string in layout. Exception: {}".format(e))
+
+  def _validate_readme(self):
+    """Private method to check that the readme field is a string."""
+    if not isinstance(self.readme, basestring):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid readme '{}', value must be a string."
+          .format(self.readme))
 
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
