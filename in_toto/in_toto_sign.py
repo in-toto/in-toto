@@ -164,7 +164,7 @@ def check_file_type_and_return_object(file_path):
   with open(file_path,'r') as fp:
     file_object = json.load(fp)
 
-    if file_object.get("_type") == "Link":
+    if file_object.get("_type") == "link":
       signable_object = link_import.read(file_object)
       return signable_object
 
@@ -278,7 +278,7 @@ def main():
           path = args.signablepath
 
 
-      if signable_object._type == 'Link':
+      if signable_object._type == 'link':
         if args.destination:
           path = args.destination
 
