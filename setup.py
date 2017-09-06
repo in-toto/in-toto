@@ -28,7 +28,7 @@
 
   # Installation from GitHub
     ```
-    pip install git+git://github.com/in-toto/in-toto@develop
+    pip install git+https://github.com/in-toto/in-toto@develop
     ```
 """
 from setuptools import setup, find_packages
