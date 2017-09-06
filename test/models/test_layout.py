@@ -126,7 +126,6 @@ class TestLayoutValidator(unittest.TestCase):
       self.layout.steps = [test_step]
       self.layout.validate()
 
-
     test_step = Step(name="this-is-a-step")
     test_step.expected_materials = [["CREATE", "foo"]]
     test_step.threshold = 1
@@ -188,8 +187,6 @@ class TestLayoutValidator(unittest.TestCase):
 
     # Clean up
     os.remove(link_path)
-
-
 
 if __name__ == "__main__":
   unittest.main()
