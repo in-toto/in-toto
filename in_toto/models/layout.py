@@ -164,6 +164,7 @@ class Layout(models__common.Signable):
 
       for keyid in step.pubkeys:
         filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+        print "#"*30, filename
 
         # load the link object from the file
         try:

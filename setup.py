@@ -42,7 +42,7 @@ setup(
                "the integrity of software supply chains"),
   license="MIT",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-  install_requires=["six", "securesystemslib==0.10.4", "attrs", "canonicaljson",
+  install_requires=["six", "securesystemslib==0.10.7", "attrs", "canonicaljson",
                     "python-dateutil", "iso8601"],
   test_suite="test.runtests",
   entry_points={
