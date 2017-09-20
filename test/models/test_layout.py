@@ -188,5 +188,12 @@ class TestLayoutValidator(unittest.TestCase):
     # Clean up
     os.remove(link_path)
 
+  def test_step_expected_command_shlex(self):
+    """Check that a step's `expected_command` passed as string is converted
+    to a list (using `shlex`). """
+    step = Step(**{"expected_command": "rm -rf /"})
+    self.assertTrue(isinstance(step.expected_command, list))
+    self.assertTrue(len(step.expected_command) == 3)
+
 if __name__ == "__main__":
   unittest.main()

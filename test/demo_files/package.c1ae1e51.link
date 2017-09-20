@@ -1,0 +1,32 @@
+{
+    "_type": "link",
+    "byproducts": {
+        "stderr": "a foo.py\n",
+        "stdout": ""
+    },
+    "command": [
+        "tar",
+        "zcvf",
+        "foo.tar.gz",
+        "foo.py"
+    ],
+    "materials": {
+        "foo.py": {
+            "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+        }
+    },
+    "name": "package",
+    "products": {
+        "foo.tar.gz": {
+            "sha256": "52947cb78b91ad01fe81cd6aef42d1f6817e92b9e6936c1e5aabb7c98514f355"
+        }
+    },
+    "return_value": 0,
+    "signatures": [
+        {
+            "keyid": "c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8",
+            "method": "RSASSA-PSS",
+            "sig": "bd7e6f71d6861bc27cf3603b2c557fa9c910aa821fcc50d16539873b1d76108a6309f2174ff8c1c4f1d6f46e40ed4dd767c2d3da30ce6de24d19f67cfa5c1b7dc368bfcbb476d23b4867659d2154f488c135e8cac12b6c8b0e78ea86e196c4e6bab9247408ef2d019916ff046c9baecb6eff297040a6bf7c3a27ef98852dcfcb6d06171fc86749fa6201e1088ea6c985f4e42f516453ea85b1cd65f4a042c27eaf24e57efefcc4d3eab9d6a304bb8cfa3a3101e056375725d80e94f691196ec9460b1ddd3468df36c1f02acd5a82bfdbafb560c74bd608c67a280557c75b5f77b91528553dd7f01f55240ae2d155e77f30ffc5008194c9ee0f79c0070c3582317345f51dee808e3debba0c304cd571a021cd44d5975b7886dae33a8e05ac5fc8ef95e9fb91f9f4532de985b28e0d6dca8c263465ea1f15bc3620e372b2b12f88ba169fe204a22bc7de70a3e90d0e53f75fed14b30b5de87e79223775a072f46dccff442217efba63ed070612dae8c8e9f0137ab40e27645ae599c66b8764bafb"
+        }
+    ]
+}

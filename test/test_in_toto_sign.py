@@ -74,10 +74,10 @@ class TestInTotoSignTool(unittest.TestCase):
     layout_template.dump(self.layout_single_signed_path)
 
     # Path to the link file
-    self.link_file = "package.2dc02526.link"
+    self.link_file = "package.c1ae1e51.link"
 
     # load a link file
-    link_template = Link.read_from_file("package.2dc02526.link")
+    link_template = Link.read_from_file("package.c1ae1e51.link")
     link_template.signatures = []
 
     # Change _type to some random type and dump
