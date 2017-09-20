@@ -17,7 +17,6 @@
                     "*"
                 ]
             ],
-            "name": "untar",
             "expected_products": [
                 [
                     "MATCH",
@@ -32,48 +31,59 @@
                     "*"
                 ]
             ],
-            "run": "tar xfz foo.tar.gz"
+            "name": "untar",
+            "run": [
+                "tar",
+                "xfz",
+                "foo.tar.gz"
+            ]
         }
     ],
     "keys": {
-        "2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd": {
-            "keyid": "2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd",
+        "0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117": {
+            "keyid": "0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117",
             "keytype": "rsa",
             "keyval": {
                 "private": "",
-                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAudRRW13Bta+pVHixjJYR\ne5EVK/8FmQ01YbCS8pfcbSGryMcTOgzit32bEwVSHrkWTjbKi41DHKOchHm/5DJH\ngExGLG19egp/axuIxjFzXFvTg5X4rj2om4S8god+b//YBk9WNnYVi+SmWrt1zmlr\noSP/oMKYXDeuf2n33bMD7yf2R4y7CeMwcSfTqz3UOmw/GyuIiRRMFzvFRAHTUGWb\n6ZO6Q7C17qSwJLqSntKWBHRbG1MxvmBx6eK32Y/AOxJ089rrqgZzjYLFq2M+NFUa\nmzkGVqa2HB2kgsEvrftpvIFT/2MAl0pEZSDp/59yoR1PNYu25f7TeeL6Wfx34uY9\nyJrWLmLf6zCG0BPbOkS/YedoqC25863N4qu4w+rchihfha2IsSSnCrQ4Iibi4eHK\nVHKwObr6VyFYPP2MCUFdoeCYwMU2fZ/WtkeR61iRLrruwz73z+7HnzEFvbwimJxg\n+d+XjDeb/ETruAZfKmYmoGSGMF1m/QApbiGEDZbRwulPAgMBAAE=\n-----END PUBLIC KEY-----"
+                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0Zfzonp3/FScaIP+KKuz\nB+OZNFpjbVGWjm3leqnFqHYLqrLcCw5KhlXpycJqoSvZBpO+PFCksUx8U/ryklHG\nVoDiB84pRkvZtBoVaA4b4IHDIhz1K5NqkJgieya4fwReTxmCW0a9gH7AnDicHBCX\nlzMxqEdt6OKMV5g4yjKaxf8lW72O1gSI46GSIToo+Z7UUgs3ofaM5UFIcczgCpUa\n5kEKocB6cSZ9U8PKRLSs0xO0ROjrcOTsfxMs8eV4bsRCWY5mAq1WM9EHDSV9WO8g\nqrRmanC4enNqa8jU4O3zhgJVegP9A01r9AwNt6AqgPSikwhXN/P4v1FMYV+R6N3b\nS1lsVWRAnwBq5RFz5zVvcY88JEkHbrcBqP/A4909NXae1VMXmnoJb4EzGAkyUySB\na+fHXAVJgzwyv3I48d/OIjH8NWcVmM/DQL7FtcJk3tp0YUjY5wNpcbQTnLzURtlU\nsd+MtGuvdlDxUUvtUYCIVKRdS8UzYnTPjI2xzeoSHZ2ZAgMBAAE=\n-----END PUBLIC KEY-----"
             }
         },
-        "c8650e01ec099466cec16b0c61db1793574d0561152f49aa8334ac8b4408a421": {
-            "keyid": "c8650e01ec099466cec16b0c61db1793574d0561152f49aa8334ac8b4408a421",
+        "c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8": {
+            "keyid": "c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8",
             "keytype": "rsa",
             "keyval": {
                 "private": "",
-                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0m/XaG7AmN29kWm69Fzz\novBjlzNn/V0B+0mRZMijgJ41NCZmMXDwlEX4OE09f9DEmAOrJH8zjrWQwh3ySuEy\nsoE9zQhlyHL1OsuBS1c1gaOWWGP004b9U1i3NuQl5NQhYMLab1BLUIR/fMC+Turo\ny+eDT7hdcKWqHx/QpWqW05jV/5Aa2BVIlwfva5YZmPf9oyqyeehJBeg2kG9mz7kB\nbe5YvT6maxNvrORmPSLi4Zeml7VDkWl04VTrBXoe3j5+UXlOq1MIuv6XkgBhpkXh\n7vGrJNz8UW32J0ZAPJeXuOkoSB+8CF/m02nn2twNWPUAlmv+RITyO4Y8rL5eypHX\ngUlylaJWXD2EbJhdbS8etPhJUZgQ3QgMl7698+LldLzJP1242aB5pQpADDQF6Urx\ntibpT1V5x/bT28fPwxLdb0Dos9tVM6rNCkk2UFL7YwZqkkrJzwsHysLbiS/KfF/g\nsacTIfHl/x1thENtPtA+kR6zVJXFrune3SyM/aFPXF0ZAgMBAAE=\n-----END PUBLIC KEY-----"
+                "public": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAzgLBsMFSgwBiWTBmVsyW\n5KbJwLFSodAzdUhU2Bq6SdRz/W6UOBGdojZXibxupjRtAaEQW/eXDe+1CbKg6ENZ\nGt2D9HGFCQZgQS8ONgNDQGiNxgApMA0T21AaUhru0vEofzdN1DfEF4CAGv5AkcgK\nsalhTyONervFIjFEdXGelFZ7dVMV3Pp5WkZPG0jFQWjnmDZhUrtSxEtqbVghc3kK\nAUj9Ll/3jyi2wS92Z1j5ueN8X62hWX2xBqQ6nViOMzdujkoiYCRSwuMLRqzW2CbT\nL8hF1+S5KWKFzxl5sCVfpPe7V5HkgEHjwCILXTbCn2fCMKlaSbJ/MG2lW7qSY2Ro\nwVXWkp1wDrsJ6Ii9f2dErv9vJeOVZeO9DsooQ5EuzLCfQLEU5mn7ul7bU7rFsb8J\nxYOeudkNBatnNCgVMAkmDPiNA7E33bmL5ARRwU0iZicsqLQR32pmwdap8PjofxqQ\nk7Gtvz/iYzaLrZv33cFWWTsEOqK1gKqigSqgW9T26wO9AgMBAAE=\n-----END PUBLIC KEY-----"
             }
         }
     },
+    "readme": "",
     "signatures": [],
     "steps": [
         {
             "_type": "step",
-            "expected_command": "",
+            "expected_command": [],
             "expected_materials": [],
-            "name": "write-code",
             "expected_products": [
                 [
                     "CREATE",
                     "foo.py"
                 ]
             ],
+            "name": "write-code",
             "pubkeys": [
-                "c8650e01ec099466cec16b0c61db1793574d0561152f49aa8334ac8b4408a421"
+                "0c6c50a1c30f3c0ce179598bf49502d2a89ccc2dccc4db5adcaf83b9f309d117"
             ],
             "threshold": 1
         },
         {
             "_type": "step",
-            "expected_command": "tar zcvf foo.tar.gz foo.py",
+            "expected_command": [
+                "tar",
+                "zcvf",
+                "foo.tar.gz",
+                "foo.py"
+            ],
             "expected_materials": [
                 [
                     "MATCH",
@@ -84,7 +94,6 @@
                     "write-code"
                 ]
             ],
-            "name": "package",
             "expected_products": [
                 [
                     "CREATE",
@@ -95,8 +104,9 @@
                     "foo.py"
                 ]
             ],
+            "name": "package",
             "pubkeys": [
-                "2dc025263ba09a6a996cce10426033427cc84cc4c0b51459350ccb13a04b47bd"
+                "c1ae1e516e00e9cab671b3302b0b861cd1cd22d175e6c6dc49ad8c271c91a5b8"
             ],
             "threshold": 1
         }
