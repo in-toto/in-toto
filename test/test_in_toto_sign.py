@@ -82,7 +82,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Change _type to some random type and dump
     link_wrong_type = copy.deepcopy(link_template)
-    link_wrong_type._type = "random_file"
+    link_wrong_type.signed._type = "random_file"
     self.not_a_link_file = "not_a_link_file.link"
     link_wrong_type.dump(self.not_a_link_file)
 
@@ -95,7 +95,7 @@ class TestInTotoSignTool(unittest.TestCase):
     link_bad_sig = copy.deepcopy(link_template)
     self.link_with_modified_sig = "link_with_modified_sig.link"
     link_bad_sig.sign(alice)
-    link_bad_sig.byproducts = "baaad"
+    link_bad_sig.signed.byproducts = "baaad"
     link_bad_sig.dump(self.link_with_modified_sig)
 
 
