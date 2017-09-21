@@ -382,9 +382,11 @@ def in_toto_run(name, material_list, product_list,
   products_dict = record_artifacts_as_dict(product_list)
 
   log.info("Creating link metadata...")
-  link = in_toto.models.link.Link(name=name, materials=materials_dict,
+  signable = in_toto.models.link._Link(name=name, materials=materials_dict,
     products=products_dict, command=link_cmd_args, byproducts=byproducts,
     return_value=return_value)
+
+  link = in_toto.models.link.Link(signed=signable)
 
   if key:
     log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
@@ -434,8 +436,11 @@ def in_toto_record_start(step_name, key, material_list):
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.info("Creating preliminary link metadata...")
-  link = in_toto.models.link.Link(name=step_name, materials=materials_dict,
-    products={}, command=[], byproducts={}, return_value=None)
+  signable = in_toto.models.link._Link(name=step_name,
+          materials=materials_dict, products={}, command=[], byproducts={},
+          return_value=None)
+
+  link = in_toto.models.link.Link(signed=signable)
 
   log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
   link.sign(key)
@@ -489,7 +494,7 @@ def in_toto_record_stop(step_name, key, product_list):
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  link.products = record_artifacts_as_dict(product_list)
+  link.signed.products = record_artifacts_as_dict(product_list)
 
   log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
   link.signatures = []
