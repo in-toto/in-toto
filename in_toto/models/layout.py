@@ -47,8 +47,8 @@ import securesystemslib.formats
 # import validators
 import in_toto.models.common as models__common
 import in_toto.models.link as models__link
-@attr.s(repr=False, init=False)
-class Layout(models__common.Signable):
+
+class Layout(models__common.Metablock):
   """
   The layout specifies each of the different steps and the requirements for
   each step, as well as the public keys functionaries used to perform these
@@ -77,31 +77,10 @@ class Layout(models__common.Signable):
 
     expires:
         the expiration date of a layout
-
-    readme:
-        Can be used to provide a human-readable description of the supply
-        chain
   """
-  _type = attr.ib()
-  steps = attr.ib()
-  inspect = attr.ib()
-  keys = attr.ib()
-  expires = attr.ib()
-  readme = attr.ib()
 
-  def __init__(self, **kwargs):
-    super(Layout, self).__init__(**kwargs)
-    self._type = "layout"
-    self.steps = kwargs.get("steps", [])
-    self.inspect = kwargs.get("inspect", [])
-    self.keys = kwargs.get("keys", {})
-    self.readme = kwargs.get("readme", "")
-
-    # Assign a default expiration (on month) if not specified
-    self.expires = kwargs.get("expires", (datetime.today() +
-        relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
-
-    self.validate()
+  def get_signable(self):
+      return _Layout
 
   def dump(self, filename='root.layout'):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -120,15 +99,21 @@ class Layout(models__common.Signable):
   @staticmethod
   def read(data):
     """Static method to instantiate a new Layout from a Python dictionary """
+    signatures = data.get('signatures', [])
     steps = []
-    for step_data in data.get("steps"):
+
+    if 'signed' not in data:
+        data['signed'] = _Layout()
+
+    for step_data in data['signed'].get("steps"):
+      # FIXME: is this really needed?
       steps.append(Step.read(step_data))
-    data["steps"] = steps
+    data['signed']["steps"] = steps
 
     inspections = []
-    for inspect_data in data.get("inspect"):
+    for inspect_data in data['signed'].get("inspect"):
       inspections.append(Inspection.read(inspect_data))
-    data["inspect"] = inspections
+    data['signed']["inspect"] = inspections
 
     return Layout(**data)
 
@@ -177,12 +162,17 @@ class Layout(models__common.Signable):
           pass
 
         else:
+
+          if 'signed' not in link_obj:
+            raise in_toto.exceptions.LinkNotFoundError("Invalid format. '{0}'"
+                " is not a valid in-toto metadata file.".format(filename))
+
           # Check whether the object is of type link or layout
           # and load it accordingly
-          if link_obj.get("_type") == "link":
+          if link_obj['signed'].get("_type") == "link":
             link = models__link.Link.read(link_obj)
 
-          elif link_obj.get("_type") == "layout":
+          elif link_obj['signed'].get("_type") == "layout":
             link = Layout.read(link_obj)
 
           else:
@@ -202,6 +192,36 @@ class Layout(models__common.Signable):
       step_link_dict[step.name] = key_link_dict
 
     return step_link_dict
+
+
+@attr.s(repr=False, init=False)
+class _Layout(models__common.Signable):
+  """
+  A layout is the signed statement of a supply chain's structure.
+
+  This object hold the *signable* part of the layout file. That is, the part
+  from which the link's signature field will be computed.
+  """
+  _type = attr.ib()
+  steps = attr.ib()
+  inspect = attr.ib()
+  keys = attr.ib()
+  expires = attr.ib()
+  readme = attr.ib()
+
+  def __init__(self, **kwargs):
+    super(_Layout, self).__init__(**kwargs)
+    self._type = "layout"
+    self.steps = kwargs.get("steps", [])
+    self.inspect = kwargs.get("inspect", [])
+    self.keys = kwargs.get("keys", {})
+    self.readme = kwargs.get("readme", "")
+
+    # Assign a default expiration (on month) if not specified
+    self.expires = kwargs.get("expires", (datetime.today() +
+        relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    self.validate()
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
@@ -275,7 +295,7 @@ class Layout(models__common.Signable):
       names_seen.add(inspection.name)
 
 @attr.s(repr=False, init=False)
-class Step(models__common.Metablock):
+class Step(models__common.Signable):
   """
   Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
@@ -383,7 +403,7 @@ class Step(models__common.Metablock):
 
 
 @attr.s(repr=False, init=False)
-class Inspection(models__common.Metablock):
+class Inspection(models__common.Signable):
   """
   Represents an inspection which performs a command during layout verification.
 

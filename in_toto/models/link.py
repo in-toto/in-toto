@@ -26,8 +26,7 @@ import securesystemslib.formats
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
-@attr.s(repr=False, init=False)
-class Link(models__common.Signable):
+class Link(models__common.Metablock):
   """
   A link is the metadata representation of a supply chain step performed
   by a functionary.
@@ -60,25 +59,22 @@ class Link(models__common.Signable):
     return_value:
         the return value of the executed command
    """
-  _type = attr.ib()
-  name = attr.ib()
-  materials = attr.ib()
-  products = attr.ib()
-  byproducts = attr.ib()
-  command = attr.ib()
-  return_value = attr.ib()
 
   def __init__(self, **kwargs):
+
+    # FIXME: this is a patch that will make code migration easier.
+    if 'signed' not in kwargs:
+      new_kwargs = {}
+      new_kwargs['signed'] = {}
+      new_kwargs['signed'].update(kwargs)
+      kwargs = new_kwargs
+
     super(Link, self).__init__(**kwargs)
 
-    self._type = "link"
-    self.name = kwargs.get("name")
-    self.materials = kwargs.get("materials", {})
-    self.products = kwargs.get("products", {})
-    self.byproducts = kwargs.get("byproducts", {})
-    self.command = kwargs.get("command", [])
-    self.return_value = kwargs.get("return_value", None)
-
+  def get_signable(self):
+    """ this method is used by the base class's constructor to obtain the
+     appropriate signable to populate itself. """
+    return _Link
 
   def dump(self, filename=False, key=False):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -109,3 +105,31 @@ class Link(models__common.Signable):
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
     return Link(**data)
+
+@attr.s(repr=False, init=False)
+class _Link(models__common.Signable):
+  """
+  A link is the metadata representation of a supply chain step performed
+  by a functionary.
+
+  This object hold the *signable* part of a piece of link metadata. That is,
+  the part from which the link's signature field will be computed.
+   """
+  _type = attr.ib()
+  name = attr.ib()
+  materials = attr.ib()
+  products = attr.ib()
+  byproducts = attr.ib()
+  command = attr.ib()
+  return_value = attr.ib()
+
+  def __init__(self, **kwargs):
+    super(_Link, self).__init__(**kwargs)
+
+    self._type = "link"
+    self.name = kwargs.get("name")
+    self.materials = kwargs.get("materials", {})
+    self.products = kwargs.get("products", {})
+    self.byproducts = kwargs.get("byproducts", {})
+    self.command = kwargs.get("command", [])
+    self.return_value = kwargs.get("return_value", None)
