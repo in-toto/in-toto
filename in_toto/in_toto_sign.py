@@ -164,11 +164,14 @@ def check_file_type_and_return_object(file_path):
   with open(file_path,'r') as fp:
     file_object = json.load(fp)
 
-    if file_object.get("_type") == "link":
+    if 'signed' not in file_object:
+        raise TypeError("This file is probably not in-toto metadata ;[")
+
+    if file_object['signed'].get("_type") == "link":
       signable_object = link_import.read(file_object)
       return signable_object
 
-    elif file_object.get("_type") == "layout":
+    elif file_object['signed'].get("_type") == "layout":
       signable_object = layout_import.read(file_object)
       return signable_object
 
