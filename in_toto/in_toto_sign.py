@@ -165,7 +165,7 @@ def check_file_type_and_return_object(file_path):
     file_object = json.load(fp)
 
     if 'signed' not in file_object:
-        raise TypeError("This file is probably not in-toto metadata ;[")
+      raise TypeError("This file is probably not in-toto metadata ;[")
 
     if file_object['signed'].get("_type") == "link":
       signable_object = link_import.read(file_object)

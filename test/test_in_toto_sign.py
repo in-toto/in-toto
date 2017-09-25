@@ -98,11 +98,9 @@ class TestInTotoSignTool(unittest.TestCase):
     link_bad_sig.signed.byproducts = "baaad"
     link_bad_sig.dump(self.link_with_modified_sig)
 
-
-    # Store the file path to be used in test
-
-    # Dump the file
-
+    self.empty_json_path = "empty_json"
+    with open(self.empty_json_path, "w") as fp:
+      fp.write("{}")
 
   @classmethod
   def tearDownClass(self):
@@ -277,6 +275,10 @@ class TestInTotoSignTool(unittest.TestCase):
     """Check_file_type_and_return_object run through. """
     check_file_type_and_return_object(self.link_file)
 
+  def test_check_file_type_and_return_object_no_signed_field(self):
+    """Check_file_type_and_return_object, fail with missing signed field. """
+    with self.assertRaises(TypeError):
+      check_file_type_and_return_object(self.empty_json_path)
 
   def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """
