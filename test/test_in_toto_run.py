@@ -95,6 +95,17 @@ class TestInTotoRunTool(unittest.TestCase):
 
     self.assertTrue(os.path.exists(self.test_link))
 
+  def test_main_no_command_arg(self):
+    """Test CLI command with --no-command argument. """
+
+    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+        self.key_path, "--no-command"]
+
+    with patch.object(sys, 'argv', args):
+      in_toto_run_main()
+
+    self.assertTrue(os.path.exists(self.test_link))
+
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
 
@@ -102,7 +113,11 @@ class TestInTotoRunTool(unittest.TestCase):
       ["in_toto_run.py"],
       ["in_toto_run.py", "--step-name", "some"],
       ["in_toto_run.py", "--key", self.key_path],
-      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path]]
+      ["in_toto_run.py", "--", "echo", "blub"],
+      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path],
+      ["in_toto_run.py", "--step-name", "--", "echo", "blub"],
+      ["in_toto_run.py", "--key", self.key_path, "--", "echo", "blub"],
+      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path, "--"]]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
