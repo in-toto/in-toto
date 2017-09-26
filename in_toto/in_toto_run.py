@@ -98,6 +98,7 @@ def main():
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-byproducts]\n{0}"
+               "[--no-command]\n{0}"
                "[--verbose] -- <cmd> [args]\n\n"
                .format(lpad))
 
@@ -120,12 +121,16 @@ def main():
       help="If set redirects stdout/stderr and stores to link metadata",
       dest="record_byproducts", default=False, action="store_true")
 
+  in_toto_args.add_argument("-x", "--no-command",
+      help="Set if step does not have a command",
+      dest="no_command", default=False, action="store_true")
+
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
-  in_toto_args.add_argument("link_cmd", nargs="+",
+  in_toto_args.add_argument("link_cmd", nargs="*",
     help="Link command to be executed with options and arguments")
 
   args = parser.parse_args()
@@ -142,7 +147,13 @@ def main():
     log.error("in load key - {}".format(args.key))
     sys.exit(1)
 
-  in_toto_run(args.step_name, args.materials, args.products,
+  if args.no_command:
+    in_toto_run(args.step_name, {}, {}, [], key, args.record_byproducts)
+  else:
+    if not args.link_cmd:
+      parser.print_usage()
+      parser.exit("For no command use --no-command option")
+    in_toto_run(args.step_name, args.materials, args.products,
       args.link_cmd, key, args.record_byproducts)
 
 if __name__ == "__main__":
