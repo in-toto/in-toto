@@ -94,9 +94,6 @@ class Layout(models__common.Metablock):
     signatures = data.get('signatures', [])
     steps = []
 
-    if 'signed' not in data:
-        data['signed'] = LayoutSignable()
-
     for step_data in data['signed'].get("steps"):
       steps.append(Step.read(step_data))
     data['signed']["steps"] = steps
