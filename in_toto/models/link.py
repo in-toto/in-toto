@@ -38,26 +38,10 @@ class Link(models__common.Metablock):
   the command was executed and after the command was executed.
 
   <Attributes>
-    name:
-        a unique name used to identify the related step in the layout
-    materials and products:
-        a dictionary in the format of
-          { <relative file path> : {
-            {<hash algorithm> : <hash of the file>}
-          },... }
+    signed: A LinkSignable object (described below)
 
-    byproducts:
-        a dictionary in the format of
-          {
-            "stdout": <standard output of the executed command>
-            "stderr": <standard error of the executed command>
-          }
+    signatures: the signatures computed on the LinkSignable object
 
-    command:
-        the command that was wrapped by in_toto-run
-
-    return_value:
-        the return value of the executed command
    """
 
   def __init__(self, **kwargs):
@@ -72,9 +56,9 @@ class Link(models__common.Metablock):
     super(Link, self).__init__(**kwargs)
 
   def get_signable(self):
-    """ this method is used by the base class's constructor to obtain the
+    """ This method is used by the base class's constructor to obtain the
      appropriate signable to populate itself. """
-    return _Link
+    return LinkSignable
 
   def dump(self, filename=False, key=False):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -107,14 +91,38 @@ class Link(models__common.Metablock):
     return Link(**data)
 
 @attr.s(repr=False, init=False)
-class _Link(models__common.Signable):
+class LinkSignable(models__common.Signable):
   """
   A link is the metadata representation of a supply chain step performed
   by a functionary.
 
   This object hold the *signable* part of a piece of link metadata. That is,
   the part from which the link's signature field will be computed.
-   """
+
+  <Attributes>
+    name:
+        a unique name used to identify the related step in the layout
+
+    materials and products:
+        a dictionary in the format of
+          { <relative file path> : {
+            {<hash algorithm> : <hash of the file>}
+          },... }
+
+    byproducts:
+        a dictionary in the format of
+          {
+            "stdout": <standard output of the executed command>
+            "stderr": <standard error of the executed command>
+          }
+
+    command:
+        the command that was wrapped by in_toto-run
+
+    return_value:
+        the return value of the executed command
+
+  """
   _type = attr.ib()
   name = attr.ib()
   materials = attr.ib()
@@ -124,7 +132,7 @@ class _Link(models__common.Signable):
   return_value = attr.ib()
 
   def __init__(self, **kwargs):
-    super(_Link, self).__init__(**kwargs)
+    super(LinkSignable, self).__init__(**kwargs)
 
     self._type = "link"
     self.name = kwargs.get("name")

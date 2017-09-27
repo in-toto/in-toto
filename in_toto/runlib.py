@@ -382,9 +382,9 @@ def in_toto_run(name, material_list, product_list,
   products_dict = record_artifacts_as_dict(product_list)
 
   log.info("Creating link metadata...")
-  signable = in_toto.models.link._Link(name=name, materials=materials_dict,
-    products=products_dict, command=link_cmd_args, byproducts=byproducts,
-    return_value=return_value)
+  signable = in_toto.models.link.LinkSignable(name=name,
+      materials=materials_dict, products=products_dict, command=link_cmd_args,
+      byproducts=byproducts, return_value=return_value)
 
   link = in_toto.models.link.Link(signed=signable)
 
@@ -436,7 +436,7 @@ def in_toto_record_start(step_name, key, material_list):
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.info("Creating preliminary link metadata...")
-  signable = in_toto.models.link._Link(name=step_name,
+  signable = in_toto.models.link.LinkSignable(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
           return_value=None)
 
