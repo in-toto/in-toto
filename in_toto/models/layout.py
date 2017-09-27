@@ -94,12 +94,12 @@ class Layout(models__common.Metablock):
     signatures = data.get('signatures', [])
     steps = []
 
-    for step_data in data['signed'].get("steps"):
+    for step_data in data.get("signed", {}).get("steps"):
       steps.append(Step.read(step_data))
     data['signed']["steps"] = steps
 
     inspections = []
-    for inspect_data in data['signed'].get("inspect"):
+    for inspect_data in data.get("signed", {}).get("inspect"):
       inspections.append(Inspection.read(inspect_data))
     data['signed']["inspect"] = inspections
 
@@ -150,17 +150,12 @@ class Layout(models__common.Metablock):
           pass
 
         else:
-
-          if 'signed' not in link_obj:
-            raise in_toto.exceptions.LinkNotFoundError("Invalid format. '{0}'"
-                " is not a valid in-toto metadata file.".format(filename))
-
           # Check whether the object is of type link or layout
           # and load it accordingly
-          if link_obj['signed'].get("_type") == "link":
+          if link_obj.get('signed', {}).get("_type") == "link":
             link = models__link.Link.read(link_obj)
 
-          elif link_obj['signed'].get("_type") == "layout":
+          elif link_obj.get('signed', {}).get("_type") == "layout":
             link = Layout.read(link_obj)
 
           else:
