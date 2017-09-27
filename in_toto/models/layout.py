@@ -64,23 +64,15 @@ class Layout(models__common.Metablock):
   and instantiated from a file.
 
   <Attributes>
-    steps:
-        a list of Step objects
+    signed: A LayoutSignable object (described below)
+    signatures: the signatures computed on the LayoutSignable object
 
-    inspect:
-        a list of Inspection objects
-
-    keys:
-        A dictionary of public keys used to verify the signature of link
-        metadata file related to a step. Format is
-        securesystemslib.formats.KEYDICT_SCHEMA
-
-    expires:
-        the expiration date of a layout
   """
 
   def get_signable(self):
-      return _Layout
+    """ Since Layout is a subclass of Metablock, it needs to implenment
+    get_signable and return a LayoutSignable (described below)"""
+    return LayoutSignable
 
   def dump(self, filename='root.layout'):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -103,10 +95,9 @@ class Layout(models__common.Metablock):
     steps = []
 
     if 'signed' not in data:
-        data['signed'] = _Layout()
+        data['signed'] = LayoutSignable()
 
     for step_data in data['signed'].get("steps"):
-      # FIXME: is this really needed?
       steps.append(Step.read(step_data))
     data['signed']["steps"] = steps
 
@@ -195,12 +186,28 @@ class Layout(models__common.Metablock):
 
 
 @attr.s(repr=False, init=False)
-class _Layout(models__common.Signable):
+class LayoutSignable(models__common.Signable):
   """
   A layout is the signed statement of a supply chain's structure.
 
   This object hold the *signable* part of the layout file. That is, the part
   from which the link's signature field will be computed.
+
+  <Attributes>
+    steps:
+        a list of Step objects
+
+    inspect:
+        a list of Inspection objects
+
+    keys:
+        A dictionary of public keys used to verify the signature of link
+        metadata file related to a step. Format is
+        securesystemslib.formats.KEYDICT_SCHEMA
+
+    expires:
+        the expiration date of a layout
+
   """
   _type = attr.ib()
   steps = attr.ib()
@@ -210,7 +217,7 @@ class _Layout(models__common.Signable):
   readme = attr.ib()
 
   def __init__(self, **kwargs):
-    super(_Layout, self).__init__(**kwargs)
+    super(LayoutSignable, self).__init__(**kwargs)
     self._type = "layout"
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])
