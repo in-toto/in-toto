@@ -214,7 +214,7 @@ class LayoutSignable(models__common.Signable):
   readme = attr.ib()
 
   def __init__(self, **kwargs):
-    super(LayoutSignable, self).__init__(**kwargs)
+    super(LayoutSignable, self).__init__()
     self._type = "layout"
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])

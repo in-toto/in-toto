@@ -156,8 +156,5 @@ class Signable(ValidationMixin):
   to be signed (hence the name). They provide a pretty-printed json
   representation of its fields"""
 
-  def __init__(self, **kwargs):
-    super(Signable, self).__init__()
-
   def __repr__(self):
     return canonicaljson.encode_pretty_printed_json(attr.asdict(self))

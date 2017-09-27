@@ -132,7 +132,7 @@ class LinkSignable(models__common.Signable):
   return_value = attr.ib()
 
   def __init__(self, **kwargs):
-    super(LinkSignable, self).__init__(**kwargs)
+    super(LinkSignable, self).__init__()
 
     self._type = "link"
     self.name = kwargs.get("name")
