@@ -302,7 +302,7 @@ class LayoutSignable(models__common.Signable):
       names_seen.add(inspection.name)
 
 @attr.s(repr=False, init=False)
-class Step(models__common.Signable):
+class Step(models__common.ValidationMixin):
   """
   Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
@@ -410,7 +410,7 @@ class Step(models__common.Signable):
 
 
 @attr.s(repr=False, init=False)
-class Inspection(models__common.Signable):
+class Inspection(models__common.ValidationMixin):
   """
   Represents an inspection which performs a command during layout verification.
 
