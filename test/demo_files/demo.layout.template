@@ -1,5 +1,7 @@
 {
+    "signed" : {
     "_type": "layout",
+    "readme" : "",
     "inspect": [
         {
             "_type": "inspection",
@@ -57,8 +59,6 @@
             }
         }
     },
-    "readme": "",
-    "signatures": [],
     "steps": [
         {
             "_type": "step",
@@ -111,4 +111,6 @@
             "threshold": 1
         }
     ]
+  },
+  "signatures": []
 }

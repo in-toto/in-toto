@@ -82,7 +82,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Change _type to some random type and dump
     link_wrong_type = copy.deepcopy(link_template)
-    link_wrong_type._type = "random_file"
+    link_wrong_type.signed._type = "random_file"
     self.not_a_link_file = "not_a_link_file.link"
     link_wrong_type.dump(self.not_a_link_file)
 
@@ -95,14 +95,12 @@ class TestInTotoSignTool(unittest.TestCase):
     link_bad_sig = copy.deepcopy(link_template)
     self.link_with_modified_sig = "link_with_modified_sig.link"
     link_bad_sig.sign(alice)
-    link_bad_sig.byproducts = "baaad"
+    link_bad_sig.signed.byproducts = "baaad"
     link_bad_sig.dump(self.link_with_modified_sig)
 
-
-    # Store the file path to be used in test
-
-    # Dump the file
-
+    self.empty_json_path = "empty_json"
+    with open(self.empty_json_path, "w") as fp:
+      fp.write("{}")
 
   @classmethod
   def tearDownClass(self):
@@ -277,6 +275,10 @@ class TestInTotoSignTool(unittest.TestCase):
     """Check_file_type_and_return_object run through. """
     check_file_type_and_return_object(self.link_file)
 
+  def test_check_file_type_and_return_object_no_signed_field(self):
+    """Check_file_type_and_return_object, fail with missing signed field. """
+    with self.assertRaises(TypeError):
+      check_file_type_and_return_object(self.empty_json_path)
 
   def test_add_sign_bad_key_error_exit(self):
     """Error exit in_toto_add_sign with bad key. """

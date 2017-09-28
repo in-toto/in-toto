@@ -79,12 +79,15 @@ class TestRunAllInspections(unittest.TestCase):
 
     # Create layout with one inspection
     self.layout = Layout.read({
-      "_type": "layout",
-      "steps": [],
-      "inspect": [{
-        "name": "touch-bar",
-        "run": "touch bar",
-      }]
+      "signed": {
+        "_type": "layout",
+        "steps": [],
+        "inspect": [{
+          "name": "touch-bar",
+          "run": "touch bar",
+        }]
+      },
+      "signatures": []
     })
 
     # Create directory where the verification will take place
@@ -117,12 +120,15 @@ class TestRunAllInspections(unittest.TestCase):
   def test_inspection_fail_with_non_zero_retval(self):
     """Test fail run inspections with non-zero return value. """
     layout = Layout.read({
-      "_type": "layout",
-      "steps": [],
-      "inspect": [{
-        "name": "non-zero-inspection",
-        "run": "expr 1 / 0",
-      }]
+      "signed" : {
+        "_type": "layout",
+        "steps": [],
+        "inspect": [{
+          "name": "non-zero-inspection",
+          "run": "expr 1 / 0",
+        }]
+      },
+      "signatures": []
     })
     with self.assertRaises(BadReturnValueError):
       run_all_inspections(layout)
@@ -906,7 +912,7 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump expired layout
     layout = copy.deepcopy(layout_template)
-    layout.expires = (datetime.today() +
+    layout.signed.expires = (datetime.today() +
         relativedelta(months=-1)).strftime("%Y-%m-%dT%H:%M:%SZ")
     layout.sign(alice)
     layout.dump(self.layout_expired_path)

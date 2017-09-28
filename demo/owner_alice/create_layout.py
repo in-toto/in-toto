@@ -10,61 +10,63 @@ def main():
   key_carl = import_rsa_key_from_file("../functionary_carl/carl.pub")
 
   layout = Layout.read({
-    "_type": "layout",
-    "keys": {
-        key_bob["keyid"]: key_bob,
-        key_carl["keyid"]: key_carl,
+    "signed": {
+      "_type": "layout",
+      "keys": {
+          key_bob["keyid"]: key_bob,
+          key_carl["keyid"]: key_carl,
+      },
+      "steps": [{
+          "name": "clone",
+          "expected_materials": [],
+          "expected_products": [["CREATE", "demo-project/foo.py"]],
+          "pubkeys": [key_bob["keyid"]],
+          "expected_command": "git clone https://github.com/in-toto/demo-project.git",
+          "threshold": 1,
+        },{
+          "name": "update-version",
+          "expected_materials": [["MATCH", "demo-project/*", "WITH", "PRODUCTS",
+                                "FROM", "clone"]],
+          "expected_products": [["ALLOW", "demo-project/foo.py"]],
+          "pubkeys": [key_bob["keyid"]],
+          "expected_command": "",
+          "threshold": 1,
+        },{
+          "name": "package",
+          "expected_materials": [
+            ["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM",
+             "update-version"],
+          ],
+          "expected_products": [
+              ["CREATE", "demo-project.tar.gz"],
+          ],
+          "pubkeys": [key_carl["keyid"]],
+          "expected_command": "tar --exclude '.git' -zcvf demo-project.tar.gz demo-project",
+          "threshold": 1,
+        }],
+      "inspect": [{
+          "name": "untar",
+          "expected_materials": [
+              ["MATCH", "demo-project.tar.gz", "WITH", "PRODUCTS", "FROM", "package"],
+              # FIXME: If the routine running inspections would gather the
+              # materials/products to record from the rules we wouldn't have to
+              # ALLOW other files that we aren't interested in.
+              ["ALLOW", ".keep"],
+              ["ALLOW", "alice.pub"],
+              ["ALLOW", "root.layout"],
+          ],
+          "expected_products": [
+              ["MATCH", "demo-project/foo.py", "WITH", "PRODUCTS", "FROM", "update-version"],
+              # FIXME: See expected_materials above
+              ["ALLOW", "demo-project/.git/*"],
+              ["ALLOW", "demo-project.tar.gz"],
+              ["ALLOW", ".keep"],
+              ["ALLOW", "alice.pub"],
+              ["ALLOW", "root.layout"],
+          ],
+          "run": "tar xzf demo-project.tar.gz",
+        }],
     },
-    "steps": [{
-        "name": "clone",
-        "expected_materials": [],
-        "expected_products": [["CREATE", "demo-project/foo.py"]],
-        "pubkeys": [key_bob["keyid"]],
-        "expected_command": "git clone https://github.com/in-toto/demo-project.git",
-        "threshold": 1,
-      },{
-        "name": "update-version",
-        "expected_materials": [["MATCH", "demo-project/*", "WITH", "PRODUCTS",
-                              "FROM", "clone"]],
-        "expected_products": [["ALLOW", "demo-project/foo.py"]],
-        "pubkeys": [key_bob["keyid"]],
-        "expected_command": "",
-        "threshold": 1,
-      },{
-        "name": "package",
-        "expected_materials": [
-          ["MATCH", "demo-project/*", "WITH", "PRODUCTS", "FROM",
-           "update-version"],
-        ],
-        "expected_products": [
-            ["CREATE", "demo-project.tar.gz"],
-        ],
-        "pubkeys": [key_carl["keyid"]],
-        "expected_command": "tar --exclude '.git' -zcvf demo-project.tar.gz demo-project",
-        "threshold": 1,
-      }],
-    "inspect": [{
-        "name": "untar",
-        "expected_materials": [
-            ["MATCH", "demo-project.tar.gz", "WITH", "PRODUCTS", "FROM", "package"],
-            # FIXME: If the routine running inspections would gather the
-            # materials/products to record from the rules we wouldn't have to
-            # ALLOW other files that we aren't interested in.
-            ["ALLOW", ".keep"],
-            ["ALLOW", "alice.pub"],
-            ["ALLOW", "root.layout"],
-        ],
-        "expected_products": [
-            ["MATCH", "demo-project/foo.py", "WITH", "PRODUCTS", "FROM", "update-version"],
-            # FIXME: See expected_materials above
-            ["ALLOW", "demo-project/.git/*"],
-            ["ALLOW", "demo-project.tar.gz"],
-            ["ALLOW", ".keep"],
-            ["ALLOW", "alice.pub"],
-            ["ALLOW", "root.layout"],
-        ],
-        "run": "tar xzf demo-project.tar.gz",
-      }],
     "signatures": []
   })
 
