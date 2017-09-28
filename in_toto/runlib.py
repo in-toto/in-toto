@@ -374,8 +374,11 @@ def in_toto_run(name, material_list, product_list,
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
   materials_dict = record_artifacts_as_dict(material_list)
 
-  log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-  byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
+  if link_cmd_args:
+    log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
+    byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
+  else:
+    byproducts, return_value = {}, None
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
