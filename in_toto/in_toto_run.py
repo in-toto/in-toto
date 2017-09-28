@@ -148,7 +148,8 @@ def main():
     sys.exit(1)
 
   if args.no_command:
-    in_toto_run(args.step_name, {}, {}, [], key, args.record_byproducts)
+    in_toto_run(args.step_name, args.materials, args.products, [],
+      key, args.record_byproducts)
   else:
     if not args.link_cmd:
       parser.print_usage()
