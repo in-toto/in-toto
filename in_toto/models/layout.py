@@ -70,7 +70,7 @@ class Layout(models__common.Metablock):
   """
 
   def get_signable(self):
-    """ Since Layout is a subclass of Metablock, it needs to implenment
+    """ Since Layout is a subclass of Metablock, it needs to implement
     get_signable and return a LayoutSignable (described below)"""
     return LayoutSignable
 

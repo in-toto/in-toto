@@ -39,9 +39,9 @@ class Metablock(object):
   signatures. Other convenience classes will inherit this class to provide
   serialization and signing capabilities to in-toto metadata.
   """
-  
+
   def __init__(self, **kwargs):
-    """ The constructor of metablock requires subclasses to impelement a
+    """ The constructor of metablock requires subclasses to implement a
     template for its underlying signable class (see get_signable()). This
     method will populate the signatures list and instantiate the subclass's
     corresponding signable under its signed property"""
@@ -63,7 +63,7 @@ class Metablock(object):
     """ There should not be an instance of metablock, as it is an abstract
     class. Its subclasses (Layout, Link) should implement the get_signable
     method to return the corresponding signable class to populate """
-    raise NotImplementedError('Metablock is not intended to be instantiated.'
+    raise NotImplementedError('Metablock is not intended to be instantiated. '
         'You probably wanted to instantiate a Layout or a Link?')
 
   """Objects with base class Metablock have a __repr__ method
