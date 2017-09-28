@@ -141,3 +141,59 @@ class LinkSignable(models__common.Signable):
     self.byproducts = kwargs.get("byproducts", {})
     self.command = kwargs.get("command", [])
     self.return_value = kwargs.get("return_value", None)
+
+    self.validate()
+
+  def _validate_type(self):
+    """Private method to check that `_type` is set to "link"."""
+    if self._type != "link":
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `_type` must be set to 'link', got: {}"
+          .format(self._type))
+
+
+  def _validate_materials(self):
+    """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
+    if not isinstance(self.materials, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `materials` must be of type list, got: {}"
+          .format(type(self.materials)))
+
+    for material in self.materials.values():
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
+
+
+  def _validate_products(self):
+    """Private method to check that `products` is a `dict` of `HASHDICTs`."""
+    if not isinstance(self.products, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `products` must be of type list, got: {}"
+          .format(type(self.products)))
+
+    for product in self.products.values():
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
+
+
+  def _validate_byproducts(self):
+    """Private method to check that `byproducts` is a `dict`."""
+    if not isinstance(self.byproducts, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `byproducts` must be of type list, got: {}"
+          .format(type(self.byproducts)))
+
+
+  def _validate_return_value(self):
+    """Private method to check that `return_value` is an `int` or `None`."""
+    if not (isinstance(self.return_value, int) or
+        self.return_value is None):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `return_value` must None or integer, got: {}"
+          .format(type(self.return_value)))
+
+
+  def _validate_command(self):
+    """Private method to check that `command` is a `list`."""
+    if not isinstance(self.command, list):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `command` must be of type list, got: {}"
+          .format(type(self.command)))
