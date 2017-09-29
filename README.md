@@ -1,12 +1,11 @@
 # in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop)
 
-Protecting the software supply chain integrity
+in-toto provides a framework to protect the integrity of the software supply chain. It does so by verifying that each task in the chain is carried out as planned, by authorized personnel only, and that the product is not tampered with in transit.
 
-in-toto guarantees that the end-user (or client) is able to verify that the entire development life cycle has been conducted as per the specified layout and that each of the functionaries (eg. developers) have performed the specified tasks and there haven't been any malicious changes in the files.
+in-toto requires a **project owner** to create a **layout**. A layout lists the sequence of **steps** of the software supply chain, and the **functionaries** authorized to perform these steps.
+When a functionary performs a step in-toto gathers information about the used command and the related files and stores it in a **link** metadata file. As a consequence link files provide the required evidence to establish a continuous chain that can be validated against the steps defined in the layout.
 
-in-toto requires a project layout that specifies the functionaries and the tasks they are supposed to perform.
-After each functionary performs his or her task a link metadata is generated.
-This metadata is used to verify the intermediate and final products with the project layout.
+The layout, signed by the project owners, together with the links, signed by the designated functionaries, are released as part of the final product, and can be validated manually or via automated tooling in, e.g. a package manager.
 
 
 ## Getting Started
@@ -16,18 +15,12 @@ This metadata is used to verify the intermediate and final products with the pro
  - [OpenSSL](https://www.openssl.org/) - crypto libraries require header files
  - [git](https://git-scm.com/) - version control system
  - [pip](https://pip.pypa.io) - package installer tool
- - [virtualenvs](http://docs.python-guide.org/en/latest/dev/virtualenvs/) - optional but strongly recommended
 
 ### Installation
+It is strongly recommended to install in-toto in an isolated Python environment. For easy setup instructions visit the docs for [`virtualenv`](https://virtualenv.pypa.io) and the convenient [`vitualenvwrapper`](https://virtualenvwrapper.readthedocs.io).
+
 ```shell
-# Fetch in-toto sources
-git clone https://github.com/in-toto/in-toto.git
-
-# Change into project root directory
-cd in-toto
-
-# Install with pip in "develop mode"
-pip install -e .
+pip install git+git://github.com/in-toto/in-toto.git
 ```
 ### Create layout, run supply chain steps and verify final product
 
@@ -35,10 +28,11 @@ pip install -e .
 
 The in-toto software supply chain layout consists of the following parts:
  - **expiration date**
+ - **readme** (an optional description of the supply chain)
  - **functionary keys** (public keys, used to verify link metadata signatures)
  - **signatures** (one or more layout signatures created with the project owner key(s))
- - **software supply chain steps** correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools.
-Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
+ - **software supply chain steps**
+   correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools. Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
 *Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/in-toto/blob/develop/demo/owner_alice/create_layout.py), a script that creates the in-toto demo layout.*
