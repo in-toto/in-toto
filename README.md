@@ -2,11 +2,12 @@
 
 Protecting the software supply chain integrity
 
-in-toto guarantees that the end-user (or client) is able to verify that the entire development life cycle has been conducted as per the specified layout and that each of the functionaries (eg. developers) have performed the specified tasks and there haven't been any malicious changes in the files.
+in-toto provides a framework to verify that the entire supply chain of a software product has been conducted as planned, by authorized personnel only, and that there hasn't been any tampering with the product in transit.
 
-in-toto requires a project layout that specifies the functionaries and the tasks they are supposed to perform.
-After each functionary performs his or her task a link metadata is generated.
-This metadata is used to verify the intermediate and final products with the project layout.
+in-toto requires a **project owner** to create a **layout**. A layout lists the sequence of **steps** of the software supply chain, and the **functionaries** authorized to perform these steps.
+When a functionary performs a step in-toto gathers information about the used command and the related files and stores it to a **link** metadata file. As a consequence link files provide the required evidence to establish a continuous chain that can be validated against the steps defined in the layout.
+
+The layout, signed by the project owners, together with the links, signed by the designated functionaries, are released as part of the final product, and can be validated manually or via automated tooling in, e.g. a package manager.
 
 
 ## Getting Started
