@@ -30,10 +30,11 @@ pip install git+git://github.com/in-toto/in-toto.git
 
 The in-toto software supply chain layout consists of the following parts:
  - **expiration date**
+ - **readme** (an optional description of the supply chain)
  - **functionary keys** (public keys, used to verify link metadata signatures)
  - **signatures** (one or more layout signatures created with the project owner key(s))
- - **software supply chain steps** correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools.
-Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
+ - **software supply chain steps**
+   correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools. Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
 *Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/in-toto/blob/develop/demo/owner_alice/create_layout.py), a script that creates the in-toto demo layout.*
