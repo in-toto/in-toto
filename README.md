@@ -17,18 +17,12 @@ The layout, signed by the project owners, together with the links, signed by the
  - [OpenSSL](https://www.openssl.org/) - crypto libraries require header files
  - [git](https://git-scm.com/) - version control system
  - [pip](https://pip.pypa.io) - package installer tool
- - [virtualenvs](http://docs.python-guide.org/en/latest/dev/virtualenvs/) - optional but strongly recommended
 
 ### Installation
+It is strongly recommended to install in-toto in an isolated Python environment. For easy setup instructions visit the docs for [`virtualenv`](https://virtualenv.pypa.io) and the convenient [`vitualenvwrapper`](https://virtualenvwrapper.readthedocs.io).
+
 ```shell
-# Fetch in-toto sources
-git clone https://github.com/in-toto/in-toto.git
-
-# Change into project root directory
-cd in-toto
-
-# Install with pip in "develop mode"
-pip install -e .
+pip install git+git://github.com/in-toto/in-toto.git
 ```
 ### Create layout, run supply chain steps and verify final product
 
