@@ -4,6 +4,7 @@
 
 <Author>
   Sachit Malik <i.sachitmalik@gmail.com>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
 
 <Started>
   June 13, 2017
@@ -12,314 +13,228 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  A CLI tool for adding, replacing, verifying signatures in link
-  metadata files. It takes the following inputs - path to the signable
-  object, and path to the key file. Also there are two optional inputs
-  based on which it decides whether to sign the file with the replacement
-  of the existing signature, or sign it but without replacement and then
-  appends the new signature in the file. Further in each of the two cases,
-  depending on the arguments it then dumps the file either by infixing
-  the keyID i.e. <filename>.<8-initial-characters-from-the-keyID>.link
-  or simply <filename>.link. Note that in case of signing by multiple key
-  files, when -i is specified, file is dumped by the keyID of the last key
-  supplied in the arguments.
+  Provides command line interface to sign in-toto Link or Layout metadata
+  or verify its signatures.
 
-  General Usage:
-  python in_toto_sign.py [sign | verify] <path/to/link/file> [-r] [-i] --keys
-  <path/to/key/file(s)>
+  The tool provides options to
+    - add or replace signatures,
+    - add the short keyid of the signing key as infix to the filename
+      (only available for Link metadata, if multiple keys are passed the last
+      key in the argument list is used), and
+    - verify signatures
 
-  Example Usage:
-  Suppose Bob wants to sign a file called package.link, and also while signing,
-  he wants to replace all the existing signatures, and then dump the file
-  by infixing the keyID in it. Then his command would be-
 
-  python in_toto_sign.py sign /bob/software/in-toto/test/package.link -r -i
-  --keys /bob/mykeys/bob_pvt_key
+  Usage:
+  ```
+  in-toto-sign [-h] -f FILE -k KEYS [KEYS ...] [-o OUTPUT] [-x] [-r] [-v]
+               [--verify]
+  ```
+
+  Examples:
+  ```
+  # Sign Layout with two keys and write to specified path
+  in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout
+
+  # Sign Link and use passed key's short id as filename infix
+  in-toto-sign -f package.c1ae1e51.link -k priv_key -x
+
+  # Verify Layout signed with two keys
+  in-toto-sign -f root.layout -k pub_key1 pub_key2 --verify
+
+  ```
 
 """
 import os
-import json
 import sys
+import json
 import argparse
-import in_toto.util
-from in_toto import log
-from in_toto import exceptions
-from in_toto.models.common import Signable as signable_object
-from in_toto.models.layout import Layout as layout_import
-from in_toto.models.link import Link as link_import
-from in_toto.models.link import FILENAME_FORMAT as FILENAME_FORMAT_IMPORT
-import securesystemslib.exceptions
-import securesystemslib.keys
-import securesystemslib.formats
+from in_toto import log, exceptions, util
+from in_toto.models.layout import Layout
+from in_toto.models.link import Link, FILENAME_FORMAT
 
-
-def add_sign(file_path, key_dict):
+def _sign_and_dump_metadata(metadata, args):
   """
   <Purpose>
-    Signs the given link file with the corresponding key,
-    adds the signature to the file, and then returns, the
-    link file as an object.
+    Internal method to sign Link or Layout metadata and dump it to disk.
 
   <Arguments>
-    link - path to the signable link file
-    key - the key to be used for signing
+    metadata:
+            Link or Layout object
+    args:
+            see argparser
 
   <Exceptions>
-    None
-
-  <Returns>
-    An object containing the contents of the link file after
-    adding the signature
+    SystemExit(0) if signing is successful
+    SystemExit(2) if any exception occurs
 
   """
-  signable_object = check_file_type_and_return_object(file_path)
 
-  for key in key_dict:
-    # Import the rsa key from the file specified in the filepath
-    rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
+  try:
+    if args.replace:
+      metadata.signatures = []
 
-    # Checking if the given key follows the format
-    securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
+    for key_path in args.keys:
+      key = util.prompt_import_rsa_key_from_file(key_path)
+      metadata.sign(key)
+      # Only keeping  in the passed list will be used as infix
+      keyid = key["keyid"]
 
-    signable_object.sign(rsa_key)
+    out_path = args.file
 
-  return signable_object
+    if args.infix:
+      if len(args.keys) > 1:
+        log.warn("Using last key in the list of passed keys for infix...")
+
+      out_path = FILENAME_FORMAT.format(step_name=metadata.name,
+          keyid=keyid)
+
+    if args.output:
+      out_path = args.output
+
+    log.info("Dumping {0} to '{1}'...".format(metadata._type,
+        out_path))
+
+    metadata.dump(out_path)
+    sys.exit(0)
+
+  except Exception as e:
+    log.error("The following error occurred while signing: "
+        "{}".format(e))
+    sys.exit(2)
 
 
-def replace_sign(file_path, key_dict):
+def _verify_metadata(metadata, args):
   """
   <Purpose>
-    Replaces all the existing signature with the new signature,
-    signs the file, and then returns the link file as an object.
+    Internal method to verify Link or Layout signatures.
 
   <Arguments>
-    link - path to the key file
-    key - the key/keys to be used for signing
+    metadata:
+            Link or Layout object
+    args:
+            see argparser
 
   <Exceptions>
-    None
+    SystemExit(0) if verification passes
+    SystemExit(1) if verification fails
+    SystemExit(2) if any exception occurs
 
-  <Returns>
-    An object containing the contents of the link file after
-    adding the signature which replaces the old signatures
   """
-  signable_object = check_file_type_and_return_object(file_path)
+  try:
+    pub_key_dict = util.import_rsa_public_keys_from_files_as_dict(
+        args.keys)
 
-  # Remove all the existing signatures
-  signable_object.signatures = []
+    metadata.verify_signatures(pub_key_dict)
+    log.pass_verification("Signature verification passed")
+    sys.exit(0)
 
-  for key in key_dict:
-    # Import rsa key from the filepath
-    rsa_key = in_toto.util.prompt_import_rsa_key_from_file(key)
+  except exceptions.SignatureVerificationError as e:
+    log.fail_verification("Signature verification failed: {}".format(e))
+    sys.exit(1)
 
-    # Check if the key corresponds to the correct format
-    securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
-
-    # Sign the object
-    signable_object.sign(rsa_key)
-
-  return signable_object
+  except Exception as e:
+    log.error("The following error occurred while verifying signatures: "
+        "{}".format(e))
+    sys.exit(2)
 
 
-def verify_sign(file_path, key_pub):
+def _load_metadata(file_path):
   """
   <Purpose>
-    Verifies the signature field in the link file, given a public key
+    Loads Link or Layout file from disk
 
   <Arguments>
-    link - path to the link file
-    key_pub - public key to be used to verification
+    file_path:
+            path to Link or Layout file
 
   <Exceptions>
-    Raises SignatureVerificationError
-      - 'Invalid Signature' : when the verification fails
-      - 'Signature Key Not Found' : when KeyError occurs
-      - 'No Signatures Found' - when no signature exists
+    SystemExit(2) if any exception occurs
 
   <Returns>
-    None
+    in-toto Link or Layout object
+
   """
-  signable_object = check_file_type_and_return_object(file_path)
-  key_pub_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
-      key_pub)
-  signable_object.verify_signatures(key_pub_dict)
+  try:
+    with open(file_path, "r") as fp:
+      file_object = json.load(fp)
 
+    if file_object["signed"].get("_type", {}) == "link":
+      return Link.read(file_object)
 
-def check_file_type_and_return_object(file_path):
-  """
-  <Purpose>
-    Checks the file type of the file at file_path and returns a signable
-    object if the file is a link or a layout
-
-  <Arguments>
-    file_path - path to the file
-
-  <Exceptions>
-    Raises LinkNotFoundError when a file other than link or layout is
-    encountered.
-
-  <Returns>
-    A signable object
-  """
-  with open(file_path,'r') as fp:
-    file_object = json.load(fp)
-
-    if 'signed' not in file_object:
-      raise TypeError("This file is probably not in-toto metadata ;[")
-
-    if file_object['signed'].get("_type") == "link":
-      signable_object = link_import.read(file_object)
-      return signable_object
-
-    elif file_object['signed'].get("_type") == "layout":
-      signable_object = layout_import.read(file_object)
-      return signable_object
+    elif file_object["signed"].get("_type", {}) == "layout":
+      return Layout.read(file_object)
 
     else:
-      raise exceptions.LinkNotFoundError("Invalid format.'{0}' is not a "
-        "valid in-toto 'Link' or 'Layout' metadata file.".format(file_path))
+      raise Exception("Not a valid in-toto 'Link' or 'Layout'"
+          " metadata file")
 
+  except Exception as e:
+    log.error("The following error occurred while loading the file '{}': "
+      "{}".format(file_path, e))
+    sys.exit(2)
 
-def parse_args():
-  """
-  <Purpose>
-    A function which parses the user supplied arguments.
-
-  <Arguments>
-    None
-
-  <Exceptions>
-    None
-
-  <Returns>
-    Parsed arguments (args object)
-  """
-  parser = argparse.ArgumentParser(
-    description="in-toto-sign : Signs(single/multiple signing) link file "
-                "with/without replacement of the existing signatures and dumps"
-                " with/without infixing the keyID in the (user "
-                "provided/source) file name")
-
-  subparsers = parser.add_subparsers(help='in-toto sign/verify subparsers',
-                                     dest='subparser_name')
-
-  sign_parser = subparsers.add_parser('sign', help='Sign the link/layout '
-                                      'file.')
-
-  sign_parser.add_argument("signablepath", type=str,
-                            help="path to the signable file")
-
-  sign_parser.add_argument("-r", "--replace-sig", action="store_true",
-                            help="Replace all the old signatures, sign "
-                                 "with the given key, and add the new "
-                                 "signature in file")
-
-  sign_parser.add_argument("-i", "--infix", action="store_true",
-                            help="Infix keyID in the filename while "
-                                 "dumping, when -i the file will be dumped "
-                                 "as original.<keyID>.link/layout, "
-                                 "else original.link/layout")
-
-  sign_parser.add_argument("-v", "--verbose", dest="verbose",
-                            help="Verbose execution.", default=False,
-                            action="store_true")
-
-  sign_parser.add_argument("-d", "--destination", type=str, help="Filepath "
-                           "to which the output file should be dumped")
-
-  sign_parser.add_argument("-k", "--keys", nargs="+", type=str, required=True,
-                            help="Path to the key file/files")
-
-  verify_parser = subparsers.add_parser('verify', help='Verify the '
-                                        'link/layout file.')
-
-  verify_parser.add_argument("signablepath", type=str,
-                            help="path to the signable file")
-
-  verify_parser.add_argument("-v", "--verbose", dest="verbose",
-                            help="Verbose execution.", default=False,
-                            action="store_true")
-
-  verify_parser.add_argument("-k", "--keys", nargs="+", type=str,
-                            required=True, help="Path to the key file/files")
-
-
-  args = parser.parse_args()
-  return args
 
 def main():
-  """
-  First calls parse_args to parse the arguments, and then calls either
-  add_sign or add_replace depending upon the arguments. Based on the
-  arguments it then dumps the corresponding file.
-  """
-  args = parse_args()
+  """Parse arguments, load link or layout metadata file and either sign
+  metadata file or verify its signatures. """
+
+  parser = argparse.ArgumentParser(
+    description="Sign in-toto Link or Layout metadata (or verify signatures)")
+
+  parser.add_argument("-f", "--file", type=str, required=True,
+      help="read metadata file from passed path (required)")
+
+  parser.add_argument("-k", "--keys", nargs="+", type=str, required=True,
+      help="path(s) to key file(s) used for signing or signature verification"
+      " (required)")
+
+  # Only when signing
+  parser.add_argument("-o", "--output", type=str,
+      help="store signed metadata file to passed path")
+
+  # Only when signing Link files
+  parser.add_argument("-x", "--infix", action="store_true",
+      help="write signed file to '<link name>.<infix>.link', where infix is "
+      "the short form of the signing key's id (only available for Link "
+      "metadata, if multiple keys are passed the last key in the "
+      "argument list is used)")
+
+  # Only when signing
+  parser.add_argument("-r", "--replace", action="store_true",
+      help="replace existing signatures (if not specified signatures are"
+      " appended)")
+
+  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
+
+  parser.add_argument("--verify", action="store_true",
+      help="verify signatures")
+
+  args = parser.parse_args()
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 
-  if args.subparser_name == 'sign':
-    try:
-      if args.destination and args.infix:
-        log.error('Please specify one and only one out of infix and '
-                  'destination!')
-        sys.exit(1)
+  if args.infix and args.output:
+    parser.print_help()
+    parser.exit(2, "conflicting arguments: specify either 'infix' or 'out path'")
 
-      if args.replace_sig:
-        signable_object = replace_sign(args.signablepath, args.keys)
-      else:
-        signable_object = add_sign(args.signablepath, args.keys)
+  if args.verify and (args.replace or args.infix or args.output):
+    parser.print_help()
+    parser.exit(2, "conflicting arguments: don't specify any of"
+        " 'replace', 'infix' or 'output' when verifying")
 
-      if signable_object._type == 'layout':
-        if args.infix:
-          log.warn('Ignoring option --infix for layouts...')
+  metadata = _load_metadata(args.file)
 
-        if args.destination:
-          path = args.destination
+  if metadata._type == "layout" and args.infix:
+    parser.print_help()
+    parser.exit(2, "wrong argument: infix option is not available for Layouts")
 
-        else:
-          path = args.signablepath
+  if args.verify:
+    _verify_metadata(metadata, args)
 
-
-      if signable_object._type == 'link':
-        if args.destination:
-          path = args.destination
-
-        elif args.infix:
-          rsa_key = in_toto.util.import_rsa_key_from_file(args.keys[-1])
-          path = FILENAME_FORMAT_IMPORT.format(step_name=signable_object.name,
-                  keyid=rsa_key["keyid"])
-          if len(args.keys) > 1:
-            log.warn('Using last key in the list of passed keys for infix...')
-
-        else:
-          path = args.signablepath
-
-      log.info("Dumping {0} to '{1}'...".format(signable_object._type.lower(),
-          path))
-
-      signable_object.dump(path)
-      sys.exit(0)
-
-    except Exception as e:
-      log.error("Unable to sign. Error Occured - {}".format(e))
-      sys.exit(1)
-
-  elif args.subparser_name == 'verify':
-    try:
-      verify_sign(args.signablepath, args.keys)
-      log.pass_verification('Successfully verified.')
-      sys.exit(0)
-
-    except exceptions.SignatureVerificationError as e:
-      log.fail_verification('Verification Failed.' + str(e))
-      sys.exit(1)
-
-    except Exception as e:
-      log.error("The following error occured while verification - "
-                "'{}'".format(e))
-      sys.exit(2)
+  else:
+    _sign_and_dump_metadata(metadata, args)
 
 
 if __name__ == "__main__":
-    main()
+  main()
