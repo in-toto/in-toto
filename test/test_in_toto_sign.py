@@ -19,15 +19,8 @@ import logging
 import argparse
 import shutil
 import tempfile
-import copy
 from mock import patch
-from in_toto.models.layout import Layout
-from in_toto.util import (generate_and_write_rsa_keypair,
-  prompt_import_rsa_key_from_file, import_rsa_key_from_file)
-from in_toto.models.link import Link
 from in_toto.in_toto_sign import main as in_toto_sign_main
-from in_toto.in_toto_sign import add_sign, replace_sign, verify_sign, \
-  check_file_type_and_return_object
 from in_toto import log
 from in_toto import exceptions
 
@@ -57,50 +50,14 @@ class TestInTotoSignTool(unittest.TestCase):
     for file_path in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
 
-    # Load layout template
-    layout_template = Layout.read_from_file("demo.layout.template")
-
-    # Store layout paths to be used in tests
-    self.layout_single_signed_path = "single-signed.layout"
-
-    # Import layout signing keys
-    alice = import_rsa_key_from_file("alice")
-    self.alice_path_pvt = "alice"
-    self.alice_path = "alice.pub"
-    self.bob_path = "bob.pub"
-
-    # Dump a single signed layout
-    layout_template.sign(alice)
-    layout_template.dump(self.layout_single_signed_path)
-
-    # Path to the link file
-    self.link_file = "package.c1ae1e51.link"
-
-    # load a link file
-    link_template = Link.read_from_file("package.c1ae1e51.link")
-    link_template.signatures = []
-
-    # Change _type to some random type and dump
-    link_wrong_type = copy.deepcopy(link_template)
-    link_wrong_type.signed._type = "random_file"
-    self.not_a_link_file = "not_a_link_file.link"
-    link_wrong_type.dump(self.not_a_link_file)
-
-    # Remove the signatures and dump
-    link_no_signatures = copy.deepcopy(link_template)
-    self.link_with_no_sig = "link_with_no_sig.link"
-    link_no_signatures.dump(self.link_with_no_sig)
-
-    # Change the contents of the link file and dump
-    link_bad_sig = copy.deepcopy(link_template)
-    self.link_with_modified_sig = "link_with_modified_sig.link"
-    link_bad_sig.sign(alice)
-    link_bad_sig.signed.return_value = 10000
-    link_bad_sig.dump(self.link_with_modified_sig)
-
-    self.empty_json_path = "empty_json"
-    with open(self.empty_json_path, "w") as fp:
-      fp.write("{}")
+    self.layout_path = "demo.layout.template"
+    self.link_path = "package.c1ae1e51.link"
+    self.alice_path = "alice"
+    self.alice_pub_path = "alice.pub"
+    self.bob_path= "bob"
+    self.bob_pub_path = "bob.pub"
+    self.carl_path= "carl"
+    self.carl_pub_path = "carl.pub"
 
   @classmethod
   def tearDownClass(self):
@@ -108,209 +65,137 @@ class TestInTotoSignTool(unittest.TestCase):
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
-  def test_main_required_args(self):
-    """Test in-toto-sign CLI tool with required arguments. """
-    args = ["in_toto_sign.py"]
 
-    with patch.object(sys, 'argv', args + ["sign" ,
-        self.layout_single_signed_path, "-r", "--keys",
-        self.alice_path_pvt]), self.assertRaises(SystemExit):
+  def _test_cli_sys_exit(self, cli_args, status):
+    """Test helper to mock command line call and assert return value. """
+    with patch.object(sys, "argv", ["in_toto_sign.py"]
+        + cli_args), self.assertRaises(SystemExit) as raise_ctx:
       in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["verify" ,
-        self.layout_single_signed_path, "--keys", self.alice_path]), \
-        self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    self.assertEqual(raise_ctx.exception.code, status)
 
 
-  def test_main_optional_args(self):
-    """Test CLI command sign with optional arguments. """
-    args = ["in_toto_sign.py"]
+  def test_sign_and_verify(self):
+    """Test signing and verifying Layout and Link metadata with
+    different combinations of arguments. """
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.layout_single_signed_path, "-r",  "--keys", self.alice_path_pvt]),\
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Sign Layout with multiple keys and write to "tmp.layout"
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.alice_path, self.bob_path,
+        "-o", "tmp.layout",
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.layout_single_signed_path, "-i", "--keys", self.alice_path_pvt]),\
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Verify "tmp.layout" (requires all keys)
+    self._test_cli_sys_exit([
+        "-f", "tmp.layout",
+        "-k", self.alice_pub_path, self.bob_pub_path,
+        "--verify",
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.layout_single_signed_path, "-d", "test_path", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Sign Layout "tmp.layout", replacing old signatures, write to "tmp.layout"
+    self._test_cli_sys_exit([
+        "-f", "tmp.layout",
+        "-k", self.carl_path,
+        "-o", "tmp.layout",
+        "-r"
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.layout_single_signed_path, "-r", "-d", "test_path", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Verify "tmp.layout" (has only one signature now)
+    self._test_cli_sys_exit([
+        "-f", "tmp.layout",
+        "-k", self.carl_pub_path,
+        "--verify"
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign" ,
-      self.layout_single_signed_path, "--keys", self.alice_path_pvt]), \
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Sign Link, replacing old signature,
+    # and write to same file as input (verbosely)
+    self._test_cli_sys_exit([
+        "-f", self.link_path,
+        "-k", self.bob_path,
+        "-r",
+        "-v"
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.link_file, "-r",  "--keys", self.alice_path_pvt]),\
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Verify Link
+    self._test_cli_sys_exit([
+        "-f", self.link_path,
+        "-k", self.bob_pub_path,
+        "--verify", "-v"
+        ], 0)
 
-    with patch.object(sys, 'argv', args + ["sign",
-      self.link_file, "-i", "--keys", self.alice_path_pvt]),\
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign",
-      self.link_file, "-d", "test_path", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign",
-      self.link_file, "-r", "-d", "test_path", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign" ,
-      self.link_file, "--keys", self.alice_path_pvt]), \
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign" ,
-      self.link_file, "-r", "-i", "-d", "test_path", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["verify" ,
-      self.layout_single_signed_path, "--keys", self.alice_path]), \
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["verify" ,
-      self.link_file, "--keys", self.alice_path]), \
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
+    # Add signature to Link and use last passed key's (alice) id as infix
+    self._test_cli_sys_exit([
+        "-f", self.link_path,
+        "-k", self.carl_path, self.alice_path,
+        "-x",
+        ], 0)
+    # Verify Link with alice's keyid as infix
+    self._test_cli_sys_exit([
+        "-f", "package.20a893b8.link",
+        "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
+        "--verify"
+        ], 0)
 
 
-  def test_main_wrong_args(self):
-    """Test CLI command sign/verify with missing arguments. """
-
-    wrong_args_list = [
-      ["in_toto_sign.py"],
-      ["in_toto_sign.py", "random"],
-      ["in_toto_sign.py", "sign", "--keys", self.alice_path],
-      ["in_toto_sign.py", "verify", "--keys", self.alice_path_pvt],
-      ["in_toto_sign.py", "sign", "-i", "-d", "test_path", "--keys",
-       self.alice_path_pvt]
-    ]
-
-    for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv', wrong_args), self.assertRaises(
-        SystemExit):
-        in_toto_sign_main()
-
-  def test_main_wrong_key_exits(self):
-    """Test main with wrong key exits and logs error """
-    args = ["in_toto_sign.py"]
-    with patch.object(sys, 'argv', args + ["sign" ,
-      self.layout_single_signed_path, "-r", "-i", "--keys",
-      "non-existent-key"]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["verify" ,
-      self.layout_single_signed_path, "--keys", "non-existent-key"]), \
-      self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["sign" ,
-      self.layout_single_signed_path, "-d", "test_path", "--keys",
-      "non-existent-key"]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-  def test_main_verification_failed(self):
-    """Test in_toto_sign_main with failing verification """
-    args = ["in_toto_sign.py"]
-    with patch.object(sys, 'argv', args + ["verify" ,
-      self.link_file, "--keys", self.bob_path]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-  def test_main_verbose(self):
-    """Log level with verbose flag is lesser/equal than logging.INFO. """
-    args = ["in_toto_sign.py"]
-
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args + ["sign",
-      self.layout_single_signed_path, "-r", "-i", "--verbose", "--keys",
-      self.alice_path_pvt]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    with patch.object(sys, 'argv', args + ["verify",
-      self.layout_single_signed_path, "--verbose", "--keys",
-      self.alice_path]), self.assertRaises(SystemExit):
-      in_toto_sign_main()
-
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
-
-  def test_in_toto_sign_add_sign(self):
-    """in_toto_sign_add_sign run through. """
-    add_sign(self.layout_single_signed_path, [self.alice_path_pvt])
-
-  def test_in_toto_sign_replace_sign(self):
-    """in_toto_sign_replace_sign run through. """
-    replace_sign(self.layout_single_signed_path, [self.alice_path_pvt])
-
-  def test_in_toto_sign_verify_sign(self):
-    """in_toto_sign_verify_sign run through. """
-    verify_sign(self.layout_single_signed_path, [self.alice_path])
-
-  def test_check_file_type_and_return_object_layout(self):
-    """Check_file_type_and_return_object run through. """
-    check_file_type_and_return_object(self.layout_single_signed_path)
-
-  def test_check_file_type_and_return_object_link(self):
-    """Check_file_type_and_return_object run through. """
-    check_file_type_and_return_object(self.link_file)
-
-  def test_check_file_type_and_return_object_no_signed_field(self):
-    """Check_file_type_and_return_object, fail with missing signed field. """
-    with self.assertRaises(TypeError):
-      check_file_type_and_return_object(self.empty_json_path)
-
-  def test_add_sign_bad_key_error_exit(self):
-    """Error exit in_toto_add_sign with bad key. """
-    with self.assertRaises(IOError):
-      add_sign(self.layout_single_signed_path, ["bad-key"])
-
-  def test_verify_sign_bad_key_error_exit(self):
-    """Error exit in_toto_verify_sign with bad key. """
-    with self.assertRaises(IOError):
-      verify_sign(self.layout_single_signed_path, ["bad-key"])
-
-  def test_check_file_type_and_return_object(self):
-    """Invalid file input to check_file_type_return_object """
-    with self.assertRaises(exceptions.LinkNotFoundError):
-      check_file_type_and_return_object(self.not_a_link_file)
-
-  def test_verify_sign_verification_failed(self):
-    """Failed verification """
-    with self.assertRaises(exceptions.SignatureVerificationError):
-      verify_sign(self.layout_single_signed_path, [self.bob_path])
-
-  def test_verify_sign_invalid_file(self):
-    """Invalid input to verify_sign """
-    with self.assertRaises(exceptions.SignatureVerificationError):
-      verify_sign(self.link_with_no_sig,[self.bob_path])
-
-  def test_verify_sign_invalid_signature(self):
-    """Modified signature verification """
-    with self.assertRaises(exceptions.SignatureVerificationError):
-      verify_sign(self.link_with_modified_sig,[self.alice_path])
+  def test_fail_signing(self):
+    """Fail signing with an invalid key. """
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.carl_path, self.link_path,
+        ], 2)
 
 
+  def test_fail_verification(self):
+    """Fail verification with key that was not used for signing. """
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.carl_pub_path,
+        "--verify"
+        ], 1)
 
-if __name__ == '__main__':
+
+  def test_bad_args(self):
+    """Fail with wrong comination of arguments. """
+
+    # Conflicting "infix" and "output" option
+    # Sign layout and dump to "tmp1.layout"
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", "key-not-used",
+        "-o", "file-not-written",
+        "-x"
+        ], 2)
+
+    # Conflicting "verify" and signing options (--verify -rx)
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", "key-not-used",
+        "--verify",
+        "-rx"
+        ], 2)
+
+    # Conflicting "verify" and signing options (--verify -o)
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", "key-not-used",
+        "--verify",
+        "-o", "file-not-written"
+        ], 2)
+
+    # Wrong "infix" option for Layout metadata
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", "key-not-used",
+        "-x"
+        ], 2)
+
+
+  def test_bad_metadata(self):
+    """Fail with wrong metadata type. """
+    self._test_cli_sys_exit([
+        "-f", self.alice_pub_path,
+        "-k", "key-not-used",
+        ], 2)
+
+if __name__ == "__main__":
   unittest.main(buffer=True)
