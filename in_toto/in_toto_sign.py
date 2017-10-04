@@ -32,6 +32,7 @@
 
     - verify signatures
 
+
   Usage:
   ```
   in-toto-sign [-h] -f FILE -k KEYS [KEYS ...] [-o OUTPUT] [-x] [-r] [-v]
@@ -166,10 +167,10 @@ def _load_metadata(file_path):
     with open(file_path, "r") as fp:
       file_object = json.load(fp)
 
-    if file_object["signed"].get("_type", {}) == "link":
+    if file_object.get("signed", {}).get("_type") == "link":
       return Link.read(file_object)
 
-    elif file_object["signed"].get("_type", {}) == "layout":
+    elif file_object.get("signed", {}).get("_type") == "layout":
       return Layout.read(file_object)
 
     else:

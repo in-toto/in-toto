@@ -4,6 +4,7 @@
   test_in_toto_sign.py
 <Author>
   Sachit Malik <i.sachitmalik@gmail.com>
+  Lukas Puehringer <luk.puehringer@gmail.com>
 <Started>
   Wed Jun 21, 2017
 <Copyright>
@@ -14,15 +15,15 @@
 
 import os
 import sys
-import unittest
-import logging
-import argparse
+import json
 import shutil
+import logging
 import tempfile
+import unittest
+
 from mock import patch
+from in_toto import log, exceptions
 from in_toto.in_toto_sign import main as in_toto_sign_main
-from in_toto import log
-from in_toto import exceptions
 
 WORKING_DIR = os.getcwd()
 
@@ -191,9 +192,18 @@ class TestInTotoSignTool(unittest.TestCase):
 
 
   def test_bad_metadata(self):
-    """Fail with wrong metadata type. """
+    """Fail with wrong metadata. """
+
+    # Not valid JSON
     self._test_cli_sys_exit([
         "-f", self.alice_pub_path,
+        "-k", "key-not-used",
+        ], 2)
+
+    # Valid JSON but not valid Link or Layout
+    open("tmp.json", "w").write(json.dumps({}))
+    self._test_cli_sys_exit([
+        "-f", "tmp.json",
         "-k", "key-not-used",
         ], 2)
 
