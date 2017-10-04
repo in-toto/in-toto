@@ -147,12 +147,20 @@ class TestInTotoSignTool(unittest.TestCase):
 
 
   def test_fail_verification(self):
-    """Fail verification with key that was not used for signing. """
+    """Fail signature verification. """
+    # Fail with wrong key (not used for signing)
     self._test_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.carl_pub_path,
         "--verify"
         ], 1)
+
+    # Fail with wrong key (not a valid pub key)
+    self._test_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.carl_path,
+        "--verify"
+        ], 2)
 
 
   def test_bad_args(self):
