@@ -18,11 +18,19 @@
 
   The tool provides options to
     - add or replace signatures,
-    - add the short keyid of the signing key as infix to the filename
-      (only available for Link metadata, if multiple keys are passed the last
-      key in the argument list is used), and
-    - verify signatures
+    - write the signed file to a specified path,
+    - write the signed file to a path consisting of
+      the value from the metadata's `name` field, the first 8 characters
+      of the signing key's id as infix and '.link' as extension,
+      e.g.:  "package.c1ae1e51.link"
+      Note:
+        The naming scheme is used to distinguish Link files of steps that are
+        required to be carried out by a threshold of functionaries.
+        This option is only available for Link metadata.
+        If multiple keys are passed for signing, the short key id of the last
+        key in the arguments list is used as infix.
 
+    - verify signatures
 
   Usage:
   ```
