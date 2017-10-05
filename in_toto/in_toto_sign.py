@@ -16,39 +16,37 @@
   Provides command line interface to sign in-toto Link or Layout metadata
   or verify its signatures.
 
-  The tool provides options to
-    - add or replace signatures,
-    - write the signed file to a specified path,
-    - write the signed file to a path consisting of
-      the value from the metadata's `name` field, the first 8 characters
-      of the signing key's id as infix and '.link' as extension,
-      e.g.:  "package.c1ae1e51.link"
-      Note:
-        The naming scheme is used to distinguish Link files of steps that are
-        required to be carried out by a threshold of functionaries.
-        This option is only available for Link metadata.
-        If multiple keys are passed for signing, the short key id of the last
-        key in the arguments list is used as infix.
+  Provides options to,
+    - replace (default) or add signature(s):
+        - Layout metadata can be signed by multiple keys at once,
+        - Link metadata can only be signed by one key at a time
+    - write signed metadata to a specified path:
+      if no output path is specified,
+        - layout metadata is written to the input file,
+        - link metadata is written to:
+         "<step name>.<short signing key id>.link"
 
     - verify signatures
 
 
+
+
   Usage:
   ```
-  in-toto-sign [-h] -f FILE -k KEYS [KEYS ...] [-o OUTPUT] [-x] [-r] [-v]
+  in-toto-sign [-h] -f FILE -k KEY [KEY ...] [-o OUTPUT] [-a] [-v]
                [--verify]
   ```
 
   Examples:
   ```
-  # Sign Layout with two keys and write to specified path
-  in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout
+  # Append two signatures to layout file and write to passed path
+  in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
 
   # Sign Link and use passed key's short id as filename infix
-  in-toto-sign -f package.c1ae1e51.link -k priv_key -x
+  in-toto-sign -f package.c1ae1e51.link -k priv_key
 
-  # Verify Layout signed with two keys
-  in-toto-sign -f root.layout -k pub_key1 pub_key2 --verify
+  # Verify Layout signed with three keys
+  in-toto-sign -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
 
   ```
 
@@ -79,26 +77,25 @@ def _sign_and_dump_metadata(metadata, args):
   """
 
   try:
-    if args.replace:
+    if not args.append:
       metadata.signatures = []
 
-    for key_path in args.keys:
+    for key_path in args.key:
       key = util.prompt_import_rsa_key_from_file(key_path)
       metadata.sign(key)
-      # Only keeping  in the passed list will be used as infix
+
+      # Only relevant when signing Link metadata, where there is only one key
       keyid = key["keyid"]
-
-    out_path = args.file
-
-    if args.infix:
-      if len(args.keys) > 1:
-        log.warn("Using last key in the list of passed keys for infix...")
-
-      out_path = FILENAME_FORMAT.format(step_name=metadata.name,
-          keyid=keyid)
 
     if args.output:
       out_path = args.output
+
+    elif metadata._type == "link":
+      out_path = FILENAME_FORMAT.format(step_name=metadata.name,
+          keyid=keyid)
+
+    elif metadata._type == "layout":
+      out_path = args.file
 
     log.info("Dumping {0} to '{1}'...".format(metadata._type,
         out_path))
@@ -131,7 +128,7 @@ def _verify_metadata(metadata, args):
   """
   try:
     pub_key_dict = util.import_rsa_public_keys_from_files_as_dict(
-        args.keys)
+        args.key)
 
     metadata.verify_signatures(pub_key_dict)
     log.pass_verification("Signature verification passed")
@@ -193,25 +190,20 @@ def main():
   parser.add_argument("-f", "--file", type=str, required=True,
       help="read metadata file from passed path (required)")
 
-  parser.add_argument("-k", "--keys", nargs="+", type=str, required=True,
-      help="path(s) to key file(s) used for signing or signature verification"
-      " (required)")
+  parser.add_argument("-k", "--key", nargs="+", type=str, required=True,
+      help="key path(s) used to sign or verify metadata (at least - "
+      " in case of signing Link metadata only - one key required)")
 
   # Only when signing
   parser.add_argument("-o", "--output", type=str,
-      help="store signed metadata file to passed path")
-
-  # Only when signing Link files
-  parser.add_argument("-x", "--infix", action="store_true",
-      help="write signed file to '<link name>.<infix>.link', where infix is "
-      "the short form of the signing key's id (only available for Link "
-      "metadata, if multiple keys are passed the last key in the "
-      "argument list is used)")
+      help="store signed metadata file to passed path, if not passed Layout"
+      " metadata is written to the input file and Link metadata is written to"
+      " '<step name>.<short signing key id>.link'")
 
   # Only when signing
-  parser.add_argument("-r", "--replace", action="store_true",
-      help="replace existing signatures (if not specified signatures are"
-      " appended)")
+  parser.add_argument("-a", "--append", action="store_true",
+      help="append to existing signatures (only available for Layout"
+      " metadata")
 
   parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
 
@@ -223,20 +215,26 @@ def main():
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
 
-  if args.infix and args.output:
-    parser.print_help()
-    parser.exit(2, "conflicting arguments: specify either 'infix' or 'out path'")
-
-  if args.verify and (args.replace or args.infix or args.output):
+  if args.verify and (args.append or args.output):
     parser.print_help()
     parser.exit(2, "conflicting arguments: don't specify any of"
-        " 'replace', 'infix' or 'output' when verifying")
+        " 'append' or 'output' when verifying signatures")
 
   metadata = _load_metadata(args.file)
 
-  if metadata._type == "layout" and args.infix:
-    parser.print_help()
-    parser.exit(2, "wrong argument: infix option is not available for Layouts")
+  if metadata._type == "link":
+    if len(args.key) > 1:
+      parser.print_help()
+      parser.exit(2, "wrong arguments: Link metadata can only be signed by"
+          " one key")
+
+    if args.append:
+      parser.print_help()
+      parser.exit(2, "wrong arguments: Link metadata signatures can not be"
+          " appended to existing signatures")
+
+
+
 
   if args.verify:
     _verify_metadata(metadata, args)

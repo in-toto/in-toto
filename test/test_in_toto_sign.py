@@ -93,18 +93,17 @@ class TestInTotoSignTool(unittest.TestCase):
         "--verify",
         ], 0)
 
-    # Sign Layout "tmp.layout", replacing old signatures, write to "tmp.layout"
+    # Sign Layout "tmp.layout", appending new signature, write to "tmp.layout"
     self._test_cli_sys_exit([
         "-f", "tmp.layout",
         "-k", self.carl_path,
-        "-o", "tmp.layout",
-        "-r"
+        "-a"
         ], 0)
 
-    # Verify "tmp.layout" (has only one signature now)
+    # Verify "tmp.layout" (has three signatures now)
     self._test_cli_sys_exit([
         "-f", "tmp.layout",
-        "-k", self.carl_pub_path,
+        "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
         "--verify"
         ], 0)
 
@@ -113,7 +112,7 @@ class TestInTotoSignTool(unittest.TestCase):
     self._test_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.bob_path,
-        "-r",
+        "-o", self.link_path,
         "-v"
         ], 0)
 
@@ -124,16 +123,16 @@ class TestInTotoSignTool(unittest.TestCase):
         "--verify", "-v"
         ], 0)
 
-    # Add signature to Link and use last passed key's (alice) id as infix
+    # Replace signature to Link and store to new file using passed
+    # key's (alice) id as infix
     self._test_cli_sys_exit([
         "-f", self.link_path,
-        "-k", self.carl_path, self.alice_path,
-        "-x",
+        "-k", self.alice_path
         ], 0)
     # Verify Link with alice's keyid as infix
     self._test_cli_sys_exit([
         "-f", "package.20a893b8.link",
-        "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
+        "-k", self.alice_pub_path,
         "--verify"
         ], 0)
 
@@ -164,24 +163,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
 
   def test_bad_args(self):
-    """Fail with wrong comination of arguments. """
-
-    # Conflicting "infix" and "output" option
-    # Sign layout and dump to "tmp1.layout"
-    self._test_cli_sys_exit([
-        "-f", self.layout_path,
-        "-k", "key-not-used",
-        "-o", "file-not-written",
-        "-x"
-        ], 2)
-
-    # Conflicting "verify" and signing options (--verify -rx)
-    self._test_cli_sys_exit([
-        "-f", self.layout_path,
-        "-k", "key-not-used",
-        "--verify",
-        "-rx"
-        ], 2)
+    """Fail with wrong combination of arguments. """
 
     # Conflicting "verify" and signing options (--verify -o)
     self._test_cli_sys_exit([
@@ -191,13 +173,26 @@ class TestInTotoSignTool(unittest.TestCase):
         "-o", "file-not-written"
         ], 2)
 
-    # Wrong "infix" option for Layout metadata
+    # Conflicting "verify" and signing options (--verify -oa)
     self._test_cli_sys_exit([
         "-f", self.layout_path,
         "-k", "key-not-used",
-        "-x"
+        "--verify",
+        "-a",
         ], 2)
 
+    # Wrong "append" option for Link metadata
+    self._test_cli_sys_exit([
+        "-f", self.link_path,
+        "-k", "key-not-used",
+        "-a"
+        ], 2)
+
+    # Wrong multiple keys for Link metadata
+    self._test_cli_sys_exit([
+        "-f", self.link_path,
+        "-k", self.alice_path, self.bob_path,
+        ], 2)
 
   def test_bad_metadata(self):
     """Fail with wrong metadata. """
