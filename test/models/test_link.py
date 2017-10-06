@@ -7,7 +7,7 @@
   Lukas Puehringer <lukas.puehringer@nyu.edu>
 
 <Started>
-  Sep 28, 2011
+  Sep 28, 2017
 
 <Copyright>
   See LICENSE for licensing information.
@@ -97,10 +97,10 @@ class TestLinkValidator(unittest.TestCase):
     test_link = Link()
 
     # Good return_value 1
-    test_link.signed.retunr_value = 1
+    test_link.signed.return_value = 1
     test_link.signed.validate()
 
-    # Good return_value 2
+    # Good return_value 2 (default)
     test_link.signed.return_value = None
     test_link.signed.validate()
 
