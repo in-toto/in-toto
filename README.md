@@ -41,7 +41,8 @@ The in-toto software supply chain layout consists of the following parts:
 Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
-*Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/in-toto/blob/develop/demo/owner_alice/create_layout.py), a script that creates the in-toto demo layout.*
+*Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/demo/blob/master/owner_alice/create_layout.py),
+a script that creates the in-toto demo layout.*
 
 #### Artifact Rules
 A software supply chain usually operates on a set of files, such as source code, executables, packages, or the like. in-toto calls these files artifacts. A material is an artifact that will be used when a step or inspection is carried out. Likewise, a product is an artifact that results from carrying out a step.
@@ -111,7 +112,7 @@ in-toto-verify --layout <layout path>
 ```
 
 ## in-toto demo
-You can try in-toto by running the [demo application](https://github.com/in-toto/in-toto/tree/develop/demo).
+You can try in-toto by running the [demo application](https://github.com/in-toto/demo).
 The demo basically outlines three users viz., Alice (project owner), Bob (functionary) and Carl (functionary) and how in-toto helps to specify a project layout and verify that the layout has been followed in a correct manner.
 
 ## Specification
