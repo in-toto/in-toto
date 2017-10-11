@@ -26,6 +26,8 @@ import securesystemslib.formats
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
+
+
 class Link(models__common.Metablock):
   """
   A link is the metadata representation of a supply chain step performed
@@ -43,9 +45,7 @@ class Link(models__common.Metablock):
     signatures: the signatures computed on the LinkSignable object
 
    """
-
   def __init__(self, **kwargs):
-
     # FIXME: this is a patch that will make code migration easier.
     if 'signed' not in kwargs:
       new_kwargs = {}
@@ -55,10 +55,12 @@ class Link(models__common.Metablock):
 
     super(Link, self).__init__(**kwargs)
 
+
   def get_signable(self):
     """ This method is used by the base class's constructor to obtain the
      appropriate signable to populate itself. """
     return LinkSignable
+
 
   def dump(self, filename=False, key=False):
     """Write pretty printed JSON represented of self to a file with filename.
@@ -68,7 +70,6 @@ class Link(models__common.Metablock):
     using the link name + '.link'-suffix
     If both filename and key are provided, the key will be ignored.
     """
-
     if filename:
       fn = filename
     elif key:
@@ -78,6 +79,7 @@ class Link(models__common.Metablock):
       fn = "{}.link".format(self.name)
     super(Link, self).dump(fn)
 
+
   @staticmethod
   def read_from_file(filename):
     """Static method to instantiate a new Link object from a
@@ -85,10 +87,13 @@ class Link(models__common.Metablock):
     with open(filename, 'r') as fp:
       return Link.read(json.load(fp))
 
+
   @staticmethod
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
     return Link(**data)
+
+
 
 @attr.s(repr=False, init=False)
 class LinkSignable(models__common.Signable):
@@ -131,6 +136,7 @@ class LinkSignable(models__common.Signable):
   command = attr.ib()
   return_value = attr.ib()
 
+
   def __init__(self, **kwargs):
     super(LinkSignable, self).__init__()
 
@@ -141,3 +147,60 @@ class LinkSignable(models__common.Signable):
     self.byproducts = kwargs.get("byproducts", {})
     self.command = kwargs.get("command", [])
     self.return_value = kwargs.get("return_value", None)
+
+    self.validate()
+
+
+  def _validate_type(self):
+    """Private method to check that `_type` is set to "link"."""
+    if self._type != "link":
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `_type` must be set to 'link', got: {}"
+          .format(self._type))
+
+
+  def _validate_materials(self):
+    """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
+    if not isinstance(self.materials, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `materials` must be of type list, got: {}"
+          .format(type(self.materials)))
+
+    for material in self.materials.values():
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
+
+
+  def _validate_products(self):
+    """Private method to check that `products` is a `dict` of `HASHDICTs`."""
+    if not isinstance(self.products, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `products` must be of type list, got: {}"
+          .format(type(self.products)))
+
+    for product in self.products.values():
+      securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
+
+
+  def _validate_byproducts(self):
+    """Private method to check that `byproducts` is a `dict`."""
+    if not isinstance(self.byproducts, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `byproducts` must be of type list, got: {}"
+          .format(type(self.byproducts)))
+
+
+  def _validate_return_value(self):
+    """Private method to check that `return_value` is an `int` or `None`."""
+    if not (isinstance(self.return_value, int) or
+        self.return_value is None):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `return_value` must None or integer, got: {}"
+          .format(type(self.return_value)))
+
+
+  def _validate_command(self):
+    """Private method to check that `command` is a `list`."""
+    if not isinstance(self.command, list):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `command` must be of type list, got: {}"
+          .format(type(self.command)))

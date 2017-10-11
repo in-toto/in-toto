@@ -95,7 +95,7 @@ class TestInTotoSignTool(unittest.TestCase):
     link_bad_sig = copy.deepcopy(link_template)
     self.link_with_modified_sig = "link_with_modified_sig.link"
     link_bad_sig.sign(alice)
-    link_bad_sig.signed.byproducts = "baaad"
+    link_bad_sig.signed.return_value = 10000
     link_bad_sig.dump(self.link_with_modified_sig)
 
     self.empty_json_path = "empty_json"
