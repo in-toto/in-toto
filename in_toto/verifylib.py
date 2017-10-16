@@ -935,18 +935,19 @@ def verify_all_item_rules(items, links):
 def verify_threshold_constraints(layout, chain_link_dict):
   """
   <Purpose>
-    Iteratively verifies threshold conditions (if a step has been
-    performed and signed by enough number of functionaries) and link
-    artifacts (materials and products of a step is same for different
-    functionaries) of passed dictionary (chain_link_dict).
+    Verifies that each step of a layout meets its signature threshold, i.e.:
+    For each step there are at least `step.threshold` corresponding links,
+    signed by different functionaries.
+
+    Furthermore, verifies that all links corresponding to a given step report
+    the same materials and products.
 
   <Arguments>
     layout:
-            The layout specified by the project owner against which the
-            threshold will be verified.
+            The layout whose step thresholds are being verified
 
     chain_link_dict:
-            A dictionary of key-link pair with step names as keys. For each
+            A dictionary of key-link pairs with step names as keys. For each
             step name, there are one or more keyids and corresponding
             link objects.
 
