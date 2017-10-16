@@ -42,7 +42,9 @@
   # Append two signatures to layout file and write to passed path
   in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
 
-  # Sign Link and use passed key's short id as filename infix
+  # Re-sign specified link
+  # Since -o is not specified, write to default output filename, using the
+  # short id for priv_key as a filename infix (in place of "c1ae1e51")
   in-toto-sign -f package.c1ae1e51.link -k priv_key
 
   # Verify Layout signed with three keys
