@@ -888,6 +888,7 @@ class TestInTotoVerify(unittest.TestCase):
     # Store various layout paths to be used in tests
     self.layout_single_signed_path = "single-signed.layout"
     self.layout_double_signed_path = "double-signed.layout"
+    self.layout_bad_sig = "bad-sig.layout"
     self.layout_expired_path = "expired.layout"
     self.layout_failing_step_rule_path = "failing-step-rule.layout"
     self.layout_failing_inspection_rule_path = "failing-inspection-rule.layout"
@@ -909,6 +910,12 @@ class TestInTotoVerify(unittest.TestCase):
     layout.sign(alice)
     layout.sign(bob)
     layout.dump(self.layout_double_signed_path)
+
+    # dump layout with bad signature
+    layout = copy.deepcopy(layout_template)
+    layout.sign(alice)
+    layout.signed.readme = "this breaks the signature"
+    layout.dump(self.layout_bad_sig)
 
     # dump expired layout
     layout = copy.deepcopy(layout_template)
@@ -959,6 +966,13 @@ class TestInTotoVerify(unittest.TestCase):
     """Test fail verification with wrong layout key. """
     layout = Layout.read_from_file(self.layout_single_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
+    with self.assertRaises(SignatureVerificationError):
+      in_toto_verify(layout, layout_key_dict)
+
+  def test_verify_failing_bad_signature(self):
+    """Test fail verification with bad layout signature. """
+    layout = Layout.read_from_file(self.layout_bad_sig)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
@@ -1125,4 +1139,4 @@ class TestGetSummaryLink(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main(buffer=False)
