@@ -984,10 +984,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
     reference_keyid = key_link_dict.keys()[0]
     reference_link = key_link_dict[reference_key]
 
-    # Iterate over all links to check their signature and
-    # compare their properties with a reference_link
+    # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
-      keys_dict = {keyid: layout.keys.get(keyid)}
 
       # compare their properties
       if (reference_link.materials != link.materials or
