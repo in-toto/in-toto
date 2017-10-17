@@ -442,7 +442,7 @@ def in_toto_record_start(step_name, key, material_list):
   log.info("Creating preliminary link metadata...")
   signable = in_toto.models.link.LinkSignable(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
-          return_value=None)
+          return_value=None, environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 

@@ -413,6 +413,14 @@ class TestInTotoRecordStop(unittest.TestCase):
     self.assertEquals(link.products.keys(), [self.test_product])
     os.remove(self.link_name)
 
+  def test_create_metadata_with_expected_cwd(self):
+    """Test record start/stop run, verify cwd. """
+    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [self.test_product])
+    link = Link.read_from_file(self.link_name)
+    self.assertEquals(link.environment["workdir"], os.getcwd())
+    os.remove(self.link_name)
+
   def test_create_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(self.step_name, self.key, [])
