@@ -27,10 +27,8 @@ import shutil
 import tempfile
 from mock import patch
 
-from in_toto.models.link import Link
 from in_toto.in_toto_mock import main as in_toto_mock_main
 from in_toto.in_toto_mock import in_toto_mock
-from in_toto.models.mock_link import MOCK_FILENAME_FORMAT
 
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
@@ -50,7 +48,7 @@ class TestInTotoMockTool(unittest.TestCase):
     os.chdir(self.test_dir)
 
     self.test_step = "test_step"
-    self.test_link = MOCK_FILENAME_FORMAT.format(step_name=self.test_step)
+    self.test_link = self.test_step + ".link"
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 
