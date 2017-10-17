@@ -387,7 +387,8 @@ def in_toto_run(name, material_list, product_list,
   log.info("Creating link metadata...")
   signable = in_toto.models.link.LinkSignable(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
-      byproducts=byproducts, return_value=return_value)
+      byproducts=byproducts, return_value=return_value,
+      environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 

@@ -305,6 +305,11 @@ class TestInTotoRun(unittest.TestCase):
     self.assertEqual(link.materials.keys(),
         link.products.keys(), [self.test_artifact])
 
+  def test_in_toto_run_verify_workdir(self):
+    """Successfully run, verify cwd. """
+    link = in_toto_run(self.step_name, [], [], ["echo", "test"])
+    self.assertEquals(link.environment["workdir"], os.getcwd())
+
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
