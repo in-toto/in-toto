@@ -127,6 +127,17 @@ class LinkSignable(models__common.Signable):
     return_value:
         the return value of the executed command
 
+    environment:
+        environment information, e.g.
+        {
+          "variables": <list of environment variable "KEY=value" pairs>,
+          "filesystem": <filesystems info>,
+          "workdir": <cwd while running `in-toto-run`>
+        }
+
+        Note: None of the values in environment is mandated
+        runlib currently only records the workdir
+
   """
   _type = attr.ib()
   name = attr.ib()
@@ -135,6 +146,7 @@ class LinkSignable(models__common.Signable):
   byproducts = attr.ib()
   command = attr.ib()
   return_value = attr.ib()
+  environment = attr.ib()
 
 
   def __init__(self, **kwargs):
@@ -147,6 +159,7 @@ class LinkSignable(models__common.Signable):
     self.byproducts = kwargs.get("byproducts", {})
     self.command = kwargs.get("command", [])
     self.return_value = kwargs.get("return_value", None)
+    self.environment = kwargs.get("environment", {})
 
     self.validate()
 
@@ -204,3 +217,11 @@ class LinkSignable(models__common.Signable):
       raise securesystemslib.exceptions.FormatError(
           "Invalid Link: field `command` must be of type list, got: {}"
           .format(type(self.command)))
+
+
+  def _validate_environment(self):
+    """Private method to check that `environment` is a `dict`. """
+    if not isinstance(self.environment, dict):
+      raise securesystemslib.exceptions.FormatError(
+          "Invalid Link: field `environment` must be of type dict, got: {}"
+          .format(type(self.environment)))
