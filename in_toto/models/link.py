@@ -176,7 +176,7 @@ class LinkSignable(models__common.Signable):
     """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
     if not isinstance(self.materials, dict):
       raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `materials` must be of type list, got: {}"
+          "Invalid Link: field `materials` must be of type dict, got: {}"
           .format(type(self.materials)))
 
     for material in self.materials.values():
@@ -187,7 +187,7 @@ class LinkSignable(models__common.Signable):
     """Private method to check that `products` is a `dict` of `HASHDICTs`."""
     if not isinstance(self.products, dict):
       raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `products` must be of type list, got: {}"
+          "Invalid Link: field `products` must be of type dict, got: {}"
           .format(type(self.products)))
 
     for product in self.products.values():
