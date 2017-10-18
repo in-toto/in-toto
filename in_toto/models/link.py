@@ -117,8 +117,9 @@ class LinkSignable(models__common.Signable):
     byproducts:
         a dictionary in the format of
           {
-            "stdout": <standard output of the executed command>
-            "stderr": <standard error of the executed command>
+            "stdout": <standard output of the executed command>,
+            "stderr": <standard error of the executed command>,
+            "return-value": the return value of the executed command
           }
 
     command:
@@ -145,8 +146,8 @@ class LinkSignable(models__common.Signable):
   products = attr.ib()
   byproducts = attr.ib()
   command = attr.ib()
-  return_value = attr.ib()
   environment = attr.ib()
+
 
 
   def __init__(self, **kwargs):
@@ -158,7 +159,6 @@ class LinkSignable(models__common.Signable):
     self.products = kwargs.get("products", {})
     self.byproducts = kwargs.get("byproducts", {})
     self.command = kwargs.get("command", [])
-    self.return_value = kwargs.get("return_value", None)
     self.environment = kwargs.get("environment", {})
 
     self.validate()
@@ -198,17 +198,8 @@ class LinkSignable(models__common.Signable):
     """Private method to check that `byproducts` is a `dict`."""
     if not isinstance(self.byproducts, dict):
       raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `byproducts` must be of type list, got: {}"
+          "Invalid Link: field `byproducts` must be of type dict, got: {}"
           .format(type(self.byproducts)))
-
-
-  def _validate_return_value(self):
-    """Private method to check that `return_value` is an `int` or `None`."""
-    if not (isinstance(self.return_value, int) or
-        self.return_value is None):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `return_value` must None or integer, got: {}"
-          .format(type(self.return_value)))
 
 
   def _validate_command(self):
