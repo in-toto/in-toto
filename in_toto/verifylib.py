@@ -1143,33 +1143,45 @@ def in_toto_verify(layout, layout_key_dict):
   <Purpose>
     Does entire in-toto supply chain verification of a final product
     by performing the following actions:
+
         1.  Verify layout signature(s)
+
         2.  Verify layout expiration
+
         3.  Load link metadata for every Step defined in the layout
-            NOTE: in_toto_verify searches for link metadata files by their step
-            name plus the extension '.link' in the current directory.
-            E.g. a step of name 'foo' is expected to be found in the current
-            directory at 'foo.link'.
-        4.  Verify functionary signature for every Link.
-        5.  Verify sublayouts, if any.
+            NOTE: link files are expected to have the corresponding step
+            and the functionary, who carried out the step, encoded in their
+            filename.
+
+        4.  Verify functionary signature for every Link
+
+        5.  Verify sublayouts
             NOTE: Replaces the layout object in the chain_link_dict with an
             unsigned summary link (the actual links of the sublayouts are
             verified). The summary link is used just like a regular link
             to verify command alignments, thresholds and inspections below.
+
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
-        7.  Execute Inspection commands
+
+        7.  Verify threshold constraints
+
+        8.  Verify rules defined in each Step's expected_materials and
+            expected_products field
+            NOTE: At this point no Inspection link metadata is available,
+            hence (MATCH) rulescannot reference materials or products of
+            Inspections.
+            Verifying Steps' artifact rules before executing Inspections
+            guarantees that Inspection commands don't run on compromised
+            target files, which would be a surface for attacks.
+
+        9.  Execute Inspection commands
             NOTE: Inspections, similar to Steps executed with 'in-toto-run',
             will record materials before and products after command execution.
             For now it records everything in the current working directory.
-        8.  Verify threshold constraints
-        9.  Verify rules defined in each Step's expected_materials and
-            expected_products field.
-        10. Verify rules defined in each Inspection's expected_materials and
-            expected_products field.
 
-    Note, this function will read the following files from disk:
-      - link metadata files
+        10. Verify rules defined in each Inspection's expected_materials and
+            expected_products field
 
   <Arguments>
     layout:
@@ -1183,11 +1195,11 @@ def in_toto_verify(layout, layout_key_dict):
     None.
 
   <Side Effects>
-    None.
+    Read link metadata files from disk
 
   <Returns>
     A link which summarizes the materials and products of the overall
-    software supply chain.
+    software supply chain (used by super-layout verification if any)
   """
 
   log.info("Verifying layout signatures...")
@@ -1208,22 +1220,22 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
-  log.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout)
-
   log.info("Verifying threshold constraints...")
   verify_threshold_constraints(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
-  # Combine step links and inspection links for rule verification
-  # (Python 2 only)
-  link_dict = dict(reduced_chain_link_dict.items() + inspection_link_dict.items())
-
   log.info("Verifying Step rules...")
-  verify_all_item_rules(layout.steps, link_dict)
+  verify_all_item_rules(layout.steps, reduced_chain_link_dict)
+
+  log.info("Executing Inspection commands...")
+  inspection_link_dict = run_all_inspections(layout)
 
   log.info("Verifying Inspection rules...")
-  verify_all_item_rules(layout.inspect, link_dict)
+  # Artifact rules for inspections can reference links that correspond to
+  # Steps or Inspections, hence the concatenation of both collections of links
+  combined_links = reduced_chain_link_dict.copy()
+  combined_links.update(inspection_link_dict)
+  verify_all_item_rules(layout.inspect, combined_links)
 
   # We made it this far without exception that means, verification passed
   log.pass_verification("The software product passed all verification.")
