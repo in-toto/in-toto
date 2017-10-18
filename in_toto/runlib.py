@@ -263,7 +263,11 @@ def execute_link(link_cmd_args, record_byproducts):
       return_value = subprocess.call(link_cmd_args)
       stdout_str = stderr_str = ""
 
-  return {"stdout": stdout_str, "stderr": stderr_str}, return_value
+  return {
+      "stdout": stdout_str,
+      "stderr": stderr_str,
+      "return-value": return_value
+    }
 
 
 def in_toto_mock(name, link_cmd_args):
@@ -296,7 +300,6 @@ def in_toto_mock(name, link_cmd_args):
 
   log.info("Storing unsigned link metadata to '{}.link'...".format(name))
   link.dump()
-
   return link
 
 
@@ -356,9 +359,9 @@ def in_toto_run(name, material_list, product_list,
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
+    byproducts = execute_link(link_cmd_args, record_byproducts)
   else:
-    byproducts, return_value = {}, None
+    byproducts = {}
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
@@ -367,8 +370,7 @@ def in_toto_run(name, material_list, product_list,
   log.info("Creating link metadata...")
   signable = in_toto.models.link.LinkSignable(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
-      byproducts=byproducts, return_value=return_value,
-      environment={"workdir": os.getcwd()})
+      byproducts=byproducts, environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 
@@ -422,7 +424,7 @@ def in_toto_record_start(step_name, key, material_list):
   log.info("Creating preliminary link metadata...")
   signable = in_toto.models.link.LinkSignable(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
-          return_value=None, environment={"workdir": os.getcwd()})
+          environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 
