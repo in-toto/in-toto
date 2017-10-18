@@ -281,13 +281,13 @@ class TestInTotoRun(unittest.TestCase):
   def test_in_toto_run_with_byproduct(self):
     """Successfully run, verify recorded byproduct. """
     link = in_toto_run(self.step_name, None, None, ["echo", "test"],
-        record_byproducts=True)
+        record_streams=True)
     self.assertTrue("test" in link.byproducts.get("stdout"))
 
   def test_in_toto_run_without_byproduct(self):
     """Successfully run, verify byproduct is not recorded. """
     link = in_toto_run(self.step_name, None, None, ["echo", "test"],
-        record_byproducts=False)
+        record_streams=False)
     self.assertFalse(len(link.byproducts.get("stdout")))
 
   def test_in_toto_run_compare_dumped_with_returned_link(self):

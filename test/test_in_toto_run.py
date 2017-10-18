@@ -88,7 +88,7 @@ class TestInTotoRunTool(unittest.TestCase):
 
     args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
         self.key_path, "--materials", self.test_artifact, "--products",
-        self.test_artifact, "--record-byproducts", "--", "echo", "test"]
+        self.test_artifact, "--record-streams", "--", "echo", "test"]
 
     with patch.object(sys, 'argv', args):
       in_toto_run_main()
@@ -139,7 +139,7 @@ class TestInTotoRunTool(unittest.TestCase):
 
     args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
         self.key_path, "--materials", self.test_artifact, "--products",
-        self.test_artifact, "--record-byproducts", "--verbose",
+        self.test_artifact, "--record-streams", "--verbose",
         "--", "echo", "test"]
 
     original_log_level = logging.getLogger().getEffectiveLevel()
