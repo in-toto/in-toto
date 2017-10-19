@@ -1169,7 +1169,7 @@ def in_toto_verify(layout, layout_key_dict):
         8.  Verify rules defined in each Step's expected_materials and
             expected_products field
             NOTE: At this point no Inspection link metadata is available,
-            hence (MATCH) rulescannot reference materials or products of
+            hence (MATCH) rules cannot reference materials or products of
             Inspections.
             Verifying Steps' artifact rules before executing Inspections
             guarantees that Inspection commands don't run on compromised
