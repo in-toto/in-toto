@@ -204,7 +204,7 @@ def record_artifacts_as_dict(artifacts):
 
   return artifacts_dict
 
-def execute_link(link_cmd_args, record_byproducts):
+def execute_link(link_cmd_args, record_streams):
   """
   <Purpose>
     Executes the passed command plus arguments in a subprocess and returns
@@ -216,7 +216,7 @@ def execute_link(link_cmd_args, record_byproducts):
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    record_byproducts:
+    record_streams:
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
@@ -231,7 +231,7 @@ def execute_link(link_cmd_args, record_byproducts):
   <Returns>
     - A dictionary containg standard output and standard error of the
       executed command, called by-products.
-      Note: If record_byproducts is False, the dict values are empty strings.
+      Note: If record_streams is False, the dict values are empty strings.
     - The return value of the executed command.
   """
   # XXX: The first approach only redirects the stdout/stderr to a tempfile
@@ -245,7 +245,7 @@ def execute_link(link_cmd_args, record_byproducts):
   # decide if s/he wants to see or store stdout/stderr
   # btw: we ignore them in the layout anyway
 
-  if record_byproducts:
+  if record_streams:
     # XXX: Use SpooledTemporaryFile if we expect very large outputs
     stdout_file = tempfile.TemporaryFile()
     stderr_file = tempfile.TemporaryFile()
@@ -263,7 +263,11 @@ def execute_link(link_cmd_args, record_byproducts):
       return_value = subprocess.call(link_cmd_args)
       stdout_str = stderr_str = ""
 
-  return {"stdout": stdout_str, "stderr": stderr_str}, return_value
+  return {
+      "stdout": stdout_str,
+      "stderr": stderr_str,
+      "return-value": return_value
+    }
 
 
 def in_toto_mock(name, link_cmd_args):
@@ -292,16 +296,15 @@ def in_toto_mock(name, link_cmd_args):
     Newly created link object
   """
   link = in_toto_run(name, ["."], ["."], link_cmd_args, key=False,
-      record_byproducts=True)
+      record_streams=True)
 
   log.info("Storing unsigned link metadata to '{}.link'...".format(name))
   link.dump()
-
   return link
 
 
 def in_toto_run(name, material_list, product_list,
-    link_cmd_args, key=False, record_byproducts=False):
+    link_cmd_args, key=False, record_streams=False):
   """
   <Purpose>
     Calls function to run command passed as link_cmd_args argument, storing
@@ -325,7 +328,7 @@ def in_toto_run(name, material_list, product_list,
     key: (optional)
             Private key to sign link metadata.
             Format is securesystemslib.formats.KEY_SCHEMA
-    record_byproducts: (optional)
+    record_streams: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
@@ -356,9 +359,9 @@ def in_toto_run(name, material_list, product_list,
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts, return_value = execute_link(link_cmd_args, record_byproducts)
+    byproducts = execute_link(link_cmd_args, record_streams)
   else:
-    byproducts, return_value = {}, None
+    byproducts = {}
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
@@ -367,8 +370,7 @@ def in_toto_run(name, material_list, product_list,
   log.info("Creating link metadata...")
   signable = in_toto.models.link.LinkSignable(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
-      byproducts=byproducts, return_value=return_value,
-      environment={"workdir": os.getcwd()})
+      byproducts=byproducts, environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 
@@ -422,7 +424,7 @@ def in_toto_record_start(step_name, key, material_list):
   log.info("Creating preliminary link metadata...")
   signable = in_toto.models.link.LinkSignable(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
-          return_value=None, environment={"workdir": os.getcwd()})
+          environment={"workdir": os.getcwd()})
 
   link = in_toto.models.link.Link(signed=signable)
 

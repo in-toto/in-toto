@@ -1134,7 +1134,8 @@ class TestGetSummaryLink(unittest.TestCase):
     self.assertEquals(sum_link.products, self.package_link.products)
     self.assertEquals(sum_link.command, self.package_link.command)
     self.assertEquals(sum_link.byproducts, self.package_link.byproducts)
-    self.assertEquals(sum_link.return_value, self.package_link.return_value)
+    self.assertEquals(sum_link.byproducts.get("return-value"),
+        self.package_link.byproducts.get("return-value"))
 
 
 if __name__ == "__main__":

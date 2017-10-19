@@ -36,7 +36,7 @@ from in_toto import (util, runlib, log)
 from in_toto.models.link import Link
 
 def in_toto_run(step_name, material_list, product_list,
-    link_cmd_args, key, record_byproducts):
+    link_cmd_args, key, record_streams):
   """
   <Purpose>
     Calls runlib.in_toto_run and catches exceptions
@@ -57,7 +57,7 @@ def in_toto_run(step_name, material_list, product_list,
     key:
             Private key to sign link metadata.
             Format is securesystemslib.formats.KEY_SCHEMA
-    record_byproducts:
+    record_streams:
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
@@ -78,7 +78,7 @@ def in_toto_run(step_name, material_list, product_list,
 
   try:
     runlib.in_toto_run(step_name, material_list, product_list,
-        link_cmd_args, key, record_byproducts)
+        link_cmd_args, key, record_streams)
   except Exception as e:
     log.error("in toto run - {}".format(e))
     sys.exit(1)
@@ -97,7 +97,7 @@ def main():
                " --key <functionary private key path>\n{0}"
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
-               "[--record-byproducts]\n{0}"
+               "[--record-streams]\n{0}"
                "[--no-command]\n{0}"
                "[--verbose] -- <cmd> [args]\n\n"
                .format(lpad))
@@ -117,9 +117,9 @@ def main():
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  in_toto_args.add_argument("-b", "--record-byproducts",
+  in_toto_args.add_argument("-b", "--record-streams",
       help="If set redirects stdout/stderr and stores to link metadata",
-      dest="record_byproducts", default=False, action="store_true")
+      dest="record_streams", default=False, action="store_true")
 
   in_toto_args.add_argument("-x", "--no-command",
       help="Set if step does not have a command",
@@ -149,13 +149,13 @@ def main():
 
   if args.no_command:
     in_toto_run(args.step_name, args.materials, args.products, [],
-      key, args.record_byproducts)
+      key, args.record_streams)
   else:
     if not args.link_cmd:
       parser.print_usage()
       parser.exit("For no command use --no-command option")
     in_toto_run(args.step_name, args.materials, args.products,
-      args.link_cmd, key, args.record_byproducts)
+      args.link_cmd, key, args.record_streams)
 
 if __name__ == "__main__":
   main()

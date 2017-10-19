@@ -69,7 +69,7 @@ in-toto-run  --step-name <unique step name>
              --key <functionary private key path>
             [--materials <filepath>[ <filepath> ...]]
             [--products <filepath>[ <filepath> ...]]
-            [--record-byproducts]
+            [--record-streams]
             [--verbose] -- <cmd> [args]
 ```
 

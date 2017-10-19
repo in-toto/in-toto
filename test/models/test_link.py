@@ -92,24 +92,6 @@ class TestLinkValidator(unittest.TestCase):
       test_link.signed.validate()
 
 
-  def test_validate_return_value(self):
-    """Test `return_value` field. Must be either an `int` or `None` """
-    test_link = Link()
-
-    # Good return_value 1
-    test_link.signed.return_value = 1
-    test_link.signed.validate()
-
-    # Good return_value 2 (default)
-    test_link.signed.return_value = None
-    test_link.signed.validate()
-
-    # Bad return_value
-    test_link.signed.return_value = "not an int"
-    with self.assertRaises(FormatError):
-      test_link.signed.validate()
-
-
   def test_validate_command(self):
     """Test `command` field. Must be either a `list` """
     test_link = Link()
