@@ -891,13 +891,6 @@ def verify_item_rules(source_name, source_type, rules, links):
       elif source_type == "products":
         source_artifacts_queue = source_products_queue
 
-  # All artifacts have to be consumed by a rule. If we have applied all rules
-  # of a list and there are still artifacts in the queue, we fail.
-  if source_artifacts_queue:
-    raise RuleVerficationError("{0} '{1}' were not authorized by any rule"
-        " of item '{2}'".format(source_type, source_artifacts_queue,
-            source_name))
-
 
 def verify_all_item_rules(items, links):
   """

@@ -13,10 +13,6 @@
                     "PRODUCTS",
                     "FROM",
                     "package"
-                ],
-                [
-                    "ALLOW",
-                    "*"
                 ]
             ],
             "expected_products": [
@@ -27,10 +23,6 @@
                     "PRODUCTS",
                     "FROM",
                     "write-code"
-                ],
-                [
-                    "ALLOW",
-                    "*"
                 ]
             ],
             "name": "untar",

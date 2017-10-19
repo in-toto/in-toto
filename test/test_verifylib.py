@@ -742,11 +742,10 @@ class TestVerifyItemRules(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       verify_item_rules(self.item_name, "artifacts", [], self.links)
 
-  def test_fail_not_consumed_artifacts(self):
-    """Fail with not consumed artifacts after applying all rules. """
+  def test_pass_not_consumed_artifacts(self):
+    """Pass with not consumed artifacts (implicit ALLOW *) """
     rules = []
-    with self.assertRaises(RuleVerficationError):
-      verify_item_rules(self.item_name, "materials", rules, self.links)
+    verify_item_rules(self.item_name, "materials", rules, self.links)
 
 
 class TestVerifyAllItemRules(unittest.TestCase):
