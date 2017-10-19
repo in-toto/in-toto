@@ -122,3 +122,16 @@ class TestLinkValidator(unittest.TestCase):
     test_link.signed.command = "echo 'bad command'"
     with self.assertRaises(FormatError):
       test_link.signed.validate()
+
+
+  def test_validate_environment(self):
+    """Test `environment` field. Must be a `dict` """
+    test_link = Link()
+
+    # good env per default
+    test_link.signed.validate()
+
+    # Bad env
+    test_link.signed.environment = "not a dict"
+    with self.assertRaises(FormatError):
+      test_link.signed.validate()

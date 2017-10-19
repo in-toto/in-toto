@@ -305,6 +305,11 @@ class TestInTotoRun(unittest.TestCase):
     self.assertEqual(link.materials.keys(),
         link.products.keys(), [self.test_artifact])
 
+  def test_in_toto_run_verify_workdir(self):
+    """Successfully run, verify cwd. """
+    link = in_toto_run(self.step_name, [], [], ["echo", "test"])
+    self.assertEquals(link.environment["workdir"], os.getcwd())
+
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
@@ -406,6 +411,14 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_stop(self.step_name, self.key, [self.test_product])
     link = Link.read_from_file(self.link_name)
     self.assertEquals(link.products.keys(), [self.test_product])
+    os.remove(self.link_name)
+
+  def test_create_metadata_with_expected_cwd(self):
+    """Test record start/stop run, verify cwd. """
+    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_stop(self.step_name, self.key, [self.test_product])
+    link = Link.read_from_file(self.link_name)
+    self.assertEquals(link.environment["workdir"], os.getcwd())
     os.remove(self.link_name)
 
   def test_create_metadata_verify_signature(self):
