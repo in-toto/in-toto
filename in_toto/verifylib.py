@@ -86,6 +86,65 @@ def _raise_on_bad_retval(return_value, command=None):
     raise BadReturnValueError(msg.format(what="zero"))
 
 
+def load_links_for_layout(layout):
+  """
+  <Purpose>
+    Try to load all existing metadata files for each Step of the Layout
+    from the current directory.
+
+    For each step the metadata might consist of multiple (thresholds) Link
+    or Layout (sub-layouts) files.
+
+  <Arguments>
+    layout
+          Layout object
+
+  <Side Effects>
+    Calls functions to read files from disk
+
+  <Returns>
+    A dictionary carrying all the found metadata corresponding to the
+    passed layout, e.g.:
+
+    {
+      <step name> : {
+        <functionary key id> : <Metablock object carrying a Link or Layout>,
+        ...
+      }, ...
+    }
+
+
+  """
+  steps_metadata = {}
+
+  # Iterate over all the steps in the layout
+  for step in layout.steps:
+    links_per_step = {}
+
+    # We try to load a link for every authorized functionary, but don't fail
+    # if the file does not exist (authorized != required)
+    # FIXME: Should we really pass on IOError, or just skip inexistent links
+    for keyid in step.pubkeys:
+      filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+
+      try:
+        metadata = Metablock.load(filename)
+        links_per_step[keyid] = metadata
+
+      except IOError as e:
+        pass
+
+    # Check if the step has been performed by enough number of functionaries
+    if len(links_per_step) < step.threshold:
+      raise in_toto.exceptions.LinkNotFoundError("Step '{0}' requires '{1}'"
+          " link metadata file(s), found '{2}'."
+          .format(step.name, step.threshold, len(links_per_step)))
+
+    steps_metadata[step.name] = links_per_step
+
+  return steps_metadata
+
+
 def run_all_inspections(layout):
   """
   <Purpose>
@@ -1201,7 +1260,7 @@ def in_toto_verify(layout, layout_key_dict):
   verify_layout_expiration(layout)
 
   log.info("Reading link metadata files...")
-  chain_link_dict = layout.import_step_metadata_from_files_as_dict()
+  chain_link_dict = load_links_for_layout(layout)
 
   log.info("Verifying link metadata signatures...")
   verify_all_steps_signatures(layout, chain_link_dict)
