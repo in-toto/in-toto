@@ -60,6 +60,7 @@ import argparse
 from in_toto import log, exceptions, util
 from in_toto.models.layout import Layout
 from in_toto.models.link import Link, FILENAME_FORMAT
+from in_toto.models.metadata import Metablock
 
 def _sign_and_dump_metadata(metadata, args):
   """
@@ -93,7 +94,7 @@ def _sign_and_dump_metadata(metadata, args):
       out_path = args.output
 
     elif metadata._type == "link":
-      out_path = FILENAME_FORMAT.format(step_name=metadata.name,
+      out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
           keyid=keyid)
 
     elif metadata._type == "layout":
@@ -163,22 +164,11 @@ def _load_metadata(file_path):
 
   """
   try:
-    with open(file_path, "r") as fp:
-      file_object = json.load(fp)
-
-    if file_object.get("signed", {}).get("_type") == "link":
-      return Link.read(file_object)
-
-    elif file_object.get("signed", {}).get("_type") == "layout":
-      return Layout.read(file_object)
-
-    else:
-      raise Exception("Not a valid in-toto 'Link' or 'Layout'"
-          " metadata file")
+    return Metablock.load(file_path)
 
   except Exception as e:
     log.error("The following error occurred while loading the file '{}': "
-      "{}".format(file_path, e))
+        "{}".format(file_path, e))
     sys.exit(2)
 
 
