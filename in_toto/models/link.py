@@ -26,6 +26,7 @@ from in_toto.models.metadata import Metablock
 
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
+FILENAME_FORMAT_SHORT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
 
