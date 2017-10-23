@@ -83,14 +83,6 @@ class Link(Metablock):
 
 
   @staticmethod
-  def read_from_file(filename):
-    """Static method to instantiate a new Link object from a
-    canonical JSON serialized file """
-    with open(filename, 'r') as fp:
-      return Link.read(json.load(fp))
-
-
-  @staticmethod
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
     return Link(**data)

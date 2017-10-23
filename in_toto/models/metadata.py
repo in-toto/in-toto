@@ -26,6 +26,7 @@ import canonicaljson
 
 import securesystemslib.keys
 import securesystemslib.formats
+import securesystemslib.exceptions
 from in_toto.models.common import Signable
 from in_toto.exceptions import SignatureVerificationError
 
@@ -76,6 +77,28 @@ class Metablock(object):
   def dump(self, filename):
     with open(filename, 'wt') as fp:
       fp.write("{}".format(self))
+
+
+  @staticmethod
+  def load(path):
+    with open(path, "r") as fp:
+      data = json.load(fp)
+
+    signatures = data.get("signatures", [])
+    signed_data = data.get("signed", {})
+    signed_type = signed_data.get("_type")
+
+    if signed_type == "link":
+      signed = Link.read(signed_data)
+
+    elif signed_type == "layout":
+      signed = Layout.read(signed_data)
+
+    else:
+      raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
+
+    return Metablock(signatures=signatures, signed=signed)
+
 
   def sign(self, key):
     """Signs the canonical JSON representation of itself (without the

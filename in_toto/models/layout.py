@@ -83,14 +83,6 @@ class Layout(Metablock):
 
 
   @staticmethod
-  def read_from_file(filename='root.layout'):
-    """Static method to instantiate a new Layout object from a
-    canonical JSON serialized file """
-    with open(filename, 'r') as fp:
-      return Layout.read(json.load(fp))
-
-
-  @staticmethod
   def read(data):
     """Static method to instantiate a new Layout from a Python dictionary """
     signatures = data.get('signatures', [])
