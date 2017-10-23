@@ -29,6 +29,7 @@ from mock import patch
 
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
+from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from in_toto.in_toto_verify import in_toto_verify
 from in_toto import log
@@ -81,7 +82,7 @@ class TestInTotoVerifyTool(unittest.TestCase):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # Load layout template
-    layout_template = Layout.read_from_file("demo.layout.template")
+    layout_template = Metablock.load("demo.layout.template")
 
     # Store layout paths to be used in tests
     self.layout_single_signed_path = "single-signed.layout"
