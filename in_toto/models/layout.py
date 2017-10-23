@@ -76,11 +76,6 @@ class Layout(Metablock):
     get_signable and return a LayoutSignable (described below)"""
     return LayoutSignable
 
-  def dump(self, filename='root.layout'):
-    """Write pretty printed JSON represented of self to a file with filename.
-    If no filename is specified 'root.layout' is used as default """
-    super(Layout, self).dump(filename)
-
 
   @staticmethod
   def read(data):
