@@ -13,11 +13,9 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides base classes for various classes in the model.
-
-<Classes>
-  Metablock:
-      pretty printed canonical JSON representation and dump
+  Provides a container class `Metablock` for signed metadata and
+  functions for signing, signature verification, de-serialization and
+  serialization from and to JSON.
 
 """
 
@@ -37,9 +35,7 @@ from in_toto.exceptions import SignatureVerificationError
 class Metablock(object):
   """ This object holds the in-toto metablock data structure. This includes
   the fields "signed" and "signatures", i.e., what was signed and the
-  signatures. Other convenience classes will inherit this class to provide
-  serialization and signing capabilities to in-toto metadata.
-  """
+  signatures. """
   signatures = attr.ib()
   signed = attr.ib()
 
@@ -49,23 +45,63 @@ class Metablock(object):
     self.signed = kwargs.get("signed")
 
 
-  """Objects with base class Metablock have a __repr__ method
-  that returns a canonical pretty printed JSON string and can be dumped to a
-  file """
   def __repr__(self):
+    """Returns a JSON string representation of the object."""
     # the double {{'s is the escape sequence for an individual {. We wrap this
     # under a format string to avoid encoding to json twice (which turns a json
     # string into a string and so on...
+    # FIXME:
+    # We are mixing 3 JSON string formats here: The value of "signed" is
+    # "pretty printed canonical json", the value of "signatures" is
+    # "canonical json" and the container is just "json".
+    # Is this really what we want?
     return '{{"signed": {}, "signatures": {}}}'.format(self.signed,
         canonicaljson.encode_canonical_json(self.signatures))
 
+
   def dump(self, filename):
-    with open(filename, 'wt') as fp:
+    """
+    <Purpose>
+      Write the JSON string representation of the Metablock object
+      to disk.
+
+    <Arguments>
+      filename:
+              The path to write the file to.
+
+    <Side Effects>
+      Writing metadata file to disk
+
+    <Returns>
+      None.
+
+    """
+    with open(filename, "wt") as fp:
       fp.write("{}".format(self))
 
 
   @staticmethod
   def load(path):
+    """
+    <Purpose>
+      Loads the JSON string representation of signed metadata from disk
+      and creates a Metablock object.
+      The `signed` attribute of the Metablock object is assigned a Link
+      or Layout object, depending on the `_type` field in the loaded
+      metadata file.
+
+    <Arguments>
+      path:
+              The path to write the file to.
+
+    <Side Effects>
+      Reading metadata file from disk
+
+    <Returns>
+      None.
+
+    """
+
     with open(path, "r") as fp:
       data = json.load(fp)
 
@@ -87,13 +123,27 @@ class Metablock(object):
 
   @property
   def _type(self):
+    """ Shortcut to the _type property of the contained Link or Layout object,
+    should be one of "link" or "layout". """
     return self.signed._type
 
 
   def sign(self, key):
-    """Signs the canonical JSON representation of itself (without the
-    signatures property) and adds the signatures to its signature properties."""
+    """
+    <Purpose>
+      Signs the pretty printed canonical JSON representation
+      (see models.common.Signable.__repr__) of the Link or Layout object
+      contained in the `signed` property with the passed key and appends the
+      created signature to `signatures`.
 
+    <Arguments>
+      key:
+              A signing key in the format securesystemslib.formats.KEY_SCHEMA
+
+    <Returns>
+      None.
+
+    """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key, repr(self.signed))
@@ -101,8 +151,45 @@ class Metablock(object):
 
 
   def verify_signatures(self, keys_dict):
-    """Verifies all signatures of the object using the passed key_dict."""
+    """
+    <Purpose>
+      Verifies all signatures found in the `signatures` property using the keys
+      from the passed dictionary of keys and the pretty printed canonical JSON
+      representation (see models.common.Signable.__repr__) of the Link or
+      Layout object contained in `signed`.
 
+      Verification fails if,
+        - the passed keys don't have the right format,
+        - the object is not signed,
+        - there is a signature for which no key was passed,
+        - if any of the signatures is actually broken.
+
+      Note:
+      This will be revised with in-toto/in-toto#135
+
+    <Arguments>
+      keys_dict:
+              Verifying keys in the format:
+              securesystemslib.formats.KEYDICT_SCHEMA
+
+    <Exceptions>
+      FormatError
+            if the passed key dictionary is not conformant with
+            securesystemslib.formats.KEYDICT_SCHEMA
+
+      SignatureVerificationError
+            if the Metablock is not signed
+
+            if the Metablock carries a signature for which no key is found in
+            the passed key dictionary, which means that multiple signatures
+            have to be verified at once
+
+            if any of the verified signatures is actually broken
+
+    <Returns>
+      None.
+
+    """
     securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
 
     if not self.signatures or len(self.signatures) <= 0:

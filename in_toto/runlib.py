@@ -21,8 +21,8 @@
     - Execute command
       - Capture stdout/stderr/return value of the executed command
     - Record state of product (files after the command was executed)
-    - Return link object
-        can be used to sign and dump
+    - Return Metablock containing a Link object which can be can be signed
+      and stored to disk
 """
 import sys
 import os
@@ -293,10 +293,12 @@ def in_toto_mock(name, link_cmd_args):
     None.
 
   <Side Effects>
-    Writes newly created link metadata file to disk "<name>.link"
+    Writes newly created link metadata file to disk using the filename scheme
+    from link.FILENAME_FORMAT_SHORT
 
   <Returns>
-    Newly created link object
+    Newly created Metablock object containing a Link object
+
   """
   link = in_toto_run(name, ["."], ["."], link_cmd_args, key=False,
       record_streams=True)
@@ -343,10 +345,12 @@ def in_toto_run(name, material_list, product_list,
     None.
 
   <Side Effects>
-    Writes newly created link metadata file to disk "<name>.link"
+    Writes newly created link metadata file to disk using the filename scheme
+    from link.FILENAME_FORMAT
 
   <Returns>
-    Newly created Link object
+    Newly created Metablock object containing a Link object
+
   """
 
   log.info("Running '{}'...".format(name))
@@ -413,7 +417,8 @@ def in_toto_record_start(step_name, key, material_list):
     None.
 
   <Side Effects>
-    Creates a file UNFINISHED_FILENAME_FORMAT
+    Writes newly created link metadata file to disk using the filename scheme
+    from link.UNFINISHED_FILENAME_FORMAT
 
   <Returns>
     None.
@@ -464,8 +469,9 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   <Side Effects>
-    Writes link file to disk "<step_name>.link"
-    Removes unfinished link file UNFINISHED_FILENAME_FORMAT from disk
+    Writes newly created link metadata file to disk using the filename scheme
+    from link.FILENAME_FORMAT
+    Removes unfinished link file link.UNFINISHED_FILENAME_FORMAT from disk
 
   <Returns>
     None.

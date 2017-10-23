@@ -35,10 +35,14 @@ class Link(Signable):
   A link is the metadata representation of a supply chain step performed
   by a functionary.
 
-  This object hold the *signable* part of a piece of link metadata. That is,
-  the part from which the link's signature field will be computed.
+  The object should be contained in a generic Metablock object, which
+  provides functionality for signing and signature verification, and reading
+  from and writing to disk.
 
   <Attributes>
+    _type:
+        "link"
+
     name:
         a unique name used to identify the related step in the layout
 

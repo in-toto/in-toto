@@ -15,11 +15,6 @@
 <Purpose>
   Provides base classes for various classes in the model.
 
-<Classes>
-
-  Signable:
-      sign self, store signature to self and verify signatures
-
 """
 
 import attr
@@ -34,27 +29,30 @@ class ValidationMixin(object):
 
   def validate(self):
     """
-      <Purpose>
-        Inspects the class (or subclass) for validate methods to ensure the
-        all its members are properly formed. This method can be used to ensure
-        the metadata contained in this class is proper before calling dump.
+    <Purpose>
+      Inspects the class (or subclass) for validate methods to ensure the
+      all its members are properly formed. This method can be used to ensure
+      the metadata contained in this class is proper before calling dump.
 
-      <Arguments>
-        None
+    <Arguments>
+      None
 
-      <Exceptions>
-        FormatError: If any of the members of this class are not properly
-                     populated.
+    <Exceptions>
+      FormatError: If any of the members of this class are not properly
+                   populated.
 
-      <Side Effects>
-        None
+    <Side Effects>
+      None
 
-      <Returns>
-        None
+    <Returns>
+      None
+
     """
     for method in inspect.getmembers(self, predicate=inspect.ismethod):
-        if method[0].startswith("_validate_"):
-          method[1]()
+      if method[0].startswith("_validate_"):
+        method[1]()
+
+
 
 @attr.s(repr=False, init=False)
 class Signable(ValidationMixin):

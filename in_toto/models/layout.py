@@ -50,12 +50,17 @@ import securesystemslib.formats
 @attr.s(repr=False, init=False)
 class Layout(Signable):
   """
-  A layout is the signed statement of a supply chain's structure.
+  A layout lists the sequence of steps of the software supply chain, and the
+  functionaries authorized to perform these steps.
 
-  This object hold the *signable* part of the layout file. That is, the part
-  from which the link's signature field will be computed.
+  The object should be contained in a generic Metablock object, which
+  provides functionality for signing and signature verification, and reading
+  from and writing to disk.
 
   <Attributes>
+    _type:
+        "layout"
+
     steps:
         a list of Step objects
 
@@ -69,6 +74,10 @@ class Layout(Signable):
 
     expires:
         the expiration date of a layout
+
+    readme:
+        a human readable description of the software supply chain defined
+        by the layout
 
   """
   _type = attr.ib()

@@ -13,13 +13,14 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides command line interface to sign in-toto Link or Layout metadata
+  Provides command line interface to sign in-toto link or layout metadata
   or verify its signatures.
 
   Provides options to,
     - replace (default) or add signature(s):
         - Layout metadata can be signed by multiple keys at once,
         - Link metadata can only be signed by one key at a time
+
     - write signed metadata to a specified path:
       if no output path is specified,
         - layout metadata is written to the input file,
@@ -64,11 +65,11 @@ from in_toto.models.metadata import Metablock
 def _sign_and_dump_metadata(metadata, args):
   """
   <Purpose>
-    Internal method to sign Link or Layout metadata and dump it to disk.
+    Internal method to sign link or layout metadata and dump it to disk.
 
   <Arguments>
     metadata:
-            Link or Layout object
+            Metablock object (contains Link or Layout object)
     args:
             see argparser
 
@@ -114,11 +115,11 @@ def _sign_and_dump_metadata(metadata, args):
 def _verify_metadata(metadata, args):
   """
   <Purpose>
-    Internal method to verify Link or Layout signatures.
+    Internal method to verify link or layout signatures.
 
   <Arguments>
     metadata:
-            Link or Layout object
+            Metablock object (contains Link or Layout object)
     args:
             see argparser
 
@@ -149,17 +150,17 @@ def _verify_metadata(metadata, args):
 def _load_metadata(file_path):
   """
   <Purpose>
-    Loads Link or Layout file from disk
+    Loads Metablock (link or layout metadata) file from disk
 
   <Arguments>
     file_path:
-            path to Link or Layout file
+            path to link or layout metadata file
 
   <Exceptions>
     SystemExit(2) if any exception occurs
 
   <Returns>
-    in-toto Link or Layout object
+    in-toto Metablock object (contains Link or Layout object)
 
   """
   try:
@@ -223,9 +224,6 @@ def main():
       parser.print_help()
       parser.exit(2, "wrong arguments: Link metadata signatures can not be"
           " appended to existing signatures")
-
-
-
 
   if args.verify:
     _verify_metadata(metadata, args)

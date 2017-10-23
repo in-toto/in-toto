@@ -35,12 +35,13 @@ from in_toto.models.metadata import Metablock
 def in_toto_verify(layout_path, layout_key_paths):
   """
   <Purpose>
-    Loads the layout and the layout keys from the paths and
-    calls verifylib.in_toto_verify and handles exceptions.
+    Loads the layout metadata as Metablock object (containg a Layout object)
+    and the signature verification keys from the passed paths,
+    calls   verifylib.in_toto_verify   and handles exceptions.
 
   <Arguments>
     layout_path:
-            Path to the layout that is being verified.
+            Path to layout metadata file that is being verified.
 
     layout_key_paths:
             List of paths to project owner public keys, used to verify the
