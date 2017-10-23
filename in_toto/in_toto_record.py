@@ -49,7 +49,6 @@ import argparse
 import in_toto.util
 from in_toto import runlib
 from in_toto import log
-from in_toto.models.link import Link
 
 def in_toto_record_start(step_name, key, material_list):
   """

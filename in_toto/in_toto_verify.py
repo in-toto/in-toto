@@ -28,7 +28,6 @@ import sys
 import argparse
 
 import in_toto.log as log
-import in_toto.models.layout
 import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock

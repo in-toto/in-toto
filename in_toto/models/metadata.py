@@ -22,12 +22,15 @@
 """
 
 import attr
+import json
 import canonicaljson
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
-from in_toto.models.common import Signable
+
+from in_toto.models.link import Link
+from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False, init=False)

@@ -39,20 +39,16 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
 import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
 
-# import validators
-import in_toto.models.common as models__common
-import in_toto.models.link as models__link
-from in_toto.models.metadata import Metablock
-
 
 
 @attr.s(repr=False, init=False)
-class Layout(models__common.Signable):
+class Layout(Signable):
   """
   A layout is the signed statement of a supply chain's structure.
 
@@ -187,7 +183,7 @@ class Layout(models__common.Signable):
       names_seen.add(inspection.name)
 
 @attr.s(repr=False, init=False)
-class Step(models__common.ValidationMixin):
+class Step(ValidationMixin):
   """
   Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
@@ -295,7 +291,7 @@ class Step(models__common.ValidationMixin):
 
 
 @attr.s(repr=False, init=False)
-class Inspection(models__common.ValidationMixin):
+class Inspection(ValidationMixin):
   """
   Represents an inspection which performs a command during layout verification.
 

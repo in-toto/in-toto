@@ -58,8 +58,7 @@ import sys
 import json
 import argparse
 from in_toto import log, exceptions, util
-from in_toto.models.layout import Layout
-from in_toto.models.link import Link, FILENAME_FORMAT
+from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 
 def _sign_and_dump_metadata(metadata, args):
