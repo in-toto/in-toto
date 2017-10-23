@@ -77,23 +77,6 @@ class Layout(Metablock):
     return LayoutSignable
 
 
-  @staticmethod
-  def read(data):
-    """Static method to instantiate a new Layout from a Python dictionary """
-    signatures = data.get('signatures', [])
-    steps = []
-
-    for step_data in data.get("signed", {}).get("steps"):
-      steps.append(Step.read(step_data))
-    data['signed']["steps"] = steps
-
-    inspections = []
-    for inspect_data in data.get("signed", {}).get("inspect"):
-      inspections.append(Inspection.read(inspect_data))
-    data['signed']["inspect"] = inspections
-
-    return Layout(**data)
-
 
 @attr.s(repr=False, init=False)
 class LayoutSignable(models__common.Signable):
@@ -139,6 +122,25 @@ class LayoutSignable(models__common.Signable):
         relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
     self.validate()
+
+
+  @staticmethod
+  def read(data):
+    """Static method to instantiate a new Layout from a Python dictionary """
+    signatures = data.get('signatures', [])
+    steps = []
+
+    for step_data in data.get("steps"):
+      steps.append(Step.read(step_data))
+    data["steps"] = steps
+
+    inspections = []
+    for inspect_data in data.get("inspect"):
+      inspections.append(Inspection.read(inspect_data))
+    data["inspect"] = inspections
+
+    return LayoutSignable(**data)
+
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""

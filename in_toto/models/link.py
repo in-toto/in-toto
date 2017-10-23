@@ -64,10 +64,7 @@ class Link(Metablock):
     return LinkSignable
 
 
-  @staticmethod
-  def read(data):
-    """Static method to instantiate a new Link from a Python dictionary """
-    return Link(**data)
+
 
 
 
@@ -125,7 +122,6 @@ class LinkSignable(models__common.Signable):
   environment = attr.ib()
 
 
-
   def __init__(self, **kwargs):
     super(LinkSignable, self).__init__()
 
@@ -138,6 +134,12 @@ class LinkSignable(models__common.Signable):
     self.environment = kwargs.get("environment", {})
 
     self.validate()
+
+
+  @staticmethod
+  def read(data):
+    """Static method to instantiate a new Link from a Python dictionary """
+    return LinkSignable(**data)
 
 
   def _validate_type(self):
