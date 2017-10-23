@@ -50,36 +50,9 @@ import in_toto.models.link as models__link
 from in_toto.models.metadata import Metablock
 
 
-class Layout(Metablock):
-  """
-  The layout specifies each of the different steps and the requirements for
-  each step, as well as the public keys functionaries used to perform these
-  steps.
-
-  The layout also specifies additional steps called inspections
-  that are carried out during the verification.
-
-  Both steps and inspections can list rules that define how steps are
-  interconnected by their materials and products.
-
-  Layouts define a software supply chain and can be signed, dumped to a file,
-  and instantiated from a file.
-
-  <Attributes>
-    signed: A LayoutSignable object (described below)
-    signatures: the signatures computed on the LayoutSignable object
-
-  """
-
-  def get_signable(self):
-    """ Since Layout is a subclass of Metablock, it needs to implement
-    get_signable and return a LayoutSignable (described below)"""
-    return LayoutSignable
-
-
 
 @attr.s(repr=False, init=False)
-class LayoutSignable(models__common.Signable):
+class Layout(models__common.Signable):
   """
   A layout is the signed statement of a supply chain's structure.
 
@@ -110,7 +83,7 @@ class LayoutSignable(models__common.Signable):
   readme = attr.ib()
 
   def __init__(self, **kwargs):
-    super(LayoutSignable, self).__init__()
+    super(Layout, self).__init__()
     self._type = "layout"
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])
@@ -139,7 +112,7 @@ class LayoutSignable(models__common.Signable):
       inspections.append(Inspection.read(inspect_data))
     data["inspect"] = inspections
 
-    return LayoutSignable(**data)
+    return Layout(**data)
 
 
   def _validate_type(self):

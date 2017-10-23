@@ -37,32 +37,14 @@ class Metablock(object):
   signatures. Other convenience classes will inherit this class to provide
   serialization and signing capabilities to in-toto metadata.
   """
+  signatures = attr.ib()
+  signed = attr.ib()
+
 
   def __init__(self, **kwargs):
-    """ The constructor of metablock requires subclasses to implement a
-    template for its underlying signable class (see get_signable()). This
-    method will populate the signatures list and instantiate the subclass's
-    corresponding signable under its signed property"""
-    self.signatures = []
-    if "signatures" in kwargs:
-      self.signatures = kwargs['signatures']
-      del kwargs['signatures']
+    self.signatures = kwargs.get("signatures", [])
+    self.signed = kwargs.get("signed")
 
-    signable = self.get_signable()
-    if 'signed' in kwargs:
-      if isinstance(kwargs['signed'], Signable):
-        self.signed = kwargs['signed']
-      else:
-        self.signed = signable(**kwargs['signed'])
-    else:
-      self.signed = signable()
-
-  def get_signable(self):
-    """ There should not be an instance of metablock, as it is an abstract
-    class. Its subclasses (Layout, Link) should implement the get_signable
-    method to return the corresponding signable class to populate """
-    raise NotImplementedError('Metablock is not intended to be instantiated. '
-        'You probably wanted to instantiate a Layout or a Link?')
 
   """Objects with base class Metablock have a __repr__ method
   that returns a canonical pretty printed JSON string and can be dumped to a
@@ -109,19 +91,6 @@ class Metablock(object):
     signature = securesystemslib.keys.create_signature(key, repr(self.signed))
     self.signatures.append(signature)
 
-  """ FIXME: This is mostly syntactic sugar and backwards compatibility stuff.
-  This method is added to stop the code from breaking as old instances to
-  (e.g.,) Layout.[property] should now be Layout.signed.[property]. With time
-  we should phase these instances out.
-  """
-  def __getattr__(self, item):
-    if item == 'signatures' or item == 'signed':
-      return None
-
-    try:
-      return self.signed.__dict__[item]
-    except KeyError:
-      raise AttributeError
 
   def verify_signatures(self, keys_dict):
     """Verifies all signatures of the object using the passed key_dict."""

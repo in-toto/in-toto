@@ -29,47 +29,8 @@ FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
 
-
-class Link(Metablock):
-  """
-  A link is the metadata representation of a supply chain step performed
-  by a functionary.
-
-  Links are recorded, signed and stored to a file when a functionary wraps
-  a command with in_toto-run.
-
-  Links also contain materials and products which are hashes of the file before
-  the command was executed and after the command was executed.
-
-  <Attributes>
-    signed: A LinkSignable object (described below)
-
-    signatures: the signatures computed on the LinkSignable object
-
-   """
-  def __init__(self, **kwargs):
-    # FIXME: this is a patch that will make code migration easier.
-    if 'signed' not in kwargs:
-      new_kwargs = {}
-      new_kwargs['signed'] = {}
-      new_kwargs['signed'].update(kwargs)
-      kwargs = new_kwargs
-
-    super(Link, self).__init__(**kwargs)
-
-
-  def get_signable(self):
-    """ This method is used by the base class's constructor to obtain the
-     appropriate signable to populate itself. """
-    return LinkSignable
-
-
-
-
-
-
 @attr.s(repr=False, init=False)
-class LinkSignable(models__common.Signable):
+class Link(models__common.Signable):
   """
   A link is the metadata representation of a supply chain step performed
   by a functionary.
@@ -123,7 +84,7 @@ class LinkSignable(models__common.Signable):
 
 
   def __init__(self, **kwargs):
-    super(LinkSignable, self).__init__()
+    super(Link, self).__init__()
 
     self._type = "link"
     self.name = kwargs.get("name")
@@ -139,7 +100,7 @@ class LinkSignable(models__common.Signable):
   @staticmethod
   def read(data):
     """Static method to instantiate a new Link from a Python dictionary """
-    return LinkSignable(**data)
+    return Link(**data)
 
 
   def _validate_type(self):
