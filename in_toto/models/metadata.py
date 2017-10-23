@@ -82,6 +82,11 @@ class Metablock(object):
     return Metablock(signatures=signatures, signed=signed)
 
 
+  @property
+  def _type(self):
+    return self.signed._type
+
+
   def sign(self, key):
     """Signs the canonical JSON representation of itself (without the
     signatures property) and adds the signatures to its signature properties."""
