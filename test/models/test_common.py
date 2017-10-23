@@ -20,7 +20,7 @@
 import os
 import unittest
 import datetime
-from in_toto.models.common import Metablock
+from in_toto.models.metadata import Metablock
 import in_toto.models.link
 import in_toto.exceptions
 import securesystemslib.exceptions

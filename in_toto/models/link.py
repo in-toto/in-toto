@@ -22,13 +22,15 @@ import attr
 import json
 import in_toto.models.common as models__common
 import securesystemslib.formats
+from in_toto.models.metadata import Metablock
+
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
 
 
 
-class Link(models__common.Metablock):
+class Link(Metablock):
   """
   A link is the metadata representation of a supply chain step performed
   by a functionary.

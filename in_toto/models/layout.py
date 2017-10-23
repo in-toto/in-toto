@@ -47,8 +47,10 @@ import securesystemslib.formats
 # import validators
 import in_toto.models.common as models__common
 import in_toto.models.link as models__link
+from in_toto.models.metadata import Metablock
 
-class Layout(models__common.Metablock):
+
+class Layout(Metablock):
   """
   The layout specifies each of the different steps and the requirements for
   each step, as well as the public keys functionaries used to perform these
