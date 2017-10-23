@@ -31,11 +31,14 @@ import fnmatch
 
 import in_toto.settings
 from in_toto import log
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
+
+from in_toto.models.metadata import Metablock
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
@@ -298,9 +301,12 @@ def in_toto_mock(name, link_cmd_args):
   link = in_toto_run(name, ["."], ["."], link_cmd_args, key=False,
       record_streams=True)
 
-  log.info("Storing unsigned link metadata to '{}.link'...".format(name))
-  link.dump()
-  return link
+  link_metadata = Metablock(signed=link)
+
+  filename = FILENAME_FORMAT_SHORT.format(step_name=name)
+  log.info("Storing unsigned link metadata to '{}.link'...".format(filename))
+  link_metadata.dump(filename)
+  return link_metadata
 
 
 def in_toto_run(name, material_list, product_list,
@@ -368,21 +374,21 @@ def in_toto_run(name, material_list, product_list,
   products_dict = record_artifacts_as_dict(product_list)
 
   log.info("Creating link metadata...")
-  signable = in_toto.models.link.Link(name=name,
+  link = in_toto.models.link.Link(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
       byproducts=byproducts, environment={"workdir": os.getcwd()})
 
-  link = in_toto.models.link.Link(signed=signable)
+  link_metadata = Metablock(signed=link)
 
   if key:
     log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-    link.sign(key)
+    link_metadata.sign(key)
 
-    log.info("Storing link metadata to '{}'...".format(
-        FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])))
-    link.dump(key=key)
+    filename = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
+    log.info("Storing link metadata to '{}'...".format(filename))
+    link_metadata.dump(filename)
 
-  return link
+  return link_metadata
 
 
 def in_toto_record_start(step_name, key, material_list):
@@ -422,17 +428,17 @@ def in_toto_record_start(step_name, key, material_list):
   materials_dict = record_artifacts_as_dict(material_list)
 
   log.info("Creating preliminary link metadata...")
-  signable = in_toto.models.link.Link(name=step_name,
+  link = in_toto.models.link.Link(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
           environment={"workdir": os.getcwd()})
 
-  link = in_toto.models.link.Link(signed=signable)
+  link_metadata = Metablock(signed=link)
 
   log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-  link.sign(key)
+  link_metadata.sign(key)
 
   log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
-  link.dump(filename=unfinished_fn)
+  link_metadata.dump(unfinished_fn)
 
 
 def in_toto_record_stop(step_name, key, product_list):
@@ -471,23 +477,23 @@ def in_toto_record_stop(step_name, key, product_list):
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
   log.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link = in_toto.models.link.Link.read_from_file(unfinished_fn)
+  link_metadata = Metablock.load(unfinished_fn)
 
   # The file must have been signed by the same key
   log.info("Verifying preliminary link signature...")
   keydict = {key["keyid"] : key}
-  link.verify_signatures(keydict)
+  link_metadata.verify_signatures(keydict)
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  link.signed.products = record_artifacts_as_dict(product_list)
+  link_metadata.signed.products = record_artifacts_as_dict(product_list)
 
   log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
-  link.signatures = []
-  link.sign(key)
+  link_metadata.signatures = []
+  link_metadata.sign(key)
 
   log.info("Storing link metadata to '{}'...".format(fn))
-  link.dump(key=key)
+  link_metadata.dump(fn)
 
-  log.info("Removing unfinished link metadata '{}'...".format(fn))
+  log.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)

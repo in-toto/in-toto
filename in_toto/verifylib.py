@@ -41,7 +41,9 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.metadata import Metablock
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.artifact_rules
@@ -188,13 +190,14 @@ def run_all_inspections(layout):
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
         product_list, inspection.run)
 
-    _raise_on_bad_retval(link.byproducts.get("return-value"), inspection.run)
+    _raise_on_bad_retval(link.signed.byproducts.get("return-value"), inspection.run)
 
     inspection_links_dict[inspection.name] = link
 
     # Dump the inspection link file for auditing
     # Keep in mind that this pollutes the verifier's (client's) filesystem.
-    link.dump()
+    filename = FILENAME_FORMAT_SHORT.format(step_name=inspection.name)
+    link.dump(filename)
 
     in_toto.settings.ARTIFACT_BASE_PATH = base_path_backup
 
@@ -389,7 +392,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
 
-      command = link.command
+      command = link.signed.command
       verify_command_alignment(command, expected_command)
 
 
@@ -498,9 +501,9 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
 
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
-    dest_artifacts = dest_link.materials
+    dest_artifacts = dest_link.signed.materials
   elif dest_type.lower() == "products":
-    dest_artifacts = dest_link.products
+    dest_artifacts = dest_link.signed.products
 
   # Filter I - take only queued paths with specified prefix and
   # subtract prefix
@@ -874,8 +877,8 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   """
 
-  source_materials = links[source_name].materials
-  source_products = links[source_name].products
+  source_materials = links[source_name].signed.materials
+  source_products = links[source_name].signed.products
 
   source_materials_queue = source_materials.keys()
   source_products_queue = source_products.keys()
@@ -1041,8 +1044,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
     for keyid, link in six.iteritems(key_link_dict):
 
       # compare their properties
-      if (reference_link.materials != link.materials or
-          reference_link.products != link.products):
+      if (reference_link.signed.materials != link.signed.materials or
+          reference_link.signed.products != link.signed.products):
         raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
             " artifacts!".format(
                 in_toto.models.link.FILENAME_FORMAT.format(
@@ -1179,15 +1182,15 @@ def get_summary_link(layout, reduced_chain_link_dict):
   first_step_link = reduced_chain_link_dict[layout.steps[0].name]
   last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-  summary_link.materials = first_step_link.materials
-  summary_link._type = first_step_link._type
-  summary_link.name = first_step_link.name
+  summary_link.materials = first_step_link.signed.materials
+  summary_link._type = first_step_link.signed._type
+  summary_link.name = first_step_link.signed.name
 
-  summary_link.products = last_step_link.products
-  summary_link.byproducts = last_step_link.byproducts
-  summary_link.command = last_step_link.command
+  summary_link.products = last_step_link.signed.products
+  summary_link.byproducts = last_step_link.signed.byproducts
+  summary_link.command = last_step_link.signed.command
 
-  return summary_link
+  return Metablock(signed=summary_link)
 
 def in_toto_verify(layout, layout_key_dict):
   """
@@ -1255,6 +1258,11 @@ def in_toto_verify(layout, layout_key_dict):
 
   log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
+
+  # For the rest of the verification we only care about the layout payload
+  # (Layout) that carries all the information and not about the layout
+  # container (Metablock) that also carries the signatures
+  layout = layout.signed
 
   log.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
