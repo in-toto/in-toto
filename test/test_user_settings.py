@@ -23,7 +23,7 @@ import logging
 import shutil
 import tempfile
 import in_toto.settings
-from in_toto.user_settings import set_settings, get_env, get_rc
+import in_toto.user_settings
 
 WORKING_DIR = os.getcwd()
 
@@ -67,14 +67,14 @@ class TestUserSettings(unittest.TestCase):
 
 
   def test_get_rc(self):
-    rc_dict = get_rc()
+    rc_dict = in_toto.user_settings.get_rc()
     self.assertEquals(rc_dict["ARTIFACT_BASEPATH"], "r/c/file")
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDES"], ["r", "c", "file"])
     self.assertEquals(rc_dict["NEW_RC_SETTING"], "new rc setting")
 
 
   def test_get_env(self):
-    env_dict = get_env()
+    env_dict = in_toto.user_settings.get_env()
     self.assertEquals(env_dict["ARTIFACT_BASEPATH"], "e/n/v")
     self.assertListEqual(env_dict["ARTIFACT_EXCLUDES"], ["e", "n", "v"])
 
@@ -83,7 +83,7 @@ class TestUserSettings(unittest.TestCase):
 
 
   def test_set_settings(self):
-    set_settings()
+    in_toto.user_settings.set_settings()
     # RCfile settings have precedence over env settings
     self.assertEquals(in_toto.settings.ARTIFACT_BASEPATH, "r/c/file")
     self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])

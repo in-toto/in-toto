@@ -50,7 +50,7 @@
 """
 import os
 import ConfigParser
-import in_toto.settings as SETTINGS_MODULE
+import in_toto.settings
 
 ENV_PREFIX = "IN_TOTO_"
 USER = os.path.expanduser("~")
@@ -129,4 +129,4 @@ def set_settings():
   user_settings.update(get_rc())
 
   for name, value in user_settings.iteritems():
-    setattr(SETTINGS_MODULE, name, value)
+    setattr(in_toto.settings, name, value)
