@@ -34,21 +34,16 @@ class TestUserSettings(unittest.TestCase):
   @classmethod
   def setUpClass(self):
     self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+
+    # We use `demo_files` as test dir because it has an `.in_totorc`, which
+    # we is loaded (from CWD) in `user_settings.set_settings` related tests
+    self.test_dir = os.path.join(os.path.dirname(__file__), "demo_files")
     os.chdir(self.test_dir)
 
     # Backup settings
     self.settings_backup = {}
     for key in dir(in_toto.settings):
       self.settings_backup[key] = getattr(in_toto.settings, key)
-
-    # Create an rc file and set some environment variables
-    with open(".in_totorc", "w") as fobj:
-      fobj.write(
-          "[settings]\n"
-          "artifact_basepath=r/c/file\n"
-          "ARTIFACT_EXCLUDES=r:c:file\n"
-          "new_rc_setting=new rc setting")
 
     os.environ["IN_TOTO_ARTIFACT_EXCLUDES"] = "e:n:v"
     os.environ["IN_TOTO_artifact_basepath"] = "e/n/v"
@@ -59,7 +54,6 @@ class TestUserSettings(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
 
     # Restore settings, other unittests might depend on defaults
     for key, val in self.settings_backup.iteritems():
