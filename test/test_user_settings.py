@@ -12,7 +12,7 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Test user settings module.
+  Test in-toto.user_settings.py
 
 """
 
