@@ -12,39 +12,12 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides methods to read environment variables and rcfiles and to write
-  them to the in_toto.settings module (override them) if whitelisted.
+  Provides methods to parse environment variables (`get_env`) and RCfiles
+  (`get_rc`) and to override default settings (`set_settings`) defined in the
+  `in_toto.settings` module.
 
-  Notes:
-  - Variable values are converted to lists if they contain colons
-  - Environment variables need to be prefixed with "IN_TOTO_". The prefix is
-    removed when the variable is written to the settings module,
-    e.g. the envvar...
-    IN_TOTO_ARTIFACT_EXCLUDES="*.link:.gitignore"
-
-    becomes the setting ...
-    in_toto.settings.ARTIFACT_EXCLUDES = ["*.link", ".gitignore"]
-
-  - RCfile values follow the format expected by Python's builtin
-    ConfigParser. The format requires at least one section, sections however
-    are ignored, e.g. the rcfile...
-    [ignored section name]
-    artifact_basepath = "/a/b/c"
-
-    becomes the setting ...
-    in_toto.settings.ARTIFACT_BASEPATH = "/a/b/c"
-
-  - Order of precedence
-    1. RCfiles
-        .in_totorc
-        ~/.in_totorc
-        ~/.in_toto/config
-        ~/.config/in_toto
-        ~/.config/in_toto/config
-        /etc/in_totorc
-        /etc/in_toto/config
-    2. Environment Variables
-    3. Settings defined in `settings.py`
+  Check out the respective docstrings to learn about the requirements for
+  environment variables and RCfiles (includes examples).
 
 """
 import os
@@ -74,7 +47,7 @@ RC_PATHS = [
 
 # List of settings, for which defaults exist in `settings.py`
 # TODO: Should we use `dir` on the module instead? If we list them here, we
-# have to manually update if settings.py changes.
+# have to manually update if `settings.py` changes.
 IN_TOTO_SETTINGS = [
   "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
 ]
@@ -91,10 +64,42 @@ def _colon_split(value):
 
 
 def get_env():
-  """Return a dict of environment variables starting with `ENV_PREFIX`
+  """
+  <Purpose>
+    Parse environment for variables with prefix `ENV_PREFIX` and return
+    a dict of key-value pairs.
 
-  - In the returned dict the prefix is stripped from the keys
-  - Values that contain colons are converted into a list
+    The prefix `ENV_PREFIX` is stripped from the keys in the returned dict.
+
+    Values that contain colons (:) are split at the postion of the colons and
+    converted into a list.
+
+
+    Example:
+
+    ```
+    # Exporting variables in e.g. bash
+    export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
+    export IN_TOTO_ARTIFACT_EXCLUDES='*.link:.gitignore'
+    ```
+
+    produces
+
+    ```
+    {
+      "ARTIFACT_BASE_PATH": "/home/user/project"
+      "ARTIFACT_EXCLUDES": ["*.link", ".gitignore"]
+    }
+    ```
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Calls function to read files from disk.
+
+  <Returns>
+    A dictionary containing the parsed key-value pairs.
 
   """
   env_dict = {}
@@ -110,13 +115,49 @@ def get_env():
 
 
 def get_rc():
-  """Load RCfiles from the usual places and return a dictionary of
-  key value pairs.
+  """
+  <Purpose>
+    Reads RCfiles from the paths defined in `RC_PATHS` and returns
+    a dictionary with all parsed key-value pairs.
 
-  - RCfile format as expected by builtin ConfigParser
-  - The format dictates that there is at least one section,
-    however we are only interested in the values and ignore the sections
-  - Values that contain colons are converted into a list
+    The RCfile format is as expected by Python's builtin `ConfigParser` with
+    the addition that values that contain colons (:) are split at the position
+    of the colons and converted into a list.
+
+    Section titles in RCfiles are ignored when parsing the key-value pairs.
+    However, there has to be at least one section defined.
+
+    The paths in `RC_PATHS` are ordered in reverse precedence, i.e. each file's
+    settings override a previous file's settings, e.g. a setting defined
+    in_toto `.in_totorc` (in the current working dir) overrides the same
+    setting defined in `~/.in_totorc` (in the user's home dir) and so on ...
+
+    Example:
+
+    ```
+    # E.g. File `.in_totorc` in current working directory
+    [in-toto setting]
+    ARTIFACT_BASE_PATH = /home/user/project
+    ARTIFACT_EXCLUDES = *.link:.gitignore
+    ```
+
+    produces
+
+    ```
+    {
+      "ARTIFACT_BASE_PATH": "/home/user/project"
+      "ARTIFACT_EXCLUDES": ["*.link", ".gitignore"]
+    }
+    ```
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Calls function to read files from disk.
+
+  <Returns>
+    A dictionary containing the parsed key-value pairs.
 
   """
   rc_dict = {}
@@ -135,7 +176,7 @@ def set_settings():
   """
   <Purpose>
     Calls functions that read in-toto related environment variables and RCfiles
-    and overrides variables `settings.py` with the retrieved values, if they
+    and overrides variables in `settings.py` with the retrieved values, if they
     are whitelisted in `IN_TOTO_SETTINGS`.
 
     Settings defined in RCfiles take precedence over settings defined in
