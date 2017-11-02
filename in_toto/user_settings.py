@@ -77,7 +77,7 @@ RC_PATHS = [
 # TODO: Should we use `dir` on the module instead? If we list them here, we
 # have to manually update if settings.py changes.
 IN_TOTO_SETTINGS = [
-  "LOG_LEVEL", "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
+  "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
 ]
 
 

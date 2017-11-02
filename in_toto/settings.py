@@ -33,6 +33,9 @@
 import logging
 
 # Debug level INFO shows a bunch of stuff that is happening
+# FIXME: This setting currently can not be overridden with envvars or
+# rcfiles, because that would involve additional evaluation of the parsed
+# values. Let's ignore it for now and fix it with in-toto/in-toto#117
 LOG_LEVEL = logging.INFO
 # Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
