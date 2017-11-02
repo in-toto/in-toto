@@ -49,6 +49,7 @@
 
 """
 import os
+import log
 import ConfigParser
 import in_toto.settings
 
@@ -78,7 +79,6 @@ RC_PATHS = [
 IN_TOTO_SETTINGS = [
   "LOG_LEVEL", "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
 ]
-
 
 
 def _colon_split(value):
@@ -165,4 +165,6 @@ def set_settings():
   for setting in IN_TOTO_SETTINGS:
     user_setting = user_settings.get(setting)
     if user_setting:
+      log.info("Using setting {0}={1}".format(
+          setting, user_setting))
       setattr(in_toto.settings, setting, user_setting)
