@@ -1,4 +1,4 @@
 [settings]
-artifact_basepath=r/c/file
+artifact_base_path=r/c/file
 ARTIFACT_EXCLUDES=r:c:file
 new_rc_setting=new rc setting

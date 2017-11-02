@@ -25,8 +25,6 @@ import tempfile
 import in_toto.settings
 import in_toto.user_settings
 
-WORKING_DIR = os.getcwd()
-
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
 
@@ -46,7 +44,7 @@ class TestUserSettings(unittest.TestCase):
       self.settings_backup[key] = getattr(in_toto.settings, key)
 
     os.environ["IN_TOTO_ARTIFACT_EXCLUDES"] = "e:n:v"
-    os.environ["IN_TOTO_artifact_basepath"] = "e/n/v"
+    os.environ["IN_TOTO_artifact_base_path"] = "e/n/v"
     os.environ["IN_TOTO_NEW_ENV_SETTING"] = "new env setting"
     os.environ["NOT_IN_TOTO_NOTHING"] = "nothing"
 
@@ -61,30 +59,39 @@ class TestUserSettings(unittest.TestCase):
 
 
   def test_get_rc(self):
+    """ Test rcfile parsing in CWD. """
     rc_dict = in_toto.user_settings.get_rc()
-    self.assertEquals(rc_dict["ARTIFACT_BASEPATH"], "r/c/file")
+    self.assertEquals(rc_dict["ARTIFACT_BASE_PATH"], "r/c/file")
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDES"], ["r", "c", "file"])
     self.assertEquals(rc_dict["NEW_RC_SETTING"], "new rc setting")
 
 
   def test_get_env(self):
+    """ Test environment variables parsing, prefix and colon splitting. """
     env_dict = in_toto.user_settings.get_env()
-    self.assertEquals(env_dict["ARTIFACT_BASEPATH"], "e/n/v")
+    self.assertEquals(env_dict["ARTIFACT_BASE_PATH"], "e/n/v")
     self.assertListEqual(env_dict["ARTIFACT_EXCLUDES"], ["e", "n", "v"])
-
     self.assertEquals(env_dict["NEW_ENV_SETTING"], "new env setting")
     self.assertFalse("NOT_IN_TOTO_NOTHING" in env_dict)
 
 
   def test_set_settings(self):
+    """ Test precedence of rc over env and whitelisting. """
     in_toto.user_settings.set_settings()
-    # RCfile settings have precedence over env settings
-    self.assertEquals(in_toto.settings.ARTIFACT_BASEPATH, "r/c/file")
-    self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])
-    self.assertEquals(in_toto.settings.NEW_RC_SETTING, "new rc setting")
 
-    # Settings that are only in env are still used even if they are new
-    self.assertEquals(in_toto.settings.NEW_ENV_SETTING, "new env setting")
+    # RCfile settings have precedence over env settings
+    self.assertEquals(in_toto.settings.ARTIFACT_BASE_PATH, "r/c/file")
+    self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])
+
+    # Not whitelisted items are returned by get_rc but ignored by set_settings
+    self.assertTrue("NEW_RC_SETTING" in in_toto.user_settings.get_rc())
+    self.assertRaises(AttributeError, getattr, in_toto.settings,
+        "NEW_RC_SETTING")
+
+    # Not whitelisted items are returned by get_env but ignored by set_settings
+    self.assertTrue("NEW_ENV_SETTING" in in_toto.user_settings.get_env())
+    self.assertRaises(AttributeError, getattr, in_toto.settings,
+        "NEW_ENV_SETTING")
 
 if __name__ == "__main__":
   unittest.main()

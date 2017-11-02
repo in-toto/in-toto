@@ -13,7 +13,7 @@
 
 <Purpose>
   Provides methods to read environment variables and rcfiles and to write
-  them to the in_toto.settings module (override them).
+  them to the in_toto.settings module (override them) if whitelisted.
 
   Notes:
   - Variable values are converted to lists if they contain colons
@@ -52,18 +52,34 @@ import os
 import ConfigParser
 import in_toto.settings
 
-ENV_PREFIX = "IN_TOTO_"
-USER = os.path.expanduser("~")
 
+
+USER_PATH = os.path.expanduser("~")
+
+# Prefix required by environment variables to be considered as in_toto settings
+ENV_PREFIX = "IN_TOTO_"
+
+# List of considered rcfile paths in the order they get parsed and overridden,
+# i.e. the same setting in `/etc/in_toto/config` and `.in_totorc` (cwd) uses
+# the latter
 RC_PATHS = [
   os.path.join("/etc", "in_toto", "config"),
   os.path.join("/etc", "in_totorc"),
-  os.path.join(USER,  ".config", "in_toto", "config"),
-  os.path.join(USER, ".config", "in_toto"),
-  os.path.join(USER, ".in_toto", "config"),
-  os.path.join(USER, ".in_totorc"),
+  os.path.join(USER_PATH,  ".config", "in_toto", "config"),
+  os.path.join(USER_PATH, ".config", "in_toto"),
+  os.path.join(USER_PATH, ".in_toto", "config"),
+  os.path.join(USER_PATH, ".in_totorc"),
   ".in_totorc"
 ]
+
+# List of settings, for which defaults exist in `settings.py`
+# TODO: Should we use `dir` on the module instead? If we list them here, we
+# have to manually update if settings.py changes.
+IN_TOTO_SETTINGS = [
+  "LOG_LEVEL", "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
+]
+
+
 
 def _colon_split(value):
   """ If `value` contains colons, return a list split at colons,
@@ -122,11 +138,31 @@ def get_rc():
 
 
 def set_settings():
-  """Read environment variables and RCfiles and write them to the
-  settings module.
+  """
+  <Purpose>
+    Calls functions that read in-toto related environment variables and RCfiles
+    and overrides variables `settings.py` with the retrieved values, if they
+    are whitelisted in `IN_TOTO_SETTINGS`.
+
+    Settings defined in RCfiles take precedence over settings defined in
+    environment variables.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    Calls functions that read environment variables and files from disk.
+
+  <Returns>
+    None.
+
   """
   user_settings = get_env()
   user_settings.update(get_rc())
 
-  for name, value in user_settings.iteritems():
-    setattr(in_toto.settings, name, value)
+  # If the user has specified one of the settings whitelisted in
+  # IN_TOTO_SETTINGS per envvar or rcfile, override the item in `settings.py`
+  for setting in IN_TOTO_SETTINGS:
+    user_setting = user_settings.get(setting)
+    if user_setting:
+      setattr(in_toto.settings, setting, user_setting)
