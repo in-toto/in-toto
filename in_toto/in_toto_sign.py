@@ -58,6 +58,7 @@ import os
 import sys
 import json
 import argparse
+import in_toto.user_settings
 from in_toto import log, exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
@@ -201,6 +202,10 @@ def main():
 
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
+
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   args = parser.parse_args()
 

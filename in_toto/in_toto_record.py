@@ -47,6 +47,7 @@ import os
 import sys
 import argparse
 import in_toto.util
+import in_toto.user_settings
 from in_toto import runlib
 from in_toto import log
 
@@ -152,6 +153,10 @@ def main():
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
+
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   args = parser.parse_args()
 

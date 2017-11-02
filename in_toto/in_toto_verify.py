@@ -27,6 +27,7 @@
 import sys
 import argparse
 
+import in_toto.user_settings
 import in_toto.log as log
 import in_toto.util
 from in_toto import verifylib
@@ -96,6 +97,10 @@ def main():
 
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
+
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   args = parser.parse_args()
 

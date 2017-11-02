@@ -36,6 +36,7 @@
 import os
 import sys
 import argparse
+import in_toto.user_settings
 from in_toto import (util, runlib, log)
 
 def in_toto_mock(name, link_cmd_args):
@@ -69,7 +70,6 @@ def in_toto_mock(name, link_cmd_args):
 
 def main():
   """Parse arguments and call in_toto_mock. """
-
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata")
   # Whitespace padding to align with program name
@@ -90,6 +90,10 @@ def main():
   # What should we do with tokens like > or ; ?
   in_toto_args.add_argument("link_cmd", nargs="+",
     help="Link command to be executed with options and arguments")
+
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   args = parser.parse_args()
 
