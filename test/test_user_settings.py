@@ -52,9 +52,9 @@ class TestUserSettings(unittest.TestCase):
   def test_get_rc(self):
     """ Test rcfile parsing in CWD. """
     rc_dict = in_toto.user_settings.get_rc()
-    self.assertEquals(rc_dict["ARTIFACT_BASE_PATH"], "r/c/file")
+    self.assertEquals(rc_dict["artifact_base_path"], "r/c/file")
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDES"], ["r", "c", "file"])
-    self.assertEquals(rc_dict["NEW_RC_SETTING"], "new rc setting")
+    self.assertEquals(rc_dict["new_rc_setting"], "new rc setting")
 
 
   def test_get_env(self):
@@ -75,7 +75,7 @@ class TestUserSettings(unittest.TestCase):
     self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])
 
     # Not whitelisted items are returned by get_rc but ignored by set_settings
-    self.assertTrue("NEW_RC_SETTING" in in_toto.user_settings.get_rc())
+    self.assertTrue("new_rc_setting" in in_toto.user_settings.get_rc())
     self.assertRaises(AttributeError, getattr, in_toto.settings,
         "NEW_RC_SETTING")
 

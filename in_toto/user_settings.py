@@ -17,7 +17,6 @@
 
   Notes:
   - Variable values are converted to lists if they contain colons
-  - Variable names are converted to upper case
   - Environment variables need to be prefixed with "IN_TOTO_". The prefix is
     removed when the variable is written to the settings module,
     e.g. the envvar...
@@ -96,14 +95,11 @@ def get_env():
 
   - In the returned dict the prefix is stripped from the keys
   - Values that contain colons are converted into a list
-  - Variable names are converted to upper case
 
   """
   env_dict = {}
 
   for name, value in os.environ.iteritems():
-    name = name.upper()
-
     if (name.startswith(ENV_PREFIX) and
         len(name) > len(ENV_PREFIX)):
       stripped_name = name[len(ENV_PREFIX):]
@@ -121,7 +117,6 @@ def get_rc():
   - The format dictates that there is at least one section,
     however we are only interested in the values and ignore the sections
   - Values that contain colons are converted into a list
-  - Variable names are converted to upper case
 
   """
   rc_dict = {}
@@ -131,7 +126,6 @@ def get_rc():
 
   for section in config.sections():
     for name, value in config.items(section):
-      name = name.upper()
       rc_dict[name] = _colon_split(value)
 
   return rc_dict
