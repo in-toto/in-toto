@@ -105,6 +105,16 @@ in-toto-verify --layout <layout path>
                --layout-keys (<layout pubkey path>,...)
 ```
 
+
+#### Settings
+in-toto provides a settings module as a place to store defaults that can
+be used throughout the package. When using in-toto from the command line,
+these settings can be configured using environment variables or RCfiles.
+Take a look at [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py)
+to learn more about the available defaults and at
+[`in_toto.user_settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/user_settings.py)
+to see how to configure them.
+
 ## in-toto demo
 You can try in-toto by running the [demo application](https://github.com/in-toto/demo).
 The demo basically outlines three users viz., Alice (project owner), Bob (functionary) and Carl (functionary) and how in-toto helps to specify a project layout and verify that the layout has been followed in a correct manner.
