@@ -30,6 +30,7 @@ import tempfile
 import fnmatch
 
 import in_toto.settings
+import in_toto.exceptions
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT)
@@ -122,7 +123,7 @@ def record_artifacts_as_dict(artifacts):
             the link command.
 
   <Exceptions>
-    None.
+    SettingsError if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDES can't be used
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -140,18 +141,29 @@ def record_artifacts_as_dict(artifacts):
     original_cwd = os.getcwd()
     try:
       os.chdir(in_toto.settings.ARTIFACT_BASE_PATH)
-    except OSError as e:
-      raise OSError("Review your ARTIFACT_BASE_PATH setting - {}".format(e))
+    except Exception as e:
+      raise in_toto.exceptions.SettingsError(
+          "Review your ARTIFACT_BASE_PATH setting '{}' - {}".format(
+          in_toto.settings.ARTIFACT_BASE_PATH, e))
 
   # Normalize passed paths
   norm_artifacts = []
   for path in artifacts:
     norm_artifacts.append(os.path.normpath(path))
 
+  # If ARTIFACT_EXCLUDES is set it must be a list of strings or an empty
+  # TODO: Change NAMES_SCHEMA to something more semantically accurate
+  if (in_toto.settings.ARTIFACT_EXCLUDES and not
+      securesystemslib.formats.NAMES_SCHEMA.matches(
+      in_toto.settings.ARTIFACT_EXCLUDES)):
+    raise in_toto.exceptions.SettingsError(
+        "Review your ARTIFACT_EXCLUDES setting '{}'".format(
+        in_toto.settings.ARTIFACT_EXCLUDES))
+
   # Iterate over remaining normalized artifact paths after
   # having applied exclusion patterns
   for artifact in _apply_exclude_patterns(norm_artifacts,
-        in_toto.settings.ARTIFACT_EXCLUDES):
+      in_toto.settings.ARTIFACT_EXCLUDES):
 
     if not os.path.exists(artifact):
       log.warn("path: {} does not exist, skipping..".format(artifact))

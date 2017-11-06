@@ -24,6 +24,7 @@ import shutil
 import tempfile
 
 import in_toto.settings
+import in_toto.exceptions
 from in_toto.models.metadata import Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
@@ -136,11 +137,13 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     in_toto.settings.ARTIFACT_EXCLUDES = []
     in_toto.settings.ARTIFACT_BASE_PATH = None
 
-  def test_not_existing_base_path(self):
-    """Raise exception with not existing base path setting. """
-    in_toto.settings.ARTIFACT_BASE_PATH = "path_does_not_exist"
-    with self.assertRaises(OSError):
-      record_artifacts_as_dict(["."])
+  def test_bad_base_path_setting(self):
+    """Raise exception with bogus base path settings. """
+    for setting in ["path/does/not/exist", 12345, True]:
+      in_toto.settings.ARTIFACT_BASE_PATH = setting
+      with self.assertRaises(in_toto.exceptions.SettingsError):
+        print setting
+        record_artifacts_as_dict(["."])
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
@@ -222,6 +225,15 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
+
+  def test_bad_artifact_excludes_setting(self):
+    """Raise exception with bogus artifact excludes settings. """
+    for setting in ["not a list of settings", 12345, True]:
+      in_toto.settings.ARTIFACT_EXCLUDES = setting
+      with self.assertRaises(in_toto.exceptions.SettingsError):
+        print setting
+        record_artifacts_as_dict(["."])
+
 
 class TestInTotoRun(unittest.TestCase):
   """"
