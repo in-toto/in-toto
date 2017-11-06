@@ -129,13 +129,13 @@ def get_rc():
 
     The paths in `RC_PATHS` are ordered in reverse precedence, i.e. each file's
     settings override a previous file's settings, e.g. a setting defined
-    in_toto `.in_totorc` (in the current working dir) overrides the same
+    in `.in_totorc` (in the current working dir) overrides the same
     setting defined in `~/.in_totorc` (in the user's home dir) and so on ...
 
     Example:
 
     ```
-    # E.g. File `.in_totorc` in current working directory
+    # E.g. file `.in_totorc` in current working directory
     [in-toto setting]
     ARTIFACT_BASE_PATH = /home/user/project
     ARTIFACT_EXCLUDES = *.link:.gitignore

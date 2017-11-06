@@ -12,7 +12,7 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Test in-toto.user_settings.py
+  Test in_toto/user_settings.py
 
 """
 
@@ -34,14 +34,15 @@ class TestUserSettings(unittest.TestCase):
     self.working_dir = os.getcwd()
 
     # We use `demo_files` as test dir because it has an `.in_totorc`, which
-    # we is loaded (from CWD) in `user_settings.set_settings` related tests
+    # is loaded (from CWD) in `user_settings.set_settings` related tests
     self.test_dir = os.path.join(os.path.dirname(__file__), "rc_test")
     os.chdir(self.test_dir)
 
     os.environ["IN_TOTO_ARTIFACT_EXCLUDES"] = "e:n:v"
-    os.environ["IN_TOTO_artifact_base_path"] = "e/n/v"
-    os.environ["IN_TOTO_NEW_ENV_SETTING"] = "new env setting"
-    os.environ["NOT_IN_TOTO_NOTHING"] = "nothing"
+    os.environ["IN_TOTO_ARTIFACT_BASE_PATH"] = "e/n/v"
+    os.environ["IN_TOTO_not_whitelisted"] = "parsed"
+    os.environ["NOT_PARSED"] = "ignored"
+
 
 
   @classmethod
@@ -52,37 +53,51 @@ class TestUserSettings(unittest.TestCase):
   def test_get_rc(self):
     """ Test rcfile parsing in CWD. """
     rc_dict = in_toto.user_settings.get_rc()
-    self.assertEquals(rc_dict["artifact_base_path"], "r/c/file")
+
+    # Parsed (and split) and used by `set_settings` to monkeypatch settings
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDES"], ["r", "c", "file"])
+
+    # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
+    self.assertEquals(rc_dict["artifact_base_path"], "r/c/file")
     self.assertEquals(rc_dict["new_rc_setting"], "new rc setting")
 
 
   def test_get_env(self):
     """ Test environment variables parsing, prefix and colon splitting. """
     env_dict = in_toto.user_settings.get_env()
+
+    # Parsed and used by `set_settings` to monkeypatch settings
     self.assertEquals(env_dict["ARTIFACT_BASE_PATH"], "e/n/v")
+
+    # Parsed (and split) but overriden by rcfile setting in `set_settings`
     self.assertListEqual(env_dict["ARTIFACT_EXCLUDES"], ["e", "n", "v"])
-    self.assertEquals(env_dict["NEW_ENV_SETTING"], "new env setting")
-    self.assertFalse("NOT_IN_TOTO_NOTHING" in env_dict)
+
+    # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
+    self.assertEquals(env_dict["not_whitelisted"], "parsed")
+
+    # Not parsed because of missing prefix
+    self.assertFalse("NOT_PARSED" in env_dict)
 
 
   def test_set_settings(self):
     """ Test precedence of rc over env and whitelisting. """
     in_toto.user_settings.set_settings()
 
-    # RCfile settings have precedence over env settings
-    self.assertEquals(in_toto.settings.ARTIFACT_BASE_PATH, "r/c/file")
+    # From envvar IN_TOTO_ARTIFACT_BASE_PATH
+    self.assertEquals(in_toto.settings.ARTIFACT_BASE_PATH, "e/n/v")
+
+    # From RCfile setting (has precedence over envvar setting)
     self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])
 
-    # Not whitelisted items are returned by get_rc but ignored by set_settings
+    # Not whitelisted rcfile settings are ignored by `set_settings`
     self.assertTrue("new_rc_setting" in in_toto.user_settings.get_rc())
     self.assertRaises(AttributeError, getattr, in_toto.settings,
         "NEW_RC_SETTING")
 
-    # Not whitelisted items are returned by get_env but ignored by set_settings
-    self.assertTrue("NEW_ENV_SETTING" in in_toto.user_settings.get_env())
+    # Not whitelisted envvars are ignored by `set_settings`
+    self.assertTrue("not_whitelisted" in in_toto.user_settings.get_env())
     self.assertRaises(AttributeError, getattr, in_toto.settings,
-        "NEW_ENV_SETTING")
+        "not_whitelisted")
 
 if __name__ == "__main__":
   unittest.main()
