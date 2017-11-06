@@ -163,6 +163,8 @@ def get_rc():
   rc_dict = {}
 
   config = ConfigParser.ConfigParser()
+  # Reset `optionxform`'s default case conversion to enable case-sensitivity
+  config.optionxform = str
   config.read(RC_PATHS)
 
   for section in config.sections():
