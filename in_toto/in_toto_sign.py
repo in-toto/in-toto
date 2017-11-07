@@ -203,14 +203,13 @@ def main():
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
 
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  in_toto.user_settings.set_settings()
-
   args = parser.parse_args()
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   if args.verify and (args.append or args.output):
     parser.print_help()

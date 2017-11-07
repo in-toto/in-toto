@@ -91,14 +91,13 @@ def main():
   in_toto_args.add_argument("link_cmd", nargs="+",
     help="Link command to be executed with options and arguments")
 
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  in_toto.user_settings.set_settings()
-
   args = parser.parse_args()
 
   # Turn on all the `log.info()` in the library
   log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   in_toto_mock(args.name, args.link_cmd)
 

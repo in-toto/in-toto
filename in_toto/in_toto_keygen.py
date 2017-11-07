@@ -90,10 +90,10 @@ def main():
   depending upon the arguments. It then dumps the corresponding key files as:
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
+  args = parse_args()
+
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
-
-  args = parse_args()
 
   try:
     if args.prompt:

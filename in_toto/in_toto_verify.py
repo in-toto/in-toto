@@ -98,15 +98,14 @@ def main():
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
 
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  in_toto.user_settings.set_settings()
-
   args = parser.parse_args()
 
   # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   in_toto_verify(args.layout, args.layout_keys)
 
