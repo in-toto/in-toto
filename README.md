@@ -107,13 +107,43 @@ in-toto-verify --layout <layout path>
 
 
 #### Settings
-in-toto provides a settings module as a place to store defaults that can
-be used throughout the package. When using in-toto from the command line,
-these settings can be configured using environment variables or RCfiles.
-Take a look at [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py)
-to learn more about the available defaults and at
-[`in_toto.user_settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/user_settings.py)
-to see how to configure them.
+Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
+paths: */etc/in_toto/config, /etc/in_totorc, \~/.config/in_toto/config,
+\~/.config/in_toto, \~/.in_toto/config, \~/.in_totorc, .in_totorc*.
+
+A setting in an RCfile in the current working directory overrides
+the same
+setting in an RCfile in the user's home directory, which overrides the
+same setting in an environment variable, which overrides the same setting
+in `in_toto.settings`.
+
+Setting names are restricted to the below listed settings (case sensitive).
+Also, setting values that contain colons are parsed as list.
+
+##### Available Settings
+
+`ARTIFACT_EXCLUDES` Specifies a list of glob patterns that can be used to
+exclude files from being recorded as materials or products. See [runlib
+docs for more details](https://github.com/in-toto/in-toto/blob/develop/in_toto/runlib.py#L93-L114).
+
+`ARTIFACT_BASE_PATH` If set, material and product paths passed to
+`in-toto-run` are searched relative to the set base path. Also, the base
+path is stripped from the paths written to the resulting link metadata
+file.
+
+##### Examples
+```shell
+# Bash style environment variable export
+export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
+export IN_TOTO_ARTIFACT_EXCLUDES='*.link:.gitignore'
+```
+```
+# E.g in rcfile ~/.in_totorc
+[in-toto settings]
+ARTIFACT_BASE_PATH=/home/user/project
+ARTIFACT_EXCLUDES=*.link:.gitignore
+
+```
 
 ## in-toto demo
 You can try in-toto by running the [demo application](https://github.com/in-toto/demo).
@@ -122,7 +152,7 @@ The demo basically outlines three users viz., Alice (project owner), Bob (functi
 ## Specification
 You can read more about how in-toto works by taking a look at the [specification](https://github.com/in-toto/docs/raw/master/in-toto-spec.pdf).
 
-## Acknowledgements
+## Acknowledgments
 This project is managed by Prof. Justin Cappos and other members of the
 [Secure Systems Lab](https://ssl.engineering.nyu.edu/) at NYU and the
 [NJIT Cybersecurity Research Center](https://centers.njit.edu/cybersecurity).
