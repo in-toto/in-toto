@@ -61,4 +61,7 @@ class Signable(ValidationMixin):
   representation of its fields"""
 
   def __repr__(self):
+    # Note: The string returned from this function is used to generate
+    # and verify signatures (c.f. `metadata.Metablock`). Changes to this
+    # function might break backwards compatibility with existing metadata.
     return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
