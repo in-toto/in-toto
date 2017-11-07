@@ -20,18 +20,13 @@
 import os
 import unittest
 import datetime
-from in_toto.models.common import Metablock
 import in_toto.models.link
 import in_toto.exceptions
 import securesystemslib.exceptions
 
 class TestMetablock(unittest.TestCase):
   """ Verifies that the metablock class is correct """
-
-  def test_metablock_is_indeed_abstract(self):
-    """ Ensure that a Metablock cannot be instantiated """
-    with self.assertRaises(NotImplementedError):
-      _ = Metablock()
+  pass
 
 if __name__ == "__main__":
   unittest.main()

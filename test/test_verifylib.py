@@ -28,13 +28,15 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import in_toto.settings
+from in_toto.models.metadata import Metablock
 from in_toto.models.link import Link, FILENAME_FORMAT
 from in_toto.models.layout import Step, Inspection, Layout
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections, in_toto_verify,
-    verify_sublayouts, get_summary_link, _raise_on_bad_retval)
+    verify_sublayouts, get_summary_link, _raise_on_bad_retval,
+    load_links_for_layout)
 from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
@@ -79,16 +81,13 @@ class TestRunAllInspections(unittest.TestCase):
 
     # Create layout with one inspection
     self.layout = Layout.read({
-      "signed": {
         "_type": "layout",
         "steps": [],
         "inspect": [{
           "name": "touch-bar",
           "run": "touch bar",
         }]
-      },
-      "signatures": []
-    })
+      })
 
     # Create directory where the verification will take place
     self.working_dir = os.getcwd()
@@ -110,9 +109,9 @@ class TestRunAllInspections(unittest.TestCase):
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
     run_all_inspections(self.layout)
-    link = Link.read_from_file("touch-bar.link")
-    self.assertListEqual(link.materials.keys(), ["foo"])
-    self.assertListEqual(sorted(link.products.keys()), sorted(["foo", "bar"]))
+    link = Metablock.load("touch-bar.link")
+    self.assertListEqual(link.signed.materials.keys(), ["foo"])
+    self.assertListEqual(sorted(link.signed.products.keys()), sorted(["foo", "bar"]))
 
     in_toto.settings.ARTIFACT_BASE_PATH = None
     shutil.rmtree(ignore_dir)
@@ -120,15 +119,12 @@ class TestRunAllInspections(unittest.TestCase):
   def test_inspection_fail_with_non_zero_retval(self):
     """Test fail run inspections with non-zero return value. """
     layout = Layout.read({
-      "signed" : {
         "_type": "layout",
         "steps": [],
         "inspect": [{
           "name": "non-zero-inspection",
           "run": "expr 1 / 0",
         }]
-      },
-      "signatures": []
     })
     with self.assertRaises(BadReturnValueError):
       run_all_inspections(layout)
@@ -472,7 +468,8 @@ class TestVerifyMatchRule(unittest.TestCase):
 
     # Note: For simplicity the Links don't have all usually required fields set
     self.links = {
-        "link-1" : Link(name="link-1", materials=materials, products=products),
+        "link-1" : Metablock(signed=Link(
+            name="link-1", materials=materials, products=products)),
     }
 
 
@@ -698,7 +695,7 @@ class TestVerifyItemRules(unittest.TestCase):
         "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
 
     self.links = {
-      "item": Link(name="item",
+      "item": Metablock(signed=Link(name="item",
           materials={
               "foo": {"sha256": self.sha256_1},
               "foobar": {"sha256": self.sha256_1},
@@ -709,7 +706,7 @@ class TestVerifyItemRules(unittest.TestCase):
               "foo": {"sha256": self.sha256_1},
               "bar": {"sha256": self.sha256_2}
           }
-      )
+      ))
     }
 
   def test_pass_material_rules_with_each_rule_type(self):
@@ -798,14 +795,14 @@ class TestVerifyAllItemRules(unittest.TestCase):
     ]
 
     self.links = {
-      "write-code" : Link(name="write-code",
+      "write-code" : Metablock(signed=Link(name="write-code",
           products={
               "foo": {
                   "sha256": self.sha256_foo
               }
           }
-      ),
-      "package" : Link(name="package",
+      )),
+      "package" : Metablock(signed=Link(name="package",
           materials={
               "foo": {
                   "sha256": self.sha256_foo
@@ -816,8 +813,8 @@ class TestVerifyAllItemRules(unittest.TestCase):
                   "sha256": self.sha256_foo_tar
               }
           }
-      ),
-        "untar" : Link(name="untar",
+      )),
+        "untar" : Metablock(signed=Link(name="untar",
             materials={
                 "foo.tar.gz": {
                     "sha256": self.sha256_foo_tar
@@ -828,7 +825,7 @@ class TestVerifyAllItemRules(unittest.TestCase):
                     "sha256": self.sha256_foo
                 },
             }
-        )
+        ))
     }
 
   def test_pass_verify_all_step_rules(self):
@@ -882,7 +879,7 @@ class TestInTotoVerify(unittest.TestCase):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # Load layout template
-    layout_template = Layout.read_from_file("demo.layout.template")
+    layout_template = Metablock.load("demo.layout.template")
 
     # Store various layout paths to be used in tests
     self.layout_single_signed_path = "single-signed.layout"
@@ -925,21 +922,21 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing step rule
     layout = copy.deepcopy(layout_template)
-    layout.steps[0].expected_products.insert(0,
+    layout.signed.steps[0].expected_products.insert(0,
         ["MODIFY", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_step_rule_path)
 
     # dump layout with failing inspection rule
     layout = copy.deepcopy(layout_template)
-    layout.inspect[0].expected_materials.insert(0,
+    layout.signed.inspect[0].expected_materials.insert(0,
         ["MODIFY", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_rule_path)
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
-    layout.inspect[0].run = ["expr",  "1", "/", "0"]
+    layout.signed.inspect[0].run = ["expr",  "1", "/", "0"]
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
@@ -951,40 +948,40 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
-    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_passing_double_signed_layout(self):
     """Test pass verification of double-signed layout. """
-    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout = Metablock.load(self.layout_double_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_wrong_key(self):
     """Test fail verification with wrong layout key. """
-    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_bad_signature(self):
     """Test fail verification with bad layout signature. """
-    layout = Layout.read_from_file(self.layout_bad_sig)
+    layout = Metablock.load(self.layout_bad_sig)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_missing_key(self):
     """Test fail verification with missing layout key. """
-    layout = Layout.read_from_file(self.layout_double_signed_path)
+    layout = Metablock.load(self.layout_double_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
     """Test fail verification with expired layout. """
-    layout = Layout.read_from_file(self.layout_expired_path)
+    layout = Metablock.load(self.layout_expired_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
     with self.assertRaises(LayoutExpiredError):
       in_toto_verify(layout, layout_key_dict)
@@ -992,7 +989,7 @@ class TestInTotoVerify(unittest.TestCase):
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
     os.rename("package.c1ae1e51.link", "package.link.bak")
-    layout = Layout.read_from_file(self.layout_single_signed_path)
+    layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
       in_toto_verify(layout, layout_key_dict)
@@ -1000,21 +997,21 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
-    layout = Layout.read_from_file(self.layout_failing_inspection_retval)
+    layout = Metablock.load(self.layout_failing_inspection_retval)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(BadReturnValueError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step artifact rule. """
-    layout = Layout.read_from_file(self.layout_failing_step_rule_path)
+    layout = Metablock.load(self.layout_failing_step_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection artifact rule. """
-    layout = Layout.read_from_file(self.layout_failing_inspection_rule_path)
+    layout = Metablock.load(self.layout_failing_inspection_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
@@ -1050,7 +1047,7 @@ class TestVerifySublayouts(unittest.TestCase):
     alice_pub = import_rsa_key_from_file("alice.pub")
 
     # Copy, sign and dump sub layout as link from template
-    layout_template = Layout.read_from_file("demo.layout.template")
+    layout_template = Metablock.load("demo.layout.template")
     sub_layout = copy.deepcopy(layout_template)
     sub_layout_name = "sub_layout"
     sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
@@ -1068,8 +1065,7 @@ class TestVerifySublayouts(unittest.TestCase):
     self.super_layout.steps.append(sub_layout_step)
 
     # Load the super layout links (i.e. the sublayout)
-    self.super_layout_links = \
-        self.super_layout.import_step_metadata_from_files_as_dict()
+    self.super_layout_links = load_links_for_layout(self.super_layout)
 
   @classmethod
   def tearDownClass(self):
@@ -1110,9 +1106,9 @@ class TestGetSummaryLink(unittest.TestCase):
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
-    self.demo_layout = Layout.read_from_file("demo.layout.template")
-    self.code_link = Link.read_from_file("package.c1ae1e51.link")
-    self.package_link = Link.read_from_file("write-code.0c6c50a1.link")
+    self.demo_layout = Metablock.load("demo.layout.template")
+    self.code_link = Metablock.load("package.c1ae1e51.link")
+    self.package_link = Metablock.load("write-code.0c6c50a1.link")
     self.demo_links = {
         "write-code": self.code_link,
         "package": self.package_link
@@ -1126,16 +1122,17 @@ class TestGetSummaryLink(unittest.TestCase):
 
   def test_get_summary_link_from_demo_layout(self):
     """Create summary link from demo link files and compare properties. """
-    sum_link = get_summary_link(self.demo_layout, self.demo_links)
-    self.assertEquals(sum_link._type, self.code_link._type)
-    self.assertEquals(sum_link.name, self.code_link.name)
-    self.assertEquals(sum_link.materials, self.code_link.materials)
+    sum_link = get_summary_link(self.demo_layout.signed, self.demo_links)
 
-    self.assertEquals(sum_link.products, self.package_link.products)
-    self.assertEquals(sum_link.command, self.package_link.command)
-    self.assertEquals(sum_link.byproducts, self.package_link.byproducts)
-    self.assertEquals(sum_link.byproducts.get("return-value"),
-        self.package_link.byproducts.get("return-value"))
+    self.assertEquals(sum_link.signed._type, self.code_link.signed._type)
+    self.assertEquals(sum_link.signed.name, self.code_link.signed.name)
+    self.assertEquals(sum_link.signed.materials, self.code_link.signed.materials)
+
+    self.assertEquals(sum_link.signed.products, self.package_link.signed.products)
+    self.assertEquals(sum_link.signed.command, self.package_link.signed.command)
+    self.assertEquals(sum_link.signed.byproducts, self.package_link.signed.byproducts)
+    self.assertEquals(sum_link.signed.byproducts.get("return-value"),
+        self.package_link.signed.byproducts.get("return-value"))
 
 
 if __name__ == "__main__":

@@ -28,19 +28,20 @@ import sys
 import argparse
 
 import in_toto.log as log
-import in_toto.models.layout
 import in_toto.util
 from in_toto import verifylib
+from in_toto.models.metadata import Metablock
 
 def in_toto_verify(layout_path, layout_key_paths):
   """
   <Purpose>
-    Loads the layout and the layout keys from the paths and
-    calls verifylib.in_toto_verify and handles exceptions.
+    Loads the layout metadata as Metablock object (containg a Layout object)
+    and the signature verification keys from the passed paths,
+    calls   verifylib.in_toto_verify   and handles exceptions.
 
   <Arguments>
     layout_path:
-            Path to the layout that is being verified.
+            Path to layout metadata file that is being verified.
 
     layout_key_paths:
             List of paths to project owner public keys, used to verify the
@@ -60,7 +61,7 @@ def in_toto_verify(layout_path, layout_key_paths):
     log.info("Verifying software supply chain...")
 
     log.info("Reading layout...")
-    layout = in_toto.models.layout.Layout.read_from_file(layout_path)
+    layout = Metablock.load(layout_path)
 
     log.info("Reading layout key(s)...")
     layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(

@@ -39,153 +39,28 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
 import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
 
-# import validators
-import in_toto.models.common as models__common
-import in_toto.models.link as models__link
-
-class Layout(models__common.Metablock):
-  """
-  The layout specifies each of the different steps and the requirements for
-  each step, as well as the public keys functionaries used to perform these
-  steps.
-
-  The layout also specifies additional steps called inspections
-  that are carried out during the verification.
-
-  Both steps and inspections can list rules that define how steps are
-  interconnected by their materials and products.
-
-  Layouts define a software supply chain and can be signed, dumped to a file,
-  and instantiated from a file.
-
-  <Attributes>
-    signed: A LayoutSignable object (described below)
-    signatures: the signatures computed on the LayoutSignable object
-
-  """
-
-  def get_signable(self):
-    """ Since Layout is a subclass of Metablock, it needs to implement
-    get_signable and return a LayoutSignable (described below)"""
-    return LayoutSignable
-
-  def dump(self, filename='root.layout'):
-    """Write pretty printed JSON represented of self to a file with filename.
-    If no filename is specified 'root.layout' is used as default """
-    super(Layout, self).dump(filename)
-
-
-  @staticmethod
-  def read_from_file(filename='root.layout'):
-    """Static method to instantiate a new Layout object from a
-    canonical JSON serialized file """
-    with open(filename, 'r') as fp:
-      return Layout.read(json.load(fp))
-
-
-  @staticmethod
-  def read(data):
-    """Static method to instantiate a new Layout from a Python dictionary """
-    signatures = data.get('signatures', [])
-    steps = []
-
-    for step_data in data.get("signed", {}).get("steps"):
-      steps.append(Step.read(step_data))
-    data['signed']["steps"] = steps
-
-    inspections = []
-    for inspect_data in data.get("signed", {}).get("inspect"):
-      inspections.append(Inspection.read(inspect_data))
-    data['signed']["inspect"] = inspections
-
-    return Layout(**data)
-
-  def import_step_metadata_from_files_as_dict(self):
-    """
-    <Purpose>
-      Iteratively loads metadata files for each Step of the Layout
-      from disk, checks whether they are of type link or layout
-      and loads them with the according function.
-      Returns a dict with Link names as keys and a dict as values.
-      The inner dict contains key_id as keys and link objects
-      as values.
-
-    <Arguments>
-      None
-
-    <Exceptions>
-      TBA (see https://github.com/in-toto/in-toto/issues/6)
-
-    <Side Effects>
-      Calls functions to read files from disk
-
-    <Returns>
-      A dictionary with Link names as keys and a dict (key_id Link objects)
-      as values.
-
-    """
-    step_link_dict = {}
-
-    # Iterate over all the steps in the layout
-    for step in self.steps:
-      key_link_dict = {}
-
-      for keyid in step.pubkeys:
-        filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
-
-        # load the link object from the file
-        try:
-          with open(filename, 'r') as fp:
-            link_obj = json.load(fp)
-
-        # We try to load a link for every authorized functionary, but don't fail
-        # if the file does not exist (authorized != required)
-        # FIXME: Should we really pass on IOError, or just skip inexistent links
-        except IOError as e:
-          pass
-
-        else:
-          # Check whether the object is of type link or layout
-          # and load it accordingly
-          if link_obj.get('signed', {}).get("_type") == "link":
-            link = models__link.Link.read(link_obj)
-
-          elif link_obj.get('signed', {}).get("_type") == "layout":
-            link = Layout.read(link_obj)
-
-          else:
-            raise in_toto.exceptions.LinkNotFoundError("Invalid format. '{0}'"
-                " is not a valid in-toto 'Link' or 'Layout' metadata file."
-                .format(filename))
-
-          key_link_dict[keyid] = link
-
-      # Check if the step has been performed by enough number of functionaries
-      if len(key_link_dict) < step.threshold:
-
-        raise in_toto.exceptions.LinkNotFoundError("Step '{0}' requires '{1}'"
-            " link metadata file(s), found '{2}'."
-            .format(step.name, step.threshold, len(key_link_dict)))
-
-      step_link_dict[step.name] = key_link_dict
-
-    return step_link_dict
 
 
 @attr.s(repr=False, init=False)
-class LayoutSignable(models__common.Signable):
+class Layout(Signable):
   """
-  A layout is the signed statement of a supply chain's structure.
+  A layout lists the sequence of steps of the software supply chain, and the
+  functionaries authorized to perform these steps.
 
-  This object hold the *signable* part of the layout file. That is, the part
-  from which the link's signature field will be computed.
+  The object should be contained in a generic Metablock object, which
+  provides functionality for signing and signature verification, and reading
+  from and writing to disk.
 
   <Attributes>
+    _type:
+        "layout"
+
     steps:
         a list of Step objects
 
@@ -200,6 +75,10 @@ class LayoutSignable(models__common.Signable):
     expires:
         the expiration date of a layout
 
+    readme:
+        a human readable description of the software supply chain defined
+        by the layout
+
   """
   _type = attr.ib()
   steps = attr.ib()
@@ -209,7 +88,7 @@ class LayoutSignable(models__common.Signable):
   readme = attr.ib()
 
   def __init__(self, **kwargs):
-    super(LayoutSignable, self).__init__()
+    super(Layout, self).__init__()
     self._type = "layout"
     self.steps = kwargs.get("steps", [])
     self.inspect = kwargs.get("inspect", [])
@@ -221,6 +100,26 @@ class LayoutSignable(models__common.Signable):
         relativedelta(months=1)).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
     self.validate()
+
+
+  @staticmethod
+  def read(data):
+    """Static method to instantiate a Layout and containing Step and Inspection
+    objects from a dictionary, e.g.:
+    {"steps": [<step data>, ...], "inspect": [<inspection data>, ...]} """
+    steps = []
+
+    for step_data in data.get("steps"):
+      steps.append(Step.read(step_data))
+    data["steps"] = steps
+
+    inspections = []
+    for inspect_data in data.get("inspect"):
+      inspections.append(Inspection.read(inspect_data))
+    data["inspect"] = inspections
+
+    return Layout(**data)
+
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
@@ -294,7 +193,7 @@ class LayoutSignable(models__common.Signable):
       names_seen.add(inspection.name)
 
 @attr.s(repr=False, init=False)
-class Step(models__common.ValidationMixin):
+class Step(ValidationMixin):
   """
   Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
@@ -402,7 +301,7 @@ class Step(models__common.ValidationMixin):
 
 
 @attr.s(repr=False, init=False)
-class Inspection(models__common.ValidationMixin):
+class Inspection(ValidationMixin):
   """
   Represents an inspection which performs a command during layout verification.
 

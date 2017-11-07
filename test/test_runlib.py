@@ -24,7 +24,7 @@ import shutil
 import tempfile
 
 import in_toto.settings
-from in_toto.models.link import Link
+from in_toto.models.metadata import Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns)
@@ -282,19 +282,19 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify recorded byproduct. """
     link = in_toto_run(self.step_name, None, None, ["echo", "test"],
         record_streams=True)
-    self.assertTrue("test" in link.byproducts.get("stdout"))
+    self.assertTrue("test" in link.signed.byproducts.get("stdout"))
 
   def test_in_toto_run_without_byproduct(self):
     """Successfully run, verify byproduct is not recorded. """
     link = in_toto_run(self.step_name, None, None, ["echo", "test"],
         record_streams=False)
-    self.assertFalse(len(link.byproducts.get("stdout")))
+    self.assertFalse(len(link.signed.byproducts.get("stdout")))
 
   def test_in_toto_run_compare_dumped_with_returned_link(self):
     """Successfully run, compare dumped link is equal to returned link. """
     link = in_toto_run(self.step_name, [self.test_artifact],
         [self.test_artifact], ["echo", "test"], self.key, True)
-    link_dump = Link.read_from_file(
+    link_dump = Metablock.load(
         FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEquals(repr(link), repr(link_dump))
 
@@ -302,13 +302,13 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify properly recorded artifacts. """
     link = in_toto_run(self.step_name, [self.test_artifact],
         [self.test_artifact], ["echo", "test"])
-    self.assertEqual(link.materials.keys(),
-        link.products.keys(), [self.test_artifact])
+    self.assertEqual(link.signed.materials.keys(),
+        link.signed.products.keys(), [self.test_artifact])
 
   def test_in_toto_run_verify_workdir(self):
     """Successfully run, verify cwd. """
     link = in_toto_run(self.step_name, [], [], ["echo", "test"])
-    self.assertEquals(link.environment["workdir"], os.getcwd())
+    self.assertEquals(link.signed.environment["workdir"], os.getcwd())
 
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
@@ -350,7 +350,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
-  def test_unfinished_filename_format(self):
+  def test_UNFINISHED_FILENAME_FORMAT(self):
     """Test if the unfinished filname format. """
     self.assertTrue(self.link_name_unfinished ==
         ".{}.{:.8}.link-unfinished".format(self.step_name, self.key["keyid"]))
@@ -359,15 +359,15 @@ class TestInTotoRecordStart(unittest.TestCase):
     """Test record start creates metadata with expected material. """
     in_toto_record_start(
         self.step_name, self.key, [self.test_material])
-    link = Link.read_from_file(self.link_name_unfinished)
-    self.assertEquals(link.materials.keys(), [self.test_material])
+    link = Metablock.load(self.link_name_unfinished)
+    self.assertEquals(link.signed.materials.keys(), [self.test_material])
     os.remove(self.link_name_unfinished)
 
   def test_create_unfininished_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(
         self.step_name, self.key, [self.test_material])
-    link = Link.read_from_file(self.link_name_unfinished)
+    link = Metablock.load(self.link_name_unfinished)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name_unfinished)
 
@@ -409,23 +409,23 @@ class TestInTotoRecordStop(unittest.TestCase):
     """Test record stop records expected product. """
     in_toto_record_start(self.step_name, self.key, [])
     in_toto_record_stop(self.step_name, self.key, [self.test_product])
-    link = Link.read_from_file(self.link_name)
-    self.assertEquals(link.products.keys(), [self.test_product])
+    link = Metablock.load(self.link_name)
+    self.assertEquals(link.signed.products.keys(), [self.test_product])
     os.remove(self.link_name)
 
   def test_create_metadata_with_expected_cwd(self):
     """Test record start/stop run, verify cwd. """
     in_toto_record_start(self.step_name, self.key, [])
     in_toto_record_stop(self.step_name, self.key, [self.test_product])
-    link = Link.read_from_file(self.link_name)
-    self.assertEquals(link.environment["workdir"], os.getcwd())
+    link = Metablock.load(self.link_name)
+    self.assertEquals(link.signed.environment["workdir"], os.getcwd())
     os.remove(self.link_name)
 
   def test_create_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(self.step_name, self.key, [])
     in_toto_record_stop(self.step_name, self.key, [])
-    link = Link.read_from_file(self.link_name)
+    link = Metablock.load(self.link_name)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name)
 

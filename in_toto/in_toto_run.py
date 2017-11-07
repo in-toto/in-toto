@@ -33,7 +33,6 @@ import os
 import sys
 import argparse
 from in_toto import (util, runlib, log)
-from in_toto.models.link import Link
 
 def in_toto_run(step_name, material_list, product_list,
     link_cmd_args, key, record_streams):
