@@ -92,7 +92,7 @@ def record_artifacts_as_dict(artifacts):
     Paths are normalized for matching and storing by left stripping "./"
 
     Excludes files that are matched by the file patterns specified in
-    ARTIFACT_EXCLUDES setting.
+    ARTIFACT_EXCLUDE_PATTERNS setting.
 
     EXCLUDES:
       - Uses Python fnmatch
@@ -124,7 +124,7 @@ def record_artifacts_as_dict(artifacts):
 
   <Exceptions>
     in_toto.exceptions.SettingsError
-        if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDES can't be used
+        if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDE_PATTERNS can't be used
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -152,19 +152,19 @@ def record_artifacts_as_dict(artifacts):
   for path in artifacts:
     norm_artifacts.append(os.path.normpath(path))
 
-  # If ARTIFACT_EXCLUDES is set it must be a list of strings or an empty list
+  # If ARTIFACT_EXCLUDE_PATTERNS is set it must be a list of strings or an empty list
   # TODO: Change NAMES_SCHEMA to something more semantically accurate
-  if (in_toto.settings.ARTIFACT_EXCLUDES and not
+  if (in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS and not
       securesystemslib.formats.NAMES_SCHEMA.matches(
-      in_toto.settings.ARTIFACT_EXCLUDES)):
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)):
     raise in_toto.exceptions.SettingsError(
-        "Review your ARTIFACT_EXCLUDES setting '{}'".format(
-        in_toto.settings.ARTIFACT_EXCLUDES))
+        "Review your ARTIFACT_EXCLUDE_PATTERNS setting '{}'".format(
+        in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS))
 
   # Iterate over remaining normalized artifact paths after
   # having applied exclusion patterns
   for artifact in _apply_exclude_patterns(norm_artifacts,
-      in_toto.settings.ARTIFACT_EXCLUDES):
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
 
     if not os.path.exists(artifact):
       log.warn("path: {} does not exist, skipping..".format(artifact))
@@ -184,7 +184,8 @@ def record_artifacts_as_dict(artifacts):
           dirpaths.append(norm_dirpath)
 
         # Apply exlcude patterns on normalized dirpaths
-        dirpaths = _apply_exclude_patterns(dirpaths, in_toto.settings.ARTIFACT_EXCLUDES)
+        dirpaths = _apply_exclude_patterns(dirpaths,
+            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)
 
         # Reset and refill dirs with remaining names after exclusion
         # Modify (not reassign) dirnames to only recurse into remaining dirs
@@ -211,7 +212,7 @@ def record_artifacts_as_dict(artifacts):
         # store each remaining normalized filepath with it's files hash to
         # the resulting artifact dict
         for filepath in _apply_exclude_patterns(filepaths,
-            in_toto.settings.ARTIFACT_EXCLUDES):
+            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
           artifacts_dict[filepath] = _hash_artifact(filepath)
 
   # Change back to where original current working dir

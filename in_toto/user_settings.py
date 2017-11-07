@@ -49,7 +49,7 @@ RC_PATHS = [
 # TODO: Should we use `dir` on the module instead? If we list them here, we
 # have to manually update if `settings.py` changes.
 IN_TOTO_SETTINGS = [
-  "ARTIFACT_EXCLUDES", "ARTIFACT_BASE_PATH"
+  "ARTIFACT_EXCLUDE_PATTERNS", "ARTIFACT_BASE_PATH"
 ]
 
 
@@ -80,7 +80,7 @@ def get_env():
     ```
     # Exporting variables in e.g. bash
     export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
-    export IN_TOTO_ARTIFACT_EXCLUDES='*.link:.gitignore'
+    export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
     ```
 
     produces
@@ -88,7 +88,7 @@ def get_env():
     ```
     {
       "ARTIFACT_BASE_PATH": "/home/user/project"
-      "ARTIFACT_EXCLUDES": ["*.link", ".gitignore"]
+      "ARTIFACT_EXCLUDE_PATTERNS": ["*.link", ".gitignore"]
     }
     ```
 
@@ -138,7 +138,7 @@ def get_rc():
     # E.g. file `.in_totorc` in current working directory
     [in-toto setting]
     ARTIFACT_BASE_PATH = /home/user/project
-    ARTIFACT_EXCLUDES = *.link:.gitignore
+    ARTIFACT_EXCLUDE_PATTERNS = *.link:.gitignore
     ```
 
     produces
@@ -146,7 +146,7 @@ def get_rc():
     ```
     {
       "ARTIFACT_BASE_PATH": "/home/user/project"
-      "ARTIFACT_EXCLUDES": ["*.link", ".gitignore"]
+      "ARTIFACT_EXCLUDE_PATTERNS": ["*.link", ".gitignore"]
     }
     ```
 

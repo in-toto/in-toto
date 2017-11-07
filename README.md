@@ -122,7 +122,7 @@ Also, setting values that contain colons are parsed as list.
 
 ##### Available Settings
 
-`ARTIFACT_EXCLUDES` Specifies a list of glob patterns that can be used to
+`ARTIFACT_EXCLUDE_PATTERNS` Specifies a list of glob patterns that can be used to
 exclude files from being recorded as materials or products. See [runlib
 docs for more details](https://github.com/in-toto/in-toto/blob/develop/in_toto/runlib.py#L93-L114).
 
@@ -135,13 +135,13 @@ file.
 ```shell
 # Bash style environment variable export
 export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
-export IN_TOTO_ARTIFACT_EXCLUDES='*.link:.gitignore'
+export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
 ```
 ```
 # E.g in rcfile ~/.in_totorc
 [in-toto settings]
 ARTIFACT_BASE_PATH=/home/user/project
-ARTIFACT_EXCLUDES=*.link:.gitignore
+ARTIFACT_EXCLUDE_PATTERNS=*.link:.gitignore
 
 ```
 

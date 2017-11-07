@@ -99,10 +99,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     self.working_dir = os.getcwd()
 
-    # Backup and clear user set excludes and base path
-    self.artifact_exclude_orig = in_toto.settings.ARTIFACT_EXCLUDES
+    # Backup and clear user set exclude patterns and base path
+    self.artifact_exclude_orig = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
     self.artifact_base_path_orig = in_toto.settings.ARTIFACT_BASE_PATH
-    in_toto.settings.ARTIFACT_EXCLUDES = []
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
     in_toto.settings.ARTIFACT_BASE_PATH = None
 
     # mkdtemp uses $TMPDIR, which might contain a symlink
@@ -129,12 +129,12 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Change back to working dir, remove temp directory, restore settings. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
-    in_toto.settings.ARTIFACT_EXCLUDES = self.artifact_exclude_orig
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = self.artifact_exclude_orig
     in_toto.settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
 
   def tearDown(self):
     """Clear the ARTIFACT_EXLCUDES after every test. """
-    in_toto.settings.ARTIFACT_EXCLUDES = []
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
     in_toto.settings.ARTIFACT_BASE_PATH = None
 
   def test_bad_base_path_setting(self):
@@ -196,7 +196,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   def test_record_dot_exclude_star_foo_star_from_recording(self):
     """Traverse dot. Exclude pattern. Record one file. """
-    in_toto.settings.ARTIFACT_EXCLUDES = ["*foo*"]
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*foo*"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
     securesystemslib.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
@@ -204,20 +204,20 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   def test_exclude_subdir(self):
     """Traverse dot. Exclude subdir (and subsubdir). """
-    in_toto.settings.ARTIFACT_EXCLUDES = ["*subdir"]
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subdir"]
     artifacts_dict = record_artifacts_as_dict(["."])
     self.assertListEqual(sorted(artifacts_dict.keys()), sorted(["bar", "foo"]))
 
   def test_exclude_files_in_subdir(self):
     """Traverse dot. Exclude files in subdir but not subsubdir. """
-    in_toto.settings.ARTIFACT_EXCLUDES = ["*foosub?"]
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*foosub?"]
     artifacts_dict = record_artifacts_as_dict(["."])
     self.assertListEqual(sorted(artifacts_dict.keys()),
       sorted(["bar", "foo", "subdir/subsubdir/foosubsub"]))
 
   def test_exclude_subsubdir(self):
     """Traverse dot. Exclude subsubdir. """
-    in_toto.settings.ARTIFACT_EXCLUDES = ["*subsubdir"]
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subsubdir"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
     for key, val in artifacts_dict.iteritems():
@@ -226,10 +226,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     self.assertListEqual(sorted(artifacts_dict.keys()),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
-  def test_bad_artifact_excludes_setting(self):
-    """Raise exception with bogus artifact excludes settings. """
+  def test_bad_artifact_exclude_patterns_setting(self):
+    """Raise exception with bogus artifact exclude patterns settings. """
     for setting in ["not a list of settings", 12345, True]:
-      in_toto.settings.ARTIFACT_EXCLUDES = setting
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
         print setting
         record_artifacts_as_dict(["."])

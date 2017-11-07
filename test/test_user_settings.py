@@ -38,7 +38,7 @@ class TestUserSettings(unittest.TestCase):
     self.test_dir = os.path.join(os.path.dirname(__file__), "rc_test")
     os.chdir(self.test_dir)
 
-    os.environ["IN_TOTO_ARTIFACT_EXCLUDES"] = "e:n:v"
+    os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"] = "e:n:v"
     os.environ["IN_TOTO_ARTIFACT_BASE_PATH"] = "e/n/v"
     os.environ["IN_TOTO_not_whitelisted"] = "parsed"
     os.environ["NOT_PARSED"] = "ignored"
@@ -55,7 +55,7 @@ class TestUserSettings(unittest.TestCase):
     rc_dict = in_toto.user_settings.get_rc()
 
     # Parsed (and split) and used by `set_settings` to monkeypatch settings
-    self.assertListEqual(rc_dict["ARTIFACT_EXCLUDES"], ["r", "c", "file"])
+    self.assertListEqual(rc_dict["ARTIFACT_EXCLUDE_PATTERNS"], ["r", "c", "file"])
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
     self.assertEquals(rc_dict["artifact_base_path"], "r/c/file")
@@ -70,7 +70,8 @@ class TestUserSettings(unittest.TestCase):
     self.assertEquals(env_dict["ARTIFACT_BASE_PATH"], "e/n/v")
 
     # Parsed (and split) but overriden by rcfile setting in `set_settings`
-    self.assertListEqual(env_dict["ARTIFACT_EXCLUDES"], ["e", "n", "v"])
+    self.assertListEqual(env_dict["ARTIFACT_EXCLUDE_PATTERNS"],
+        ["e", "n", "v"])
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
     self.assertEquals(env_dict["not_whitelisted"], "parsed")
@@ -87,7 +88,8 @@ class TestUserSettings(unittest.TestCase):
     self.assertEquals(in_toto.settings.ARTIFACT_BASE_PATH, "e/n/v")
 
     # From RCfile setting (has precedence over envvar setting)
-    self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDES, ["r", "c", "file"])
+    self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS,
+        ["r", "c", "file"])
 
     # Not whitelisted rcfile settings are ignored by `set_settings`
     self.assertTrue("new_rc_setting" in in_toto.user_settings.get_rc())
