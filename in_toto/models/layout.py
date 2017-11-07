@@ -104,7 +104,9 @@ class Layout(Signable):
 
   @staticmethod
   def read(data):
-    """Static method to instantiate a new Layout from a Python dictionary """
+    """Static method to instantiate a Layout and containing Step and Inspection
+    objects from a dictionary, e.g.:
+    {"steps": [<step data>, ...], "inspect": [<inspection data>, ...]} """
     steps = []
 
     for step_data in data.get("steps"):
