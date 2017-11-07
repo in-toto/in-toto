@@ -123,7 +123,8 @@ def record_artifacts_as_dict(artifacts):
             the link command.
 
   <Exceptions>
-    SettingsError if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDES can't be used
+    in_toto.exceptions.SettingsError
+        if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDES can't be used
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -151,7 +152,7 @@ def record_artifacts_as_dict(artifacts):
   for path in artifacts:
     norm_artifacts.append(os.path.normpath(path))
 
-  # If ARTIFACT_EXCLUDES is set it must be a list of strings or an empty
+  # If ARTIFACT_EXCLUDES is set it must be a list of strings or an empty list
   # TODO: Change NAMES_SCHEMA to something more semantically accurate
   if (in_toto.settings.ARTIFACT_EXCLUDES and not
       securesystemslib.formats.NAMES_SCHEMA.matches(

@@ -202,6 +202,11 @@ def set_settings():
   for setting in IN_TOTO_SETTINGS:
     user_setting = user_settings.get(setting)
     if user_setting:
-      log.info("Using setting {0}={1}".format(
+      log.info("Setting (user): {0}={1}".format(
           setting, user_setting))
       setattr(in_toto.settings, setting, user_setting)
+
+    else:
+      default_setting = getattr(in_toto.settings, setting)
+      log.info("Setting (default): {0}={1}".format(
+          setting, default_setting))

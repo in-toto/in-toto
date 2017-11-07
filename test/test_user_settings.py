@@ -33,7 +33,7 @@ class TestUserSettings(unittest.TestCase):
   def setUpClass(self):
     self.working_dir = os.getcwd()
 
-    # We use `demo_files` as test dir because it has an `.in_totorc`, which
+    # We use `rc_test` as test dir because it has an `.in_totorc`, which
     # is loaded (from CWD) in `user_settings.set_settings` related tests
     self.test_dir = os.path.join(os.path.dirname(__file__), "rc_test")
     os.chdir(self.test_dir)

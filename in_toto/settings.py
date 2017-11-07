@@ -42,5 +42,6 @@ ARTIFACT_EXCLUDES = ["*.link*", ".git", "*.pyc", "*~"]
 
 # Used as base path for --materials and --products arguments when running
 # in-toto-run/in-toto-record
+# If not set the current working directory is used as base path
 # FIXME: Do we want different base paths for materials and products?
 ARTIFACT_BASE_PATH = None
