@@ -12,36 +12,36 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Mostly for things that will eventually be moved to
-  separate configuration files or command line arguments.
+  A central place to define default settings that can be used throughout the
+  package.
 
-  Note:
-  This used to be a global settings file for in_toto and its submodules using
-  `simple_settings`. Since submodules were removed `simple_settings` is no
-  longer needed.
-
-  The former submodule and now external dependency `securesystemslib` has its
-  own settings file, that should henceforth be used programmatically.
-
-  E.g.:
-  ```
-  import securesystemslib.settings
-  securesystemslib.settings.RSA_CRYPTO_LIBRARY = "pyca-cryptography" # default
-  ```
+  Defaults can be changed,
+   - here (hardcoded),
+   - programmatically, e.g.
+     ```
+     import in_toto.settings
+     in_toto.settings.ARTIFACT_BASE_PATH = "/home/user/project"
+     ```
+  - or, when using in-toto via command line tooling, with environment variables
+    or RCfiles, see the `in_toto.user_settings` module
 
 """
 import logging
 
 # Debug level INFO shows a bunch of stuff that is happening
+# FIXME: This setting currently can not be overridden with envvars or
+# rcfiles, because that would involve additional evaluation of the parsed
+# values. Let's ignore it for now and fix it with in-toto/in-toto#117
 LOG_LEVEL = logging.INFO
 # Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
 
-# FIXME: Add as command line argument or to config file, e.g .in-toto-ignore
-ARTIFACT_EXCLUDES = ["*.link*", ".git", "*.pyc", "*~"]
+
+# See docstring of `in-toto.record_artifacts_as_dict` for how this is used
+ARTIFACT_EXCLUDE_PATTERNS = ["*.link*", ".git", "*.pyc", "*~"]
 
 # Used as base path for --materials and --products arguments when running
 # in-toto-run/in-toto-record
-# FIXME: This is likely to become a command line argument
+# If not set the current working directory is used as base path
 # FIXME: Do we want different base paths for materials and products?
 ARTIFACT_BASE_PATH = None

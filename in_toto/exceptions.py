@@ -28,3 +28,7 @@ class LinkNotFoundError(Error):
 class AuthorizationError(Error):
   """Indicates that the link was signed by a non-authorized functionary. """
   pass
+
+class SettingsError(Error):
+  """Indicates an invalid setting. """
+  pass

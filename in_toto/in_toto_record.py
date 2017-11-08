@@ -47,6 +47,7 @@ import os
 import sys
 import argparse
 import in_toto.util
+import in_toto.user_settings
 from in_toto import runlib
 from in_toto import log
 
@@ -158,6 +159,9 @@ def main():
   # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.

@@ -58,6 +58,7 @@ import os
 import sys
 import json
 import argparse
+import in_toto.user_settings
 from in_toto import log, exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
@@ -206,6 +207,9 @@ def main():
 
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
 
   if args.verify and (args.append or args.output):
     parser.print_help()

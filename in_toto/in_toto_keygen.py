@@ -37,6 +37,7 @@ import argparse
 import json
 import getpass
 import in_toto.util
+import in_toto.user_settings
 from in_toto import log
 import securesystemslib.formats
 import securesystemslib.keys
@@ -90,6 +91,10 @@ def main():
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
   args = parse_args()
+
+  # Override defaults in settings.py with environment variables and RCfiles
+  in_toto.user_settings.set_settings()
+
   try:
     if args.prompt:
       in_toto.util.prompt_generate_and_write_rsa_keypair(args.name, args.bits)
