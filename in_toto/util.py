@@ -93,7 +93,7 @@ def import_rsa_key_from_file(filepath, password=None):
 
   if securesystemslib.keys.is_pem_private(rsa_pem):
     rsa_key = securesystemslib.keys.import_rsakey_from_private_pem(
-        rsa_pem, password)
+        rsa_pem, password=password)
 
   elif securesystemslib.keys.is_pem_public(rsa_pem):
     rsa_key = securesystemslib.keys.import_rsakey_from_public_pem(rsa_pem)
