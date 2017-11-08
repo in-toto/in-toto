@@ -988,12 +988,12 @@ class TestInTotoVerify(unittest.TestCase):
 
   def test_verify_failing_link_metadata_files(self):
     """Test fail verification with link metadata files not found. """
-    os.rename("package.c1ae1e51.link", "package.link.bak")
+    os.rename("package.2f89b927.link", "package.link.bak")
     layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
       in_toto_verify(layout, layout_key_dict)
-    os.rename("package.link.bak", "package.c1ae1e51.link")
+    os.rename("package.link.bak", "package.2f89b927.link")
 
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
@@ -1107,8 +1107,8 @@ class TestGetSummaryLink(unittest.TestCase):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     self.demo_layout = Metablock.load("demo.layout.template")
-    self.code_link = Metablock.load("package.c1ae1e51.link")
-    self.package_link = Metablock.load("write-code.0c6c50a1.link")
+    self.code_link = Metablock.load("package.2f89b927.link")
+    self.package_link = Metablock.load("write-code.776a00e2.link")
     self.demo_links = {
         "write-code": self.code_link,
         "package": self.package_link

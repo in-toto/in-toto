@@ -52,7 +52,7 @@ class TestInTotoSignTool(unittest.TestCase):
       shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
 
     self.layout_path = "demo.layout.template"
-    self.link_path = "package.c1ae1e51.link"
+    self.link_path = "package.2f89b927.link"
     self.alice_path = "alice"
     self.alice_pub_path = "alice.pub"
     self.bob_path= "bob"
@@ -131,11 +131,10 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 0)
     # Verify Link with alice's keyid as infix
     self._test_cli_sys_exit([
-        "-f", "package.20a893b8.link",
+        "-f", "package.556caebd.link",
         "-k", self.alice_pub_path,
         "--verify"
         ], 0)
-
 
   def test_fail_signing(self):
     """Fail signing with an invalid key. """

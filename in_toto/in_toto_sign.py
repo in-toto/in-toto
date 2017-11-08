@@ -45,8 +45,8 @@
 
   # Re-sign specified link
   # Since -o is not specified, write to default output filename, using the
-  # short id for priv_key as a filename infix (in place of "c1ae1e51")
-  in-toto-sign -f package.c1ae1e51.link -k priv_key
+  # short id for priv_key as a filename infix (in place of "2f89b927")
+  in-toto-sign -f package.2f89b927.link -k priv_key
 
   # Verify Layout signed with three keys
   in-toto-sign -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
