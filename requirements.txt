@@ -1,4 +1,4 @@
-securesystemslib==0.10.4
+securesystemslib==0.10.8
 sphinx
 attrs
 python-dateutil
