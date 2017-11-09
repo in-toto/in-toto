@@ -33,14 +33,41 @@
 """
 from setuptools import setup, find_packages
 
+version = "0.1.0"
+
+description = """
+A framework to define and secure the integrity of software supply chains"""
+
+long_description = """
+To learn more about in-toto visit our source code
+`repository on GitHub <https://github.com/in-toto/in-toto/tree/{version}>`__.
+""".format(version=version)
+
 setup(
   name="in-toto",
-  version="0.0.1",
+  version=version,
   author="New York University: Secure Systems Lab",
-  author_email=["santiago@nyu.edu", "lukas.puehringer@nyu.edu"],
-  description=("A framework to define and secure "
-               "the integrity of software supply chains"),
+  author_email="in-toto-dev@googlegroups.com",
+  url="https://in-toto.io",
+  description=description,
+  long_description=long_description,
   license="MIT",
+  keywords="software supply chain security",
+  classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'License :: Freely Distributable',
+    'Natural Language :: English',
+    'Operating System :: POSIX',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Topic :: Security',
+    'Topic :: Software Development'
+  ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
   install_requires=["six", "securesystemslib==0.10.8", "attrs", "canonicaljson",
                     "python-dateutil", "iso8601"],
