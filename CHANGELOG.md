@@ -1,4 +1,4 @@
 # Changelog
 
-## in-toto v0.1.0
+## in-toto v0.1.1
 * Initial pre-release

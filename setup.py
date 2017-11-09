@@ -33,15 +33,7 @@
 """
 from setuptools import setup, find_packages
 
-version = "0.1.0"
-
-description = """
-A framework to define and secure the integrity of software supply chains"""
-
-long_description = """
-To learn more about in-toto visit our source code
-`repository on GitHub <https://github.com/in-toto/in-toto/tree/{version}>`__.
-""".format(version=version)
+version = "0.1.1"
 
 setup(
   name="in-toto",
@@ -49,8 +41,12 @@ setup(
   author="New York University: Secure Systems Lab",
   author_email="in-toto-dev@googlegroups.com",
   url="https://in-toto.io",
-  description=description,
-  long_description=long_description,
+  description=("A framework to define and secure the integrity of "
+    "software supply chains"),
+  long_description=("To learn more about in-toto visit our source code "
+    "`repository on GitHub "
+    "<https://github.com/in-toto/in-toto/tree/{version}>`__."
+    .format(version=version)),
   license="MIT",
   keywords="software supply chain security",
   classifiers = [
