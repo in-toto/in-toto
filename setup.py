@@ -56,7 +56,7 @@ setup(
   classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-    'License :: Freely Distributable',
+    'License :: OSI Approved :: MIT License',
     'Natural Language :: English',
     'Operating System :: POSIX',
     'Operating System :: POSIX :: Linux',
