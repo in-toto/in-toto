@@ -20,7 +20,7 @@ The layout, signed by the project owners, together with the links, signed by the
 It is strongly recommended to install in-toto in an isolated Python environment. For easy setup instructions visit the docs for [`virtualenv`](https://virtualenv.pypa.io) and the convenient [`vitualenvwrapper`](https://virtualenvwrapper.readthedocs.io).
 
 ```shell
-pip install git+git://github.com/in-toto/in-toto.git
+pip install in-toto
 ```
 ### Create layout, run supply chain steps and verify final product
 
