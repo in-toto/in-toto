@@ -847,19 +847,23 @@ def verify_disallow_rule(rule, source_artifacts_queue):
 def verify_item_rules(source_name, source_type, rules, links):
   """
   <Purpose>
-    Iteratively apply passed material or product rules to enforce and authorize
-    artifacts reported by a link and/or to guarantee that artifacts are linked
-    together across links.
+    Iteratively apply all passed material or product rules of one item (step or
+    inspection) to enforce and authorize artifacts reported by the
+    corresponding link and/or to guarantee that artifacts are linked together
+    across links.
+    In the beginning all artifacts are placed in a queue according to their
+    type. If an artifact gets consumed by a rule it is removed from the queue,
+    hence an artifact can only be consumed once.
+
 
   <Algorithm>
       1.  Create materials queue and products queue, and a generic artifacts
           queue based on the source_type (materials or products)
-      2.  For each rule:
-          1.  Apply rule on queues
-          2.  If rule verification passes, update queues and continue
 
-      3.  After applying all rules the artifact queue must be empty. Raise
-          and exception otherwise.
+      2.  For each rule:
+          1.  Apply rule on corresponding queue(s)
+          2.  If rule verification passes, remove consumed items from the
+              corresponding queue(s) and continue with next rule
 
   <Arguments>
     source_name:
