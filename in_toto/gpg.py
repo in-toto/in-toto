@@ -13,6 +13,17 @@ import cryptography.hazmat.primitives.asymmetric.utils as rsautils
 GPG_SIGN_COMMAND = "gpg --detach-sign {keyarg}"
 GPG_EXPORT_PUBKEY_COMMAND = "gpg --export {keyid}"
 
+PACKET_TYPES = {
+        'signature_packet': 0x02,
+        'main_pubkey_packet': 0x06,
+        }
+SUPPORTED_SIGNATURE_PACKET_VERSIONS = {0x04}
+SUPPORTED_PUBKEY_PACKET_VERSIONS = {0x04}
+SUPPORTED_SIGNATURE_ALGORITHMS = {0x01}
+SUPPORTED_HASH_ALGORITHMS = {0x08}
+
+SIGNATURE_TYPE_CANONICAL = 0x00
+
 def gpg_verify_signature(signature_object, pubkey, content):
 
     e = int(pubkey['keyval']['public']['e'], 16)
@@ -114,7 +125,7 @@ def _parse_pubkey_packet(data):
 
     version_number = data[ptr]
     ptr += 1
-    if version_number != 4:
+    if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS:
         raise Exception("life is bad and I don't support this pubkey packet")
 
     time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
@@ -175,14 +186,14 @@ def _parse_signature_packet(data):
     # FIXME: support v4 type signatures (which I havent' seen in the wild)
     version_number = data[ptr]
     ptr += 1
-    if version_number != 4:
-        raise Exception("life is bad and I don't support this signature packet")
+    if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS:
+        raise Exception("Only version 4 packets are supported")
 
     # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
     signature_type = data[ptr]
     ptr += 1
-    if signature_type != 0:
-        raise Exception("life is bad and I don't support this signature type")
+    if signature_type != SIGNATURE_TYPE_CANONICAL:
+        raise Exception("We can only use canonical signatures on in-toto")
 
     signature_algorithm = data[ptr]
     ptr += 1
@@ -190,8 +201,11 @@ def _parse_signature_packet(data):
     hash_algorithm = data[ptr]
     ptr += 1
 
-    if signature_algorithm != 1 or hash_algorithm != 8:
-        raise Exception("This library only supports rsa+pkcsv1.5 and sha256");
+    if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
+        raise Exception("This library only supports RSA algorithms for now")
+
+    if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS:
+        raise Exception("This library only supports sha256 as the hash algorithm!")
 
     # obtain the hased octets.
     hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
