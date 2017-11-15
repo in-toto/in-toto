@@ -29,7 +29,7 @@ def gpg_verify_signature(signature_object, pubkey, content):
     hash_headers = binascii.unhexlify(signature['other-headers'])
     hasher.update(hash_headers)
     hasher.update(b'\x04\xff')
-    hasher.update(len(hash_headers).to_bytes(4, 'big'))
+    hasher.update(struct.pack(">I", len(hash_headers)))
 
     digest = hasher.finalize()
 
@@ -94,6 +94,7 @@ def gpg_export_pubkey(keyid):
 # pubkey packets are a little bit more complicated than the signature ones
 def _parse_pubkey_packet(data):
 
+    data = bytearray(data)
     packet_type = (data[0] & 0x3c ) >> 2
     packet_length = data[0] & 0x03
 
@@ -147,7 +148,7 @@ def _compute_keyid(pubkey_packet_data):
 
     hasher = hashing.Hash(hashing.SHA1(), backend=backends.default_backend())
     hasher.update(b'\x99')
-    hasher.update(pubkey_packet_data)
+    hasher.update(bytes(pubkey_packet_data))
     return binascii.hexlify(hasher.finalize())
 
 
@@ -156,6 +157,7 @@ def _compute_keyid(pubkey_packet_data):
 def _parse_signature_packet(data):
 
     # grab the header information first.
+    data = bytearray(data)
     packet_type = (data[0] & 0x3c ) >> 2
     packet_length = data[0] & 0x03
 
@@ -164,7 +166,7 @@ def _parse_signature_packet(data):
     other_headers_ptr = 0
     ptr = 3
     if packet_length == 1:
-        signature_length= struct.unpack(">H", data[1:ptr])[0]
+        signature_length = struct.unpack(">H", data[1:ptr])[0]
     else:
         signature_length = data[1]
         ptr = 2
@@ -211,7 +213,6 @@ def _parse_signature_packet(data):
     ptr += unhashed_octet_count
 
     left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
-    print("left hash bits {}".format(hex(left_hash_bits)))
     ptr += 2
 
     # Notice the /8 at the end, this length is the bitlength, not the length of
