@@ -35,7 +35,7 @@ import in_toto.user_settings
 from in_toto import (util, runlib, log)
 
 def in_toto_run(step_name, material_list, product_list,
-    link_cmd_args, key, record_streams):
+    link_cmd_args, key, record_streams, use_gpg=False):
   """
   <Purpose>
     Calls runlib.in_toto_run and catches exceptions
@@ -56,10 +56,15 @@ def in_toto_run(step_name, material_list, product_list,
     key:
             Private key to sign link metadata.
             Format is securesystemslib.formats.KEY_SCHEMA
+            If `use_gpg` is True, then this parameter is expected to be a
+            GPG keyid.
     record_streams:
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
+    use_gpg:
+            If true the `key` argument will be interpreted as GPG keyid
+
 
   <Exceptions>
     SystemExit if any exception occurs
@@ -73,7 +78,7 @@ def in_toto_run(step_name, material_list, product_list,
 
   try:
     runlib.in_toto_run(step_name, material_list, product_list,
-        link_cmd_args, key, record_streams)
+        link_cmd_args, key, record_streams, use_gpg)
   except Exception as e:
     log.error("in toto run - {}".format(e))
     sys.exit(1)
@@ -89,7 +94,8 @@ def main():
 
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n{0}"
+               " --key <functionary private key path or GPG keyid>\n{0}"
+               "[--use-gpg]\n{0}"
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-streams]\n{0}"
@@ -99,7 +105,7 @@ def main():
 
   in_toto_args = parser.add_argument_group("in-toto options")
 
-  # FIXME: Do we limit the allowed characters for the name?
+   # FIXME: Do we limit the allowed characters for the name?
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
@@ -110,7 +116,11 @@ def main():
       nargs='+', help="Files to record after link command execution")
 
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
-      help="Path to private key to sign link metadata (PEM)")
+      help="Path to private key to sign link metadata (PEM) or GPG keyid")
+
+  in_toto_args.add_argument("-g", "--use-gpg", dest="use_gpg", default=False,
+      action="store_true", help=("Load `--key <keyid>` from GPG keyring "
+      "instead of PEM file (EXPERIMENTAL)"))
 
   in_toto_args.add_argument("-b", "--record-streams",
       help="If set redirects stdout/stderr and stores to link metadata",
@@ -139,11 +149,16 @@ def main():
 
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
-  try:
-    key = util.prompt_import_rsa_key_from_file(args.key)
-  except Exception as e:
-    log.error("in load key - {}".format(e))
-    sys.exit(1)
+  if not args.use_gpg:
+    try:
+      key = util.prompt_import_rsa_key_from_file(args.key)
+    except Exception as e:
+      log.error("in load key - {}".format(e))
+      sys.exit(1)
+  else:
+    key = args.key
+    # TODO: Check if we can actually load the GPG key from the keyid
+    pass
 
   if args.no_command:
     in_toto_run(args.step_name, args.materials, args.products, [],
@@ -153,7 +168,7 @@ def main():
       parser.print_usage()
       parser.exit("For no command use --no-command option")
     in_toto_run(args.step_name, args.materials, args.products,
-      args.link_cmd, key, args.record_streams)
+      args.link_cmd, key, args.record_streams, args.use_gpg)
 
 if __name__ == "__main__":
   main()

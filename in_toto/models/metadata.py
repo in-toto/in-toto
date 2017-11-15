@@ -26,6 +26,7 @@ import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 
+import in_toto.gpg
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
@@ -95,7 +96,6 @@ class Metablock(object):
       None.
 
     """
-
     with open(path, "r") as fp:
       data = json.load(fp)
 
@@ -123,11 +123,11 @@ class Metablock(object):
     return self.signed.type_
 
 
-  def sign(self, key):
+  def sign(self, key, use_gpg=False):
     """
     <Purpose>
       Signs the pretty printed canonical JSON representation
-      (see models.common.Signable.__repr__) of the Link or Layout object
+      (see models.common.Signable.signable_string) of the Link or Layout object
       contained in the `signed` property with the passed key and appends the
       created signature to `signatures`.
 
@@ -139,9 +139,14 @@ class Metablock(object):
       None.
 
     """
-    securesystemslib.formats.KEY_SCHEMA.check_match(key)
+    if use_gpg:
+      signature = in_toto.gpg.gpg_sign_object(self.signed.signable_string, key)
 
-    signature = securesystemslib.keys.create_signature(key, self.signed.signable_string)
+    else:
+      securesystemslib.formats.KEY_SCHEMA.check_match(key)
+      signature = securesystemslib.keys.create_signature(key,
+          self.signed.signable_string)
+
     self.signatures.append(signature)
 
 
@@ -194,9 +199,11 @@ class Metablock(object):
       keyid = signature["keyid"]
       try:
         key = keys_dict[keyid]
+
       except KeyError:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
+
       if not securesystemslib.keys.verify_signature(
           key, signature, self.signed.signable_string):
         raise SignatureVerificationError("Invalid signature")

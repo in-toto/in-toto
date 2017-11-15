@@ -330,7 +330,7 @@ def in_toto_mock(name, link_cmd_args):
 
 
 def in_toto_run(name, material_list, product_list,
-    link_cmd_args, key=False, record_streams=False):
+    link_cmd_args, key=False, record_streams=False, use_gpg=False):
   """
   <Purpose>
     Calls function to run command passed as link_cmd_args argument, storing
@@ -354,10 +354,14 @@ def in_toto_run(name, material_list, product_list,
     key: (optional)
             Private key to sign link metadata.
             Format is securesystemslib.formats.KEY_SCHEMA
+            If `use_gpg` is True, then this parameter is expected to be a
+            GPG keyid.
     record_streams: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
+    use_gpg: (optional) (EXPERIMENTAL)
+            If true the `key` argument will be interpreted as GPG keyid
 
   <Exceptions>
     None.
@@ -374,7 +378,7 @@ def in_toto_run(name, material_list, product_list,
   log.info("Running '{}'...".format(name))
 
   # If a key is passed, it has to match the format
-  if key:
+  if key and not use_gpg:
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
     #FIXME: Add private key format check to securesystemslib formats
     if not key["keyval"].get("private"):
@@ -403,10 +407,12 @@ def in_toto_run(name, material_list, product_list,
   link_metadata = Metablock(signed=link)
 
   if key:
-    log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-    link_metadata.sign(key)
+    keyid = (key if use_gpg else key["keyid"])
 
-    filename = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
+    log.info("Signing link metadata with key '{:.8}...'...".format(keyid))
+    link_metadata.sign(key, use_gpg=use_gpg)
+
+    filename = FILENAME_FORMAT.format(step_name=name, keyid=keyid)
     log.info("Storing link metadata to '{}'...".format(filename))
     link_metadata.dump(filename)
 
