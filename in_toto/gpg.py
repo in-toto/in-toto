@@ -7,7 +7,7 @@ import shlex
 import cryptography.hazmat.primitives.asymmetric.rsa as rsa
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.asymmetric.padding as padding
-import cryptography.hazmat.primitives.hashes as hashing 
+import cryptography.hazmat.primitives.hashes as hashing
 import cryptography.hazmat.primitives.asymmetric.utils as rsautils
 
 GPG_SIGN_COMMAND = "gpg --detach-sign {keyarg}"
@@ -30,7 +30,7 @@ def gpg_verify_signature(signature_object, pubkey, content):
     n = int(pubkey['keyval']['public']['n'], 16)
     pubkey = rsa.RSAPublicNumbers(e, n).public_key(backends.default_backend())
 
-    # we need to manually hash stuff now 
+    # we need to manually hash stuff now
     hasher = hashing.Hash(hashing.SHA256(), backend=backends.default_backend())
 
     hasher.update(content)
@@ -44,7 +44,7 @@ def gpg_verify_signature(signature_object, pubkey, content):
 
     digest = hasher.finalize()
 
-    # we need to manually make things work now 
+    # we need to manually make things work now
     try:
         pubkey.verify(
             binascii.unhexlify(signature['signature']),
@@ -84,7 +84,7 @@ def gpg_export_pubkey(keyid):
     process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
             stdin=subprocess.PIPE, stderr=None)
     key_packet, _ = process.communicate()
-    
+
     # FIXME: incredibly-opinionated decision WARNING. We will export the signing subkey only
     # why? because that's the one we need to verify. We will discard all the other pubkey
     # information
@@ -139,7 +139,7 @@ def _parse_pubkey_packet(data):
     modulus = data[ptr:ptr + modulus_length]
     if len(modulus) != modulus_length:
         raise Exception("This modulus MPI was truncated!")
-    ptr += modulus_length 
+    ptr += modulus_length
 
     exponent_e_length = _get_mpi_length(data[ptr: ptr + 2])
     ptr += 2
@@ -217,7 +217,7 @@ def _parse_signature_packet(data):
     ptr += hashed_octet_count
     other_headers_ptr = ptr
 
-    # we don't need this, but we will still parse them for the sake of 
+    # we don't need this, but we will still parse them for the sake of
     # getting a keyid, this should be smarter down the line
     # FIXME
     unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
