@@ -101,10 +101,8 @@ def gpg_export_pubkey(keyid):
             }
         }
 
-# XXX this doesn't support armored pubkey packets, so use with care.
-# pubkey packets are a little bit more complicated than the signature ones
-def _parse_pubkey_packet(data):
 
+def _parse_packet_header(data, expected_type):
     data = bytearray(data)
     packet_type = (data[0] & 0x3c ) >> 2
     packet_length = data[0] & 0x03
@@ -118,11 +116,19 @@ def _parse_pubkey_packet(data):
         signature_length = data[1]
         ptr = 2
 
-    # note, from RFC 4880: "By convention, the top-level key provides signature
-    # services, and the subkeys provide encryption services."
-    if packet_type != 6:
-        raise Excption("This packet is not a main pubkey!")
+    if packet_type != expected_type:
+        raise Excption("This packet type is not supported!")
 
+    return data[ptr:]
+
+
+# XXX this doesn't support armored pubkey packets, so use with care.
+# pubkey packets are a little bit more complicated than the signature ones
+def _parse_pubkey_packet(data):
+
+    data = _parse_packet_header(data, PACKET_TYPES['main_pubkey_packet'])
+
+    ptr = 0
     version_number = data[ptr]
     ptr += 1
     if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS:
@@ -167,20 +173,8 @@ def _compute_keyid(pubkey_packet_data):
 # representation (to be used with gpg_sign_object)
 def _parse_signature_packet(data):
 
-    # grab the header information first.
-    data = bytearray(data)
-    packet_type = (data[0] & 0x3c ) >> 2
-    packet_length = data[0] & 0x03
-
-    # we initialize a "data pointer" because things will move around depending
-    # on the header packet (that we will read right away)
-    other_headers_ptr = 0
-    ptr = 3
-    if packet_length == 1:
-        signature_length = struct.unpack(">H", data[1:ptr])[0]
-    else:
-        signature_length = data[1]
-        ptr = 2
+    data = _parse_packet_header(data, PACKET_TYPES['signature_packet'])
+    ptr = 0
 
     # we get the version number, which we also expect to be v4, or we bail
     # FIXME: support v4 type signatures (which I havent' seen in the wild)
@@ -239,7 +233,7 @@ def _parse_signature_packet(data):
 
     return {
         'keyid': "0x{}".format(binascii.hexlify(unhashed_subpackets).decode('ascii')),
-        'other-headers': binascii.hexlify(data[3:other_headers_ptr]).decode('ascii'),
+        'other-headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
         'signature': binascii.hexlify(signature).decode('ascii')
     }
 
