@@ -51,7 +51,6 @@ Note that it is up to you to properly secure your supply chain, by authorizing, 
 - `DELETE <pattern>`
 - `MODIFY <pattern>`
 - `ALLOW <pattern>`
-- `REQUIRE <pattern>`
 - `DISALLOW <pattern>`
 - `MATCH <pattern> [IN <source-path-prefix>] WITH (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>`
 
