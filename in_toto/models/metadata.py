@@ -140,7 +140,8 @@ class Metablock(object):
 
     """
     if use_gpg:
-      signature = in_toto.gpg.gpg_sign_object(self.signed.signable_string, key)
+      signature = in_toto.gpg.functions.gpg_sign_object(
+          self.signed.signable_string, key)
 
     else:
       securesystemslib.formats.KEY_SCHEMA.check_match(key)
