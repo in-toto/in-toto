@@ -39,7 +39,7 @@ class TestGPGRSA(unittest.TestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
 
-  default_keyid = "5C318D0AE3F859837526898A38343D0CB98A0422"
+  default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
 
   @classmethod
   def setUpClass(self):
@@ -103,7 +103,7 @@ class TestGPGDSA(unittest.TestCase):
   """ Test signature creation, verification and key export from the gpg
   module """
 
-  default_keyid = "3D80E7F45377F9203BDA3B4B1629F9F0883466FA"
+  default_keyid = "C242A830DAAF1C2BEF604A9EF033A3A3E267B3B1"
 
   @classmethod
   def setUpClass(self):
