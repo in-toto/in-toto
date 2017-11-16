@@ -45,10 +45,14 @@ class TestGPGRSA(unittest.TestCase):
   def setUpClass(self):
     # Create directory to run the tests without having everything blow up
     self.working_dir = os.getcwd()
+
+    # Find demo files
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(os.path.join("test", "demo_files", "gpg_keyrings", "rsa"),
-        self.gnupg_home)
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
     os.chdir(self.test_dir)
 
   @classmethod
@@ -107,8 +111,12 @@ class TestGPGDSA(unittest.TestCase):
     self.working_dir = os.getcwd()
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     self.gnupg_home = os.path.join(self.test_dir, "dsa")
-    shutil.copytree(os.path.join("test", "demo_files", "gpg_keyrings", "dsa"),
-        self.gnupg_home)
+
+    # Find keyrings
+    keyrings = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "dsa")
+
+    shutil.copytree(keyrings, self.gnupg_home)
     os.chdir(self.test_dir)
 
   @classmethod
