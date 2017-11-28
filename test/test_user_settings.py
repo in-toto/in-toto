@@ -33,6 +33,11 @@ class TestUserSettings(unittest.TestCase):
   def setUpClass(self):
     self.working_dir = os.getcwd()
 
+    # Backup settings to restore them in `tearDownClass`
+    self.settings_backup = {}
+    for key in dir(in_toto.settings):
+      self.settings_backup[key] = getattr(in_toto.settings, key)
+
     # We use `rc_test` as test dir because it has an `.in_totorc`, which
     # is loaded (from CWD) in `user_settings.set_settings` related tests
     self.test_dir = os.path.join(os.path.dirname(__file__), "rc_test")
@@ -44,10 +49,20 @@ class TestUserSettings(unittest.TestCase):
     os.environ["NOT_PARSED"] = "ignored"
 
 
-
   @classmethod
   def tearDownClass(self):
     os.chdir(self.working_dir)
+
+    # Other unittests might depend on defaults:
+    # Restore monkey patched settings ...
+    for key, val in self.settings_backup.iteritems():
+      setattr(in_toto.settings, key, val)
+
+    # ... and delete test environment variables
+    del os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"]
+    del os.environ["IN_TOTO_ARTIFACT_BASE_PATH"]
+    del os.environ["IN_TOTO_not_whitelisted"]
+    del os.environ["NOT_PARSED"]
 
 
   def test_get_rc(self):
