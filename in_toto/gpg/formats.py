@@ -1,0 +1,102 @@
+"""
+<Program Name>
+  formats.py
+
+<Author>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+
+<Started>
+  November 28, 2017.
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Format schemas for gpg data structures (keys, signatures)
+  based on securesystemslib.schema.
+
+  Example Usage:
+
+  >>> rsa_pubkey = {
+      'type': 'rsa',
+      'hashes': ['pgp+SHA1'],
+      'keyid': '8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17',
+      'keyval': {
+        'public': {
+          'e': u'010001',
+          'n': (u'da59409e6ede307a52f6851954a7bd4b9e309bd40a390f8c0de9722b63101
+                  10ef0b095bf1c473e33db97150edae05c63dda70c03902701b15f3c5c3089
+                  47e1b06675b4f1112030f1145be84ae1562e9120c2d429b20d5056337cbc9
+                  7fc8b5db5704a21db635d00b2157ed68a403c793e9958b77e00163f99b018
+                  09e08ee9099b99b117c086501e79eb947f760a0715bead0024c48d81f9000
+                  671c4306a93725965f3ff2dc9806eaf081357f0268cab8ba7582d2e95e512
+                  25a9dc7ed31a9568c45568d7917b05e7c954d561cd084291e77a7bdd69e3a
+                  c2f9091de55fe3f4e730147e880e2fc044c5f7c04c75ce33a3c0b52380f4d
+                  60309708c56185f3bce6703b')
+          },
+        'private': ''
+      },
+      'method': 'pgp+rsa-pkcsv1.5'
+    }
+  >>> RSA_PUBKEY_SCHEMA.check_match(rsa)
+  True
+
+"""
+
+import securesystemslib.schema as ssl_schema
+import securesystemslib.formats as ssl_formats
+
+
+RSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
+  object_name = "RSA_PUBKEYVAL_SCHEMA",
+  e = ssl_schema.AnyString(),
+  n = ssl_formats.HEX_SCHEMA
+)
+
+
+RSA_PUBKEY_SCHEMA = ssl_schema.Object(
+  object_name = "RSA_PUBKEY_SCHEMA",
+  type = ssl_schema.String("rsa"),
+  method = ssl_schema.String("pgp+rsa-pkcsv1.5"),
+  hashes = ssl_schema.ListOf(ssl_schema.String("pgp+SHA1")),
+  keyid = ssl_formats.KEYID_SCHEMA,
+  keyval = ssl_schema.Object(
+      public = RSA_PUBKEYVAL_SCHEMA,
+      private = ssl_schema.String("")
+    )
+)
+
+
+DSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
+  object_name = "DSA_PUBKEYVAL_SCHEMA",
+  y = ssl_formats.HEX_SCHEMA,
+  p = ssl_formats.HEX_SCHEMA,
+  q = ssl_formats.HEX_SCHEMA,
+  g = ssl_formats.HEX_SCHEMA
+)
+
+
+DSA_PUBKEY_SCHEMA = ssl_schema.Object(
+  object_name = "DSA_PUBKEY_SCHEMA",
+  type = ssl_schema.String("dsa"),
+  method = ssl_schema.String("pgp+dsa-fips-180-2"),
+  hashes = ssl_schema.ListOf(ssl_schema.String("pgp+SHA1")),
+  keyid = ssl_formats.KEYID_SCHEMA,
+  keyval = ssl_schema.Object(
+      public = DSA_PUBKEYVAL_SCHEMA,
+      private = ssl_schema.String("")
+    )
+)
+
+
+PUBKEY_SCHEMA = ssl_schema.OneOf([RSA_PUBKEY_SCHEMA,
+    DSA_PUBKEY_SCHEMA])
+
+
+# SIGNATURE_SCHEMA = ssl_schema.Object(
+#     object_name = "SIGNATURE_SCHEMA",
+#     keyid = ssl_formats.KEYID_SCHEMA,
+# FIXME: Object schemas can't handle dashes in variable names
+#     other-headers = ssl_formats.HEX_SCHEMA,
+#     signature = ssl_formats.HEX_SCHEMA
+#   )
