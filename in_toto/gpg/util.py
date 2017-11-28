@@ -137,3 +137,43 @@ def compute_keyid(pubkey_packet_data):
   hasher.update(struct.pack(">H", len(pubkey_packet_data)))
   hasher.update(bytes(pubkey_packet_data))
   return binascii.hexlify(hasher.finalize())
+
+def parse_subpackets(subpacket_octets):
+  """
+  <Purpose>
+    parse the subpackets fields
+
+  <Arguments>
+    subpacket_octets: the unparsed subpacketoctets
+
+  <Exceptions>
+    in_toto.gpg.PacketParsingError if the octets are malformed
+
+  <Side Effects>
+    None
+
+  <Returns>
+    A list of tuples with like:
+        [ (packet_type, data),
+          (packet_type, data),
+          ...
+        ]
+  """
+  parsed_subpackets = []
+  ptr = 0
+  while ptr < len(subpacket_octets):
+    length = subpacket_octets[ptr]
+    ptr += 1
+    if length > 192 and length < 255 :
+      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 102))
+    if length == 255:
+      length = 0
+      length = struct.unpack(">I", subpacket_octets[ptr: ptr+4])
+      ptr += 4
+
+    packet_type = subpacket_octets[ptr]
+    packet_payload = subpacket_octets[ptr:ptr + length]
+    parsed_subpackets.append((packet_type, packet_payload))
+    ptr += length
+
+  return parsed_subpackets

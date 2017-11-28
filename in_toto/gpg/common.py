@@ -22,9 +22,10 @@ import binascii
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_CANONICAL,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-        SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS)
+        SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET)
 
-from in_toto.gpg.util import compute_keyid, parse_packet_header
+from in_toto.gpg.util import (compute_keyid, parse_packet_header,
+    parse_subpackets)
 import in_toto.gpg
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
@@ -102,6 +103,7 @@ def parse_signature_packet(data):
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
   hashed_subpackets = data[ptr:ptr+hashed_octet_count]
+  hashed_subpacket_info = parse_subpackets(hashed_subpackets)
 
   # check wether we were actually able to read this much hashed octets
   if len(hashed_subpackets) != hashed_octet_count:
@@ -110,14 +112,21 @@ def parse_signature_packet(data):
   ptr += hashed_octet_count
   other_headers_ptr = ptr
 
-  # we don't need this, but we will still parse them for the sake of
-  # getting a keyid, this should be smarter down the line
-  # FIXME
   unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
   ptr += 2
-
   unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
+  unhashed_subpacket_info = parse_subpackets(unhashed_subpackets)
   ptr += unhashed_octet_count
+
+  # this is a somewhat convoluted way to compute the keyid from the signature
+  # subpackets. Try to obtain the FULL_KEYID_SUBPACKET and bail even if the
+  # partial one is available.
+  keyid = filter(lambda x: True if x[0] == FULL_KEYID_SUBPACKET else False,
+          hashed_subpacket_info)
+  if not keyid:
+    raise in_toto.gpg.PacketParsingError("can't parse the full keyid on "
+                "this signature packet!")
+  keyid = binascii.hexlify(keyid[0][1][2:])
 
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
@@ -127,7 +136,7 @@ def parse_signature_packet(data):
   signature = handler.get_signature_params(data[ptr:])
 
   return {
-    'keyid': "0x{}".format(binascii.hexlify(unhashed_subpackets).decode('ascii')),
+    'keyid': "".format(keyid),
     'other-headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
