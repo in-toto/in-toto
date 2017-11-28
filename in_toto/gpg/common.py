@@ -25,6 +25,7 @@ from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS)
 
 from in_toto.gpg.util import compute_keyid, parse_packet_header
+import in_toto.gpg
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
   handler = SIGNATURE_HANDLERS[pubkey_info['type']]
@@ -41,7 +42,7 @@ def parse_pubkey_packet(data):
   version_number = data[ptr]
   ptr += 1
   if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS:
-    raise Exception("This pubkey packet version is not supported!")
+    raise ValueError("This pubkey packet version is not supported!")
 
   time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
   ptr += 4
@@ -50,7 +51,7 @@ def parse_pubkey_packet(data):
   ptr += 1
 
   if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
-    raise Exception("This signature algorithm is not supported!")
+    raise ValueError("This signature algorithm is not supported!")
   else:
     keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
     keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
@@ -59,7 +60,7 @@ def parse_pubkey_packet(data):
   keyinfo['keyid'] = compute_keyid(data)
   key_params = handler.get_pubkey_params(data[ptr:])
 
-  return key_params, keyinfo 
+  return key_params, keyinfo
 
 # this takes the signature as created by pgp and turns it into a tuf-like
 # representation (to be used with gpg_sign_object)
@@ -69,40 +70,43 @@ def parse_signature_packet(data):
   ptr = 0
 
   # we get the version number, which we also expect to be v4, or we bail
-  # FIXME: support v4 type signatures (which I havent' seen in the wild)
+  # FIXME: support v3 type signatures (which I havent' seen in the wild)
   version_number = data[ptr]
   ptr += 1
   if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS:
-    raise Exception("Only version 4 signature packets are supported")
+    raise ValueError("Only version 4 signature packets are supported")
 
   # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
   signature_type = data[ptr]
   ptr += 1
   if signature_type != SIGNATURE_TYPE_CANONICAL:
-    raise Exception("We can only use canonical signatures on in-toto")
+    raise ValueError("We can only use canonical signatures on in-toto")
 
   signature_algorithm = data[ptr]
   ptr += 1
 
   if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
-    raise Exception("This signature algorithm is not supported!")
-  else:
-    key_type = SUPPORTED_SIGNATURE_ALGORITHMS[signature_algorithm]['type']
-    handler = SIGNATURE_HANDLERS[key_type]
+    raise ValueError("This signature algorithm is not supported!")
+
+  key_type = SUPPORTED_SIGNATURE_ALGORITHMS[signature_algorithm]['type']
+  handler = SIGNATURE_HANDLERS[key_type]
 
   hash_algorithm = data[ptr]
   ptr += 1
 
   if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS:
-    raise Exception("This library only supports sha256 as the hash algorithm!")
+    raise ValueError("This library only supports sha256 as "
+            "the hash algorithm!")
 
-  # obtain the hased octets.
+  # obtain the hashed octets.
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
   hashed_subpackets = data[ptr:ptr+hashed_octet_count]
+
   # check wether we were actually able to read this much hashed octets
   if len(hashed_subpackets) != hashed_octet_count:
-    raise Exception("this signature packet is missing hashed octets!")
+    raise ValueError("this signature packet is missing hashed octets!")
+
   ptr += hashed_octet_count
   other_headers_ptr = ptr
 

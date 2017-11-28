@@ -28,7 +28,7 @@ def gpg_sign_object(content, keyid = None, homedir = None):
 
   keyarg = ""
   if keyid:
-    keyarg="--default-key {}".format(keyid)
+    keyarg = "--default-key {}".format(keyid)
 
   homearg = ""
   if homedir:
@@ -48,7 +48,8 @@ def gpg_export_pubkey(keyid, homedir = None):
   if keyid is None:
     # FIXME: probably needs smarter parsing of what a valid keyid is so as to
     # not export more than on pubkey packet.
-    raise Exception("we need to export an individual keyid. Please provide one")
+    raise ValueError("we need to export an "
+            "individual keyid. Please provide one")
 
   homearg = ""
   if homedir:

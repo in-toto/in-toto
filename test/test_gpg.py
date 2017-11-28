@@ -29,8 +29,8 @@ import cryptography.hazmat.backends as backends
 
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
-from in_toto.gpg.rsa import create_key as rsa_create_key
-from in_toto.gpg.dsa import create_key as dsa_create_key
+from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
+from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -70,7 +70,7 @@ class TestGPGRSA(unittest.TestCase):
 
     # export our gpg key, using our functions
     key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
-    our_exported_key = rsa_create_key(key_data)
+    our_exported_key = rsa_create_pubkey(key_data)
 
     # load the equivalent ssh key, and make sure that we get the same RSA key
     # parameters
@@ -134,7 +134,7 @@ class TestGPGDSA(unittest.TestCase):
 
     # export our gpg key, using our functions
     key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
-    our_exported_key = dsa_create_key(key_data)
+    our_exported_key = dsa_create_pubkey(key_data)
 
     # load the equivalent ssh key, and make sure that we get the same RSA key
     # parameters

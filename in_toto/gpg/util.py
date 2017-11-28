@@ -19,6 +19,7 @@ import binascii
 
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
+import in_toto.gpg
 
 def get_mpi_length(data):
   """
@@ -82,9 +83,10 @@ def parse_packet_header(data, expected_type):
     Parse an RFC4880 packet header and return its payload
 
   <Arguments>
-    data: the packet header bufffer 
+    data: the packet header buffer
 
-    expected_type:
+    expected_type: The type of packet expected, as described in section 5.2.3.1
+        of RFC4880.
 
   <Exceptions>
     None
@@ -107,9 +109,11 @@ def parse_packet_header(data, expected_type):
     ptr = 2
 
   if packet_type != expected_type:
-    raise Excption("This packet type is not supported!")
+    raise in_toto.gpg.PacketParsingError("Expected packet {}, "
+        "but got {} instead!".format(expected_type, packet_type))
 
   return data[ptr:ptr+packet_length]
+
 
 def compute_keyid(pubkey_packet_data):
   """
@@ -117,7 +121,7 @@ def compute_keyid(pubkey_packet_data):
     compute a keyid from an RFC4880 public-key buffer
 
   <Arguments>
-    data: the public-key packet bufffer 
+    pubkey_packet_data: the public-key packet buffer
 
   <Exceptions>
     None
