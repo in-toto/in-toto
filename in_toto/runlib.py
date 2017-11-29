@@ -318,7 +318,7 @@ def in_toto_mock(name, link_cmd_args):
     Newly created Metablock object containing a Link object
 
   """
-  link = in_toto_run(name, ["."], ["."], link_cmd_args, key=False,
+  link = in_toto_run(name, ["."], ["."], link_cmd_args,
       record_streams=True)
 
   link_metadata = Metablock(signed=link)
@@ -330,7 +330,7 @@ def in_toto_mock(name, link_cmd_args):
 
 
 def in_toto_run(name, material_list, product_list,
-    link_cmd_args, key=False, record_streams=False, use_gpg=False):
+    link_cmd_args, record_streams=False, signing_key=None):
   """
   <Purpose>
     Calls function to run command passed as link_cmd_args argument, storing
@@ -351,17 +351,13 @@ def in_toto_run(name, material_list, product_list,
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    key: (optional)
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
-            If `use_gpg` is True, then this parameter is expected to be a
-            GPG keyid.
     record_streams: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
-    use_gpg: (optional) (EXPERIMENTAL)
-            If true the `key` argument will be interpreted as GPG keyid
+    signing_key: (optional)
+            If passed, link metadata is signed with this key.
+            Format is securesystemslib.formats.KEY_SCHEMA
 
   <Exceptions>
     None.
@@ -378,10 +374,10 @@ def in_toto_run(name, material_list, product_list,
   log.info("Running '{}'...".format(name))
 
   # If a key is passed, it has to match the format
-  if key and not use_gpg:
-    securesystemslib.formats.KEY_SCHEMA.check_match(key)
-    #FIXME: Add private key format check to securesystemslib formats
-    if not key["keyval"].get("private"):
+  if signing_key:
+    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
+    # FIXME: Add private key format check to formats
+    if not signing_key["keyval"].get("private"):
       raise securesystemslib.exceptions.FormatError(
           "Signing key needs to be a private key.")
 
@@ -406,14 +402,15 @@ def in_toto_run(name, material_list, product_list,
 
   link_metadata = Metablock(signed=link)
 
-  if key:
-    keyid = (key if use_gpg else key["keyid"])
+  if signing_key:
+    keyid = signing_key["keyid"]
 
     log.info("Signing link metadata with key '{:.8}...'...".format(keyid))
-    link_metadata.sign(key, use_gpg=use_gpg)
+    link_metadata.sign(signing_key)
 
     filename = FILENAME_FORMAT.format(step_name=name, keyid=keyid)
     log.info("Storing link metadata to '{}'...".format(filename))
+
     link_metadata.dump(filename)
 
   return link_metadata

@@ -123,7 +123,7 @@ class Metablock(object):
     return self.signed.type_
 
 
-  def sign(self, key, use_gpg=False):
+  def sign(self, key):
     """
     <Purpose>
       Signs the pretty printed canonical JSON representation
@@ -139,17 +139,11 @@ class Metablock(object):
       None.
 
     """
-    if use_gpg:
-      signature = in_toto.gpg.functions.gpg_sign_object(
-          self.signed.signable_string, key)
-
-    else:
-      securesystemslib.formats.KEY_SCHEMA.check_match(key)
-      signature = securesystemslib.keys.create_signature(key,
-          self.signed.signable_string)
+    securesystemslib.formats.KEY_SCHEMA.check_match(key)
+    signature = securesystemslib.keys.create_signature(key,
+        self.signed.signable_string)
 
     self.signatures.append(signature)
-
 
   def verify_signatures(self, keys_dict):
     """

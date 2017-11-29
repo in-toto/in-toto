@@ -282,7 +282,7 @@ class TestInTotoRun(unittest.TestCase):
   def test_in_toto_run_verify_signature(self):
     """Successfully run, verify signed metadata. """
     link = in_toto_run(self.step_name, None, None,
-        ["echo", "test"], self.key, True)
+        ["echo", "test"], True, self.key)
     link.verify_signatures({self.key["keyid"] : self.key})
 
   def test_in_toto_run_no_signature(self):
@@ -305,7 +305,7 @@ class TestInTotoRun(unittest.TestCase):
   def test_in_toto_run_compare_dumped_with_returned_link(self):
     """Successfully run, compare dumped link is equal to returned link. """
     link = in_toto_run(self.step_name, [self.test_artifact],
-        [self.test_artifact], ["echo", "test"], self.key, True)
+        [self.test_artifact], ["echo", "test"], True, self.key)
     link_dump = Metablock.load(
         FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEquals(repr(link), repr(link_dump))
@@ -326,13 +326,13 @@ class TestInTotoRun(unittest.TestCase):
     """Fail run, passed key is not properly formatted. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
-          ["echo", "test"], "this-is-not-a-key", True)
+          ["echo", "test"], True, "this-is-not-a-key")
 
   def test_in_toto_wrong_key(self):
     """Fail run, passed key is a public key. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
-          ["echo", "test"], self.key_pub, True)
+          ["echo", "test"], True, self.key_pub)
 
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
