@@ -127,7 +127,7 @@ def parse_signature_packet(data):
     raise in_toto.gpg.PacketParsingError("can't parse the full keyid on "
                 "this signature packet!")
   keyid = binascii.hexlify(keyid[0][1][2:])
-
+  print "keyid", keyid
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
 
@@ -136,7 +136,7 @@ def parse_signature_packet(data):
   signature = handler.get_signature_params(data[ptr:])
 
   return {
-    'keyid': "".format(keyid),
+    'keyid': "{}".format(keyid),
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
