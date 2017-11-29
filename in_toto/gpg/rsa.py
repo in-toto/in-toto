@@ -68,7 +68,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 
   pubkey_object = create_pubkey(pubkey_info)
 
-  digest = hash_object(binascii.unhexlify(signature_object['other-headers']),
+  digest = hash_object(binascii.unhexlify(signature_object['other_headers']),
       hashing.SHA256(), content)
 
   try:

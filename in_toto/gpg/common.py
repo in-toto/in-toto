@@ -137,6 +137,6 @@ def parse_signature_packet(data):
 
   return {
     'keyid': "".format(keyid),
-    'other-headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
+    'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
