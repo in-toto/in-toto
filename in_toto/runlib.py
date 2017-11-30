@@ -327,14 +327,24 @@ def in_toto_mock(name, link_cmd_args):
   return link_metadata
 
 
-def in_toto_run(name, material_list, product_list,
-    link_cmd_args, record_streams=False, signing_key=None):
+def in_toto_run(name, material_list, product_list, link_cmd_args,
+    record_streams=False, signing_key=None, gpg_keyid=None,
+    gpg_use_default=False, gpg_home=None):
   """
   <Purpose>
     Calls function to run command passed as link_cmd_args argument, storing
-    its materials, by-products and return value, and products into a link
-    metadata file. The link metadata file is signed with the passed key and
-    stored to disk.
+    its materials, products, by-products and environment information into a
+    link metadata file.
+
+    The link metadata file is signed either with the passed signing_key, or
+    a gpg key identified by the passed gpg_keyid or with the default gpg
+    key if gpg_use_default is True.
+
+    Even if multiple key parameters are passed, only one key is used for
+    signing (in above order of precedence) and the link file is dumped to
+    `link.FILENAME_FORMAT` using the signing key's keyid.
+
+    If no key parameter is passed the link is neither signed nor dumped.
 
   <Arguments>
     name:
@@ -354,15 +364,23 @@ def in_toto_run(name, material_list, product_list,
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
     signing_key: (optional)
-            If passed, link metadata is signed with this key.
+            If not None, link metadata is signed with this key.
             Format is securesystemslib.formats.KEY_SCHEMA
+    gpg_keyid: (optional)
+            If not None, link metadata is signed with a gpg key identified
+            by the passed keyid.
+    gpg_use_default: (optional)
+            If True, link metadata is signed with default gpg key.
+    gpg_home: (optional)
+            Path to GPG keyring (if not set the default keyring is used).
 
   <Exceptions>
-    None.
+    securesystemslib.FormatError if a signing_key is passed and does not match
+        securesystemslib.formats.KEY_SCHEMA.
 
   <Side Effects>
-    Writes newly created link metadata file to disk using the filename scheme
-    from link.FILENAME_FORMAT
+    If a key parameter is passed for signing, the ewly created link metadata
+    file is written to disk using the filename scheme: `link.FILENAME_FORMAT`
 
   <Returns>
     Newly created Metablock object containing a Link object
@@ -400,15 +418,24 @@ def in_toto_run(name, material_list, product_list,
 
   link_metadata = Metablock(signed=link)
 
+  signature = None
   if signing_key:
-    keyid = signing_key["keyid"]
+    log.info("Signing link metadata using passed key...")
+    signature = link_metadata.sign(signing_key)
 
-    log.info("Signing link metadata with key '{:.8}...'...".format(keyid))
-    link_metadata.sign(signing_key)
+  elif gpg_keyid:
+    log.info("Signing link metadata using passed GPG keyid...")
+    signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
 
-    filename = FILENAME_FORMAT.format(step_name=name, keyid=keyid)
+  elif gpg_use_default:
+    log.info("Signing link metadata using default GPG key ...")
+    signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
+
+  # We need the signature's keyid to write the link to keyid infix'ed filename
+  if signature:
+    signing_keyid = signature["keyid"]
+    filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
     log.info("Storing link metadata to '{}'...".format(filename))
-
     link_metadata.dump(filename)
 
   return link_metadata

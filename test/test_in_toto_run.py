@@ -153,16 +153,16 @@ class TestInTotoRunTool(unittest.TestCase):
 
   def test_successful_in_toto_run(self):
     """Call in_toto_run successfully """
-    in_toto_run(self.test_step, [self.test_artifact],
-      [self.test_artifact], ["echo", "test"], False, self.key)
+    in_toto_run(self.test_step, [self.test_artifact], [self.test_artifact],
+        ["echo", "test"], False, self.key, None, False, None)
 
     self.assertTrue(os.path.exists(self.test_link))
 
   def test_in_toto_run_bad_key_error_exit(self):
     """Error exit in_toto_run with bad key. """
     with self.assertRaises(SystemExit):
-      in_toto_run(self.test_step, [self.test_artifact],
-        [self.test_artifact], ["echo", "test"], False, "bad-key")
+      in_toto_run(self.test_step, [self.test_artifact], [self.test_artifact],
+          ["echo", "test"], False, "bad-key", None, False, None)
 
 if __name__ == "__main__":
   unittest.main(buffer=True)

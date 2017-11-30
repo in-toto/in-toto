@@ -26,7 +26,9 @@ import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 
-import in_toto.gpg
+import in_toto.formats
+import in_toto.gpg.functions
+
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
@@ -136,7 +138,7 @@ class Metablock(object):
               A signing key in the format securesystemslib.formats.KEY_SCHEMA
 
     <Returns>
-      None.
+      The newly created signature dictionary.
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
@@ -144,6 +146,36 @@ class Metablock(object):
         self.signed.signable_string)
 
     self.signatures.append(signature)
+
+    return signature
+
+  def sign_gpg(self, gpg_keyid=None, gpg_home=None):
+    """
+    <Purpose>
+      Signs the pretty printed canonical JSON representation
+      (see models.common.Signable.__repr__) of the Link or Layout object
+      contained in the `signed` property using `gpg_verify_signature` and
+      appends the created signature to `signatures`.
+
+    <Arguments>
+      gpg_keyid: (optional)
+              A gpg keyid, if omitted the default signing key is used
+
+      gpg_home: (optional)
+              The path to the gpg keyring, if omitted the default gpg keyring
+              is used
+
+    <Returns>
+      The newly created signature dictionary.
+
+    """
+    signature = in_toto.gpg.functions.gpg_sign_object(
+        self.signed.signable_string, gpg_keyid, gpg_home)
+
+    self.signatures.append(signature)
+
+    return signature
+
 
   def verify_signatures(self, keys_dict):
     """
