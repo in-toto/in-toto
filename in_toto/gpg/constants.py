@@ -18,8 +18,8 @@
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
 
-GPG_SIGN_COMMAND = "gpg --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
-GPG_EXPORT_PUBKEY_COMMAND = "gpg {homearg} --export {keyid}"
+GPG_SIGN_COMMAND = "gpg2 --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
+GPG_EXPORT_PUBKEY_COMMAND = "gpg2 {homearg} --export {keyid}"
 
 PACKET_TYPES = {
     'signature_packet': 0x02,
