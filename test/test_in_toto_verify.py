@@ -147,12 +147,12 @@ class TestInTotoVerifyTool(unittest.TestCase):
 
   def test_in_toto_verify_pass_all(self):
     """Test in-toto-verify function pass verification. """
-    in_toto_verify(self.layout_single_signed_path, [self.alice_path])
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path], None, None)
 
   def test_in_toto_verify_fail(self):
     """Test in-toto-verify function fail verification. """
     with self.assertRaises(SystemExit):
-      in_toto_verify("wrong-layout-path", [self.alice_path])
+      in_toto_verify("wrong-layout-path", [self.alice_path], None, None)
 
 if __name__ == "__main__":
   unittest.main(buffer=True)

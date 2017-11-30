@@ -185,6 +185,10 @@ class Metablock(object):
       representation (see models.common.Signable.__repr__) of the Link or
       Layout object contained in `signed`.
 
+      If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
+      `in_toto.gpg.gpg_verify_signature` is used for verification,
+      `securesystemslib.keys.verify_signature` is used otherwise.
+
       Verification fails if,
         - the passed keys don't have the right format,
         - the object is not signed,
@@ -197,12 +201,12 @@ class Metablock(object):
     <Arguments>
       keys_dict:
               Verifying keys in the format:
-              securesystemslib.formats.KEYDICT_SCHEMA
+              in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
 
     <Exceptions>
       FormatError
             if the passed key dictionary is not conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA
+            in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
 
       SignatureVerificationError
             if the Metablock is not signed
@@ -217,7 +221,7 @@ class Metablock(object):
       None.
 
     """
-    securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
+    in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA.check_match(keys_dict)
 
     if not self.signatures or len(self.signatures) <= 0:
       raise SignatureVerificationError("No signatures found")
@@ -231,6 +235,13 @@ class Metablock(object):
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
 
-      if not securesystemslib.keys.verify_signature(
-          key, signature, self.signed.signable_string):
+      if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
+        valid = in_toto.gpg.functions.gpg_verify_signature(signature, key,
+            self.signed.signable_string)
+
+      else:
+        valid = securesystemslib.keys.verify_signature(
+            key, signature, self.signed.signable_string)
+
+      if not valid:
         raise SignatureVerificationError("Invalid signature")

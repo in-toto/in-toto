@@ -40,6 +40,8 @@ from dateutil.parser import parse
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
 import in_toto.exceptions
+import in_toto.formats
+
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -150,14 +152,7 @@ class Layout(Signable):
 
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
-    if type(self.keys) != dict:
-      raise securesystemslib.exceptions.FormatError(
-          "keys dictionary is malformed!")
-
-    securesystemslib.formats.KEYDICT_SCHEMA.check_match(self.keys)
-
-    for junk, key in six.iteritems(self.keys):
-      securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
+    in_toto.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
 
   def _validate_steps_and_inspections(self):
     """Private method to verify that the list of steps and inspections are
