@@ -318,13 +318,11 @@ def in_toto_mock(name, link_cmd_args):
     Newly created Metablock object containing a Link object
 
   """
-  link = in_toto_run(name, ["."], ["."], link_cmd_args,
+  link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
       record_streams=True)
 
-  link_metadata = Metablock(signed=link)
-
   filename = FILENAME_FORMAT_SHORT.format(step_name=name)
-  log.info("Storing unsigned link metadata to '{}.link'...".format(filename))
+  log.info("Storing unsigned link metadata to '{}'...".format(filename))
   link_metadata.dump(filename)
   return link_metadata
 
