@@ -30,11 +30,15 @@
     - verify signatures
 
 
-
-
   Usage:
   ```
+  # securesystemslib keys
   in-toto-sign [-h] -f FILE -k KEY [KEY ...] [-o OUTPUT] [-a] [-v]
+               [--verify]
+
+  # gpg keys
+  in-toto-sign [-h] -f FILE -g [GPG [GPG ...]] [-o OUTPUT] [-a] [-v]
+               [--gpg-home GPG_HOME]
                [--verify]
   ```
 
@@ -51,6 +55,11 @@
   # Verify Layout signed with three keys
   in-toto-sign -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
 
+  # Sign layout with default gpg key in default gpg keyring
+  in-toto-sign -f gpg.layout --gpg
+
+  # Verify layout with a gpg key found in keyring
+  in-toto-sign -f gpg.layout --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
   ```
 
 """
@@ -60,6 +69,7 @@ import in_toto.user_settings
 from in_toto import log, exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
+import in_toto.gpg.functions
 
 def _sign_and_dump_metadata(metadata, args):
   """
@@ -82,25 +92,48 @@ def _sign_and_dump_metadata(metadata, args):
     if not args.append:
       metadata.signatures = []
 
-    for key_path in args.key:
-      key = util.prompt_import_rsa_key_from_file(key_path)
-      metadata.sign(key)
+    signature = None
+    # If the cli tool was called with `--gpg [KEYID ...]` `args.gpg` is
+    # a list (not None) and we will try to sign with gpg.
+    # If `--gpg-home` was not set, args.gpg_home is None and the signer tries
+    # to use the default gpg keyring.
+    if args.gpg != None:
+      # If `--gpg` was passed without argument we sign with the default key
+      if len(args.gpg) == 0:
+        signature = metadata.sign_gpg(gpg_keyid=None, gpg_home=args.gpg_home)
 
-      # Only relevant when signing Link metadata, where there is only one key
-      keyid = key["keyid"]
+      # Otherwise we sign with each passed keyid
+      for keyid in args.gpg:
+        # TODO: Add keyid schema check
+        signature = metadata.sign_gpg(gpg_keyid=keyid, gpg_home=args.gpg_home)
 
+    # Alternatively we iterate over passed private key paths `--key KEYPATH ...`
+    # load the corresponding key from disk and sign with it
+    elif args.key != None:
+      for key_path in args.key:
+        key = util.prompt_import_rsa_key_from_file(key_path)
+        signature = metadata.sign(key)
+
+
+
+    # If `--output` was specified we store the signed link or layout metadata
+    # to that location no matter what
     if args.output:
       out_path = args.output
 
+    # Otherwise, in case of links, we build the filename using the link/step
+    # name and the keyid of the created signature (there is only one for links)
     elif metadata.type_ == "link":
+      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+      keyid = signature["keyid"]
       out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
           keyid=keyid)
 
+    # In case of layouts we just override the input file.
     elif metadata.type_ == "layout":
       out_path = args.file
 
-    log.info("Dumping {0} to '{1}'...".format(metadata.type_,
-        out_path))
+    log.info("Dumping {0} to '{1}'...".format(metadata.type_, out_path))
 
     metadata.dump(out_path)
     sys.exit(0)
@@ -129,8 +162,14 @@ def _verify_metadata(metadata, args):
 
   """
   try:
-    pub_key_dict = util.import_rsa_public_keys_from_files_as_dict(
-        args.key)
+    # Load pubkeys from disk ....
+    if args.key != None:
+      pub_key_dict = util.import_rsa_public_keys_from_files_as_dict(args.key)
+
+    # ... or from gpg keyring
+    elif args.gpg != None:
+      pub_key_dict = util.import_gpg_public_keys_from_keyring_as_dict(
+          args.gpg, args.gpg_home)
 
     metadata.verify_signatures(pub_key_dict)
     log.pass_verification("Signature verification passed")
@@ -181,9 +220,15 @@ def main():
   parser.add_argument("-f", "--file", type=str, required=True,
       help="read metadata file from passed path (required)")
 
-  parser.add_argument("-k", "--key", nargs="+", type=str, required=True,
-      help="key path(s) used to sign or verify metadata (at least - "
-      " in case of signing Link metadata only - one key required)")
+  parser.add_argument("-k", "--key", nargs="+",
+      help="key path(s) used to sign or verify metadata.")
+
+  parser.add_argument("-g", "--gpg", nargs="*",
+      help=("GPG keyids to sign or verify metadata. "
+      "(if passed without arguments, the default key is used)"))
+
+  parser.add_argument("--gpg-home", dest="gpg_home", type=str,
+      help="Path to GPG keyring (if not set the default keyring is used)")
 
   # Only when signing
   parser.add_argument("-o", "--output", type=str,
@@ -209,23 +254,45 @@ def main():
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
+
+  # Additional argparse sanitization
+  # NOTE: This tool is starting to have many inter-dependent argument
+  # restrictions. Maybe we should make it less sophisticated at some point.
   if args.verify and (args.append or args.output):
     parser.print_help()
     parser.exit(2, "conflicting arguments: don't specify any of"
         " 'append' or 'output' when verifying signatures")
 
+  # Regular signing and GPG signing are mutually exclusive
+  if (args.key == None) == (args.gpg == None):
+    parser.print_help()
+    parser.exit(2, "wrong arguments: specify either `--key PATH [PATH ...]`"
+      " or `--gpg [KEYID [KEYID ...]]`")
+
+  # For gpg verification we must specify a keyid (no default key is loaded)
+  if args.verify and args.gpg != None and len(args.gpg) < 1:
+    parser.print_help()
+    parser.exit(2, "missing arguments: specify at least one keyid for GPG"
+      " signature (`--gpg KEYID ...`)")
+
   metadata = _load_metadata(args.file)
 
+  # Specific command line argument restrictions if we deal with links
   if metadata.type_ == "link":
-    if len(args.key) > 1:
+    # Above we check that it's either `--key ...` or `--gpg ...`
+    # Here we check that it is not more than one in each case when dealing
+    # with links
+    if ((args.key != None and len(args.key) > 1) or
+        (args.gpg != None and len(args.gpg) > 1)):
       parser.print_help()
-      parser.exit(2, "wrong arguments: Link metadata can only be signed by"
-          " one key")
+      parser.exit(2, "too many arguments: Link metadata can not be signed by"
+          " multiple keys")
 
     if args.append:
       parser.print_help()
       parser.exit(2, "wrong arguments: Link metadata signatures can not be"
           " appended to existing signatures")
+
 
   if args.verify:
     _verify_metadata(metadata, args)

@@ -35,3 +35,6 @@ ANY_PUBKEY_SCHEMA = ssl_schema.OneOf([ssl_formats.PUBLIC_KEY_SCHEMA,
 ANY_PUBKEY_DICT_SCHEMA = ssl_schema.DictOf(
   key_schema = ssl_formats.KEYID_SCHEMA,
   value_schema = ANY_PUBKEY_SCHEMA)
+
+ANY_SIGNATURE_SCHEMA = ssl_schema.OneOf([ssl_formats.SIGNATURE_SCHEMA,
+    gpg_formats.SIGNATURE_SCHEMA])
