@@ -61,20 +61,32 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` executes the passed command and records the path and hash of the passed *materials* - files before command execution - and *products* - files after command execution and optionally stores them together with the command's *byproducts* (e.g: return value, stdout or stderr) to a link file (`<step-name>.link`), signed with the functionary's key.
+`in-toto-run` executes the passed command and records the path and hash of
+the passed *materials* - files before command execution - and *products* -
+files after command execution and optionally stores them together with the
+command's *byproducts* (e.g: return value, stdout or stderr) to a link file
+(`<NAME>.<KEYID-PREFIX>.link`), signed with the functionary's key.
 
 ```shell
 in-toto-run  --step-name <unique step name>
-             --key <functionary private key path>
+            {--key <functionary signing key path>,  --gpg [<functionary gpg signing key id>]}
+            [--gpg-home <path to gpg keyring>]
             [--materials <filepath>[ <filepath> ...]]
             [--products <filepath>[ <filepath> ...]]
             [--record-streams]
+            [--no-command]
             [--verbose] -- <cmd> [args]
 ```
 
 
 ##### in-toto-record
-`in-toto-record` works similar to `in-toto-run` but can be used for multi-part software supply chain steps, i.e. steps that are not carried out by a single command. Use `in-toto-record ... start ...` to create a preliminary link file that only records the *materials*, then run the commands of that step, and finally use `in-toto-record ... stop ...` to record the *products* and generate the actual link metadata file.
+`in-toto-record` works similar to `in-toto-run` but can be used for
+multi-part software supply chain steps, i.e. steps that are not carried out
+by a single command. Use `in-toto-record ... start ...` to create a
+preliminary link file that only records the *materials*, then run the
+commands of that step, and finally use `in-toto-record ... stop ...` to
+record the *products* and generate the actual link metadata file. *Note:
+`in-toto-record` does not support GPG signing yet.*
 
 ```shell
 in-toto-record  --step-name <unique step name>
@@ -101,7 +113,9 @@ Use `in-toto-verify` on the final product to verify that
 
 ```shell
 in-toto-verify --layout <layout path>
-               --layout-keys (<layout pubkey path>,...)
+               {--layout-keys <filepath>[ <filepath> ...],  --gpg <keyid> [ <keyid> ...]}
+               [--gpg-home <path to gpg keyring>]
+               [--verbose]
 ```
 
 
