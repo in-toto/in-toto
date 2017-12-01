@@ -16,6 +16,9 @@
 """
 import struct
 import binascii
+import subprocess
+import shlex
+import re
 
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
@@ -177,3 +180,21 @@ def parse_subpackets(subpacket_octets):
     ptr += length
 
   return parsed_subpackets
+
+def get_version():
+  """
+  <Purpose>
+    Uses `gpg2 --version` to get the version info of the installed gpg2
+    and extracts and returns the version number.
+
+  <Returns>
+    Version number string, e.g. "2.1.22"
+
+  """
+  command = shlex.split(in_toto.gpg.constants.GPG_VERSION_COMMAND)
+  process = subprocess.Popen(command, stdout=subprocess.PIPE)
+  full_version_info, _ = process.communicate()
+
+  version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
+
+  return version_string
