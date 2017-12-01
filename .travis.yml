@@ -8,11 +8,6 @@ env:
     - TOXENV=lint
     - TOXENV=py27
 
-before_install:
-    - echo "deb http://us.archive.ubuntu.com/ubuntu/ xenial main" | sudo tee -a /etc/apt/sources.list
-    - sudo apt-get update -qq
-    - sudo apt-get install gnupg2
-
 install:
     - pip install tox
     - pip install coveralls
