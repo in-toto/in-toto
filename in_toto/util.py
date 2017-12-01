@@ -2,6 +2,7 @@ import sys
 import getpass
 
 import in_toto.gpg.functions
+import in_toto.gpg.formats
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.keys
