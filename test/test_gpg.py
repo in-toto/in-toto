@@ -29,6 +29,7 @@ import cryptography.hazmat.backends as backends
 
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
+from in_toto.gpg.util import is_version_fully_supported
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 
@@ -63,9 +64,9 @@ class TestGPGRSA(unittest.TestCase):
 
   def test_gpg_export_pubkey(self):
     """ export a public key and make sure the parameters are the right ones:
-      
+
       since there's very little we can do to check rsa key parameters are right
-      we pre-exported the public key to an ssh key, which we can load with 
+      we pre-exported the public key to an ssh key, which we can load with
       cryptography for the sake of comparison """
 
     # export our gpg key, using our functions
@@ -79,25 +80,47 @@ class TestGPGRSA(unittest.TestCase):
     with open(ssh_key_path, "rb") as fp:
       keydata = fp.read()
 
-    ssh_key = serialization.load_ssh_public_key(keydata, 
-        backends.default_backend()) 
+    ssh_key = serialization.load_ssh_public_key(keydata,
+        backends.default_backend())
 
     self.assertEquals(ssh_key.public_numbers().n,
         our_exported_key.public_numbers().n)
     self.assertEquals(ssh_key.public_numbers().e,
         our_exported_key.public_numbers().e)
 
-  def test_gpg_sign_and_verify_object(self):
-    """Create a signature using the deafult key on the keyring """
+  def test_gpg_sign_and_verify_object_with_default_key(self):
+    """Create a signature using the default key on the keyring """
 
     test_data = b'test_data'
     wrong_data = b'something malicious'
 
-    signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+    if is_version_fully_supported():
+      signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+      key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+
+      self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+      self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
+    # On not fully supported versions > 2.1.x this will fail because we
+    # can't compute a keyid from the created signature and computing the
+    # keyid from an exported pubkey will fail because we can't identify it.
+    else:
+      with self.assertRaises(ValueError):
+        gpg_sign_object(test_data, homedir=self.gnupg_home)
+
+  def test_gpg_sign_and_verify_object(self):
+    """Create a signature using a specific key on the keyring """
+
+    test_data = b'test_data'
+    wrong_data = b'something malicious'
+
+    signature = gpg_sign_object(test_data, keyid=self.default_keyid,
+        homedir=self.gnupg_home)
     key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
 
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
 
 class TestGPGDSA(unittest.TestCase):
   """ Test signature creation, verification and key export from the gpg
@@ -127,9 +150,9 @@ class TestGPGDSA(unittest.TestCase):
 
   def test_gpg_export_pubkey(self):
     """ export a public key and make sure the parameters are the right ones:
-      
+
       since there's very little we can do to check rsa key parameters are right
-      we pre-exported the public key to an ssh key, which we can load with 
+      we pre-exported the public key to an ssh key, which we can load with
       cryptography for the sake of comparison """
 
     # export our gpg key, using our functions
@@ -143,8 +166,8 @@ class TestGPGDSA(unittest.TestCase):
     with open(ssh_key_path, "rb") as fp:
       keydata = fp.read()
 
-    ssh_key = serialization.load_ssh_public_key(keydata, 
-        backends.default_backend()) 
+    ssh_key = serialization.load_ssh_public_key(keydata,
+        backends.default_backend())
 
     self.assertEquals(ssh_key.public_numbers().y,
         our_exported_key.public_numbers().y)
@@ -155,18 +178,38 @@ class TestGPGDSA(unittest.TestCase):
     self.assertEquals(ssh_key.public_numbers().parameter_numbers.p,
         our_exported_key.public_numbers().parameter_numbers.p)
 
-  def test_gpg_sign_and_verify_object(self):
-    """Create a signature using the deafult key on the keyring """
+  def test_gpg_sign_and_verify_object_with_default_key(self):
+    """Create a signature using the default key on the keyring """
 
     test_data = b'test_data'
     wrong_data = b'something malicious'
 
-    signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+    if is_version_fully_supported():
+      signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+      key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+
+      self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+      self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
+    # On not fully supported versions > 2.1.x this will fail because we
+    # can't compute a keyid from the created signature and computing the
+    # keyid from an exported pubkey will fail because we can't identify it.
+    else:
+      with self.assertRaises(ValueError):
+        gpg_sign_object(test_data, homedir=self.gnupg_home)
+
+  def test_gpg_sign_and_verify_object(self):
+    """Create a signature using a specific key on the keyring """
+
+    test_data = b'test_data'
+    wrong_data = b'something malicious'
+
+    signature = gpg_sign_object(test_data, keyid=self.default_keyid,
+        homedir=self.gnupg_home)
     key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
 
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
-
 
 if __name__ == "__main__":
   unittest.main()
