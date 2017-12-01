@@ -24,6 +24,7 @@ import unittest
 import logging
 import argparse
 import shutil
+import glob
 import tempfile
 from mock import patch
 
@@ -34,6 +35,8 @@ from in_toto.models.link import Link
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.in_toto_run import in_toto_run
 from in_toto.models.link import FILENAME_FORMAT
+
+import in_toto.gpg.util
 
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
@@ -50,6 +53,15 @@ class TestInTotoRunTool(unittest.TestCase):
     self.working_dir = os.getcwd()
 
     self.test_dir = tempfile.mkdtemp()
+
+    # Copy gpg keyring
+    self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
+    self.non_default_gpg_keyid = "8288ef560ed3795f9df2c0db56193089b285da58"
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+
     os.chdir(self.test_dir)
 
     self.key_path = "test_key"
@@ -68,10 +80,8 @@ class TestInTotoRunTool(unittest.TestCase):
     shutil.rmtree(self.test_dir)
 
   def tearDown(self):
-    try:
-      os.remove(self.test_link)
-    except OSError:
-      pass
+    for link in glob.glob("*.link"):
+      os.remove(link)
 
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
@@ -95,6 +105,41 @@ class TestInTotoRunTool(unittest.TestCase):
 
     self.assertTrue(os.path.exists(self.test_link))
 
+
+  def test_main_with_specified_gpg_key(self):
+    """Test CLI command with specified gpg key. """
+    args = [ "in_toto_run.py", "-n", self.test_step,
+            "--gpg", self.non_default_gpg_keyid,
+            "--gpg-home", self.gnupg_home, "--", "ls"]
+
+    with patch.object(sys, 'argv', args):
+      in_toto_run_main()
+
+    link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
+        keyid=self.non_default_gpg_keyid)
+
+    self.assertTrue(os.path.exists(link_filename))
+
+
+  def test_main_with_default_gpg_key(self):
+    """Test CLI command with default gpg key. """
+    args = [ "in_toto_run.py", "-n", self.test_step,
+            "--gpg", "--gpg-home", self.gnupg_home, "--", "ls"]
+
+    if in_toto.gpg.util.is_version_fully_supported():
+      with patch.object(sys, 'argv', args):
+        in_toto_run_main()
+
+      link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
+          keyid=self.default_gpg_keyid)
+
+      self.assertTrue(os.path.exists(link_filename))
+
+    # Default key signing fails on not fully supported gpg versions
+    else:
+      with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
+        in_toto_run_main()
+
   def test_main_no_command_arg(self):
     """Test CLI command with --no-command argument. """
 
@@ -117,7 +162,10 @@ class TestInTotoRunTool(unittest.TestCase):
       ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path],
       ["in_toto_run.py", "--step-name", "--", "echo", "blub"],
       ["in_toto_run.py", "--key", self.key_path, "--", "echo", "blub"],
-      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path, "--"]]
+      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path, "--"],
+      ["in_toto_run.py", "--step-name", "test-step",
+          "--key", self.key_path, "--gpg", "--", "echo", "blub"]
+    ]
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
