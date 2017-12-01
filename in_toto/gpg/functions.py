@@ -23,6 +23,8 @@ from in_toto.gpg.constants import GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND
 from in_toto.gpg.common import (parse_signature_packet, parse_pubkey_packet,
     gpg_verify_signature)
 
+import securesystemslib.formats
+
 # if None is used, then the keyid is not passed down and the signature is
 # performed with the default keyid
 def gpg_sign_object(content, keyid = None, homedir = None):
@@ -55,11 +57,11 @@ def gpg_sign_object(content, keyid = None, homedir = None):
 
 def gpg_export_pubkey(keyid, homedir = None):
 
-  if keyid is None:
+  if not securesystemslib.formats.KEYID_SCHEMA.matches(keyid):
     # FIXME: probably needs smarter parsing of what a valid keyid is so as to
-    # not export more than on pubkey packet.
-    raise ValueError("we need to export an "
-            "individual key. Please provide a valid keyid!")
+    # not export more than one pubkey packet.
+    raise ValueError("we need to export an individual key."
+            " Please provide a valid keyid! Keyid was '{}'".format(keyid))
 
   homearg = ""
   if homedir:
