@@ -11,4 +11,6 @@ exclude_lines =
   if __name__ == .__main__.:
 
 omit =
+  */test/*
+  */python?.?/*
   */site-packages/*
