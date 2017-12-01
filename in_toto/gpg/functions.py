@@ -18,6 +18,7 @@
 import subprocess
 import shlex
 
+import in_toto.log
 from in_toto.gpg.constants import GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND
 from in_toto.gpg.common import (parse_signature_packet, parse_pubkey_packet,
     gpg_verify_signature)
@@ -41,6 +42,15 @@ def gpg_sign_object(content, keyid = None, homedir = None):
 
   signature = parse_signature_packet(signature_data)
 
+  # On GPG < 2.1 we cannot derive the keyid from the signature data.
+  # Instead we try to compute the keyid from the public part of the signing key
+  # Note: This fails if no keyid was passed, e.g. if the default key was used
+  # for signing, c.f. `gpg_export_pubkey`.
+  if not signature["keyid"]:
+    in_toto.log.warn("the created signature has no keyid. We will export the"
+        " public portion of the signing key to compute the keyid.")
+    signature["keyid"] = gpg_export_pubkey(keyid, homedir)["keyid"]
+
   return signature
 
 def gpg_export_pubkey(keyid, homedir = None):
@@ -49,7 +59,7 @@ def gpg_export_pubkey(keyid, homedir = None):
     # FIXME: probably needs smarter parsing of what a valid keyid is so as to
     # not export more than on pubkey packet.
     raise ValueError("we need to export an "
-            "individual keyid. Please provide one")
+            "individual key. Please provide a valid keyid!")
 
   homearg = ""
   if homedir:
