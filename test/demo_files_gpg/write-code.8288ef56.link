@@ -1,0 +1,13 @@
+{"signed": {
+    "_type": "link",
+    "byproducts": {},
+    "command": [],
+    "environment": {},
+    "materials": {},
+    "name": "write-code",
+    "products": {
+        "foo.py": {
+            "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+        }
+    }
+}, "signatures": [{"keyid":"8288ef560ed3795f9df2c0db56193089b285da58","other_headers":"04000108001d1621048288ef560ed3795f9df2c0db56193089b285da5805025a21c7ed","signature":"c193ceaa2ed268461eef6572ee74930567df35a973da96e3d917c0d1fa3d34469097fc241fe65958e7125e3f4c4ce31acfadbe52ca090a5e5f40f46cc1184337fed1cb1adc6d75590c42522b00a0bbf41bb046adee71c3adbc10542dad4eb21c1d87718d5a79f40e6d31c8d26686281a0dfff5feffe5105023374252a209221d058a3853bda6857b21afcc3bbade232431516959d92c2aedc0fee8dbb0d1663b08d74ed89c4a2102f2c5b0ac6259985774ed533ef5116adf9f802b0a68c0acfaa164d9d423ecfd476794611d524e13fe9d4168edc3e499bd704714cf780ed86ac727eeedc7179f794e04012e667af0894a547e549a9eb2eb140ba82261dcf7c5"}]}
