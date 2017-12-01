@@ -19,6 +19,7 @@ import binascii
 import subprocess
 import shlex
 import re
+from distutils.version import StrictVersion
 
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
@@ -198,3 +199,24 @@ def get_version():
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
 
   return version_string
+
+
+def is_version_fully_supported():
+  """
+  <Purpose>
+    Compares the version of installed gpg2 with the minimal fully supported
+    gpg2 version (2.1.0).
+
+  <Returns>
+    True if the version returned by `get_version` is greater-equal
+    constants.FULLY_SUPPORTED_MIN_VERSION, False otherwise.
+
+  """
+
+  installed_version = get_version()
+  if (StrictVersion(installed_version) >=
+      StrictVersion(in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION)):
+    return True
+
+  else:
+    return False

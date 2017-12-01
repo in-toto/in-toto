@@ -22,6 +22,8 @@ GPG_SIGN_COMMAND = "gpg2 --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
 GPG_EXPORT_PUBKEY_COMMAND = "gpg2 {homearg} --export {keyid}"
 GPG_VERSION_COMMAND = "gpg2 --version"
 
+FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
+
 PACKET_TYPES = {
     'signature_packet': 0x02,
     'main_pubkey_packet': 0x06,
