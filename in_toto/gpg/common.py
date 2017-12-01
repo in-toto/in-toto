@@ -38,6 +38,9 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 # pubkey packets are a little bit more complicated than the signature ones
 def parse_pubkey_packet(data):
 
+  if not data:
+    raise ValueError("Could not parse empty pubkey packet.")
+
   data = parse_packet_header(data, PACKET_TYPES['main_pubkey_packet'])
 
   ptr = 0
