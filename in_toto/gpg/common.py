@@ -19,13 +19,15 @@
 import struct
 import binascii
 
+import in_toto.log
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_CANONICAL,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-        SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET)
+        SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
+        FULLY_SUPPORTED_MIN_VERSION)
 
 from in_toto.gpg.util import (compute_keyid, parse_packet_header,
-    parse_subpackets)
+    parse_subpackets, get_version)
 import in_toto.gpg
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
@@ -123,10 +125,16 @@ def parse_signature_packet(data):
   # partial one is available.
   keyid = filter(lambda x: True if x[0] == FULL_KEYID_SUBPACKET else False,
           hashed_subpacket_info)
-  if not keyid:
-    raise in_toto.gpg.PacketParsingError("can't parse the full keyid on "
-                "this signature packet!")
-  keyid = binascii.hexlify(keyid[0][1][2:])
+
+  if keyid:
+    keyid = binascii.hexlify(keyid[0][1][2:])
+
+  else:
+    keyid = ""
+    in_toto.log.warn("can't parse the full keyid on this signature packet."
+        "you need at least gpg version '{}'. Your version is '{}'".format(
+        FULLY_SUPPORTED_MIN_VERSION, get_version()))
+
 
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
