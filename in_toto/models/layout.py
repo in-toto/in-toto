@@ -38,6 +38,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
+from pprint import pformat
+
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
