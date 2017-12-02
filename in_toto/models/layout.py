@@ -250,6 +250,17 @@ class Step(ValidationMixin):
 
     self.validate()
 
+  def __repr__(self):
+    """
+    <Purpose>
+      Represents a readable format of Step Class fields
+    <Returns>
+      Step Class fields, i.e. type, name, expected_materials, expected_products
+      pubkeys, expected_command, threshold
+    """
+    return self.__class__.__name__ \
+     + "\n" + pformat({key:value for key,value in self.__dict__.iteritems() if not "__" in key})
+
   @staticmethod
   def read(data):
     return Step(**data)
