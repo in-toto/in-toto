@@ -356,6 +356,16 @@ class Inspection(ValidationMixin):
 
     self.validate()
 
+  def __repr__(self):
+    """
+    <Purpose>
+      Represents a readable format of Inspection Class fields
+    <Returns>
+      Step Inspection fields, i.e. type, name, expected_materials, expected_products, run
+    """
+    return self.__class__.__name__ \
+     + "\n" +  pformat({key:value for key,value in self.__dict__.iteritems() if not "__" in key})
+
   @staticmethod
   def read(data):
     return Inspection(**data)
