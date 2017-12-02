@@ -136,3 +136,40 @@ def prompt_generate_and_write_rsa_keypair(filepath, bits):
   generate_and_write_rsa_keypair"""
   password = prompt_password()
   generate_and_write_rsa_keypair(filepath, bits, password)
+
+def display(data, indentation=0):
+  """
+  <Purpose>
+    Generates a human friendly display for the data specified in the arguments
+
+  <Arguments>
+    data
+      The data structure passed in to be formatted to a readable format
+
+    indentation: (optional)
+      Set to 0 by default, a higher value will offset the amount of spaces used when displaying
+      information via console
+
+  <Returns>
+    None.
+  """
+  tab = " " * 4
+  if isinstance(data, list):
+    for item in data:
+      if isinstance(item, dict) or isinstance(item, list):
+        display(item, indentation+1)
+      else:
+        log.info(tab * (indentation+1) + str(item))
+  elif isinstance(data, dict):
+    for key, value in data.iteritems():
+      if not 'keys' in key:
+        log.info(tab * indentation + str(key) + ":")
+        if isinstance(value, dict) or isinstance(value, list):
+          if not len(value):
+            log.info(tab + "None")
+          else:
+            display(value, indentation+1)
+        else:
+          if not len(str(value)):
+            value = "None"
+          log.info(tab * (indentation+1) + str(value))
