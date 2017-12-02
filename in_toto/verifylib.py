@@ -1315,6 +1315,10 @@ def in_toto_verify(layout, layout_key_dict):
   # container (Metablock) that also carries the signatures
   layout = layout.signed
 
+  log.info("Begin printing layout metadata")
+  in_toto.util.display(layout.__dict__)
+  log.info("End printing layout metadata")
+
   log.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
 
