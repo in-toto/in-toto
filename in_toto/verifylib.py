@@ -1316,7 +1316,7 @@ def in_toto_verify(layout, layout_key_dict):
   layout = layout.signed
 
   log.info("Begin printing layout metadata")
-  in_toto.util.display(layout.__dict__)
+  in_toto.util.display(layout)
   log.info("End printing layout metadata")
 
   log.info("Verifying layout expiration...")

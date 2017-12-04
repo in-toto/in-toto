@@ -10,6 +10,9 @@ import securesystemslib.hash
 import securesystemslib.keys
 import securesystemslib.exceptions
 
+from in_toto.models.link import Link
+from in_toto.models.layout import Layout
+
 DEFAULT_RSA_KEY_BITS = 3072
 
 def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
@@ -153,6 +156,8 @@ def display(data, indentation=0):
   <Returns>
     None.
   """
+  if isinstance(data, Link) or isinstance(data, Layout):
+    data = vars(data)
   tab = " " * 4
   if isinstance(data, list):
     for item in data:
