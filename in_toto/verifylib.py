@@ -1126,7 +1126,7 @@ def reduce_chain_links(chain_link_dict):
 
   return reduced_chain_link_dict
 
-def verify_sublayouts(layout, chain_link_dict):
+def verify_sublayouts(layout, chain_link_dict, partial_verif=False):
   """
   <Purpose>
     Checks if any step has been delegated by the functionary, recurses into
@@ -1181,7 +1181,7 @@ def verify_sublayouts(layout, chain_link_dict):
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict)
+        summary_link = in_toto_verify(link, layout_key_dict, partial_verif)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
@@ -1243,7 +1243,7 @@ def get_summary_link(layout, reduced_chain_link_dict):
 
   return Metablock(signed=summary_link)
 
-def in_toto_verify(layout, layout_key_dict):
+def in_toto_verify(layout, layout_key_dict, partial_verif=False):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1306,9 +1306,10 @@ def in_toto_verify(layout, layout_key_dict):
     A link which summarizes the materials and products of the overall
     software supply chain (used by super-layout verification if any)
   """
+  failures = {}
 
   log.info("Verifying layout signatures...")
-  verify_layout_signatures(layout, layout_key_dict)
+  _run_verification(verify_layout_signatures, layout, layout_key_dict, partial_verif=partial_verif, failures=failures)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
@@ -1316,41 +1317,71 @@ def in_toto_verify(layout, layout_key_dict):
   layout = layout.signed
 
   log.info("Verifying layout expiration...")
-  verify_layout_expiration(layout)
+  _run_verification(verify_layout_expiration, layout, partial_verif=partial_verif, failures=failures)
 
   log.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout)
+  chain_link_dict = _run_verification(load_links_for_layout, layout, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying link metadata signatures...")
-  verify_all_steps_signatures(layout, chain_link_dict)
+  _run_verification(verify_all_steps_signatures, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict)
+  chain_link_dict = _run_verification(verify_sublayouts, layout, chain_link_dict, partial_verif, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying alignment of reported commands...")
-  verify_all_steps_command_alignment(layout, chain_link_dict)
+  _run_verification(verify_all_steps_command_alignment, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying threshold constraints...")
-  verify_threshold_constraints(layout, chain_link_dict)
-  reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
+  _run_verification(verify_threshold_constraints, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
+  reduced_chain_link_dict = _run_verification(reduce_chain_links, chain_link_dict, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying Step rules...")
-  verify_all_item_rules(layout.steps, reduced_chain_link_dict)
+  _run_verification(verify_all_item_rules, layout.steps, reduced_chain_link_dict, partial_verif=partial_verif, failures=failures)
 
   log.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout)
+  inspection_link_dict = _run_verification(run_all_inspections, layout, partial_verif=partial_verif, failures=failures)
 
   log.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
   # Steps or Inspections, hence the concatenation of both collections of links
-  combined_links = reduced_chain_link_dict.copy()
-  combined_links.update(inspection_link_dict)
-  verify_all_item_rules(layout.inspect, combined_links)
+  combined_links = _run_verification(reduced_chain_link_dict.copy, partial_verif=partial_verif, failures=failures)
+  _run_verification(combined_links.update, inspection_link_dict, partial_verif=partial_verif, failures=failures)
+  _run_verification(verify_all_item_rules, layout.inspect, combined_links, partial_verif=partial_verif, failures=failures)
 
-  # We made it this far without exception that means, verification passed
-  log.pass_verification("The software product passed all verification.")
+  if len(failures) == 0:
+    # We made it this far without exception that means, verification passed
+    log.pass_verification("The software product passed all verification.")
 
-  # Return a link file which summarizes the entire software supply chain
-  # This is mostly relevant if the currently verified supply chain is embedded
-  # in another supply chain
-  return get_summary_link(layout, reduced_chain_link_dict)
+    # Return a link file which summarizes the entire software supply chain
+    # This is mostly relevant if the currently verified supply chain is embedded
+    # in another supply chain
+    return get_summary_link(layout, reduced_chain_link_dict)
+  else:
+    log.fail_verification("The software product failed at least one verification step. Failures:\n%s" % str(failures))
+    return
+
+def _run_verification(func, *args, **kwargs):
+  # Default flag values
+  partial_verif = kwargs.get('partial_verif', False)
+  failures = kwargs.get('failures', {})
+
+  # If not running partial verification, run the command as usual
+  if not partial_verif:
+    return func(*args)
+  else:
+    retVal = None
+
+    # If missing a required variable, fail immediately
+    if None in args:
+      log.info("Cannot proceed due to previous failed step")
+      return retVal
+
+    # Attempt command as usual, but log exceptions instead of exiting
+    try:
+      retVal = func(*args)
+    except Exception as e:
+      e_type = type(e).__name__
+      e_message = getattr(e, "message", repr(e))
+      failures[e_type] = failures.get(e_type, []).append(e_message)
+
+    return retVal

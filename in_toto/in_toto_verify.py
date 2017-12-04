@@ -33,7 +33,7 @@ import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock
 
-def in_toto_verify(layout_path, layout_key_paths):
+def in_toto_verify(layout_path, layout_key_paths, partial_verif):
   """
   <Purpose>
     Loads the layout metadata as Metablock object (containg a Layout object)
@@ -68,7 +68,7 @@ def in_toto_verify(layout_path, layout_key_paths):
     layout_key_dict = in_toto.util.import_rsa_public_keys_from_files_as_dict(
         layout_key_paths)
 
-    verifylib.in_toto_verify(layout, layout_key_dict)
+    verifylib.in_toto_verify(layout, layout_key_dict, partial_verif)
   except Exception as e:
     log.fail_verification("{0} - {1}".format(type(e).__name__, e))
     sys.exit(1)
@@ -98,6 +98,9 @@ def main():
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
 
+  in_toto_args.add_argument("-p", "--partial", dest="partial_verif",
+      help="Enables partial verification", default=False, action="store_true")
+
   args = parser.parse_args()
 
   # Turn on all the `log.info()` in the library
@@ -107,7 +110,7 @@ def main():
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
-  in_toto_verify(args.layout, args.layout_keys)
+  in_toto_verify(args.layout, args.layout_keys, args.partial_verif)
 
 if __name__ == "__main__":
   main()
