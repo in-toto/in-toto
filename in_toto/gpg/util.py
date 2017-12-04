@@ -112,7 +112,7 @@ def parse_packet_header(data, expected_type):
     packet_length = data[1]
     ptr = 2
 
-  if packet_type != expected_type:
+  if packet_type != expected_type: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
 
@@ -168,9 +168,9 @@ def parse_subpackets(subpacket_octets):
   while ptr < len(subpacket_octets):
     length = subpacket_octets[ptr]
     ptr += 1
-    if length > 192 and length < 255 :
+    if length > 192 and length < 255 : # pragma: no cover
       length = ((length - 192 << 8) + (subpacket_octets[ptr] + 102))
-    if length == 255:
+    if length == 255: # pragma: no cover
       length = 0
       length = struct.unpack(">I", subpacket_octets[ptr: ptr+4])
       ptr += 4

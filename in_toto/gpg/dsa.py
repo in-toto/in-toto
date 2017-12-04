@@ -42,28 +42,28 @@ def get_pubkey_params(data):
   prime_p_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   prime_p = data[ptr:ptr + prime_p_length]
-  if len(prime_p) != prime_p_length:
+  if len(prime_p) != prime_p_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This MPI was truncated!")
   ptr += prime_p_length
 
   group_order_q_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   group_order_q = data[ptr:ptr + group_order_q_length]
-  if len(group_order_q) != group_order_q_length:
+  if len(group_order_q) != group_order_q_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This MPI has been truncated!")
   ptr += group_order_q_length
 
   generator_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   generator = data[ptr:ptr + generator_length]
-  if len(generator) != generator_length:
+  if len(generator) != generator_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This MPI has been truncated!")
   ptr += generator_length
 
   value_y_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   value_y = data[ptr:ptr + value_y_length]
-  if len(value_y) != value_y_length:
+  if len(value_y) != value_y_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This MPI has been truncated!")
 
   return {
@@ -79,14 +79,14 @@ def get_signature_params(data):
   r_length = get_mpi_length(data[ptr:ptr+2])
   ptr += 2
   r = data[ptr:ptr + r_length]
-  if len(r) != r_length:
+  if len(r) != r_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("r-value truncated in signature")
   ptr += r_length
 
   s_length = get_mpi_length(data[ptr: ptr+2])
   ptr += 2
   s = data[ptr: ptr + s_length]
-  if len(s) != s_length:
+  if len(s) != s_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("s-value truncated in signature")
 
   s = int(binascii.hexlify(s), 16)

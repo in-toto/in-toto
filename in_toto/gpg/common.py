@@ -47,7 +47,7 @@ def parse_pubkey_packet(data):
   keyinfo = {}
   version_number = data[ptr]
   ptr += 1
-  if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS:
+  if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
     raise ValueError("This pubkey packet version is not supported!")
 
   time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
@@ -56,7 +56,7 @@ def parse_pubkey_packet(data):
   algorithm = data[ptr]
   ptr += 1
 
-  if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
+  if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
     raise ValueError("This signature algorithm is not supported!")
   else:
     keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
@@ -79,19 +79,19 @@ def parse_signature_packet(data):
   # FIXME: support v3 type signatures (which I havent' seen in the wild)
   version_number = data[ptr]
   ptr += 1
-  if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS:
+  if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS: # pragma: no cover
     raise ValueError("Only version 4 signature packets are supported")
 
   # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
   signature_type = data[ptr]
   ptr += 1
-  if signature_type != SIGNATURE_TYPE_CANONICAL:
+  if signature_type != SIGNATURE_TYPE_CANONICAL: # pragma: no cover
     raise ValueError("We can only use canonical signatures on in-toto")
 
   signature_algorithm = data[ptr]
   ptr += 1
 
-  if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
+  if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
     raise ValueError("This signature algorithm is not supported!")
 
   key_type = SUPPORTED_SIGNATURE_ALGORITHMS[signature_algorithm]['type']
@@ -100,7 +100,7 @@ def parse_signature_packet(data):
   hash_algorithm = data[ptr]
   ptr += 1
 
-  if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS:
+  if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS: # pragma: no cover
     raise ValueError("This library only supports sha256 as "
             "the hash algorithm!")
 
@@ -111,7 +111,7 @@ def parse_signature_packet(data):
   hashed_subpacket_info = parse_subpackets(hashed_subpackets)
 
   # check wether we were actually able to read this much hashed octets
-  if len(hashed_subpackets) != hashed_octet_count:
+  if len(hashed_subpackets) != hashed_octet_count: # pragma: no cover
     raise ValueError("this signature packet is missing hashed octets!")
 
   ptr += hashed_octet_count

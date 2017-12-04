@@ -39,14 +39,14 @@ def get_pubkey_params(data):
   modulus_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   modulus = data[ptr:ptr + modulus_length]
-  if len(modulus) != modulus_length:
+  if len(modulus) != modulus_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This modulus MPI was truncated!")
   ptr += modulus_length
 
   exponent_e_length = get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   exponent_e = data[ptr:ptr + exponent_e_length]
-  if len(exponent_e) != exponent_e_length:
+  if len(exponent_e) != exponent_e_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This e MPI has been truncated!")
 
   return {
@@ -59,7 +59,7 @@ def get_signature_params(data):
   signature_length = get_mpi_length(data[ptr:ptr+2])
   ptr += 2
   signature = data[ptr:ptr + signature_length]
-  if len(signature) != signature_length:
+  if len(signature) != signature_length: # pragma: no cover
     raise in_toto.gpg.PacketParsingError("This signature was truncated!")
 
   return signature
