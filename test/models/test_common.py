@@ -13,20 +13,20 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Test the Signable, ValidationMixin and Metablock class functions.
+  Test the Signable and ValidationMixin class functions.
 
 """
 
-import os
 import unittest
-import datetime
-import in_toto.models.link
-import in_toto.exceptions
-import securesystemslib.exceptions
+import json
+from in_toto.models.common import Signable
 
-class TestMetablock(unittest.TestCase):
-  """ Verifies that the metablock class is correct """
-  pass
+class TestSignable(unittest.TestCase):
+  """ Verifies Signable class. """
+
+  def test_load_repr_string_as_json(self):
+    """Test load string returned by `Signable.repr` as JSON  """
+    json.loads(repr(Signable()))
 
 if __name__ == "__main__":
   unittest.main()
