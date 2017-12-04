@@ -1,13 +1,22 @@
-{"signed": {
-    "_type": "link",
-    "byproducts": {},
-    "command": [],
-    "environment": {},
-    "materials": {},
-    "name": "write-code",
-    "products": {
-        "foo.py": {
-            "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
-        }
-    }
-}, "signatures": [{"keyid":"8288ef560ed3795f9df2c0db56193089b285da58","other_headers":"04000108001d1621048288ef560ed3795f9df2c0db56193089b285da5805025a21c7ed","signature":"c193ceaa2ed268461eef6572ee74930567df35a973da96e3d917c0d1fa3d34469097fc241fe65958e7125e3f4c4ce31acfadbe52ca090a5e5f40f46cc1184337fed1cb1adc6d75590c42522b00a0bbf41bb046adee71c3adbc10542dad4eb21c1d87718d5a79f40e6d31c8d26686281a0dfff5feffe5105023374252a209221d058a3853bda6857b21afcc3bbade232431516959d92c2aedc0fee8dbb0d1663b08d74ed89c4a2102f2c5b0ac6259985774ed533ef5116adf9f802b0a68c0acfaa164d9d423ecfd476794611d524e13fe9d4168edc3e499bd704714cf780ed86ac727eeedc7179f794e04012e667af0894a547e549a9eb2eb140ba82261dcf7c5"}]}
+{
+ "signatures": [
+  {
+   "keyid": "8288ef560ed3795f9df2c0db56193089b285da58",
+   "other_headers": "04000108001d1621048288ef560ed3795f9df2c0db56193089b285da5805025a25a335",
+   "signature": "bc8db9988d722ccc2e34165be012488effec5f73be29d2db4f860154d90b58247ed8a589d13fc11b6301939e926353ecc0484ac14d55183e7c89ca90b315e9399103dcf7a41748f3ee4c55d114ac49fc32bc0f0a512e5324431eff2325555b24d4ae0426aba9cd0c5509ca14c1db2205da1d9ff7a50b1a5219f6fade5d4cd547552344191103d9511971b2e2cca7aa028fe5b3218c6ee3fa5beac94e67602fdd548e554b4bc42fedda42aa5e634b6805e4982ee0ae3c8b91515c61590e2fdce1e02b977e52913fd49e9c3e6c41f1a9eed80669fbb4a60d54cc70a77ada294e0bbe4c28c10312bb00754be626696abbf1b10c7d6ac952b591637f45a20ec26e8f"
+  }
+ ],
+ "signed": {
+  "_type": "link",
+  "byproducts": {},
+  "command": [],
+  "environment": {},
+  "materials": {},
+  "name": "write-code",
+  "products": {
+   "foo.py": {
+    "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+   }
+  }
+ }
+}

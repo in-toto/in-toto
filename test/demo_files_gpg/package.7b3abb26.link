@@ -1,26 +1,35 @@
-{"signed": {
-    "_type": "link",
-    "byproducts": {
-        "return-value": 0,
-        "stderr": "a foo.py\n",
-        "stdout": ""
-    },
-    "command": [
-        "tar",
-        "zcvf",
-        "foo.tar.gz",
-        "foo.py"
-    ],
-    "environment": {},
-    "materials": {
-        "foo.py": {
-            "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
-        }
-    },
-    "name": "package",
-    "products": {
-        "foo.tar.gz": {
-            "sha256": "52947cb78b91ad01fe81cd6aef42d1f6817e92b9e6936c1e5aabb7c98514f355"
-        }
-    }
-}, "signatures": [{"keyid":"7b3abb26b97b655ab9296bd15b0bd02e1c768c43","other_headers":"04000108001d1621047b3abb26b97b655ab9296bd15b0bd02e1c768c4305025a21c7df","signature":"493dd0d657662907e7e22cb1b6ae57f441c4cf391de1feba044dfe7ec421c2aeae619c31f84dd9e48edd01ee5756e743d2fad3d4a6021a1bd6642a9e83ca574ea63fd8811609b943097842cc65245ea7ccff68b3ab53301ffded7231d9455f7435fe0ef8237b1fcc930d1d616871f326294f9cd6a9f411353a2d486d776dc4b9fd77682cb58beaa442d4a6247fece7b07171aee3c0d1ce50b96bb2a71abd53a5f286ec4b0e8cb7b2ae205c777c4029ced1c7f4120a081033c3b65e7a2aca2fff996cafe36b7b3c99a9228ca711feff5ea111e2433076206a05b14940c1b47476e31bad6d5542d95114d850f4c6c4cabe0af3b396caebb38bfba65dfae0ba5d87"}]}
+{
+ "signatures": [
+  {
+   "keyid": "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
+   "other_headers": "04000108001d1621047b3abb26b97b655ab9296bd15b0bd02e1c768c4305025a25a328",
+   "signature": "e29c54033e60a883c326cc8f1ecaecc3c61cbddfd67c91e223235ad19075e360609de01121140210c0be7d296726df82f6b61611aafce46e94b4ae5a596e938b0ac6cc141397965b8b3f7fc695bd8b8361186678e1dbc765f0b4e690f22b7a5f3e72b7221088fb519fd619b3f227055643cd09094a3991b4765d4a1b0c2d988d360c633d5e508f8ad6fe87a07f5f0047f44ab35e53cb8b55c6f06c43b5aa512f946a9d8ff711bc7ea4aac6d0306ce94bb8cb9fe03b0493c6afbf2d7255e1937491d4f43d09ee603682823a530c16e2cc0f16227f9ba5d6f6926631fc170a30a59590cee2a0695b692aba0252c7b5d983bf3ebf822f992a877a1382478a557b11"
+  }
+ ],
+ "signed": {
+  "_type": "link",
+  "byproducts": {
+   "return-value": 0,
+   "stderr": "a foo.py\n",
+   "stdout": ""
+  },
+  "command": [
+   "tar",
+   "zcvf",
+   "foo.tar.gz",
+   "foo.py"
+  ],
+  "environment": {},
+  "materials": {
+   "foo.py": {
+    "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+   }
+  },
+  "name": "package",
+  "products": {
+   "foo.tar.gz": {
+    "sha256": "52947cb78b91ad01fe81cd6aef42d1f6817e92b9e6936c1e5aabb7c98514f355"
+   }
+  }
+ }
+}

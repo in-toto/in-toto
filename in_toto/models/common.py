@@ -58,7 +58,7 @@ class ValidationMixin(object):
 @attr.s(repr=False, init=False)
 class Signable(ValidationMixin):
   """Objects with base class Signable are to be included in a Metablock class
-  to be signed (hence the name). They provide a `signable_string` property
+  to be signed (hence the name). They provide a `signable_bytes` property
   used to create deterministic signatures. """
 
   def __repr__(self):
@@ -67,9 +67,13 @@ class Signable(ValidationMixin):
         indent=1, separators=(",", ": "), sort_keys=True)
 
   @property
-  def signable_string(self):
-    """Returns a canonical JSON string of Signable used for signing. """
-    # Note: The string returned from this function is used to generate
-    # and verify signatures (c.f. `metadata.Metablock`). Changes to this
-    # function might break backwards compatibility with existing metadata.
-    return securesystemslib.formats.encode_canonical(attr.asdict(self))
+  def signable_bytes(self):
+    """Returns canonical JSON utf-8 encoded bytes of Signable object dictionary
+    representation.
+
+    The bytes returned from this function are used to generate
+    and verify signatures (c.f. `metadata.Metablock`). Changes to this
+    function might break backwards compatibility with existing metadata. """
+
+    return securesystemslib.formats.encode_canonical(
+        attr.asdict(self)).encode("UTF-8")
