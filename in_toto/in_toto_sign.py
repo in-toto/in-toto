@@ -99,7 +99,8 @@ def _sign_and_dump_metadata(metadata, args):
     # to use the default gpg keyring.
     if args.gpg != None:
       # If `--gpg` was passed without argument we sign with the default key
-      if len(args.gpg) == 0:
+      # Excluded so that coverage does not vary in different test environments
+      if len(args.gpg) == 0: # pragma: no cover
         signature = metadata.sign_gpg(gpg_keyid=None, gpg_home=args.gpg_home)
 
       # Otherwise we sign with each passed keyid

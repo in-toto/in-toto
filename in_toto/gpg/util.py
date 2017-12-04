@@ -214,9 +214,10 @@ def is_version_fully_supported():
   """
 
   installed_version = get_version()
+  # Excluded so that coverage does not vary in different test environments
   if (StrictVersion(installed_version) >=
-      StrictVersion(in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION)):
+      StrictVersion(in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION)): # pragma: no cover
     return True
 
-  else:
+  else: # pragma: no cover
     return False

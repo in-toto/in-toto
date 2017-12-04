@@ -129,15 +129,15 @@ def parse_signature_packet(data):
   keyid = filter(lambda x: True if x[0] == FULL_KEYID_SUBPACKET else False,
           hashed_subpacket_info)
 
-  if keyid:
+  # Excluded so that coverage does not vary in different test environments
+  if keyid: # pragma: no cover
     keyid = binascii.hexlify(keyid[0][1][2:])
 
-  else:
+  else: # pragma: no cover
     keyid = ""
     in_toto.log.warn("can't parse the full keyid on this signature packet."
         "you need at least gpg version '{}'. Your version is '{}'".format(
         FULLY_SUPPORTED_MIN_VERSION, get_version()))
-
 
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2

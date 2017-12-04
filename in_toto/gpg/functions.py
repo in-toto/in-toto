@@ -48,7 +48,8 @@ def gpg_sign_object(content, keyid = None, homedir = None):
   # Instead we try to compute the keyid from the public part of the signing key
   # Note: This fails if no keyid was passed, e.g. if the default key was used
   # for signing, c.f. `gpg_export_pubkey`.
-  if not signature["keyid"]:
+  # Excluded so that coverage does not vary in different test environments
+  if not signature["keyid"]: # pragma: no cover
     in_toto.log.warn("the created signature has no keyid. We will export the"
         " public portion of the signing key to compute the keyid.")
     signature["keyid"] = gpg_export_pubkey(keyid, homedir)["keyid"]
