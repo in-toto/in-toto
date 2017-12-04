@@ -21,7 +21,6 @@
 
 import attr
 import json
-import canonicaljson
 
 import securesystemslib.keys
 import securesystemslib.formats
@@ -46,17 +45,12 @@ class Metablock(object):
 
 
   def __repr__(self):
-    """Returns a JSON string representation of the object."""
-    # the double {{'s is the escape sequence for an individual {. We wrap this
-    # under a format string to avoid encoding to json twice (which turns a json
-    # string into a string and so on...
-    # FIXME:
-    # We are mixing 3 JSON string formats here: The value of "signed" is
-    # "pretty printed canonical json", the value of "signatures" is
-    # "canonical json" and the container is just "json".
-    # Is this really what we want?
-    return '{{"signed": {}, "signatures": {}}}'.format(self.signed,
-        canonicaljson.encode_canonical_json(self.signatures))
+    """Returns an indented JSON string of the metadata object. """
+    return json.dumps(
+        {
+          "signatures": self.signatures,
+          "signed": attr.asdict(self.signed)
+        }, indent=1, separators=(",", ": "), sort_keys=True)
 
 
   def dump(self, filename):
@@ -146,7 +140,7 @@ class Metablock(object):
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    signature = securesystemslib.keys.create_signature(key, repr(self.signed))
+    signature = securesystemslib.keys.create_signature(key, self.signed.signable_string)
     self.signatures.append(signature)
 
 
@@ -203,5 +197,5 @@ class Metablock(object):
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
       if not securesystemslib.keys.verify_signature(
-          key, signature, repr(self.signed)):
+          key, signature, self.signed.signable_string):
         raise SignatureVerificationError("Invalid signature")

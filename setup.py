@@ -65,7 +65,7 @@ setup(
     'Topic :: Software Development'
   ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-  install_requires=["six", "securesystemslib==0.10.8", "attrs", "canonicaljson",
+  install_requires=["six", "securesystemslib==0.10.8", "attrs",
                     "python-dateutil", "iso8601"],
   test_suite="test.runtests",
   entry_points={

@@ -17,9 +17,10 @@
 
 """
 
+import json
 import attr
-import canonicaljson
 import inspect
+import securesystemslib.formats
 
 
 
@@ -57,11 +58,18 @@ class ValidationMixin(object):
 @attr.s(repr=False, init=False)
 class Signable(ValidationMixin):
   """Objects with base class Signable are to be included in a Metablock class
-  to be signed (hence the name). They provide a pretty-printed json
-  representation of its fields"""
+  to be signed (hence the name). They provide a `signable_string` property
+  used to create deterministic signatures. """
 
   def __repr__(self):
+    """Returns an indented JSON string of the metadata object. """
+    return json.dumps(attr.asdict(self),
+        indent=1, separators=(",", ": "), sort_keys=True)
+
+  @property
+  def signable_string(self):
+    """Returns a canonical JSON string of Signable used for signing. """
     # Note: The string returned from this function is used to generate
     # and verify signatures (c.f. `metadata.Metablock`). Changes to this
     # function might break backwards compatibility with existing metadata.
-    return canonicaljson.encode_pretty_printed_json(attr.asdict(self))
+    return securesystemslib.formats.encode_canonical(attr.asdict(self))
