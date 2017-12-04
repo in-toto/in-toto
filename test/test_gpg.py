@@ -121,6 +121,24 @@ class TestGPGRSA(unittest.TestCase):
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
 
+  def test_gpg_sign_and_verify_object_default_keyring(self):
+    """Sign/verify using keyring from envvar. """
+
+    test_data = b'test_data'
+
+    gnupg_home_backup = os.environ.get("GNUPGHOME")
+    os.environ["GNUPGHOME"] = self.gnupg_home
+
+    signature = gpg_sign_object(test_data, keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid)
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+
+    # Reset GNUPGHOME
+    if gnupg_home_backup:
+      os.environ["GNUPGHOME"] = gnupg_home_backup
+    else:
+      del os.environ["GNUPGHOME"]
+
 
 class TestGPGDSA(unittest.TestCase):
   """ Test signature creation, verification and key export from the gpg
@@ -210,6 +228,7 @@ class TestGPGDSA(unittest.TestCase):
 
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
 
 if __name__ == "__main__":
   unittest.main()
