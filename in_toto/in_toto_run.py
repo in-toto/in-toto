@@ -109,7 +109,7 @@ def main():
 
   in_toto_args = parser.add_argument_group("in-toto options")
 
-   # FIXME: Do we limit the allowed characters for the name?
+  # FIXME: Do we limit the allowed characters for the name?
   in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
@@ -185,13 +185,13 @@ def main():
     in_toto_run(args.step_name, args.materials, args.products, [],
       args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
 
-  else:
-    if not args.link_cmd:
-      parser.print_usage()
-      parser.exit("For no command use `--no-command` option")
+  elif not args.link_cmd: # pragma: no branch
+    parser.print_usage()
+    parser.exit("No command specified."
+        " Please specify (or use the --no-command option)")
 
-    in_toto_run(args.step_name, args.materials, args.products, args.link_cmd,
-        args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+  in_toto_run(args.step_name, args.materials, args.products, args.link_cmd,
+      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
 
 if __name__ == "__main__":
   main()
