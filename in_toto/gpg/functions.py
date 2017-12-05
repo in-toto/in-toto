@@ -19,9 +19,9 @@ import subprocess
 import shlex
 
 import in_toto.log
-from in_toto.gpg.constants import GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND
-from in_toto.gpg.common import (parse_signature_packet, parse_pubkey_packet,
-    gpg_verify_signature)
+from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
+    SIGNATURE_HANDLERS)
+from in_toto.gpg.common import parse_signature_packet, parse_pubkey_packet
 
 import securesystemslib.formats
 
@@ -55,6 +55,12 @@ def gpg_sign_object(content, keyid = None, homedir = None):
     signature["keyid"] = gpg_export_pubkey(keyid, homedir)["keyid"]
 
   return signature
+
+
+def gpg_verify_signature(signature_object, pubkey_info, content):
+  handler = SIGNATURE_HANDLERS[pubkey_info['type']]
+  return handler.gpg_verify_signature(signature_object, pubkey_info, content)
+
 
 def gpg_export_pubkey(keyid, homedir = None):
 

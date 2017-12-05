@@ -30,9 +30,7 @@ from in_toto.gpg.util import (compute_keyid, parse_packet_header,
     parse_subpackets, get_version)
 import in_toto.gpg
 
-def gpg_verify_signature(signature_object, pubkey_info, content):
-  handler = SIGNATURE_HANDLERS[pubkey_info['type']]
-  return handler.gpg_verify_signature(signature_object, pubkey_info, content)
+
 
 # XXX this doesn't support armored pubkey packets, so use with care.
 # pubkey packets are a little bit more complicated than the signature ones

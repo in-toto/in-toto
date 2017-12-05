@@ -187,7 +187,7 @@ class Metablock(object):
       Layout object contained in `signed`.
 
       If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
-      `in_toto.gpg.gpg_verify_signature` is used for verification,
+      `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
       `securesystemslib.keys.verify_signature` is used otherwise.
 
       Verification fails if,
