@@ -128,10 +128,9 @@ class Metablock(object):
   def sign(self, key):
     """
     <Purpose>
-      Signs the pretty printed canonical JSON representation
-      (see models.common.Signable.signable_bytes) of the Link or Layout object
-      contained in the `signed` property with the passed key and appends the
-      created signature to `signatures`.
+      Signs the pretty printed canonical JSON representation of the Link or
+      Layout object contained in the `signed` property with the passed key and
+      appends the created signature to `signatures`.
 
     <Arguments>
       key:
@@ -142,9 +141,12 @@ class Metablock(object):
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
-    #FIXME: fix securesystemslib re-encoding for spec compliance
+
+    # We actually pass the dictionary representation of the data to sign
+    # and securesystemslib converts it to canonical JSON utf-8 encoded bytes
+    # before creating the signature.
     signature = securesystemslib.keys.create_signature(key,
-        self.signed.signable_bytes)
+        self.signed.signable_dict)
 
     self.signatures.append(signature)
 
@@ -241,9 +243,11 @@ class Metablock(object):
             self.signed.signable_bytes)
 
       else:
-        #FIXME: fix securesystemslib re-encoding for spec compliance
+        # We actually pass the dictionary representation of the data to verify
+        # and securesystemslib converts it to canonical JSON utf-8 encoded
+        # bytes before verifying the signature.
         valid = securesystemslib.keys.verify_signature(
-            key, signature, self.signed.signable_bytes)
+            key, signature, self.signed.signable_dict)
 
       if not valid:
         raise SignatureVerificationError("Invalid signature")

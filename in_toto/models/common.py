@@ -77,3 +77,16 @@ class Signable(ValidationMixin):
 
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
+
+  @property
+  def signable_dict(self):
+    """Returns the dictionary representation of Signable, which we pass to
+    securesystemslib signing and verifying functions, where it gets converted
+    to canonical JSON utf-8 encoded bytes before signing and verifying.
+
+    TODO: I'd rather fully control what data is signed here and not in the
+    crypto backend, i.e. pass signable_bytes to the signing/verifying
+    functions. This would require a change to securesystemslib.
+    """
+
+    return attr.asdict(self)
