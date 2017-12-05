@@ -71,6 +71,8 @@ from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 import in_toto.gpg.functions
 
+import securesystemslib.formats
+
 def _sign_and_dump_metadata(metadata, args):
   """
   <Purpose>
@@ -105,7 +107,7 @@ def _sign_and_dump_metadata(metadata, args):
 
       # Otherwise we sign with each passed keyid
       for keyid in args.gpg:
-        # TODO: Add keyid schema check
+        securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
         signature = metadata.sign_gpg(gpg_keyid=keyid, gpg_home=args.gpg_home)
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH ...`
