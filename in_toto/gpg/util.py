@@ -35,8 +35,7 @@ def get_mpi_length(data):
     data: The MPI data
 
   <Exceptions>
-    in-toto.gpg.TruncatedMPIException: if the data provided is not long enough
-    to contain this MPI.
+    None
 
   <Side Effects>
     None
