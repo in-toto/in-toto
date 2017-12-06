@@ -142,7 +142,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     for setting in ["path/does/not/exist", 12345, True]:
       in_toto.settings.ARTIFACT_BASE_PATH = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
-        print setting
         record_artifacts_as_dict(["."])
 
   def test_base_path_is_child_dir(self):
@@ -231,7 +230,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     for setting in ["not a list of settings", 12345, True]:
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
-        print setting
         record_artifacts_as_dict(["."])
 
 
