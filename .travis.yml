@@ -1,8 +1,6 @@
-language:
-    python
-
-python:
-    - "2.7"
+dist: trusty
+language: python
+python: 3.6
 
 env:
     - TOXENV=lint
@@ -12,8 +10,8 @@ env:
     - TOXENV=py36
 
 install:
-    - pip install tox
-    - pip install coveralls
+    - pip install -U tox
+    - pip install -U coveralls
 
 script:
     - tox
