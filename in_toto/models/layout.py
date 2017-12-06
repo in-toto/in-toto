@@ -28,6 +28,7 @@
   Inspection:
       represents a hook that is run at verification
 """
+from six import string_types
 
 import attr
 import shlex
@@ -144,7 +145,7 @@ class Layout(Signable):
 
   def _validate_readme(self):
     """Private method to check that the readme field is a string."""
-    if not isinstance(self.readme, basestring):
+    if not isinstance(self.readme, string_types):
       raise securesystemslib.exceptions.FormatError(
           "Invalid readme '{}', value must be a string."
           .format(self.readme))
