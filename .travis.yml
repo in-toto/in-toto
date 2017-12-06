@@ -7,6 +7,9 @@ python:
 env:
     - TOXENV=lint
     - TOXENV=py27
+    - TOXENV=py34
+    - TOXENV=py35
+    - TOXENV=py36
 
 install:
     - pip install tox
