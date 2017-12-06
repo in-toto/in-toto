@@ -110,8 +110,8 @@ class TestRunAllInspections(unittest.TestCase):
 
     run_all_inspections(self.layout)
     link = Metablock.load("touch-bar.link")
-    self.assertListEqual(link.signed.materials.keys(), ["foo"])
-    self.assertListEqual(sorted(link.signed.products.keys()), sorted(["foo", "bar"]))
+    self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
+    self.assertListEqual(sorted(list(link.signed.products.keys())), sorted(["foo", "bar"]))
 
     in_toto.settings.ARTIFACT_BASE_PATH = None
     shutil.rmtree(ignore_dir)
@@ -482,7 +482,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
@@ -496,7 +496,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
@@ -510,7 +510,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "dist/foo": {"sha256": self.sha256_foo},
       "dist/bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["dist/bar"])
 
@@ -523,7 +523,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "dist/bar": {"sha256": self.sha256_bar},
       "dist/foo": {"sha256": self.sha256_foo}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["dist/foo"])
 
@@ -536,7 +536,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
@@ -549,7 +549,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": self.sha256_bar},
       "foo": {"sha256": self.sha256_foo}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
@@ -563,7 +563,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foobar": {"sha256": self.sha256_foobar},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
@@ -577,7 +577,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "barfoo": {"sha256": self.sha256_barfoo},
       "foo": {"sha256": self.sha256_foo}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
@@ -591,7 +591,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "dist/foobar": {"sha256": self.sha256_foobar},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
@@ -605,7 +605,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "dist/barfoo": {"sha256": self.sha256_barfoo},
       "foo": {"sha256": self.sha256_foo}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
@@ -619,7 +619,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foobar": {"sha256": self.sha256_foobar},
       "bar": {"sha256": self.sha256_bar}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
@@ -633,7 +633,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "barfoo": {"sha256": self.sha256_barfoo},
       "foo": {"sha256": self.sha256_foo}
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     self.assertListEqual(
         verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
@@ -643,7 +643,7 @@ class TestVerifyMatchRule(unittest.TestCase):
 
     rule = ["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-null"]
     artifacts = {}
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
@@ -655,7 +655,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     artifacts = {
       "bar": {"sha256": self.sha256_bar},
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
@@ -667,7 +667,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     artifacts = {
       "foo": {"sha256": self.sha256_foo},
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
@@ -679,7 +679,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     artifacts = {
       "bar": {"sha256": "aaaaaaaaaa"},
     }
-    queue = artifacts.keys()
+    queue = list(artifacts.keys())
     with self.assertRaises(RuleVerficationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 

@@ -127,7 +127,7 @@ class Link(Signable):
           "Invalid Link: field `materials` must be of type dict, got: {}"
           .format(type(self.materials)))
 
-    for material in self.materials.values():
+    for material in list(self.materials.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
 
 
@@ -138,7 +138,7 @@ class Link(Signable):
           "Invalid Link: field `products` must be of type dict, got: {}"
           .format(type(self.products)))
 
-    for product in self.products.values():
+    for product in list(self.products.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
 
 
