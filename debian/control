@@ -1,0 +1,40 @@
+Source: in-toto
+Section: devel
+Priority: optional
+Maintainer: in-toto developers <in-toto-dev@googlegroups.com>
+Uploaders:
+ Santiago Torres-Arias <santiago@nyu.edu>,
+ Lukas Puehringer <lukpueh@nyu.edu>,
+ Holger Levsen <holger@debian.org>,
+ Justin Cappos <jcappos@nyu.edu>,
+Build-Depends:
+ python,
+ python-cryptography,
+ python-attr,
+ python-dateutil,
+ python-six,
+ python-iso8601,
+ python-mock,
+ dh-python (>= 2.20160818~),
+ dpkg-dev (>= 1.17.14),
+ python-securesystemslib (= 0.10.8),
+Standards-Version: 4.1.1
+Homepage: https://in-toto.io
+Vcs-Git: https://github.com/in-toto/in-toto.git
+Vcs-Browser: https://github.com/in-toto/in-toto
+
+Package: in-toto
+Architecture: all
+Depends:
+ dh-python,
+ python-cryptography,
+ python-attr,
+ python-dateutil,
+ python-six,
+ python-iso8601,
+ python-securesystemslib (= 0.10.8),
+Recommends:
+ gpg2,
+Description: in-toto is a software supply chain security framework. It enables
+ developers to authenticate operations in the supply chain and verify the
+ authentication trail when releasing or installing a software product.
