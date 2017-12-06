@@ -146,7 +146,7 @@ def compute_keyid(pubkey_packet_data):
   hasher.update(b'\x99')
   hasher.update(struct.pack(">H", len(pubkey_packet_data)))
   hasher.update(bytes(pubkey_packet_data))
-  return binascii.hexlify(hasher.finalize())
+  return binascii.hexlify(hasher.finalize()).decode("ascii")
 
 
 def parse_subpackets(subpacket_octets):
