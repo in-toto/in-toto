@@ -26,7 +26,6 @@
 """
 import sys
 import os
-import tempfile
 import fnmatch
 import glob
 
@@ -250,36 +249,18 @@ def execute_link(link_cmd_args, record_streams):
     if specified.
 
   <Returns>
-    - A dictionary containg standard output and standard error of the
+    - A dictionary containing standard output and standard error of the
       executed command, called by-products.
       Note: If record_streams is False, the dict values are empty strings.
     - The return value of the executed command.
   """
-  # TODO: The first approach only redirects the stdout/stderr to a tempfile
-  # but we actually want to duplicate it, ideas
-  #  - Using a pipe won't work because processes like vi will complain
-  #  - Wrapping stdout/sterr in Python does not work because the suprocess
-  #    will only take the fd and then uses it natively
-  #  - Reading from /dev/stdout|stderr, /dev/tty is *NIX specific
-
-  # Until we come up with a proper solution we use a flag and let the user
-  # decide if s/he wants to see or store stdout/stderr
-  # btw: we ignore them in the layout anyway
-
+  # TODO: Properly duplicate standard streams (issue #11)
   if record_streams:
-    # We should consider using SpooledTemporaryFile if we expect very large
-    # outputs in the future
-    stdout_file = tempfile.TemporaryFile()
-    stderr_file = tempfile.TemporaryFile()
+    process = subprocess.Popen(link_cmd_args, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, universal_newlines=True)
 
-    return_value = subprocess.call(link_cmd_args,
-        stdout=stdout_file, stderr=stderr_file)
-
-    stdout_file.seek(0)
-    stderr_file.seek(0)
-
-    stdout_str = stdout_file.read()
-    stderr_str = stderr_file.read()
+    stdout_str, stderr_str = process.communicate()
+    return_value = process.returncode
 
   else:
     return_value = subprocess.call(link_cmd_args)
