@@ -292,7 +292,7 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 2)
 
     # Valid JSON but not valid Link or Layout
-    open("tmp.json", "w").write(json.dumps({}))
+    open("tmp.json", "wb").write(json.dumps({}).encode("utf-8"))
     self._test_cli_sys_exit([
         "-f", "tmp.json",
         "-k", "key-not-used",

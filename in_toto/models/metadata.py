@@ -73,8 +73,8 @@ class Metablock(object):
       None.
 
     """
-    with open(filename, "wt") as fp:
-      fp.write("{}".format(self))
+    with open(filename, "wb") as fp:
+      fp.write("{}".format(self).encode("utf-8"))
 
 
   @staticmethod
