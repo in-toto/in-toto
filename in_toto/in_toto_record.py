@@ -56,10 +56,9 @@ def main():
   parser = argparse.ArgumentParser(
       description="Starts or stops link metadata recording")
 
+  # The subparsers inherit the arguments from the parent parser
+  parent_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest="command")
-
-  subparser_start = subparsers.add_parser('start')
-  subparser_stop = subparsers.add_parser('stop')
 
   # Whitespace padding to align with program name
   lpad = (len(parser.prog) + 1) * " "
@@ -72,16 +71,18 @@ def main():
                "stop  [--products <filepath>[ <filepath> ...]]\n"
                .format(lpad))
 
-  in_toto_args = parser.add_argument_group("in-toto options")
   # FIXME: Do we limit the allowed characters for the name?
-  in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
+  parent_parser.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata")
 
-  in_toto_args.add_argument("-k", "--key", type=str, required=True,
+  parent_parser.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  in_toto_args.add_argument("-v", "--verbose", dest='verbose',
-      help="Verbose execution.", default=False, action='store_true')
+  parent_parser.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", default=False, action="store_true")
+
+  subparser_start = subparsers.add_parser("start", parents=[parent_parser])
+  subparser_stop = subparsers.add_parser("stop", parents=[parent_parser])
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")

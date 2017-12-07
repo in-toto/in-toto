@@ -64,22 +64,23 @@ class TestInTotoRecordTool(unittest.TestCase):
 
   def test_main_required_args(self):
     """Test CLI command record start/stop with required arguments. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path]
-    with patch.object(sys, 'argv', args + ["start"]):
+    args = ["--step-name", "test-step", "--key", self.key_path]
+
+    with patch.object(sys, 'argv', ["in_toto_record.py", "start"] + args):
       in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop"]):
+    with patch.object(sys, 'argv', ["in_toto_record.py", "stop"] + args):
       in_toto_record_main()
+
 
   def test_main_optional_args(self):
     """Test CLI command record start/stop with optional arguments. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
+    args = ["--step-name", "test-step", "--key",
         self.key_path]
-    with patch.object(sys, 'argv', args + ["start", "--materials",
-        self.test_artifact]):
+    with patch.object(sys, 'argv',
+        ["in_toto_record.py", "start"] + args + ["-m", self.test_artifact]):
       in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop", "--products",
-        self.test_artifact]):
+    with patch.object(sys, 'argv',
+        ["in_toto_record.py", "stop"] +  args + ["-p", self.test_artifact]):
       in_toto_record_main()
 
   def test_main_wrong_args(self):
@@ -102,8 +103,8 @@ class TestInTotoRecordTool(unittest.TestCase):
 
   def test_main_wrong_key_exits(self):
     """Test CLI command record with wrong key exits and logs error """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        "non-existing-key", "start"]
+    args = [ "in_toto_record.py", "start", "--step-name", "test-step", "--key",
+        "non-existing-key"]
     with patch.object(sys, 'argv',
         args), self.assertRaises(
         SystemExit):
@@ -111,13 +112,12 @@ class TestInTotoRecordTool(unittest.TestCase):
 
   def test_main_verbose(self):
     """Log level with verbose flag is lesser/equal than logging.INFO. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "--verbose"]
+    args = ["--step-name", "test-step", "--key", self.key_path, "--verbose"]
 
     original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args + ["start"]):
+    with patch.object(sys, 'argv', ["in_toto_record.py", "start"] + args):
       in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop"]):
+    with patch.object(sys, 'argv', ["in_toto_record.py", "stop"] + args):
       in_toto_record_main()
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
     # Reset log level
@@ -125,7 +125,7 @@ class TestInTotoRecordTool(unittest.TestCase):
 
   def test_stop_missing_unfinished_link_exit(self):
     """Error exit with missing unfinished link file. """
-    args = ["in_toto_record.py", "-n", "test-step", "-k", self.key_path, "stop"]
+    args = ["in_toto_record.py", "stop", "-n", "test-step", "-k", self.key_path]
     with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
       in_toto_record_main()
 
