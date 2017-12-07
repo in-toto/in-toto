@@ -60,23 +60,13 @@ def main():
   parent_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest="command")
 
-  # Whitespace padding to align with program name
-  lpad = (len(parser.prog) + 1) * " "
-  parser.usage = ("\n"
-      "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n"
-               "[--verbose]\n"
-      "Commands:\n{0}"
-               "start [--materials <filepath>[ <filepath> ...]]\n{0}"
-               "stop  [--products <filepath>[ <filepath> ...]]\n"
-               .format(lpad))
-
   # FIXME: Do we limit the allowed characters for the name?
   parent_parser.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata")
+      help="Unique name for link metadata", metavar="<unique step name>")
 
   parent_parser.add_argument("-k", "--key", type=str, required=True,
-      help="Path to private key to sign link metadata (PEM)")
+      help="Path to private key to sign link metadata (PEM)",
+      metavar="<signing key path>")
 
   parent_parser.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
@@ -85,10 +75,12 @@ def main():
   subparser_stop = subparsers.add_parser("stop", parents=[parent_parser])
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
-      nargs='+', help="Files to record before link command execution")
+      nargs='+', help="Files to record before link command execution",
+      metavar="<material path>")
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
-      nargs='+', help="Files to record after link command execution")
+      nargs='+', help="Files to record after link command execution",
+      metavar="<product path>")
 
   args = parser.parse_args()
 
