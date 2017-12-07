@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 <Program Name>
   in_toto_record.py
@@ -14,32 +13,41 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface to start and stop in-toto link metadata
-  recording.
+  Provides a command line interface to create a link metadata file in multiple
+  steps. The commands are:
 
   start
-    Takes a step name, a functionary's signing key and optional
-    material paths.
     Creates a temporary link file containing the file hashes of the passed
-    materials and signs it with the functionary's key under
-    .<step name>.link-unfinished
+    materials and signs it with the passed functionary's key under
+    .<step name>.<keyid>.link-unfinished
 
   stop
-    Takes a step name, a functionary's signing key and optional
-    product paths.
-    Expects a .<step name>.link-unfinished in the current directory signed by
-    the functionary's signing key, adds the file hashes of the passed products,
-    updates the signature and renames the file  .<step name>.link-unfinished
-    to <step name>.link
-
+    Expects a .<step name>.<keyid>.link-unfinished in the current directory
+    signed by the passed functionary's key, adds the file hashes of the passed
+    products, updates the signature and renames the file
+    .<step name>.<keyid>.link-unfinished to <step name>.<keyid>.link
 
   The implementation of the tasks can be found in runlib.
 
-  Example Usage
+<Example Usage>
+  Create link file signed with specified 'key' stored on disk and record all
+  files in current working directory as materials and products.
+  Any files in the current working directory that you edit between running
+  the commands will have different hashes in their corresponding material and
+  product entries of the resulting link file 'edit-files.<keyid>.link'.
+
   ```
-  in-toto-record --step-name edit-files start --materials . --key bob
-  # Edit files manually ...
-  in-toto-record --step-name edit-files stop --products . --key bob
+  in-toto-record start --step-name edit-files -key /path/to/key --materials .
+  in-toto-record stop --step-name edit-files -key /path/to/key --products .
+  ```
+
+  # Create link file signed with the default gpg key and record a file named
+  # 'foo' as material and product.
+  # If you edit foo between running the commands the recorded hashes in the
+  # resulting link file 'edit-foo.<keyid>.link' will differ.
+  ```
+  in-toto-record start --step-name edit-foo --gpg --materials path/to/foo
+  in-toto-record stop --step-name edit-foo --gpg --products path/to/foo
   ```
 
 """

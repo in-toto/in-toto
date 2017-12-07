@@ -82,19 +82,22 @@ in-toto-run  --step-name <unique step name>
 ##### in-toto-record
 `in-toto-record` works similar to `in-toto-run` but can be used for
 multi-part software supply chain steps, i.e. steps that are not carried out
-by a single command. Use `in-toto-record ... start ...` to create a
+by a single command. Use `in-toto-record start ...` to create a
 preliminary link file that only records the *materials*, then run the
-commands of that step, and finally use `in-toto-record ... stop ...` to
-record the *products* and generate the actual link metadata file. *Note:
-`in-toto-record` does not support GPG signing yet.*
+commands of that step or edit files manually and finally use
+`in-toto-record stop ...` to record the *products* and generate the actual
+link metadata file.
 
 ```shell
-in-toto-record  --step-name <unique step name>
-                --key <functionary private key path>
-               [--verbose]
-Commands:
-               start [--materials <filepath>[ <filepath> ...]]
-               stop  [--products <filepath>[ <filepath> ...]]
+usage: in-toto-record start --step-name <unique step name>
+                            (--key <signing key path> | --gpg [<gpg keyid>])
+                            [--gpg-home <gpg keyring path>] [-v]
+                            [--materials <material path> [<material path> ...]]
+
+usage: in-toto-record stop -step-name <unique step name>
+                           (--key <signing key path> | --gpg [<gpg keyid>])
+                           [--gpg-home <gpg keyring path>] [-v]
+                           [--products <product path> [<product path> ...]]
 ```
 
 #### Release final product
