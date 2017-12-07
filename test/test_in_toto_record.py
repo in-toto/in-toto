@@ -31,7 +31,6 @@ from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
 from in_toto.models.link import Link
 from in_toto.in_toto_record import main as in_toto_record_main
-from in_toto.in_toto_record import in_toto_record_start, in_toto_record_stop
 
 WORKING_DIR = os.getcwd()
 
@@ -124,20 +123,11 @@ class TestInTotoRecordTool(unittest.TestCase):
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
 
-  def test_in_toto_record_start_stop(self):
-    """in_toto_record_start/stop run through. """
-    in_toto_record_start("test-step", self.key, [self.test_artifact])
-    in_toto_record_stop("test-step", self.key, [self.test_artifact])
-
-  def test_in_toto_record_start_bad_key_error_exit(self):
-    """Error exit in_toto_record_start with bad key. """
-    with self.assertRaises(SystemExit):
-      in_toto_record_start("test-step", "bad-key", [self.test_artifact])
-
-  def test_in_toto_record_stop_missing_unfinished_link_exit(self):
-    """Error exit in_toto_record_stop with missing unfinished link file. """
-    with self.assertRaises(SystemExit):
-      in_toto_record_stop("test-step", self.key, [self.test_artifact])
+  def test_stop_missing_unfinished_link_exit(self):
+    """Error exit with missing unfinished link file. """
+    args = ["in_toto_record.py", "-n", "test-step", "-k", self.key_path, "stop"]
+    with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
+      in_toto_record_main()
 
 
 if __name__ == '__main__':

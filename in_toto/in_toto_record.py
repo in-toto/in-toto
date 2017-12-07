@@ -47,72 +47,8 @@ import sys
 import argparse
 import in_toto.util
 import in_toto.user_settings
-from in_toto import runlib
-from in_toto import log
-
-def in_toto_record_start(step_name, key, material_list):
-  """
-  <Purpose>
-    Calls runlib.in_toto_record_start and handles exceptions
-
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    material_list:
-            List of file or directory paths that should be recorded as
-            materials.
-
-  <Exceptions>
-    SystemExit if any exception occurs
-
-  <Side Effects>
-    Calls sys.exit(1) if an exception is raised
-
-  <Returns>
-    None.
-
-  """
-  try:
-    runlib.in_toto_record_start(step_name, key, material_list)
-  except Exception as e:
-    log.error("in start record - {}".format(e))
-    sys.exit(1)
-
-def in_toto_record_stop(step_name, key, product_list):
-  """
-  <Purpose>
-    Calls runlib.in_toto_record_stop and handles exceptions
-
-
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    product_list:
-            List of file or directory paths that should be recorded as products.
-
-  <Exceptions>
-    SystemExit if any exception occurs
-
-  <Side Effects>
-    Calls sys.exit(1) if an exception is raised
-
-  <Returns>
-    None.
-
-  """
-  try:
-    runlib.in_toto_record_stop(step_name, key, product_list)
-  except Exception as e:
-    log.error("in stop record - {}".format(e))
-    sys.exit(1)
+import in_toto.runlib
+import in_toto.log
 
 def main():
   """ Parse arguments, load key from disk and call either in_toto_record_start
@@ -157,7 +93,7 @@ def main():
 
   # Turn on all the `log.info()` in the library
   if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+    in_toto.log.logging.getLogger().setLevel(in_toto.log.logging.INFO)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
@@ -167,13 +103,21 @@ def main():
   try:
     key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
   except Exception as e:
-    log.error("in load key - {}".format(e))
+    in_toto.log.error("in load key - {}".format(e))
     sys.exit(1)
 
-  if args.command == "start":
-    in_toto_record_start(args.step_name, key, args.materials)
-  elif args.command == "stop":
-    in_toto_record_stop(args.step_name, key, args.products)
+  try:
+    if args.command == "start":
+      in_toto.runlib.in_toto_record_start(args.step_name, key, args.materials)
+
+    elif args.command == "stop": # pragma: no branch
+      in_toto.runlib.in_toto_record_stop(args.step_name, key, args.products)
+
+    # Else is caught by argparser
+
+  except Exception as e:
+    in_toto.log.error("in {} record - {}".format(args.command, e))
+    sys.exit(1)
 
 if __name__ == '__main__':
   main()
