@@ -51,8 +51,10 @@ import in_toto.runlib
 import in_toto.log
 
 def main():
-  """ Parse arguments, load key from disk and call either in_toto_record_start
-  or in_toto_record_stop. """
+  """Parse arguments, load key from disk (if passed) and call
+  either runlib.in_toto_record_start or runlib.in_toto_record_stop depending
+  on the specified subcommand. """
+
   parser = argparse.ArgumentParser(
       description="Starts or stops link metadata recording")
 
@@ -64,9 +66,18 @@ def main():
   parent_parser.add_argument("-n", "--step-name", type=str, required=True,
       help="Unique name for link metadata", metavar="<unique step name>")
 
-  parent_parser.add_argument("-k", "--key", type=str, required=True,
+  # Either a key or a gpg key id have to be specified but not both
+  key_args_group = parent_parser.add_mutually_exclusive_group(required=True)
+  key_args_group.add_argument("-k", "--key", type=str,
       help="Path to private key to sign link metadata (PEM)",
       metavar="<signing key path>")
+  key_args_group.add_argument("-g", "--gpg", nargs="?", const=True,
+      metavar="<gpg keyid>", help=("GPG keyid to sign link metadata "
+      "(if set without argument, the default key is used)"))
+
+  parent_parser.add_argument("--gpg-home", dest="gpg_home", type=str,
+      help="Path to GPG keyring (if not set the default keyring is used)",
+      metavar="<gpg keyring path>")
 
   parent_parser.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
@@ -91,20 +102,36 @@ def main():
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
+  # If `--gpg` was set without argument it has the value `True` and
+  # we will try to sign with the default key
+  gpg_use_default = (args.gpg == True)
+
+  # Otherwise we interpret it as actual keyid
+  gpg_keyid = None
+  if args.gpg != True:
+    gpg_keyid = args.gpg
+
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
-  try:
-    key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
-  except Exception as e:
-    in_toto.log.error("in load key - {}".format(e))
-    sys.exit(1)
+  key = None
+  if args.key:
+    try:
+      key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
+
+    except Exception as e:
+      in_toto.log.error("in load key - {}".format(e))
+      sys.exit(1)
 
   try:
     if args.command == "start":
-      in_toto.runlib.in_toto_record_start(args.step_name, args.materials, key)
+      in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
+          signing_key=key, gpg_keyid=gpg_keyid,
+          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
 
     elif args.command == "stop": # pragma: no branch
-      in_toto.runlib.in_toto_record_stop(args.step_name, args.products, key)
+      in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
+          signing_key=key, gpg_keyid=gpg_keyid,
+          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
 
     # Else is caught by argparser
 
@@ -112,5 +139,5 @@ def main():
     in_toto.log.error("in {} record - {}".format(args.command, e))
     sys.exit(1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   main()
