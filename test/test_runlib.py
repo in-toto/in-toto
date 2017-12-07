@@ -383,6 +383,12 @@ class TestInTotoRecordStart(unittest.TestCase):
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name_unfinished)
 
+  def test_no_key_arguments(self):
+    """Test record start without passing one required key argument. """
+    with self.assertRaises(ValueError):
+      in_toto_record_start(
+          self.step_name, [], signing_key=None, gpg_keyid=None,
+          gpg_use_default=False)
 
 class TestInTotoRecordStop(unittest.TestCase):
   """"Test in_toto_record_stop(step_name, key, product_list). """
@@ -471,6 +477,13 @@ class TestInTotoRecordStop(unittest.TestCase):
       open(self.link_name, "r")
     os.rename(changed_link_name, link_name)
     os.remove(self.link_name_unfinished)
+
+  def test_no_key_arguments(self):
+    """Test record stop without passing one required key argument. """
+    with self.assertRaises(ValueError):
+      in_toto_record_stop(
+          self.step_name, [], signing_key=None, gpg_keyid=None,
+          gpg_use_default=False)
 
 if __name__ == "__main__":
   unittest.main()
