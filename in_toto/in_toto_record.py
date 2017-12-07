@@ -108,10 +108,10 @@ def main():
 
   try:
     if args.command == "start":
-      in_toto.runlib.in_toto_record_start(args.step_name, key, args.materials)
+      in_toto.runlib.in_toto_record_start(args.step_name, args.materials, key)
 
     elif args.command == "stop": # pragma: no branch
-      in_toto.runlib.in_toto_record_stop(args.step_name, key, args.products)
+      in_toto.runlib.in_toto_record_stop(args.step_name, args.products, key)
 
     # Else is caught by argparser
 

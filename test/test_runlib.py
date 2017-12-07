@@ -370,7 +370,7 @@ class TestInTotoRecordStart(unittest.TestCase):
   def test_create_unfinished_metadata_with_expected_material(self):
     """Test record start creates metadata with expected material. """
     in_toto_record_start(
-        self.step_name, self.key, [self.test_material])
+        self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
     self.assertEquals(link.signed.materials.keys(), [self.test_material])
     os.remove(self.link_name_unfinished)
@@ -378,7 +378,7 @@ class TestInTotoRecordStart(unittest.TestCase):
   def test_create_unfininished_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(
-        self.step_name, self.key, [self.test_material])
+        self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name_unfinished)
@@ -419,32 +419,32 @@ class TestInTotoRecordStop(unittest.TestCase):
 
   def test_create_metadata_with_expected_product(self):
     """Test record stop records expected product. """
-    in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [self.test_product])
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
     self.assertEquals(link.signed.products.keys(), [self.test_product])
     os.remove(self.link_name)
 
   def test_create_metadata_with_expected_cwd(self):
     """Test record start/stop run, verify cwd. """
-    in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [self.test_product])
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
     self.assertEquals(link.signed.environment["workdir"], os.getcwd())
     os.remove(self.link_name)
 
   def test_create_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
-    in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [])
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [], self.key)
     link = Metablock.load(self.link_name)
     link.verify_signatures({self.key["keyid"] : self.key})
     os.remove(self.link_name)
 
   def test_replace_unfinished_metadata(self):
     """Test record stop removes unfinished file and creates link file. """
-    in_toto_record_start(self.step_name, self.key, [])
-    in_toto_record_stop(self.step_name, self.key, [])
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
       open(self.link_name_unfinished, "r")
     open(self.link_name, "r")
@@ -453,20 +453,20 @@ class TestInTotoRecordStop(unittest.TestCase):
   def test_missing_unfinished_file(self):
     """Test record stop exits on missing unfinished file, no link recorded. """
     with self.assertRaises(IOError):
-      in_toto_record_stop(self.step_name, self.key, [])
+      in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
       open(self.link_name, "r")
 
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
-    in_toto_record_start(self.step_name, self.key, [])
+    in_toto_record_start(self.step_name, [], self.key)
     link_name = UNFINISHED_FILENAME_FORMAT.format(
         step_name=self.step_name, keyid=self.key["keyid"])
     changed_link_name = UNFINISHED_FILENAME_FORMAT.format(
         step_name=self.step_name, keyid=self.key2["keyid"])
     os.rename(link_name, changed_link_name)
     with self.assertRaises(SignatureVerificationError):
-      in_toto_record_stop(self.step_name, self.key2, [])
+      in_toto_record_stop(self.step_name, [], self.key2)
     with self.assertRaises(IOError):
       open(self.link_name, "r")
     os.rename(changed_link_name, link_name)

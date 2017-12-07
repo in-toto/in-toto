@@ -443,7 +443,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   return link_metadata
 
 
-def in_toto_record_start(step_name, key, material_list):
+def in_toto_record_start(step_name, material_list, signing_key):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -454,13 +454,12 @@ def in_toto_record_start(step_name, key, material_list):
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     material_list:
             List of file or directory paths that should be recorded as
             materials.
-
+    signing_key:
+            Private key to sign link metadata.
+            Format is securesystemslib.formats.KEY_SCHEMA
   <Exceptions>
     None.
 
@@ -473,7 +472,8 @@ def in_toto_record_start(step_name, key, material_list):
 
   """
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
+      keyid=signing_key["keyid"])
   log.info("Start recording '{}'...".format(step_name))
 
   if material_list:
@@ -487,14 +487,15 @@ def in_toto_record_start(step_name, key, material_list):
 
   link_metadata = Metablock(signed=link)
 
-  log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-  link_metadata.sign(key)
+  log.info("Signing link metadata with key '{:.8}...'...".format(
+      signing_key["keyid"]))
+  link_metadata.sign(signing_key)
 
   log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(step_name, key, product_list):
+def in_toto_record_stop(step_name, product_list, signing_key):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -507,11 +508,11 @@ def in_toto_record_stop(step_name, key, product_list):
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     product_list:
             List of file or directory paths that should be recorded as products.
+    signing_key:
+            Private key to sign link metadata.
+            Format is securesystemslib.formats.KEY_SCHEMA
 
   <Exceptions>
     None.
@@ -525,8 +526,9 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
+  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=signing_key["keyid"])
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
+      keyid=signing_key["keyid"])
   log.info("Stop recording '{}'...".format(step_name))
 
   # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
@@ -535,16 +537,17 @@ def in_toto_record_stop(step_name, key, product_list):
 
   # The file must have been signed by the same key
   log.info("Verifying preliminary link signature...")
-  keydict = {key["keyid"] : key}
+  keydict = {signing_key["keyid"] : signing_key}
   link_metadata.verify_signatures(keydict)
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
   link_metadata.signed.products = record_artifacts_as_dict(product_list)
 
-  log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
+  log.info("Updating signature with key '{:.8}...'...".format(
+      signing_key["keyid"]))
   link_metadata.signatures = []
-  link_metadata.sign(key)
+  link_metadata.sign(signing_key)
 
   log.info("Storing link metadata to '{}'...".format(fn))
   link_metadata.dump(fn)
