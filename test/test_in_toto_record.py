@@ -27,9 +27,7 @@ import shutil
 import tempfile
 from mock import patch
 
-from in_toto.util import (generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
-from in_toto.models.link import Link
+import in_toto.util
 from in_toto.in_toto_record import main as in_toto_record_main
 
 WORKING_DIR = os.getcwd()
@@ -50,11 +48,12 @@ class TestInTotoRecordTool(unittest.TestCase):
     os.chdir(self.test_dir)
 
     self.key_path = "test_key"
-    generate_and_write_rsa_keypair(self.key_path)
-    self.key = prompt_import_rsa_key_from_file(self.key_path)
+    in_toto.util.generate_and_write_rsa_keypair(self.key_path)
 
-    self.test_artifact = "test_artifact"
-    open(self.test_artifact, "w").close()
+    self.test_artifact1 = "test_artifact1"
+    self.test_artifact2 = "test_artifact2"
+    open(self.test_artifact1, "w").close()
+    open(self.test_artifact2, "w").close()
 
   @classmethod
   def tearDownClass(self):
@@ -62,72 +61,53 @@ class TestInTotoRecordTool(unittest.TestCase):
     os.chdir(WORKING_DIR)
     shutil.rmtree(self.test_dir)
 
-  def test_main_required_args(self):
-    """Test CLI command record start/stop with required arguments. """
-    args = ["--step-name", "test-step", "--key", self.key_path]
-
-    with patch.object(sys, 'argv', ["in_toto_record.py", "start"] + args):
+  def _test_cli_sys_exit(self, cli_args, status):
+    """Test helper to mock command line call and assert return value. """
+    with patch.object(sys, "argv", ["in_toto_record.py"]
+        + cli_args), self.assertRaises(SystemExit) as raise_ctx:
       in_toto_record_main()
-    with patch.object(sys, 'argv', ["in_toto_record.py", "stop"] + args):
-      in_toto_record_main()
+    self.assertEqual(raise_ctx.exception.code, status)
 
 
-  def test_main_optional_args(self):
-    """Test CLI command record start/stop with optional arguments. """
-    args = ["--step-name", "test-step", "--key",
-        self.key_path]
-    with patch.object(sys, 'argv',
-        ["in_toto_record.py", "start"] + args + ["-m", self.test_artifact]):
-      in_toto_record_main()
-    with patch.object(sys, 'argv',
-        ["in_toto_record.py", "stop"] +  args + ["-p", self.test_artifact]):
-      in_toto_record_main()
+  def test_start_stop(self):
+    """Test CLI command record start/stop with various arguments. """
 
-  def test_main_wrong_args(self):
-    """Test CLI command record start/stop with missing arguments. """
+    # Start/stop recording
+    args = ["--step-name", "test1", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args, 0)
+    self._test_cli_sys_exit(["stop"] + args, 0)
 
-    wrong_args_list = [
-      ["in_toto_record.py"],
-      ["in_toto_record.py", "--step-name", "some"],
-      ["in_toto_record.py", "--key", self.key_path],
-      ["in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "start", "--products"],
-      ["in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "stop", "--materials"]
-    ]
+    # Start/stop with recording one artifact
+    args = ["--step-name", "test2", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args + ["--materials",
+        self.test_artifact1], 0)
+    self._test_cli_sys_exit(["stop"] + args + ["--products",
+        self.test_artifact1], 0)
 
-    for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv',
-          wrong_args), self.assertRaises(SystemExit):
-        in_toto_record_main()
+    # Start/stop with recording multiple artifacts
+    args = ["--step-name", "test3", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args + ["--materials",
+        self.test_artifact1, self.test_artifact2], 0)
+    self._test_cli_sys_exit(["stop"] + args + ["--products",
+        self.test_artifact2, self.test_artifact2], 0)
 
-  def test_main_wrong_key_exits(self):
-    """Test CLI command record with wrong key exits and logs error """
-    args = [ "in_toto_record.py", "start", "--step-name", "test-step", "--key",
-        "non-existing-key"]
-    with patch.object(sys, 'argv',
-        args), self.assertRaises(
-        SystemExit):
-      in_toto_record_main()
+    # Start/stop recording verbosely
+    args = ["--step-name", "test4", "--key", self.key_path, "--verbose"]
+    self._test_cli_sys_exit(["start"] + args, 0)
+    self._test_cli_sys_exit(["stop"] + args, 0)
 
-  def test_main_verbose(self):
-    """Log level with verbose flag is lesser/equal than logging.INFO. """
-    args = ["--step-name", "test-step", "--key", self.key_path, "--verbose"]
 
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', ["in_toto_record.py", "start"] + args):
-      in_toto_record_main()
-    with patch.object(sys, 'argv', ["in_toto_record.py", "stop"] + args):
-      in_toto_record_main()
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
+  def test_no_key(self):
+    """Test CLI command record with wrong key exits 1 """
+    args = ["--step-name", "no-key", "--key", "non-existing-key"]
+    self._test_cli_sys_exit(["start"] + args, 1)
+    self._test_cli_sys_exit(["stop"] + args, 1)
 
-  def test_stop_missing_unfinished_link_exit(self):
+
+  def test_missing_unfinished_link(self):
     """Error exit with missing unfinished link file. """
-    args = ["in_toto_record.py", "stop", "-n", "test-step", "-k", self.key_path]
-    with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
-      in_toto_record_main()
+    args = ["--step-name", "no-link", "--key", self.key_path]
+    self._test_cli_sys_exit(["stop"] + args, 1)
 
 
 if __name__ == '__main__':
