@@ -120,6 +120,27 @@ class Layout(Signable):
 
     return Layout(**data)
 
+  def display(self):
+    """
+    <Purpose>
+      Represents the Layout class by returning its fields in a readable string
+    <Returns>
+      Layout fields: type, expiration, readme, keyids, steps, inspections
+    """
+    types = "object: {}".format(self._type)
+    expiration = "expires: {}".format(self.expires)
+    if not self.readme:
+      readme = "readme: None"
+    else:
+      readme = self.readme
+    keyid = "keyids: {}".format("\n\t  ".join(self.keys))
+
+    steps = "step data:\n {}".format(self.steps)
+    inspections = "inspect data:\n {}".format(self.inspect)
+
+    return "  {}\n  {}\n  {}\n  {}\n  {}\n  {}".format(types, expiration, readme, 
+      keyid, steps, inspections)
+
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
