@@ -83,7 +83,7 @@ def in_toto_run(step_name, material_list, product_list, link_cmd_args,
          record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home)
 
   except Exception as e:
-    log.error("in toto run - {}".format(e))
+    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 def main():
