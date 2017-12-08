@@ -22,6 +22,7 @@ import attr
 import json
 import securesystemslib.formats
 from in_toto.models.common import Signable
+import in_toto.util
 
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
