@@ -139,3 +139,28 @@ def prompt_generate_and_write_rsa_keypair(filepath, bits):
   password = prompt_password()
   generate_and_write_rsa_keypair(filepath, bits, password)
 
+def compare_dicts(dict1, dict2):
+  """
+  <Purpose>
+    Compares corresponding keys and corresponding values in order to determine changes
+    across two separate dictionaries
+
+  <Arguments>
+    dict1
+      The first data structure argument passed
+
+    dict2
+      The second data structure argument passed
+
+  <Returns>
+    A tuple value which contains dict information: (created, deleted, modified, unchanged)
+  """
+  dict1_keys = set(dict1.keys())
+  dict2_keys = set(dict2.keys())
+
+  intersections = dict1_keys.intersection(dict2_keys)
+  created = dict1_keys - dict2_keys
+  deleted = dict2_keys - dict1_keys
+  modified = {o : (dict1[o], dict2[o]) for o in intersections if dict1[o] != dict2[o]}
+  unchanged = set(o for o in intersections if dict1[o] == dict2[o])
+  return created, deleted, modified, unchanged
