@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/rsa.py
+  rsa.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

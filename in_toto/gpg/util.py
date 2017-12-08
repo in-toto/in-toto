@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/util.py
+  util.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

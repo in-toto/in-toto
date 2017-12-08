@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/constants.py
+  constants.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

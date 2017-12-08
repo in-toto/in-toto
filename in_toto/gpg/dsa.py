@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/dsa.py
+  dsa.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

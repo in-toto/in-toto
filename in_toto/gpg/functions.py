@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/functions.py
+  functions.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

@@ -1,6 +1,6 @@
 """
 <Module Name>
-  gpg/common.py
+  common.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
