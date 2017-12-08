@@ -113,6 +113,9 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
     True if signature verification passes, False otherwise.
 
   """
+  in_toto.gpg.formats.PUBKEY_SCHEMA.check_match(pubkey_info)
+  in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
+
   handler = SIGNATURE_HANDLERS[pubkey_info['type']]
   return handler.gpg_verify_signature(signature_object, pubkey_info, content)
 
