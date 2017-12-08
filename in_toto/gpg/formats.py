@@ -15,6 +15,17 @@
   Format schemas for gpg data structures (keys, signatures)
   based on securesystemslib.schema.
 
+  The schemas can be verified using the following methods inherited from
+  securesystemslib.schema:
+
+  in_toto.gpg.formats.<SCHEMA>.check_match(<object to verify>)
+  in_toto.gpg.formats.<SCHEMA>.matches(<object to verify>)
+
+  `check_match` raises a securesystemslib.exceptions.FormatError and `matches`
+  returns False if the verified object does not match the schema (True
+  otherwise).
+
+
   Example Usage:
 
   >>> rsa_pubkey = {
@@ -38,7 +49,7 @@
       },
       'method': 'pgp+rsa-pkcsv1.5'
     }
-  >>> RSA_PUBKEY_SCHEMA.check_match(rsa)
+  >>> RSA_PUBKEY_SCHEMA.matches(rsa)
   True
 
 """
