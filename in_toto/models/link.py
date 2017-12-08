@@ -117,7 +117,10 @@ class Link(Signable):
       and "unchanged"
     """
     name = "object: {} (name: {})".format(self._type, self.name)
-    command = "command: {}".format(" ".join(self.command))
+    if not self.command:
+      command = "command: None"
+    else:
+      command = "command: {}".format(" ".join(self.command))
 
     inputs = "inputs:\n\tdirectory: {}".format(" ".join(self.environment.values()))
     if not self.materials:
