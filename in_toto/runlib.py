@@ -31,7 +31,6 @@ import fnmatch
 
 import in_toto.settings
 import in_toto.exceptions
-import in_toto.util
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT)
@@ -408,7 +407,7 @@ def in_toto_run(name, material_list, product_list,
     link_metadata.dump(filename)
 
     log.info("Begin printing link metadata")
-    in_toto.util.display(link)
+    log.info(link.display())
     log.info("End printing link metadata")
 
   return link_metadata
@@ -465,7 +464,7 @@ def in_toto_record_start(step_name, key, material_list):
   link_metadata.dump(unfinished_fn)
 
   log.info("Begin printing preliminary link metadata")
-  in_toto.util.display(link)
+  log.info(link.display())
   log.info("End printing preliminary link metadata")
 
 
@@ -527,6 +526,6 @@ def in_toto_record_stop(step_name, key, product_list):
   log.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)
 
-  log.info("Begin printing link metadata")
-  in_toto.util.display(link_metadata.signed)
-  log.info("End printing link metadata")
+  log.info("Begin print link metadata")
+  log.info(link_metadata.signed.display())
+  log.info("End print link metadata")
