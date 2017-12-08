@@ -31,7 +31,6 @@ from dateutil import tz
 import securesystemslib.exceptions
 
 import in_toto.settings
-import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
@@ -1316,7 +1315,7 @@ def in_toto_verify(layout, layout_key_dict):
   layout = layout.signed
 
   log.info("Begin printing layout metadata")
-  in_toto.util.display(layout)
+  log.info(layout.display())
   log.info("End printing layout metadata")
 
   log.info("Verifying layout expiration...")
