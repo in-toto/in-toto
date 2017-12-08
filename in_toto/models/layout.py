@@ -253,11 +253,32 @@ class Step(ValidationMixin):
     <Purpose>
       Represents a readable format of Step Class fields
     <Returns>
-      Step Class fields, i.e. type, name, expected_materials, expected_products
-      pubkeys, expected_command, threshold
+      Step Class fields, i.e. name (threshold), pubkeys 
+      expected_command, expected_materials, expected_products
     """
-    return self.__class__.__name__ \
-     + "\n" + pformat({key:value for key,value in self.__dict__.iteritems() if not "__" in key})
+    heading = "\n    step name: {} (threshold: {})".format(self.name, self.threshold)
+    pubkeys = "  pubkeys: {}".format("\n  ".join(self.pubkeys))
+    if not self.expected_command:
+      expected_command = "  expected cmd: None"
+    else:
+      expected_command = "  expected cmd: {}".format(" ".join(self.expected_command))
+
+    expected_materials = "  expected input (materials):\n\t"
+    if not self.expected_materials:
+      expected_materials += "   None"
+    else:
+      for value in self.expected_materials:
+        expected_materials += "   {}\n\t".format(" ".join(value))
+
+    expected_products = "  expected output (products):\n\t"
+    if not self.expected_products:
+      expected_products += "   None"
+    else:
+      for value in self.expected_products:
+        expected_products += "   {}\n\t".format(" ".join(value))
+
+    return " {}\n  {}\n  {}\n  {}\n  {} \n ".format(heading, pubkeys, expected_command, 
+      expected_materials, expected_products)
 
   @staticmethod
   def read(data):
