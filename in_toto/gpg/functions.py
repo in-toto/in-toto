@@ -67,7 +67,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=None)
-  signature_data, _ = process.communicate(content)
+  signature_data, junk = process.communicate(content)
 
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
@@ -157,7 +157,7 @@ def gpg_export_pubkey(keyid, homedir=None):
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=None)
-  key_packet, _ = process.communicate()
+  key_packet, junk = process.communicate()
 
   pubkey, keyinfo = in_toto.gpg.common.parse_pubkey_packet(key_packet)
 
