@@ -23,8 +23,7 @@ import cryptography.hazmat.primitives.asymmetric.padding as padding
 import cryptography.hazmat.primitives.asymmetric.utils as utils
 import cryptography.exceptions
 
-from in_toto.gpg.util import get_mpi_length, hash_object
-import in_toto.gpg
+import in_toto.gpg.util
 import in_toto.gpg.exceptions
 
 def create_pubkey(pubkey_info):
@@ -37,7 +36,7 @@ def create_pubkey(pubkey_info):
 def get_pubkey_params(data):
   ptr = 0
 
-  modulus_length = get_mpi_length(data[ptr: ptr + 2])
+  modulus_length = in_toto.gpg.util.get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   modulus = data[ptr:ptr + modulus_length]
   if len(modulus) != modulus_length: # pragma: no cover
@@ -45,7 +44,7 @@ def get_pubkey_params(data):
         "This modulus MPI was truncated!")
   ptr += modulus_length
 
-  exponent_e_length = get_mpi_length(data[ptr: ptr + 2])
+  exponent_e_length = in_toto.gpg.util.get_mpi_length(data[ptr: ptr + 2])
   ptr += 2
   exponent_e = data[ptr:ptr + exponent_e_length]
   if len(exponent_e) != exponent_e_length: # pragma: no cover
@@ -59,7 +58,7 @@ def get_pubkey_params(data):
 
 def get_signature_params(data):
   ptr = 0
-  signature_length = get_mpi_length(data[ptr:ptr+2])
+  signature_length = in_toto.gpg.util.get_mpi_length(data[ptr:ptr+2])
   ptr += 2
   signature = data[ptr:ptr + signature_length]
   if len(signature) != signature_length: # pragma: no cover
@@ -72,7 +71,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 
   pubkey_object = create_pubkey(pubkey_info)
 
-  digest = hash_object(binascii.unhexlify(signature_object['other_headers']),
+  digest = in_toto.gpg.util.hash_object(
+      binascii.unhexlify(signature_object['other_headers']),
       hashing.SHA256(), content)
 
   try:

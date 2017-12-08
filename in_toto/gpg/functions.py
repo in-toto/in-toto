@@ -19,9 +19,9 @@ import subprocess
 import shlex
 
 import in_toto.log
+import in_toto.gpg.common
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
     SIGNATURE_HANDLERS)
-from in_toto.gpg.common import parse_signature_packet, parse_pubkey_packet
 
 import securesystemslib.formats
 
@@ -67,7 +67,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
       stdin=subprocess.PIPE, stderr=None)
   signature_data, _ = process.communicate(content)
 
-  signature = parse_signature_packet(signature_data)
+  signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
   # On GPG < 2.1 we cannot derive the keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing key
@@ -154,7 +154,7 @@ def gpg_export_pubkey(keyid, homedir=None):
       stdin=subprocess.PIPE, stderr=None)
   key_packet, _ = process.communicate()
 
-  pubkey, keyinfo = parse_pubkey_packet(key_packet)
+  pubkey, keyinfo = in_toto.gpg.common.parse_pubkey_packet(key_packet)
 
   return {
     "method": keyinfo['method'],

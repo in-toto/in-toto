@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
-import in_toto.gpg
+
 import in_toto.gpg.exceptions
 
 def get_mpi_length(data):

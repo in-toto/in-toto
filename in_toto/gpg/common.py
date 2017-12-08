@@ -20,16 +20,12 @@ import struct
 import binascii
 
 import in_toto.log
+import in_toto.gpg.util
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_CANONICAL,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
         FULLY_SUPPORTED_MIN_VERSION)
-
-from in_toto.gpg.util import (compute_keyid, parse_packet_header,
-    parse_subpackets, get_version)
-import in_toto.gpg
-
 
 
 # XXX this doesn't support armored pubkey packets, so use with care.
@@ -39,7 +35,8 @@ def parse_pubkey_packet(data):
   if not data:
     raise ValueError("Could not parse empty pubkey packet.")
 
-  data = parse_packet_header(data, PACKET_TYPES['main_pubkey_packet'])
+  data = in_toto.gpg.util.parse_packet_header(
+      data, PACKET_TYPES['main_pubkey_packet'])
 
   ptr = 0
   keyinfo = {}
@@ -61,7 +58,7 @@ def parse_pubkey_packet(data):
     keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
     handler = SIGNATURE_HANDLERS[keyinfo['type']]
 
-  keyinfo['keyid'] = compute_keyid(data)
+  keyinfo['keyid'] = in_toto.gpg.util.compute_keyid(data)
   key_params = handler.get_pubkey_params(data[ptr:])
 
   return key_params, keyinfo
@@ -70,7 +67,8 @@ def parse_pubkey_packet(data):
 # representation (to be used with gpg_sign_object)
 def parse_signature_packet(data):
 
-  data = parse_packet_header(data, PACKET_TYPES['signature_packet'])
+  data = in_toto.gpg.util.parse_packet_header(
+      data, PACKET_TYPES['signature_packet'])
   ptr = 0
 
   # we get the version number, which we also expect to be v4, or we bail
@@ -106,7 +104,7 @@ def parse_signature_packet(data):
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
   hashed_subpackets = data[ptr:ptr+hashed_octet_count]
-  hashed_subpacket_info = parse_subpackets(hashed_subpackets)
+  hashed_subpacket_info = in_toto.gpg.util.parse_subpackets(hashed_subpackets)
 
   # check wether we were actually able to read this much hashed octets
   if len(hashed_subpackets) != hashed_octet_count: # pragma: no cover
@@ -118,7 +116,8 @@ def parse_signature_packet(data):
   unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
   ptr += 2
   unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
-  unhashed_subpacket_info = parse_subpackets(unhashed_subpackets)
+  unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
+      unhashed_subpackets)
   ptr += unhashed_octet_count
 
   # this is a somewhat convoluted way to compute the keyid from the signature
@@ -135,7 +134,7 @@ def parse_signature_packet(data):
     keyid = ""
     in_toto.log.warn("can't parse the full keyid on this signature packet."
         "you need at least gpg version '{}'. Your version is '{}'".format(
-        FULLY_SUPPORTED_MIN_VERSION, get_version()))
+        FULLY_SUPPORTED_MIN_VERSION, in_toto.gpg.util.get_version()))
 
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
