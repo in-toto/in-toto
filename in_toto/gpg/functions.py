@@ -29,8 +29,10 @@ import securesystemslib.formats
 def gpg_sign_object(content, keyid=None, homedir=None):
   """
   <Purpose>
-    Calls gpg command line utility to sign the passed content with the key
+    Calls gpg2 command line utility to sign the passed content with the key
     identified by the passed keyid from the gpg keyring at the passed homedir.
+
+    The executed base command is defined in constants.GPG_SIGN_COMMAND.
 
   <Arguments>
     content:
@@ -118,9 +120,12 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 def gpg_export_pubkey(keyid, homedir=None):
   """
   <Purpose>
-    Calls gpg command line utility to export the gpg public key identified by
+    Calls gpg2 command line utility to export the gpg public key identified by
     the passed keyid from the gpg keyring at the passed homedir in a format
     suitable for in-toto.
+
+    The executed base command is defined in
+    constants.GPG_EXPORT_PUBKEY_COMMAND.
 
   <Arguments>
     keyid:

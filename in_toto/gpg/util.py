@@ -188,6 +188,8 @@ def get_version():
     Uses `gpg2 --version` to get the version info of the installed gpg2
     and extracts and returns the version number.
 
+    The executed base command is defined in constants.GPG_VERSION_COMMAND.
+
   <Returns>
     Version number string, e.g. "2.1.22"
 
