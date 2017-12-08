@@ -59,7 +59,8 @@
   in-toto-sign -f gpg.layout --gpg
 
   # Verify layout with a gpg key found in keyring
-  in-toto-sign -f gpg.layout --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
+  in-toto-sign -f gpg.layout --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2 \
+      --verify
   ```
 
 """
@@ -284,16 +285,21 @@ def main():
     # Above we check that it's either `--key ...` or `--gpg ...`
     # Here we check that it is not more than one in each case when dealing
     # with links
+    link_error_message = ("Link metadata is associated with a"
+        " single functionary and is usually namespaced accordingly:"
+        " '<name>.<keyid>.link'.")
+
     if ((args.key != None and len(args.key) > 1) or
         (args.gpg != None and len(args.gpg) > 1)):
       parser.print_help()
-      parser.exit(2, "too many arguments: Link metadata can not be signed by"
-          " multiple keys")
+      parser.exit(2, "too many arguments: {} Hence signing Link metadata"
+          " with multiple keys is not allowed.".format(link_error_message))
 
     if args.append:
       parser.print_help()
-      parser.exit(2, "wrong arguments: Link metadata signatures can not be"
-          " appended to existing signatures")
+      parser.exit(2, "wrong arguments: {}. Hence adding signatures to"
+          " existing signatures on Link metadata is not allowed."
+          .format(link_error_message))
 
 
   if args.verify:
