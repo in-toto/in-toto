@@ -380,10 +380,24 @@ class Inspection(ValidationMixin):
     <Purpose>
       Represents a readable format of Inspection Class fields
     <Returns>
-      Step Inspection fields, i.e. type, name, expected_materials, expected_products, run
+      Step Inspection fields, i.e. name, command run, expected_materials, expected_products
     """
-    return self.__class__.__name__ \
-     + "\n" +  pformat({key:value for key,value in self.__dict__.iteritems() if not "__" in key})
+    heading = "\n    name: {}\n    command run: {}".format(self.name, " ".join(self.run))
+    expected_materials = "  expected input (materials):\n\t"
+    if not self.expected_materials:
+      expected_materials += "   None"
+    else:
+      for value in self.expected_materials:
+        expected_materials += "   {}\n\t".format(" ".join(value))
+
+    expected_products = "  expected output (products):\n\t"
+    if not self.expected_products:
+      expected_products += "   None"
+    else:
+      for value in self.expected_products:
+        expected_products += "   {}\n\t".format(" ".join(value))
+
+    return "{}\n  {}\n  {}\n ".format(heading, expected_materials, expected_products)
 
   @staticmethod
   def read(data):
