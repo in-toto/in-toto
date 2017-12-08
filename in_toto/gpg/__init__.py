@@ -1,2 +1,0 @@
-class PacketParsingError(Exception):
-  pass

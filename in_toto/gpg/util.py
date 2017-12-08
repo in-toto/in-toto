@@ -24,6 +24,7 @@ from distutils.version import StrictVersion
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
 import in_toto.gpg
+import in_toto.gpg.exceptions
 
 def get_mpi_length(data):
   """
@@ -112,7 +113,7 @@ def parse_packet_header(data, expected_type):
     ptr = 2
 
   if packet_type != expected_type: # pragma: no cover
-    raise in_toto.gpg.PacketParsingError("Expected packet {}, "
+    raise in_toto.gpg.exceptions.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
 
   return data[ptr:ptr+packet_length]
@@ -150,7 +151,7 @@ def parse_subpackets(subpacket_octets):
     subpacket_octets: the unparsed subpacketoctets
 
   <Exceptions>
-    in_toto.gpg.PacketParsingError if the octets are malformed
+    in_toto.gpg.exceptions.PacketParsingError if the octets are malformed
 
   <Side Effects>
     None
