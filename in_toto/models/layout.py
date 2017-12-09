@@ -269,37 +269,43 @@ class Step(ValidationMixin):
 
     self.validate()
 
-  def __repr__(self):
+  def display(self):
     """
     <Purpose>
       Represents a readable format of Step Class fields
     <Returns>
-      Step Class fields, i.e. name (threshold), pubkeys 
-      expected_command, expected_materials, expected_products
+      Step Class fields as strings, 
+      i.e. name (threshold), 
+            pubkeys 
+            expected_command, 
+            expected_materials, 
+            expected_products
     """
-    heading = "\n    step name: {} (threshold: {})".format(self.name, self.threshold)
-    pubkeys = "  pubkeys: {}".format("\n  ".join(self.pubkeys))
-    if not self.expected_command:
-      expected_command = "  expected cmd: None"
-    else:
-      expected_command = "  expected cmd: {}".format(" ".join(self.expected_command))
+    pubkeys = "{}".format("\n  ".join(self.pubkeys))
+    expected_command = "{}".format(" ".join(self.expected_command))
+    expected_materials = "  \n\t"
+    expected_products = "  \n\t"
 
-    expected_materials = "  expected input (materials):\n\t"
+    for value in self.expected_materials:
+      expected_materials += "   {}\n\t".format(" ".join(value))
+
+    for value in self.expected_products:
+      expected_products += "   {}\n\t".format(" ".join(value))
+
     if not self.expected_materials:
-      expected_materials += "   None"
-    else:
-      for value in self.expected_materials:
-        expected_materials += "   {}\n\t".format(" ".join(value))
-
-    expected_products = "  expected output (products):\n\t"
+      expected_materials = "   \n\t   None"
     if not self.expected_products:
-      expected_products += "   None"
-    else:
-      for value in self.expected_products:
-        expected_products += "   {}\n\t".format(" ".join(value))
+      expected_products = "   \n\t   None"
+    if not self.expected_command:
+      expected_command = "None"
 
-    return " {}\n  {}\n  {}\n  {}\n  {} \n ".format(heading, pubkeys, expected_command, 
-      expected_materials, expected_products)
+    return (
+      "\n    step name: {} (threshold: {})\n"
+      "    pubkeys: {}\n " 
+      "   expected cmd: {}\n " 
+      "   expected input (materials): {}\n " 
+      "   expected output (products): {} \n "
+      .format(self.name, self.threshold, pubkeys, expected_command, expected_materials, expected_products))
 
   @staticmethod
   def read(data):
@@ -396,29 +402,37 @@ class Inspection(ValidationMixin):
 
     self.validate()
 
-  def __repr__(self):
+  def display(self):
     """
     <Purpose>
       Represents a readable format of Inspection Class fields
     <Returns>
-      Step Inspection fields, i.e. name, command run, expected_materials, expected_products
+      Step Inspection fields as strings, 
+      i.e. name, 
+           command run,
+           expected_materials, 
+           expected_products
     """
-    heading = "\n    name: {}\n    command run: {}".format(self.name, " ".join(self.run))
-    expected_materials = "  expected input (materials):\n\t"
+    expected_materials = "  \n\t"
+    expected_products = "  \n\t"
+
+    for value in self.expected_materials:
+      expected_materials += "   {}\n\t".format(" ".join(value))
+
+    for value in self.expected_products:
+      expected_products += "   {}\n\t".format(" ".join(value))
+
     if not self.expected_materials:
-      expected_materials += "   None"
-    else:
-      for value in self.expected_materials:
-        expected_materials += "   {}\n\t".format(" ".join(value))
-
-    expected_products = "  expected output (products):\n\t"
+      expected_materials = "   \n\t   None"
     if not self.expected_products:
-      expected_products += "   None"
-    else:
-      for value in self.expected_products:
-        expected_products += "   {}\n\t".format(" ".join(value))
+      expected_products = "   \n\t   None"
 
-    return "{}\n  {}\n  {}\n ".format(heading, expected_materials, expected_products)
+    return (
+      "\n    name: {}\n"
+      "    command run: {}\n"
+      "    expected input (materials): {}\n"
+      "    expected output (products): {}\n   "
+      .format(self.name, " ".join(self.run), expected_materials, expected_products))
 
   @staticmethod
   def read(data):
