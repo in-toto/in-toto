@@ -169,7 +169,7 @@ def compare_dictionaries(dictionary_one, dictionary_two):
     if dictionary_one[element] != dictionary_two[element]:
       # Add mismatched value to "modified" list
       modified.append(element)
-    elif dictionary_one[element] == dictionary_two[element]:
+    else:
       # Add matched value to be  "unchanged" list
       unchanged.append(element)
 
