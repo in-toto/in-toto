@@ -166,12 +166,12 @@ def compare_dictionaries(dictionary_one, dictionary_two):
   modified = []
   unchanged = []
   for element in intersections:
-    if dictionary_one[element] != dictionary_two[element]:
-      # Add mismatched value to "modified" list
-      modified.append(element)
-    else:
+    if dictionary_one[element] == dictionary_two[element]:
       # Add matched value to be  "unchanged" list
       unchanged.append(element)
+    else:
+      # Add mismatched value to "modified" list
+      modified.append(element)
 
   return created, deleted, modified, unchanged
 
