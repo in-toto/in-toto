@@ -110,13 +110,13 @@ class Link(Signable):
   def display(self):
     """
     <Purpose>
-      Represents the Link class by returning its fields in a readable string
+      Represents a Link by returning a string which contains information pertaining to its member fields
     <Returns>
       Link fields represented by strings:
         type, name, 
         inputs (materials), 
         outputs (products)
-        
+
         Also returns "summary" string:
           four detections: "created", "deleted", "modified" and "unchanged"
     """
