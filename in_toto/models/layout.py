@@ -123,7 +123,7 @@ class Layout(Signable):
   def display(self):
     """
     <Purpose>
-      Represents the Layout class by returning its fields in a readable string
+      Represents a Layout by returning a string which contains information pertaining to its member fields
     <Returns>
       Layout string representation: 
         object (type) - disclosing the type (Layout)
@@ -286,7 +286,7 @@ class Step(ValidationMixin):
   def display(self):
     """
     <Purpose>
-      Represents a readable format of Step Class fields
+      Represents a Step by returning a string which contains information pertaining to its member fields
     <Returns>
       Step Class fields as strings, 
       i.e. name (threshold), 
@@ -419,7 +419,7 @@ class Inspection(ValidationMixin):
   def display(self):
     """
     <Purpose>
-      Represents a readable format of Inspection Class fields
+      Represents an Inspection by returning a string which contains information pertaining to its member fields
     <Returns>
       Step Inspection fields as strings, 
       i.e. name, 
