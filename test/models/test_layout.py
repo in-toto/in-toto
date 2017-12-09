@@ -199,5 +199,25 @@ class TestLayoutValidator(unittest.TestCase):
     self.assertTrue(isinstance(step.expected_command, list))
     self.assertTrue(len(step.expected_command) == 3)
 
+  def test_display(self):
+    test_layout = Layout()
+
+    test_layout._type = "layout"
+    test_layout.expires = "2016-11-18T16:44:55Z"
+    test_layout.readme = "This is a supply chain"
+    test_layout.keys = {"kek": securesystemslib.keys.generate_rsa_key()}
+
+    test_step = Step(name="this-is-a-step")
+    test_step.expected_materials = [["CREATE", "foo"]]
+    test_step.threshold = 1
+    test_layout.steps = [test_step]
+
+    test_inspection = Inspection(name="this-is-a-step")
+    test_inspection.expected_materials = [["CREATE", "foo"]]
+    test_layout.inspect = [test_inspection]
+
+    data = test_layout.display()
+    self.assertIsInstance(data, str)
+
 if __name__ == "__main__":
   unittest.main()

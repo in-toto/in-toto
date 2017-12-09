@@ -117,3 +117,23 @@ class TestLinkValidator(unittest.TestCase):
     test_link.environment = "not a dict"
     with self.assertRaises(FormatError):
       test_link.validate()
+
+  def test_display(self):
+    test_link = Link()
+
+    sha = "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+    sha2 = "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+
+    # Good type
+    test_link._type = "link"
+    # name identifier
+    test_link.name = "echo"
+    # sample command
+    test_link.command = ["echo", "'good command'"]
+    # sample materials
+    test_link.materials = {"foo": {"sha256": sha2}}
+    # sample products
+    test_link.products = {"bar": {"sha256": sha}}
+
+    data = test_link.display()
+    self.assertIsInstance(data, str)

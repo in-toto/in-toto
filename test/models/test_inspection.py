@@ -99,6 +99,16 @@ class TestInspectionValidator(unittest.TestCase):
     self.inspection._validate_run()
     self.inspection.validate()
 
+  def test_display(self):
+    test_inspection = Inspection(name="this-is-a-step")
+    test_inspection._type = "layout"
+    test_inspection.expected_materials = [["CREATE", "foo"]]
+    test_inspection.expected_products = [["CREATE", "foo"]]
+    test_inspection.run = ["somecommand"]
+
+    data = test_inspection.display()
+    self.assertIsInstance(data, str)
+
 if __name__ == '__main__':
 
   unittest.main()

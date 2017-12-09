@@ -135,6 +135,20 @@ class TestStepValidator(unittest.TestCase):
     self.step._validate_expected_command()
     self.step.validate()
 
+  def test_display(self):
+    test_step = Step(name="this-is-a-step")
+    test_step.expected_command = ["somecommand"]
+    test_step.expected_materials = [["CREATE", "foo"]]
+    test_step.threshold = 1
+    test_step.expected_products = [["CREATE", "foo"]]
+
+    rsa_key_one = securesystemslib.keys.generate_rsa_key()
+    rsa_key_two = securesystemslib.keys.generate_rsa_key()
+    test_step.pubkeys = [rsa_key_one['keyid'], rsa_key_two['keyid']]
+
+    data = test_step.display()
+    self.assertIsInstance(data, str)
+
 if __name__ == '__main__':
 
   unittest.main()
