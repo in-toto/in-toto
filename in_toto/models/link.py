@@ -126,14 +126,10 @@ class Link(Signable):
     summary = ""
     new, deleted, modified, no_change = in_toto.util.compare_dictionaries(self.products, self.materials)
 
-    if new:
-      summary += "\n\tcreated: {}".format(" ".join(new))
-    if deleted:
-      summary += "\n\tdeleted: {}".format(" ".join(deleted))
-    if modified:
-      summary += "\n\tmodified: {}".format(" ".join(modified))
-    if no_change:
-      summary += "\n\tunchanged: {}".format(" ".join(no_change))
+    summary += "\n\tcreated: {}".format(in_toto.util.check_string(" ".join(new)))
+    summary += "\n\tdeleted: {}".format(in_toto.util.check_string(" ".join(deleted)))
+    summary += "\n\tmodified: {}".format(in_toto.util.check_string(" ".join(modified)))
+    summary += "\n\tunchanged: {}".format(in_toto.util.check_string(" ".join(no_change)))
 
     return (
       "  object: {}"
