@@ -27,7 +27,7 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
+    prompt_import_rsa_key_from_file, check_string)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -141,6 +141,15 @@ class TestUtil(unittest.TestCase):
         return_value="wrong-password"), self.assertRaises(
         securesystemslib.exceptions.CryptoError):
       prompt_import_rsa_key_from_file(key)
+
+  def test_check_string(self):
+    test_string = check_string("a really boring string")
+    test_empty_string = check_string("")
+    value = 1
+    test_not_a_string = check_string(value)
+    self.assertIsInstance(test_string, str)
+    self.assertIsInstance(test_empty_string, str)
+    self.assertIsInstance(test_not_a_string, int)
 
 
 if __name__ == "__main__":

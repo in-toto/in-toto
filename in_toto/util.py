@@ -178,7 +178,8 @@ def compare_dictionaries(dictionary_one, dictionary_two):
 def check_string(string_arg):
   """ Checks strings that are empty and defaults them to 'None' string"""
   if not isinstance(string_arg, str):
-    return
-  if not string_arg:
-    string_arg = "None"
+    return string_arg
+  else:
+    if not string_arg:
+      string_arg = "None"
   return string_arg
