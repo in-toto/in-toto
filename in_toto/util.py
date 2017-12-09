@@ -136,28 +136,40 @@ def prompt_generate_and_write_rsa_keypair(filepath, bits):
   password = prompt_password()
   generate_and_write_rsa_keypair(filepath, bits, password)
 
-def compare_dicts(dict1, dict2):
+def compare_dictionaries(dictionary_one, dictionary_two):
   """
   <Purpose>
     Compares corresponding keys and corresponding values in order to determine changes
     across two separate dictionaries
 
   <Arguments>
-    dict1
-      The first data structure argument passed
+    dictionary_one
+      The first dictionary structure argument
 
-    dict2
-      The second data structure argument passed
+    dictionary_two
+      The second dictionary structure argument
 
   <Returns>
     A tuple value which contains dict information: (created, deleted, modified, unchanged)
   """
-  dict1_keys = set(dict1.keys())
-  dict2_keys = set(dict2.keys())
+  
+  # Find newly created keys, comparatively
+  #created = set(dictionary_one.keys()) - set(dictionary_two.keys())
+  created = set(dictionary_one.keys())- set(dictionary_two.keys())
+  
+  # Find keys that were deleted, comparatively
+  deleted = set(dictionary_two.keys()) - set(dictionary_one.keys())
 
-  intersections = dict1_keys.intersection(dict2_keys)
-  created = dict1_keys - dict2_keys
-  deleted = dict2_keys - dict1_keys
-  modified = {o : (dict1[o], dict2[o]) for o in intersections if dict1[o] != dict2[o]}
-  unchanged = set(o for o in intersections if dict1[o] == dict2[o])
+  # Find intersection between dictionaries, comparatively
+  intersections = set(dictionary_one.keys()) & set(dictionary_two.keys())
+  modified = []
+  unchanged = []
+  for element in intersections:
+    if dictionary_one[element] != dictionary_two[element]:
+      # Add mismatched value to "modified" list
+      modified.append(element)
+    elif dictionary_one[element] == dictionary_two[element]:
+      # Add matched value to be  "unchanged" list
+      unchanged.append(element)
+
   return created, deleted, modified, unchanged
