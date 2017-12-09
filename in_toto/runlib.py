@@ -26,6 +26,7 @@
 """
 import sys
 import os
+import io
 import tempfile
 import fnmatch
 
@@ -262,20 +263,67 @@ def execute_link(link_cmd_args, record_streams):
   # decide if s/he wants to see or store stdout/stderr
   # btw: we ignore them in the layout anyway
 
+  # Write subproc's stdin/out to a file and then read it back to python's output. 
+  # This simultaneously logs proc output while echoing it to the screen.
+  # Processes that demand ttys will still complain, but this maintians
+  # interactivity. Processes with buffered outputs or that use curses (eg nano)
+  # behave strangely. This should be portable but some processes (like Vim) 
+  # still break on Windows. 
+
   if record_streams:
-    # XXX: Use SpooledTemporaryFile if we expect very large outputs
-    stdout_file = tempfile.TemporaryFile()
-    stderr_file = tempfile.TemporaryFile()
+    # Windows doesn't allow reopening TemporaryFile()s
+    stdout_file = tempfile.mkstemp()
+    stderr_file = tempfile.mkstemp()
+    stdout_name = stdout_file[1]
+    stderr_name = stderr_file[1]
 
-    return_value = subprocess.call(link_cmd_args,
-        stdout=stdout_file, stderr=stderr_file)
+    #Open the files as r+b cause the subprocess to block indefinitely
+    with \
+    io.open(stdout_name, 'wb') as writer, \
+    io.open(stdout_name, 'rb', 1) as reader, \
+    io.open(stderr_name, 'wb') as err_write, \
+    io.open(stderr_name, 'rb', 1) as err_read:
 
-    stdout_file.seek(0)
-    stderr_file.seek(0)
+        # Popen allows us to do work (read from the file) during the subproc.
+        # Disabling buffering here (or during the io.open) does not to fix
+        # the buffering issue mentioned above. 
+        proc = subprocess.Popen((link_cmd_args), stdout=writer, \
+             stderr=err_write) 
 
-    stdout_str = stdout_file.read()
-    stderr_str = stderr_file.read()
+        # echo proc's stdout to our stdout
+        while proc.poll() is None:
+            sys.stdout.write(reader.read())
+            sys.stderr.write(err_read.read())
+            sys.stdout.flush()
+            sys.stderr.flush()
 
+        # do this one more time just in case
+        sys.stdout.write(reader.read())
+        sys.stderr.write(err_read.read())
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        reader.seek(0)
+        err_read.seek(0)
+
+        stdout_str = reader.read()
+        stderr_str = err_read.read()
+        return_value = proc.poll()
+
+    # Python spec says mkstemp() files need manual deleting, but closing
+    # them seems to do this anyway (OSX/Win at least). 
+    os.close(stdout_file[0])
+    os.close(stderr_file[0])
+
+    # Potentially for portability if the OS doesn't delete them on closing? 
+    # Raises error on OSX/Win
+    '''
+    try:
+        os.remove(stdout_name)
+        os.remove(stdout_name) 
+    except OSError:
+        pass
+    '''
   else:
       return_value = subprocess.call(link_cmd_args)
       stdout_str = stderr_str = ""
