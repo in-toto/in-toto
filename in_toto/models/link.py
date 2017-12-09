@@ -120,13 +120,9 @@ class Link(Signable):
         Also returns "summary" string:
           four detections: "created", "deleted", "modified" and "unchanged"
     """
-    command = "{}".format(" ".join(self.command))
-    materials = "{}".format(" ".join(self.materials))
-    if not self.command:
-      command = "None"
-    if not self.materials:
-      materials = "None"
-
+    command = in_toto.util.check_string("{}".format(" ".join(self.command)))
+    materials = in_toto.util.check_string("{}".format(" ".join(self.materials)))
+    products = in_toto.util.check_string("{}".format(" ".join(self.products)))
     summary = ""
     new, deleted, modified, no_change = in_toto.util.compare_dictionaries(self.products, self.materials)
 
@@ -148,8 +144,7 @@ class Link(Signable):
       "  outputs:\n \tfile output: {}\n"  
       "  summary: {}"
       .format(self._type, self.name, command, " ".join(self.environment.values()), \
-         materials, " ".join(self.products), summary))
-
+         materials, products, summary))
 
   def _validate_type(self):
     """Private method to check that `_type` is set to "link"."""

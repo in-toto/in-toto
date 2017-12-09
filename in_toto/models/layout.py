@@ -44,6 +44,7 @@ import in_toto.artifact_rules
 import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
+import in_toto.util
 
 
 
@@ -133,9 +134,7 @@ class Layout(Signable):
         step data - chronicles the software supply chain steps
         inspection data - verification of the supply chain
     """
-    readme = self.readme
-    if not self.readme:
-      readme = "None"
+    readme = in_toto.util.check_string(self.readme)
     keyid = "{}".format("\n\t  ".join(self.keys))
 
     step_data = []
@@ -297,29 +296,23 @@ class Step(ValidationMixin):
     """
     pubkeys = "{}".format("\n  ".join(self.pubkeys))
     expected_command = "{}".format(" ".join(self.expected_command))
-    expected_materials = "  \n\t"
-    expected_products = "  \n\t"
+    expected_materials = ""
+    expected_products = ""
 
     for value in self.expected_materials:
-      expected_materials += "   {}\n\t".format(" ".join(value))
+      expected_materials += " {}\n\t".format(" ".join(value))
 
     for value in self.expected_products:
-      expected_products += "   {}\n\t".format(" ".join(value))
-
-    if not self.expected_materials:
-      expected_materials = "   \n\t   None"
-    if not self.expected_products:
-      expected_products = "   \n\t   None"
-    if not self.expected_command:
-      expected_command = "None"
+      expected_products += " {}\n\t".format(" ".join(value))
 
     return (
       "\n    step name: {} (threshold: {})\n"
       "    pubkeys: {}\n " 
       "   expected cmd: {}\n " 
-      "   expected input (materials): {}\n " 
-      "   expected output (products): {} \n "
-      .format(self.name, self.threshold, pubkeys, expected_command, expected_materials, expected_products))
+      "   expected input (materials): \n\t{}\n " 
+      "   expected output (products): \n\t{} \n "
+      .format(self.name, self.threshold, pubkeys, in_toto.util.check_string(expected_command), \
+       in_toto.util.check_string(expected_materials), in_toto.util.check_string(expected_products)))
 
   @staticmethod
   def read(data):
@@ -427,8 +420,8 @@ class Inspection(ValidationMixin):
            expected_materials, 
            expected_products
     """
-    expected_materials = "  \n\t"
-    expected_products = "  \n\t"
+    expected_materials = ""
+    expected_products = ""
 
     for value in self.expected_materials:
       expected_materials += "   {}\n\t".format(" ".join(value))
@@ -436,17 +429,13 @@ class Inspection(ValidationMixin):
     for value in self.expected_products:
       expected_products += "   {}\n\t".format(" ".join(value))
 
-    if not self.expected_materials:
-      expected_materials = "   \n\t   None"
-    if not self.expected_products:
-      expected_products = "   \n\t   None"
-
     return (
       "\n    name: {}\n"
       "    command run: {}\n"
-      "    expected input (materials): {}\n"
-      "    expected output (products): {}\n   "
-      .format(self.name, " ".join(self.run), expected_materials, expected_products))
+      "    expected input (materials): \n\t{}\n"
+      "    expected output (products): \n\t{}\n   "
+      .format(self.name, " ".join(self.run), in_toto.util.check_string(expected_materials), \
+        in_toto.util.check_string(expected_products)))
 
   @staticmethod
   def read(data):
