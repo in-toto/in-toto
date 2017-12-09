@@ -27,7 +27,7 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file, check_string)
+    prompt_import_rsa_key_from_file, check_string, compare_dictionaries)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -151,6 +151,21 @@ class TestUtil(unittest.TestCase):
     self.assertIsInstance(test_empty_string, str)
     self.assertIsInstance(test_not_a_string, int)
 
+  def test_compare_dictionaries(self):
+    dict_one = dict(a=1, b=2)
+    dict_two = dict(a=2, b=2)
+    dict_three = dict(a=1, b=2)
+    dict_four = dict(b=2)
+
+    added, deleted, modified, no_change = compare_dictionaries(dict_one, dict_two)
+    added_two, deleted_two, modified_two, no_change_two = compare_dictionaries(dict_one, dict_three)
+    added_three, deleted_three, modified_three, no_change_three = compare_dictionaries(dict_two, dict_four)
+    added_four, deleted_four, modified_four, no_change_four = compare_dictionaries(dict_four, dict_two)
+
+    self.assertTrue(bool(modified))
+    self.assertTrue(bool(no_change_two))
+    self.assertTrue(bool(added_three))
+    self.assertTrue(bool(deleted_four))
 
 if __name__ == "__main__":
   unittest.main()
