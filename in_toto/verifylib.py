@@ -31,6 +31,7 @@ from dateutil import tz
 import securesystemslib.exceptions
 
 import in_toto.settings
+import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
