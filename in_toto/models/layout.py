@@ -125,22 +125,36 @@ class Layout(Signable):
     <Purpose>
       Represents the Layout class by returning its fields in a readable string
     <Returns>
-      Layout fields: type, expiration, readme, keyids, steps, inspections
+      Layout string representation: 
+        object (type) - disclosing the type (Layout)
+        expiration (expires) - discloses the expiration of the Layout
+        readme - important supplemental information
+        keyids - functionary keys - which disclose the authorized parties
+        step data - chronicles the software supply chain steps
+        inspection data - verification of the supply chain
     """
-    types = "object: {}".format(self._type)
-    expiration = "expires: {}".format(self.expires)
+    readme = self.readme
     if not self.readme:
-      readme = "readme: None"
-    else:
-      readme = self.readme
-    keyid = "keyids: {}".format("\n\t  ".join(self.keys))
+      readme = "None"
+    keyid = "{}".format("\n\t  ".join(self.keys))
 
-    steps = "step data:\n {}".format(self.steps)
-    inspections = "inspect data:\n {}".format(self.inspect)
+    step_data = []
+    inspect = []
 
-    return "  {}\n  {}\n  {}\n  {}\n  {}\n  {}".format(types, expiration, readme, 
-      keyid, steps, inspections)
+    for objects in self.steps:
+      step_data.append(objects.display())
 
+    for objects in self.inspect:
+      inspect.append(objects.display())
+
+    return (
+      "  object: {}\n"
+      "  expiration: {}\n"
+      "  readme: {}\n" 
+      "  keyids: {}\n"
+      "  step data:  {}"
+      "  inspect data:  {}"
+      .format(self._type, self.expires, readme, keyid, " ".join(step_data), " ".join(inspect)))
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
