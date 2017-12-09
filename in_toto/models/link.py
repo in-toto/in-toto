@@ -112,37 +112,43 @@ class Link(Signable):
     <Purpose>
       Represents the Link class by returning its fields in a readable string
     <Returns>
-      Link fields: type, name, inputs (materials), outputs (products)
-      Also returns "summary" - up to four detections: "created", "deleted", "modified"
-      and "unchanged"
+      Link fields represented by strings:
+        type, name, 
+        inputs (materials), 
+        outputs (products)
+        
+        Also returns "summary" string:
+          four detections: "created", "deleted", "modified" and "unchanged"
     """
-    name = "object: {} (name: {})".format(self._type, self.name)
+    command = "{}".format(" ".join(self.command))
+    materials = "{}".format(" ".join(self.materials))
     if not self.command:
-      command = "command: None"
-    else:
-      command = "command: {}".format(" ".join(self.command))
-
-    inputs = "inputs:\n\tdirectory: {}".format(" ".join(self.environment.values()))
+      command = "None"
     if not self.materials:
-      materials = "\n\tfile input: None"
-    else:
-      materials = "\n\tfile input: {}".format(" ".join([str(value) for value in self.materials]))
+      materials = "None"
 
-    outputs = "output:\n\tfile output: {}".format(" ".join(self.products))
+    summary = ""
+    new, deleted, modified, no_change = in_toto.util.compare_dictionaries(self.products, self.materials)
 
-    summary = "summary:\n"
-    new, deleted, modified, no_change = in_toto.util.compare_dicts(self.products, self.materials)
     if new:
-      summary += "\tcreated: {}\n".format(" ".join(new))
+      summary += "\n\tcreated: {}".format(" ".join(new))
     if deleted:
-      summary += "\tdeleted: {}\n".format(" ".join(deleted))
+      summary += "\n\tdeleted: {}".format(" ".join(deleted))
     if modified:
-      summary += "\tmodified: {}\n".format(" ".join(modified))
+      summary += "\n\tmodified: {}".format(" ".join(modified))
     if no_change:
-      summary += "\tunchanged: {}\n".format(" ".join(no_change))
+      summary += "\n\tunchanged: {}".format(" ".join(no_change))
 
-    return "  {}\n  {}\n  {}  {}\n  {}\n  {}".format(name, command, inputs, 
-      materials, outputs, summary)
+    return (
+      "  object: {}"
+      "  (name: {})\n"  
+      "  command: {}\n"  
+      "  inputs:\n\tdirectory: {}\n"
+      "\tfile input: {}\n"  
+      "  outputs:\n \tfile output: {}\n"  
+      "  summary: {}"
+      .format(self._type, self.name, command, " ".join(self.environment.values()), \
+         materials, " ".join(self.products), summary))
 
 
   def _validate_type(self):
