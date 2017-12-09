@@ -155,7 +155,6 @@ def compare_dictionaries(dictionary_one, dictionary_two):
   """
   
   # Find newly created keys, comparatively
-  #created = set(dictionary_one.keys()) - set(dictionary_two.keys())
   created = set(dictionary_one.keys())- set(dictionary_two.keys())
   
   # Find keys that were deleted, comparatively
