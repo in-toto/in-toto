@@ -198,15 +198,21 @@ def main():
       help="append to existing signatures (only available for Layout"
       " metadata")
 
-  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
+  parser.add_argument("-v", "--verbose", dest="loglevel",
+      help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
+      action="store_const")
+
+  parser.add_argument("-d", "--debug", dest="loglevel",
+      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
+      action="store_const")
 
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
 
   args = parser.parse_args()
 
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  # Distinguish log levels via parameterized input
+  log.logging.getLogger().setLevel(args.loglevel)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
