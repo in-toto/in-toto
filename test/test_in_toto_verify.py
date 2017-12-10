@@ -146,7 +146,7 @@ class TestInTotoVerifyTool(unittest.TestCase):
     logging.getLogger().setLevel(original_log_level)
 
 
-  def test_main_verbose(self):
+  def test_main_debug(self):
     """Test in-toto-verify CLI tool with verbose flag. """
     args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
         "--layout-keys", self.alice_path, "--debug"]
