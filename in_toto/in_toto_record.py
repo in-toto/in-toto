@@ -146,11 +146,11 @@ def main():
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  parser.add_argument("-v", "--verbose", dest="loglevel",
+  in_toto_args.add_argument("-v", "--verbose", dest="loglevel",
       help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
       action="store_const")
 
-  parser.add_argument("-d", "--debug", dest="loglevel",
+  in_toto_args.add_argument("-d", "--debug", dest="loglevel",
       help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
       action="store_const")
 
