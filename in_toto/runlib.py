@@ -263,7 +263,7 @@ def execute_link(link_cmd_args, record_streams):
   # decide if s/he wants to see or store stdout/stderr
   # btw: we ignore them in the layout anyway
 
-  # Write subproc's stdin/out to a file and then read it back to python's output. 
+  # Write subproc's stdout/err to a file and then read it back to python's output. 
   # This simultaneously logs proc output while echoing it to the screen.
   # Processes that demand ttys will still complain, but this maintians
   # interactivity. Processes with buffered outputs or that use curses (eg nano)
@@ -271,13 +271,14 @@ def execute_link(link_cmd_args, record_streams):
   # still break on Windows. 
 
   if record_streams:
+
     # Windows doesn't allow reopening TemporaryFile()s
     stdout_file = tempfile.mkstemp()
     stderr_file = tempfile.mkstemp()
     stdout_name = stdout_file[1]
     stderr_name = stderr_file[1]
 
-    #Open the files as r+b cause the subprocess to block indefinitely
+    # Open the files as r+b cause the subprocess to block indefinitely
     with \
     io.open(stdout_name, 'wb') as writer, \
     io.open(stdout_name, 'rb', 1) as reader, \
@@ -290,7 +291,7 @@ def execute_link(link_cmd_args, record_streams):
         proc = subprocess.Popen((link_cmd_args), stdout=writer, \
              stderr=err_write) 
 
-        # echo proc's stdout to our stdout
+        # echo proc's logged stdout to our stdout
         while proc.poll() is None:
             sys.stdout.write(reader.read())
             sys.stderr.write(err_read.read())
