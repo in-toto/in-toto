@@ -36,6 +36,9 @@ LOG_LEVEL = logging.WARNING
 # Debug level CRITICAL only shows in_toto-verify passing and failing
 #LOG_LEVEL = logging.CRITICAL
 
+# Colorizing output setting, off by default
+COLOR = False
+
 
 # See docstring of `in-toto.record_artifacts_as_dict` for how this is used
 ARTIFACT_EXCLUDE_PATTERNS = ["*.link*", ".git", "*.pyc", "*~"]

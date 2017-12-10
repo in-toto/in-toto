@@ -100,7 +100,8 @@ def main():
                "[--record-streams]\n{0}"
                "[--no-command]\n{0}"
                "[--verbose]\n{0}"
-               "[--debug] -- <cmd> [args]\n\n"
+               "[--debug]\n{0}"
+               "[--color] -- <cmd> [args]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -134,6 +135,9 @@ def main():
       help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
       action="store_const")
 
+  in_toto_args.add_argument("-c", "--color", dest="colorize",
+      help="Colorizes output.", default=False, action="store_true")
+
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
   in_toto_args.add_argument("link_cmd", nargs="*",
@@ -143,6 +147,9 @@ def main():
 
   # Distinguish log levels via parameterized input
   log.logging.getLogger().setLevel(args.loglevel)
+
+  # Set color settings
+  in_toto.settings.COLOR = args.colorize
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()

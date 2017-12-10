@@ -132,7 +132,8 @@ def main():
       "%(prog)s  --step-name <unique step name>\n{0}"
                " --key <functionary private key path>\n"
                "[--verbose]\n{0}"
-               "[--debug]\n"
+               "[--debug]\n{0}"
+               "[--color]\n"
       "Commands:\n{0}"
                "start [--materials <filepath>[ <filepath> ...]]\n{0}"
                "stop  [--products <filepath>[ <filepath> ...]]\n"
@@ -154,6 +155,9 @@ def main():
       help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
       action="store_const")
 
+  in_toto_args.add_argument("-c", "--color", dest="colorize",
+      help="Colorizes output.", default=False, action="store_true")
+
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
 
@@ -164,6 +168,9 @@ def main():
 
   # Distinguish log levels via parameterized input
   log.logging.getLogger().setLevel(args.loglevel)
+
+  # Set color settings
+  in_toto.settings.COLOR = args.colorize
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()

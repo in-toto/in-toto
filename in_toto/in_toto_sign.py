@@ -206,6 +206,9 @@ def main():
       help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
       action="store_const")
 
+  parser.add_argument("-c", "--color", dest="colorize",
+      help="Colorizes output.", default=False, action="store_true")
+
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
 
@@ -213,6 +216,9 @@ def main():
 
   # Distinguish log levels via parameterized input
   log.logging.getLogger().setLevel(args.loglevel)
+
+  # Set color settings
+  in_toto.settings.COLOR = args.colorize
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()

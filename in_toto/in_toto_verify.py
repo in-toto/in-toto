@@ -85,7 +85,8 @@ def main():
       "%(prog)s --layout <layout path>\n{0}"
                "--layout-keys <filepath>[ <filepath> ...]\n{0}"
                "[--verbose]\n{0}"
-               "[--debug]\n\n"
+               "[--debug]\n{0}"
+               "[--color]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -104,10 +105,16 @@ def main():
       help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
       action="store_const")
 
+  in_toto_args.add_argument("-c", "--color", dest="colorize",
+      help="Colorizes output.", default=False, action="store_true")
+
   args = parser.parse_args()
 
   # Distinguish log levels via parameterized input
   log.logging.getLogger().setLevel(args.loglevel)
+
+  # Set color settings
+  in_toto.settings.COLOR = args.colorize
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
