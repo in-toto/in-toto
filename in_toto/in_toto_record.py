@@ -131,7 +131,8 @@ def main():
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
                " --key <functionary private key path>\n"
-               "[--verbose]\n"
+               "[--verbose]\n{0}"
+               "[--debug]\n"
       "Commands:\n{0}"
                "start [--materials <filepath>[ <filepath> ...]]\n{0}"
                "stop  [--products <filepath>[ <filepath> ...]]\n"
@@ -145,8 +146,13 @@ def main():
   in_toto_args.add_argument("-k", "--key", type=str, required=True,
       help="Path to private key to sign link metadata (PEM)")
 
-  in_toto_args.add_argument("-v", "--verbose", dest='verbose',
-      help="Verbose execution.", default=False, action='store_true')
+  parser.add_argument("-v", "--verbose", dest="loglevel",
+      help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
+      action="store_const")
+
+  parser.add_argument("-d", "--debug", dest="loglevel",
+      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
+      action="store_const")
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution")
@@ -156,9 +162,8 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  # Distinguish log levels via parameterized input
+  log.logging.getLogger().setLevel(args.loglevel)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
