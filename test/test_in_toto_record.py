@@ -124,6 +124,20 @@ class TestInTotoRecordTool(unittest.TestCase):
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
 
+  def test_main_debug(self):
+    """Log level with verbose flag is lesser/equal than logging.DEBUG. """
+    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
+        self.key_path, "--verbose"]
+
+    original_log_level = logging.getLogger().getEffectiveLevel()
+    with patch.object(sys, 'argv', args + ["start"]):
+      in_toto_record_main()
+    with patch.object(sys, 'argv', args + ["stop"]):
+      in_toto_record_main()
+    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
+    # Reset log level
+    logging.getLogger().setLevel(original_log_level)
+
   def test_in_toto_record_start_stop(self):
     """in_toto_record_start/stop run through. """
     in_toto_record_start("test-step", self.key, [self.test_artifact])
