@@ -1344,7 +1344,8 @@ def in_toto_verify(layout, layout_key_dict, partial_verif=False):
   log.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
   # Steps or Inspections, hence the concatenation of both collections of links
-  combined_links = _run_verification(reduced_chain_link_dict.copy, partial_verif=partial_verif, failures=failures)
+  combined_links = _run_verification(reduced_chain_link_dict.copy, req_comps=reduced_chain_link_dict,
+                                     partial_verif=partial_verif, failures=failures)
   _run_verification(combined_links.update, inspection_link_dict, partial_verif=partial_verif, failures=failures)
   _run_verification(verify_all_item_rules, layout.inspect, combined_links, partial_verif=partial_verif, failures=failures)
 
@@ -1364,6 +1365,7 @@ def _run_verification(func, *args, **kwargs):
   # Default flag values
   partial_verif = kwargs.get('partial_verif', False)
   failures = kwargs.get('failures', {})
+  required_components = kwargs.get('req_comps', [])
 
   # If not running partial verification, run the command as usual
   if not partial_verif:
@@ -1372,7 +1374,7 @@ def _run_verification(func, *args, **kwargs):
     retVal = None
 
     # If missing a required variable, fail immediately
-    if None in args:
+    if None in args or None in required_components:
       log.info("Cannot proceed due to previous failed step")
       return retVal
 

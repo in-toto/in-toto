@@ -84,7 +84,7 @@ def main():
   parser.usage = ("\n"
       "%(prog)s --layout <layout path>\n{0}"
                "--layout-keys <filepath>[ <filepath> ...]\n{0}"
-               "[--verbose]\n\n"
+               "[--verbose] [-p/--partial]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
