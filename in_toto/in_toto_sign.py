@@ -202,10 +202,6 @@ def main():
       help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
       action="store_const")
 
-  parser.add_argument("-d", "--debug", dest="loglevel",
-      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
-      action="store_const")
-
   parser.add_argument("-c", "--color", dest="colorize",
       help="Colorizes output.", default=False, action="store_true")
 
