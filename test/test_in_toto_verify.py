@@ -145,6 +145,19 @@ class TestInTotoVerifyTool(unittest.TestCase):
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
 
+
+  def test_main_verbose(self):
+    """Test in-toto-verify CLI tool with verbose flag. """
+    args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
+        "--layout-keys", self.alice_path, "--debug"]
+
+    original_log_level = logging.getLogger().getEffectiveLevel()
+    with patch.object(sys, 'argv', args):
+      in_toto_verify_main()
+    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
+    # Reset log level
+    logging.getLogger().setLevel(original_log_level)
+
   def test_in_toto_verify_pass_all(self):
     """Test in-toto-verify function pass verification. """
     in_toto_verify(self.layout_single_signed_path, [self.alice_path])
