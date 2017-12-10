@@ -127,7 +127,7 @@ class TestInTotoRecordTool(unittest.TestCase):
   def test_main_debug(self):
     """Log level with verbose flag is lesser/equal than logging.DEBUG. """
     args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "--verbose"]
+        self.key_path, "--debug"]
 
     original_log_level = logging.getLogger().getEffectiveLevel()
     with patch.object(sys, 'argv', args + ["start"]):
