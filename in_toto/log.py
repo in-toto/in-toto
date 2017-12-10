@@ -20,6 +20,10 @@ import in_toto.settings
 
 logging.basicConfig(level=in_toto.settings.LOG_LEVEL, format='%(message)s')
 
+def debug(msg):
+  """ Verbose debugging """
+  logging.debug("DEBUG: {}".format(msg))
+
 def info(msg):
   """Verbose user feedback. """
   logging.info("{}".format(msg))
