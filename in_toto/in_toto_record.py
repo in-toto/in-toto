@@ -130,7 +130,7 @@ def main():
   lpad = (len(parser.prog) + 1) * " "
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n"
+               " --key <functionary private key path>\n{0}"
                "[--verbose]\n{0}"
                "[--debug]\n{0}"
                "[--color]\n"
