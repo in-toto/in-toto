@@ -51,7 +51,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
       if value == '-c' or value == '--color':
         in_toto.settings.COLOR = True
     log.warn("POSIX users (Linux, BSD, etc.) are encouraged to"
-        " install and use the much more recent subprocess32 module"
+        " install the new subprocess32 module"
         " instead of the version provided in python"
         + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     import subprocess
