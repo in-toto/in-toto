@@ -151,6 +151,23 @@ class TestInTotoRunTool(unittest.TestCase):
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
 
+  def test_main_debug(self):
+    """Log level with verbose flag is lesser/equal than logging.DEBUG. """
+
+    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+        self.key_path, "--materials", self.test_artifact, "--products",
+        self.test_artifact, "--record-streams", "--debug",
+        "--", "echo", "test"]
+
+    original_log_level = logging.getLogger().getEffectiveLevel()
+    with patch.object(sys, 'argv', args ):
+      in_toto_run_main()
+    self.assertTrue(os.path.exists(self.test_link))
+
+    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
+    # Reset log level
+    logging.getLogger().setLevel(original_log_level)
+
   def test_successful_in_toto_run(self):
     """Call in_toto_run successfully """
     in_toto_run(self.test_step, [self.test_artifact],
