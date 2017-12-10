@@ -84,7 +84,8 @@ def main():
   parser.usage = ("\n"
       "%(prog)s --layout <layout path>\n{0}"
                "--layout-keys <filepath>[ <filepath> ...]\n{0}"
-               "[--verbose]\n\n"
+               "[--verbose]\n{0}"
+               "[--debug]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -95,14 +96,18 @@ def main():
   in_toto_args.add_argument("-k", "--layout-keys", type=str, required=True,
     nargs="+", help="Key(s) to verify root layout signature")
 
-  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", default=False, action="store_true")
+  in_toto_args.add_argument("-v", "--verbose", dest="loglevel",
+      help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
+      action="store_const")
+
+  in_toto_args.add_argument("-d", "--debug", dest="loglevel",
+      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
+      action="store_const")
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  # Distinguish log levels via parameterized input
+  log.logging.getLogger().setLevel(args.loglevel)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
