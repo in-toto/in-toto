@@ -99,7 +99,8 @@ def main():
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-streams]\n{0}"
                "[--no-command]\n{0}"
-               "[--verbose] -- <cmd> [args]\n\n"
+               "[--verbose]\n{0}"
+               "[--debug] -- <cmd> [args]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -125,8 +126,13 @@ def main():
       help="Set if step does not have a command",
       dest="no_command", default=False, action="store_true")
 
-  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", default=False, action="store_true")
+  in_toto_args.add_argument("-v", "--verbose", dest="loglevel",
+      help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
+      action="store_const")
+
+  in_toto_args.add_argument("-d", "--debug", dest="loglevel",
+      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
+      action="store_const")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
@@ -135,9 +141,8 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  # Distinguish log levels via parameterized input
+  log.logging.getLogger().setLevel(args.loglevel)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
