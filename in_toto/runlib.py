@@ -48,7 +48,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
   try:
     import subprocess32 as subprocess
   except ImportError:
-    in_toto.settings.COLOR = in.toto.util.detect_colorization(sys.argv)
+    in_toto.settings.COLOR = in_toto.util.detect_colorization(sys.argv)
     log.warn("POSIX users (Linux, BSD, etc.) are encouraged to"
         " install the new subprocess32 module"
         " instead of the version provided in python "
