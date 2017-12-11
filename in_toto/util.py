@@ -173,12 +173,3 @@ def compare_dictionaries(dictionary_one, dictionary_two):
       modified.append(element)
 
   return created, deleted, modified, unchanged
-
-def check_string(string_arg):
-  """ Checks strings that are empty and defaults them to 'None' string"""
-  if not isinstance(string_arg, str):
-    return string_arg
-  else:
-    if not string_arg:
-      string_arg = "None"
-  return string_arg

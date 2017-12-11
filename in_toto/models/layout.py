@@ -44,7 +44,6 @@ import in_toto.artifact_rules
 import in_toto.exceptions
 import securesystemslib.exceptions
 import securesystemslib.formats
-import in_toto.util
 
 
 
@@ -134,7 +133,6 @@ class Layout(Signable):
         step data - chronicles the software supply chain steps
         inspection data - verification of the supply chain
     """
-    readme = in_toto.util.check_string(self.readme)
     keyid = "{}".format("\n\t  ".join(self.keys))
 
     step_data = []
@@ -153,7 +151,7 @@ class Layout(Signable):
       "  keyids: {}\n"
       "  step data:  {}"
       "  inspect data:  {}"
-      .format(self._type, self.expires, readme, keyid, " ".join(step_data), " ".join(inspect)))
+      .format(self._type, self.expires, self.readme, keyid, " ".join(step_data), " ".join(inspect)))
 
   def _validate_type(self):
     """Private method to check that the type string is set to layout."""
@@ -294,29 +292,31 @@ class Step(ValidationMixin):
             expected_materials, 
             expected_products
     """
-    pubkeys = "{}".format("\n  ".join(self.pubkeys))
-    expected_command = "{}".format(" ".join(self.expected_command))
-    expected_materials = ""
-    expected_products = ""
-
-    for value in self.expected_materials:
-      expected_materials += " {}\n\t".format(" ".join(value))
-
-    for value in self.expected_products:
-      expected_products += " {}\n\t".format(" ".join(value))
-
     return (
       "\n    step name: {} (threshold: {})\n"
       "    pubkeys: {}\n " 
       "   expected cmd: {}\n " 
       "   expected input (materials): \n\t{}\n " 
       "   expected output (products): \n\t{} \n "
-      .format(self.name, self.threshold, pubkeys, in_toto.util.check_string(expected_command), \
-       in_toto.util.check_string(expected_materials), in_toto.util.check_string(expected_products)))
+      .format(
+        self.name, 
+        self.threshold, 
+        "\n  ".join(self.pubkeys), 
+        " ".join(self.expected_command),
+        self._display_list(self.expected_materials), 
+        self._display_list(self.expected_products))
+      )
 
   @staticmethod
   def read(data):
     return Step(**data)
+
+  def _display_list(self, arguments):
+    """ Private method for printing lists """
+    string = ""
+    for value in arguments:
+      string += "   {}\n\t".format(" ".join(value))
+    return string
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to step."""
@@ -420,26 +420,24 @@ class Inspection(ValidationMixin):
            expected_materials, 
            expected_products
     """
-    expected_materials = ""
-    expected_products = ""
-
-    for value in self.expected_materials:
-      expected_materials += "   {}\n\t".format(" ".join(value))
-
-    for value in self.expected_products:
-      expected_products += "   {}\n\t".format(" ".join(value))
-
     return (
       "\n    name: {}\n"
       "    command run: {}\n"
       "    expected input (materials): \n\t{}\n"
       "    expected output (products): \n\t{}\n   "
-      .format(self.name, " ".join(self.run), in_toto.util.check_string(expected_materials), \
-        in_toto.util.check_string(expected_products)))
+      .format(self.name, " ".join(self.run), self._display_list(self.expected_materials),
+        self._display_list(self.expected_products)))
 
   @staticmethod
   def read(data):
     return Inspection(**data)
+
+  def _display_list(self, arguments):
+    """ Private method for printing lists """
+    string = ""
+    for value in arguments:
+      string += "   {}\n\t".format(" ".join(value))
+    return string
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to inspection."""

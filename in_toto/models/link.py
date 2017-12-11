@@ -120,16 +120,13 @@ class Link(Signable):
         Also returns "summary" string:
           four detections: "created", "deleted", "modified" and "unchanged"
     """
-    command = in_toto.util.check_string("{}".format(" ".join(self.command)))
-    materials = in_toto.util.check_string("{}".format(" ".join(self.materials)))
-    products = in_toto.util.check_string("{}".format(" ".join(self.products)))
-    summary = ""
     new, deleted, modified, no_change = in_toto.util.compare_dictionaries(self.products, self.materials)
-
-    summary += "\n\tcreated: {}".format(in_toto.util.check_string(" ".join(new)))
-    summary += "\n\tdeleted: {}".format(in_toto.util.check_string(" ".join(deleted)))
-    summary += "\n\tmodified: {}".format(in_toto.util.check_string(" ".join(modified)))
-    summary += "\n\tunchanged: {}".format(in_toto.util.check_string(" ".join(no_change)))
+    summary = ("\n\tcreated: {}"
+               "\n\tdeleted: {}"
+               "\n\tmodified: {}"
+               "\n\tunchanged: {}"
+               .format(" ".join(new), " ".join(deleted), " ".join(modified),
+                 " ".join(no_change)))
 
     return (
       "  object: {}"
@@ -139,8 +136,14 @@ class Link(Signable):
       "\tfile input: {}\n"  
       "  outputs:\n \tfile output: {}\n"  
       "  summary: {}"
-      .format(self._type, self.name, command, " ".join(self.environment.values()), \
-         materials, products, summary))
+      .format(
+        self._type, self.name, 
+        " ".join(self.command), 
+        " ".join(self.environment.values()),
+        " ".join(self.materials), 
+        " ".join(self.products), 
+        summary)
+      )
 
   def _validate_type(self):
     """Private method to check that `_type` is set to "link"."""
