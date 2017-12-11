@@ -154,4 +154,5 @@ def color_code(msg, lvl):
   for key, value in levelGenerator.iteritems():
     if level in key:
       return "{}{}\x1b[0m".format(value, msg)
-  return msg
+  else:
+    return msg
