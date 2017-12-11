@@ -34,6 +34,7 @@ from in_toto.models.link import Link
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.in_toto_run import in_toto_run
 from in_toto.models.link import FILENAME_FORMAT
+from in_toto import settings
 
 # Suppress all the user feedback that we print using a base logger
 logging.getLogger().setLevel(logging.CRITICAL)
@@ -167,6 +168,18 @@ class TestInTotoRunTool(unittest.TestCase):
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
+
+  def test_main_color(self):
+    """ Test color flag """
+
+    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+        self.key_path, "--materials", self.test_artifact, "--products",
+        self.test_artifact, "--record-streams", "--color",
+        "--", "echo", "test"]
+
+    with patch.object(sys, 'argv', args ):
+      in_toto_run_main()
+    self.assertTrue(settings.COLOR)
 
   def test_successful_in_toto_run(self):
     """Call in_toto_run successfully """

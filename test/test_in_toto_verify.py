@@ -35,6 +35,7 @@ from in_toto.in_toto_verify import in_toto_verify
 from in_toto import log
 from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
+from in_toto import settings
 
 
 # Suppress all the user feedback that we print using a base logger
@@ -157,6 +158,15 @@ class TestInTotoVerifyTool(unittest.TestCase):
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
+
+  def test_main_color(self):
+    """ Test color flag """
+    args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
+        "--layout-keys", self.alice_path, "--color"]
+
+    with patch.object(sys, 'argv', args):
+      in_toto_verify_main()
+    self.assertTrue(settings.COLOR)
 
   def test_in_toto_verify_pass_all(self):
     """Test in-toto-verify function pass verification. """

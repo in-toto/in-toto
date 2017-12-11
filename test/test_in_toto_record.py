@@ -32,6 +32,7 @@ from in_toto.util import (generate_and_write_rsa_keypair,
 from in_toto.models.link import Link
 from in_toto.in_toto_record import main as in_toto_record_main
 from in_toto.in_toto_record import in_toto_record_start, in_toto_record_stop
+from in_toto import settings
 
 WORKING_DIR = os.getcwd()
 
@@ -137,6 +138,16 @@ class TestInTotoRecordTool(unittest.TestCase):
     self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.DEBUG)
     # Reset log level
     logging.getLogger().setLevel(original_log_level)
+
+  def test_main_color(self):
+    """ Test color flag """
+    args = [ "in_toto_record.py", "--step-name", "test-step", "--key", self.key_path, "--color"]
+
+    with patch.object(sys, 'argv', args + ["start"]):
+      in_toto_record_main()
+    with patch.object(sys, 'argv', args + ["stop"]):
+      in_toto_record_main()
+    self.assertTrue(settings.COLOR)
 
   def test_in_toto_record_start_stop(self):
     """in_toto_record_start/stop run through. """
