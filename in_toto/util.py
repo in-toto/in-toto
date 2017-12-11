@@ -136,3 +136,20 @@ def prompt_generate_and_write_rsa_keypair(filepath, bits):
   generate_and_write_rsa_keypair"""
   password = prompt_password()
   generate_and_write_rsa_keypair(filepath, bits, password)
+
+def color_code(msg, lvl):
+  """ Assigns ANSI escape codes to different log levels for colorized output """
+
+  #FIXME: Add support for Windows (no support for ANSI escape codes)
+  if platform.system.lower() is "windows" or not in_toto.settings.COLOR:
+    return msg
+  level = logging.getLevelName(lvl)
+  levelGenerator = {  "CRITICAL" : "\x1b[31m", # red
+                      "ERROR" : "\x1b[31m", #  red
+                      "WARNING" : "\x1b[33m", # yellow
+                      "INFO" : "\x1b[32m",  # green
+                      "DEBUG" : "\x1b[35m" } # magenta
+  for key, value in levelGenerator.iteritems():
+    if level in key:
+      return "{}{}\x1b[0m".format(value, msg)
+  return msg
