@@ -145,17 +145,11 @@ class TestUtil(unittest.TestCase):
 
   def test_color_code(self):
     sample_log = "Sample message"
-    revert = False
-    if not in_toto.settings.COLOR:
-      in_toto.settings.COLOR = True
-      revert = True
-    test_code_info = color_code(sample_log, 20) #20 = info
-    test_code_debug = color_code(sample_log, 10) #10 = debug
-    test_code_warning = color_code(sample_log, 30) #30 = warning
-    test_code_error = color_code(sample_log, 40) #40 = error
-    test_code_critical = color_code(sample_log, 50) #50 = critical
-    if revert:
-      in_toto.settings.COLOR = False
+    test_code_info = color_code(sample_log, 20, True) #20 = info
+    test_code_debug = color_code(sample_log, 10, True) #10 = debug
+    test_code_warning = color_code(sample_log, 30, True) #30 = warning
+    test_code_error = color_code(sample_log, 40, True) #40 = error
+    test_code_critical = color_code(sample_log, 50, True) #50 = critical
 
     self.assertIn("\x1b[32m", test_code_info)
     self.assertIn("\x1b[35m", test_code_debug)
