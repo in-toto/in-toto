@@ -28,7 +28,7 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file, color_code, detect_colorization)
+    prompt_import_rsa_key_from_file)
 import in_toto.settings
 
 import securesystemslib.formats
@@ -143,45 +143,6 @@ class TestUtil(unittest.TestCase):
         return_value="wrong-password"), self.assertRaises(
         securesystemslib.exceptions.CryptoError):
       prompt_import_rsa_key_from_file(key)
-
-  def test_color_code(self):
-    """ Testing correct color codes """
-    sample_log = "Sample message"
-    test_code_info = color_code(sample_log, 20, True) #20 = info
-    test_code_debug = color_code(sample_log, 10, True) #10 = debug
-    test_code_warning = color_code(sample_log, 30, True) #30 = warning
-    test_code_error = color_code(sample_log, 40, True) #40 = error
-    test_code_critical = color_code(sample_log, 50, True) #50 = critical
-
-    self.assertIn("\x1b[32m", test_code_info)
-    self.assertIn("\x1b[35m", test_code_debug)
-    self.assertIn("\x1b[33m", test_code_warning)
-    self.assertIn("\x1b[31m", test_code_error)
-    self.assertIn("\x1b[31m", test_code_critical)
-
-  def test_detect_colorization(self):
-    """ Test color setting"""
-    test_step = "test_step"
-    test_artifact = "test_artifact"
-    key_path = "test_key"
-
-    test_args_c_flag = [ "in_toto_run.py", "-c",  "--step-name", test_step, "--key",
-        key_path, "--materials", test_artifact, "--products",
-        test_artifact, "--record-streams",
-        "--", "echo", "test"]
-
-    test_args_color_flag = [ "in_toto_run.py",  "--step-name", test_step, "--key",
-        key_path, "--materials", test_artifact, "--products",
-        test_artifact, "--record-streams", "--color",
-        "--", "echo", "test"]
-
-    with patch.object(sys, 'argv', test_args_color_flag):
-      color = detect_colorization(sys.argv)
-      self.assertTrue(color)
-
-    with patch.object(sys, 'argv', test_args_c_flag):
-      color = detect_colorization(sys.argv)
-      self.assertTrue(color)
 
 if __name__ == "__main__":
   unittest.main()

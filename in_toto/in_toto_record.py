@@ -148,11 +148,11 @@ def main():
       help="Path to private key to sign link metadata (PEM)")
 
   in_toto_args.add_argument("-v", "--verbose", dest="loglevel",
-      help="Verbose execution.", default=log.logging.WARNING, const=log.logging.INFO,
+      help="Verbose execution.", default=in_toto.settings.LOG_LEVEL, const=log.logging.INFO,
       action="store_const")
 
   in_toto_args.add_argument("-d", "--debug", dest="loglevel",
-      help="Debug statement execution.", default=log.logging.WARNING, const=log.logging.DEBUG,
+      help="Debug statement execution.", default=in_toto.settings.LOG_LEVEL, const=log.logging.DEBUG,
       action="store_const")
 
   in_toto_args.add_argument("-c", "--color", dest="colorize",
@@ -167,7 +167,8 @@ def main():
   args = parser.parse_args()
 
   # Distinguish log levels via parameterized input
-  log.logging.getLogger().setLevel(args.loglevel)
+  if args.loglevel:
+    log.logging.getLogger().setLevel(args.loglevel)
 
   # Set color settings
   in_toto.settings.COLOR = args.colorize
