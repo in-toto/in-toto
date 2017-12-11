@@ -142,7 +142,7 @@ def color_code(msg, lvl):
   """ Assigns ANSI escape codes to different log levels for colorized output """
 
   #FIXME: Add support for Windows (no support for ANSI escape codes)
-  if platform.system.lower() is "windows" or not in_toto.settings.COLOR:
+  if platform.system().lower() is "windows" or not in_toto.settings.COLOR:
     return msg
   level = logging.getLevelName(lvl)
   levelGenerator = {  "CRITICAL" : "\x1b[31m", # red
