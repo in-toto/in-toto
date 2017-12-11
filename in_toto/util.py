@@ -6,6 +6,7 @@ import getpass
 import platform
 
 from in_toto import log
+import in_toto.settings
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.keys
@@ -144,7 +145,7 @@ def color_code(msg, lvl):
   #FIXME: Add support for Windows (no support for ANSI escape codes)
   if platform.system().lower() is "windows" or not in_toto.settings.COLOR:
     return msg
-  level = logging.getLevelName(lvl)
+  level = log.logging.getLevelName(lvl)
   levelGenerator = {  "CRITICAL" : "\x1b[31m", # red
                       "ERROR" : "\x1b[31m", #  red
                       "WARNING" : "\x1b[33m", # yellow
