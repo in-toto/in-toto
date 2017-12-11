@@ -155,3 +155,10 @@ def color_code(msg, lvl, override=False):
     if level in key:
       msg = "{}{}\x1b[0m".format(value, msg)
   return msg
+
+def detect_colorization(arguments):
+  colorization = False
+  for value in arguments:
+    if value == "-c" or value == "--color":
+      colorization = True
+  return colorization

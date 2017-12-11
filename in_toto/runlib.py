@@ -31,6 +31,7 @@ import fnmatch
 
 import in_toto.settings
 import in_toto.exceptions
+import in_toto.util
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT)
@@ -47,17 +48,14 @@ if os.name == 'posix' and sys.version_info[0] < 3:
   try:
     import subprocess32 as subprocess
   except ImportError:
-    for value in sys.argv:
-      if value == '-c' or value == '--color':
-        in_toto.settings.COLOR = True
+    in_toto.settings.COLOR = in.toto.util.detect_colorization(sys.argv)
     log.warn("POSIX users (Linux, BSD, etc.) are encouraged to"
         " install the new subprocess32 module"
-        " instead of the version provided in python"
+        " instead of the version provided in python "
         + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     import subprocess
 else:
   import subprocess
-
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
