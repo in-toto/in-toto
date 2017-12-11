@@ -149,19 +149,19 @@ class TestUtil(unittest.TestCase):
     if not in_toto.settings.COLOR:
       in_toto.settings.COLOR = True
       revert = True
-    test_code_info = color_code(20, sample_log) #20 = info
-    test_code_debug = color_code(10, sample_log) #10 = debug
-    test_code_warning = color_code(30, sample_log) #30 = warning
-    test_code_error = color_code(40, sample_log) #40 = error
-    test_code_critical = color_code(50, sample_log) #50 = critical
+    test_code_info = color_code(sample_log, 20) #20 = info
+    test_code_debug = color_code(sample_log, 10) #10 = debug
+    test_code_warning = color_code(sample_log, 30) #30 = warning
+    test_code_error = color_code(sample_log, 40) #40 = error
+    test_code_critical = color_code(sample_log, 50) #50 = critical
     if revert:
       in_toto.settings.COLOR = False
 
-    self.assertContains(test_code_info, "\x1b[32m")
-    self.assertContains(test_code_debug, "\x1b[35m")
-    self.assertContains(test_code_warning, "\x1b[33m")
-    self.assertContains(test_code_error, "\x1b[31m")
-    self.assertContains(test_code_critical, "\x1b[31m")
+    self.assertIn("\x1b[32m", test_code_info)
+    self.assertIn("\x1b[35m", test_code_debug)
+    self.assertIn("\x1b[33m", test_code_warning)
+    self.assertIn("\x1b[31m", test_code_error)
+    self.assertIn("\x1b[31m", test_code_critical)
 
 if __name__ == "__main__":
   unittest.main()

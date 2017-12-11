@@ -17,7 +17,6 @@
 
 import logging
 import in_toto.settings
-import in_toto.util
 
 logging.basicConfig(level=in_toto.settings.LOG_LEVEL, format='%(message)s')
 
