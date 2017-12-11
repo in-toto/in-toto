@@ -3,6 +3,7 @@ import sys
 import pickle
 import json
 import getpass
+import platform
 
 from in_toto import log
 import securesystemslib.formats
