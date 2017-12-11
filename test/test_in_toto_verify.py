@@ -147,7 +147,7 @@ class TestInTotoVerifyTool(unittest.TestCase):
 
 
   def test_main_debug(self):
-    """Test in-toto-verify CLI tool with verbose flag. """
+    """Test in-toto-verify CLI tool with debug flag. """
     args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
         "--layout-keys", self.alice_path, "--debug"]
 
