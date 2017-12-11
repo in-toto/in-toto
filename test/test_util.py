@@ -27,7 +27,8 @@ from mock import patch
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
+    prompt_import_rsa_key_from_file, color_code)
+import in_toto.settings
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -142,6 +143,25 @@ class TestUtil(unittest.TestCase):
         securesystemslib.exceptions.CryptoError):
       prompt_import_rsa_key_from_file(key)
 
+  def test_color_code(self):
+    sample_log = "Sample message"
+    revert = False
+    if not in_toto.settings.COLOR:
+      in_toto.settings.COLOR = True
+      revert = True
+    test_code_info = color_code(20, sample_log) #20 = info
+    test_code_debug = color_code(10, sample_log) #10 = debug
+    test_code_warning = color_code(30, sample_log) #30 = warning
+    test_code_error = color_code(40, sample_log) #40 = error
+    test_code_critical = color_code(50, sample_log) #50 = critical
+    if revert:
+      in_toto.settings.COLOR = False
+
+    self.assertContains(test_code_info, "\x1b[32m")
+    self.assertContains(test_code_debug, "\x1b[35m")
+    self.assertContains(test_code_warning, "\x1b[33m")
+    self.assertContains(test_code_error, "\x1b[31m")
+    self.assertContains(test_code_critical, "\x1b[31m")
 
 if __name__ == "__main__":
   unittest.main()
