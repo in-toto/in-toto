@@ -154,5 +154,11 @@ class TestInTotoVerifyTool(unittest.TestCase):
     with self.assertRaises(SystemExit):
       in_toto_verify("wrong-layout-path", [self.alice_path])
 
+  def test_in_toto_verify_partial_verification(self):
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path], 1)
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path], 2)
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path], 3)
+    in_toto_verify(self.layout_single_signed_path, [self.alice_path], 4)
+
 if __name__ == "__main__":
   unittest.main(buffer=True)

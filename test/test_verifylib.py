@@ -1016,6 +1016,15 @@ class TestInTotoVerify(unittest.TestCase):
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
 
+  def test_partial_verification(self):
+    """Test partial-verification of single-signed layout. """
+    layout = Metablock.load(self.layout_single_signed_path)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
+    in_toto_verify(layout, layout_key_dict, 1)
+    in_toto_verify(layout, layout_key_dict, 2)
+    in_toto_verify(layout, layout_key_dict, 3)
+    in_toto_verify(layout, layout_key_dict, 4)
+
 
 class TestVerifySublayouts(unittest.TestCase):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
