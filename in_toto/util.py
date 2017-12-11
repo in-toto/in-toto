@@ -141,7 +141,6 @@ def prompt_generate_and_write_rsa_keypair(filepath, bits):
 
 def color_code(msg, lvl, override=False):
   """ Assigns ANSI escape codes to different log levels for colorized output """
-
   if not override:
     #FIXME: Add support for Windows (no support for ANSI escape codes)
     if platform.system().lower() is "windows" or not in_toto.settings.COLOR:
@@ -154,6 +153,5 @@ def color_code(msg, lvl, override=False):
                       "DEBUG" : "\x1b[35m" } # magenta
   for key, value in levelGenerator.iteritems():
     if level in key:
-      return "{}{}\x1b[0m".format(value, msg)
-  else:
-    return msg
+      msg = "{}{}\x1b[0m".format(value, msg)
+  return msg
