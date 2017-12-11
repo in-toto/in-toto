@@ -33,7 +33,7 @@ import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock
 
-def in_toto_verify(layout_path, layout_key_paths, partial_verif):
+def in_toto_verify(layout_path, layout_key_paths, partial_verif=0):
   """
   <Purpose>
     Loads the layout metadata as Metablock object (containg a Layout object)
@@ -47,6 +47,10 @@ def in_toto_verify(layout_path, layout_key_paths, partial_verif):
     layout_key_paths:
             List of paths to project owner public keys, used to verify the
             layout's signature.
+
+    partial_verif:
+            [Optional] Determines the step at which to stop for partial
+            verification.
 
   <Exceptions>
     SystemExit if any exception occurs
@@ -84,7 +88,7 @@ def main():
   parser.usage = ("\n"
       "%(prog)s --layout <layout path>\n{0}"
                "--layout-keys <filepath>[ <filepath> ...]\n{0}"
-               "[--verbose] [-p/--partial]\n\n"
+               "[--verbose]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -98,8 +102,13 @@ def main():
   in_toto_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", default=False, action="store_true")
 
-  in_toto_args.add_argument("-p", "--partial", dest="partial_verif",
-      help="Enables partial verification", default=False, action="store_true")
+  in_toto_args.add_argument("-p", "--partial", type=str, required=False,
+      help="Enables partial verification to verify specified steps "
+           "(1) Verifies the layout signature(s) and expiration(s) "
+           "(2) Verifies all the link functionaries and signatures "
+           "(3) Verifies sublayouts, including steps, threshold constraints,"
+           "    and the materials/products for all steps "
+           "(4) Verifies the inspection rules for materials and products", default=0)
 
   args = parser.parse_args()
 
@@ -110,7 +119,7 @@ def main():
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
-  in_toto_verify(args.layout, args.layout_keys, args.partial_verif)
+  in_toto_verify(args.layout, args.layout_keys, int(args.partial))
 
 if __name__ == "__main__":
   main()

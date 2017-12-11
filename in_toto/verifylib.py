@@ -1126,7 +1126,7 @@ def reduce_chain_links(chain_link_dict):
 
   return reduced_chain_link_dict
 
-def verify_sublayouts(layout, chain_link_dict, partial_verif=False):
+def verify_sublayouts(layout, chain_link_dict):
   """
   <Purpose>
     Checks if any step has been delegated by the functionary, recurses into
@@ -1181,7 +1181,7 @@ def verify_sublayouts(layout, chain_link_dict, partial_verif=False):
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict, partial_verif)
+        summary_link = in_toto_verify(link, layout_key_dict)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
@@ -1243,10 +1243,10 @@ def get_summary_link(layout, reduced_chain_link_dict):
 
   return Metablock(signed=summary_link)
 
-def in_toto_verify(layout, layout_key_dict, partial_verif=False):
+def in_toto_verify(layout, layout_key_dict, partial_verif=0):
   """
   <Purpose>
-    Does entire in-toto supply chain verification of a final product
+    Does part or all of in-toto supply chain verification of a final product
     by performing the following actions:
 
         1.  Verify layout signature(s)
@@ -1296,6 +1296,16 @@ def in_toto_verify(layout, layout_key_dict, partial_verif=False):
             Dictionary of project owner public keys, used to verify the
             layout's signature.
 
+    partial_verif:
+            [Optional] Determines the step at which to stop for partial
+            verification, as defined below.
+
+            1. Steps 1-2
+            2. Steps 3-4
+            3. Steps 5-8
+            4. Steps 9-10
+
+
   <Exceptions>
     None.
 
@@ -1306,51 +1316,57 @@ def in_toto_verify(layout, layout_key_dict, partial_verif=False):
     A link which summarizes the materials and products of the overall
     software supply chain (used by super-layout verification if any)
   """
-  failures = {}
+  # Run complete verification if partial_verif == 0
+  if partial_verif <= 0:
+    partial_verif = float('inf')
+  num_steps = 4
 
-  log.info("Verifying layout signatures...")
-  _run_verification(verify_layout_signatures, layout, layout_key_dict, partial_verif=partial_verif, failures=failures)
+  if partial_verif >= 1:
+    log.info("Verifying layout signatures...")
+    verify_layout_signatures(layout, layout_key_dict)
 
-  # For the rest of the verification we only care about the layout payload
-  # (Layout) that carries all the information and not about the layout
-  # container (Metablock) that also carries the signatures
-  layout = layout.signed
+    # For the rest of the verification we only care about the layout payload
+    # (Layout) that carries all the information and not about the layout
+    # container (Metablock) that also carries the signatures
+    layout = layout.signed
 
-  log.info("Verifying layout expiration...")
-  _run_verification(verify_layout_expiration, layout, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying layout expiration...")
+    verify_layout_expiration(layout)
 
-  log.info("Reading link metadata files...")
-  chain_link_dict = _run_verification(load_links_for_layout, layout, partial_verif=partial_verif, failures=failures)
+  if partial_verif >= 2:
+    log.info("Reading link metadata files...")
+    chain_link_dict = load_links_for_layout(layout)
 
-  log.info("Verifying link metadata signatures...")
-  _run_verification(verify_all_steps_signatures, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying link metadata signatures...")
+    verify_all_steps_signatures(layout, chain_link_dict)
 
-  log.info("Verifying sublayouts...")
-  chain_link_dict = _run_verification(verify_sublayouts, layout, chain_link_dict, partial_verif, partial_verif=partial_verif, failures=failures)
+  if partial_verif >= 3:
+    log.info("Verifying sublayouts...")
+    chain_link_dict = verify_sublayouts(layout, chain_link_dict)
 
-  log.info("Verifying alignment of reported commands...")
-  _run_verification(verify_all_steps_command_alignment, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying alignment of reported commands...")
+    verify_all_steps_command_alignment(layout, chain_link_dict)
 
-  log.info("Verifying threshold constraints...")
-  _run_verification(verify_threshold_constraints, layout, chain_link_dict, partial_verif=partial_verif, failures=failures)
-  reduced_chain_link_dict = _run_verification(reduce_chain_links, chain_link_dict, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying threshold constraints...")
+    verify_threshold_constraints(layout, chain_link_dict)
+    reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
-  log.info("Verifying Step rules...")
-  _run_verification(verify_all_item_rules, layout.steps, reduced_chain_link_dict, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying Step rules...")
+    verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
-  log.info("Executing Inspection commands...")
-  inspection_link_dict = _run_verification(run_all_inspections, layout, partial_verif=partial_verif, failures=failures)
+  if partial_verif >= 4:
+    log.info("Executing Inspection commands...")
+    inspection_link_dict = run_all_inspections(layout)
 
-  log.info("Verifying Inspection rules...")
-  # Artifact rules for inspections can reference links that correspond to
-  # Steps or Inspections, hence the concatenation of both collections of links
-  combined_links = _run_verification(reduced_chain_link_dict.copy, req_comps=reduced_chain_link_dict,
-                                     partial_verif=partial_verif, failures=failures)
-  _run_verification(combined_links.update, inspection_link_dict, partial_verif=partial_verif, failures=failures)
-  _run_verification(verify_all_item_rules, layout.inspect, combined_links, partial_verif=partial_verif, failures=failures)
+    log.info("Verifying Inspection rules...")
+    # Artifact rules for inspections can reference links that correspond to
+    # Steps or Inspections, hence the concatenation of both collections of links
+    combined_links = reduced_chain_link_dict.copy()
+    combined_links.update(inspection_link_dict)
+    verify_all_item_rules(layout.inspect, combined_links)
 
-  if len(failures) == 0:
-    # We made it this far without exception that means, verification passed
+  if partial_verif >= num_steps:
+    # We made it this far without exception, which means verification passed
     log.pass_verification("The software product passed all verification.")
 
     # Return a link file which summarizes the entire software supply chain
@@ -1358,32 +1374,9 @@ def in_toto_verify(layout, layout_key_dict, partial_verif=False):
     # in another supply chain
     return get_summary_link(layout, reduced_chain_link_dict)
   else:
-    log.fail_verification("The software product failed at least one verification step. Failures:\n%s" % str(failures))
-    return
-
-def _run_verification(func, *args, **kwargs):
-  # Default flag values
-  partial_verif = kwargs.get('partial_verif', False)
-  failures = kwargs.get('failures', {})
-  required_components = kwargs.get('req_comps', [])
-
-  # If not running partial verification, run the command as usual
-  if not partial_verif:
-    return func(*args)
-  else:
-    retVal = None
-
-    # If missing a required variable, fail immediately
-    if None in args or None in required_components:
-      log.info("Cannot proceed due to previous failed step")
-      return retVal
-
-    # Attempt command as usual, but log exceptions instead of exiting
-    try:
-      retVal = func(*args)
-    except Exception as e:
-      e_type = type(e).__name__
-      e_message = getattr(e, "message", repr(e))
-      failures[e_type] = failures.get(e_type, []).append(e_message)
-
-    return retVal
+    progress = {
+      1:"Layout signatures and expirations verified",
+      2:"Link functionary signatures verified",
+      3:"Sublayouts and steps verified"
+    }
+    log.info(progress[partial_verif])
