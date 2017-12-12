@@ -19,7 +19,6 @@
 """
 
 import os
-import sys
 import shutil
 import tempfile
 import unittest
@@ -29,7 +28,6 @@ from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-import in_toto.settings
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -143,6 +141,7 @@ class TestUtil(unittest.TestCase):
         return_value="wrong-password"), self.assertRaises(
         securesystemslib.exceptions.CryptoError):
       prompt_import_rsa_key_from_file(key)
+
 
 if __name__ == "__main__":
   unittest.main()

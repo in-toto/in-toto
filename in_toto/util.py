@@ -3,10 +3,8 @@ import sys
 import pickle
 import json
 import getpass
-import platform
 
 from in_toto import log
-import in_toto.settings
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.keys
