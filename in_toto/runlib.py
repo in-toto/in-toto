@@ -31,7 +31,6 @@ import fnmatch
 
 import in_toto.settings
 import in_toto.exceptions
-import in_toto.util
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT)
@@ -53,6 +52,7 @@ if os.name == 'posix' and sys.version_info[0] < 3:
     import subprocess
 else:
   import subprocess
+
 
 def _hash_artifact(filepath, hash_algorithms=['sha256']):
   """Internal helper that takes a filename and hashes the respective file's
