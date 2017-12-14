@@ -278,62 +278,53 @@ def execute_link(link_cmd_args, record_streams):
     stdout_name = stdout_file[1]
     stderr_name = stderr_file[1]
 
-    # Open the files as r+b cause the subprocess to block indefinitely
+    # Using the same fd for the subprocess and the readers doesn't work
     with \
-    io.open(stdout_name, 'wb') as writer, \
-    io.open(stdout_name, 'rb', 1) as reader, \
-    io.open(stderr_name, 'wb') as err_write, \
-    io.open(stderr_name, 'rb', 1) as err_read:
+        io.open(stdout_name, 'wb') as writer, \
+        io.open(stdout_name, 'rb', 1) as reader, \
+        io.open(stderr_name, 'wb') as err_write, \
+        io.open(stderr_name, 'rb', 1) as err_read:
 
-        # Popen allows us to do work (read from the file) during the subproc.
-        # Disabling buffering here (or during the io.open) does not to fix
-        # the buffering issue mentioned above. 
-        proc = subprocess.Popen((link_cmd_args), stdout=writer, \
-             stderr=err_write) 
+      # Popen allows us to do work (read from the file) during the subproc.
+      # Disabling buffering here (or during the io.open) does not to fix
+      # the buffering issue mentioned above. 
+      proc = subprocess.Popen((link_cmd_args), stdout=writer, stderr=err_write) 
 
-        # echo proc's logged stdout to our stdout
-        while proc.poll() is None:
-            sys.stdout.write(reader.read())
-            sys.stderr.write(err_read.read())
-            sys.stdout.flush()
-            sys.stderr.flush()
-
-        # do this one more time just in case
+      # echo proc's logged stdout to our stdout
+      while proc.poll() is None:
         sys.stdout.write(reader.read())
         sys.stderr.write(err_read.read())
         sys.stdout.flush()
         sys.stderr.flush()
 
-        reader.seek(0)
-        err_read.seek(0)
+      # do this one more time just in case
+      sys.stdout.write(reader.read())
+      sys.stderr.write(err_read.read())
+      sys.stdout.flush()
+      sys.stderr.flush()
 
-        stdout_str = reader.read()
-        stderr_str = err_read.read()
-        return_value = proc.poll()
+      reader.seek(0)
+      err_read.seek(0)
 
-    # Python spec says mkstemp() files need manual deleting, but closing
-    # them seems to do this anyway (OSX/Win at least). 
-    os.close(stdout_file[0])
-    os.close(stderr_file[0])
+      stdout_str = reader.read()
+      stderr_str = err_read.read()
+      return_value = proc.poll()
 
-    # Potentially for portability if the OS doesn't delete them on closing? 
-    # Raises error on OSX/Win
-    '''
-    try:
-        os.remove(stdout_name)
-        os.remove(stdout_name) 
-    except OSError:
-        pass
-    '''
+      os.close(stdout_file[0])
+      os.close(stderr_file[0])
+      
+      os.remove(stdout_name)
+      os.remove(stderr_name) 
+      
   else:
-      return_value = subprocess.call(link_cmd_args)
-      stdout_str = stderr_str = ""
+    return_value = subprocess.call(link_cmd_args)
+    stdout_str = stderr_str = ""
 
   return {
-      "stdout": stdout_str,
-      "stderr": stderr_str,
-      "return-value": return_value
-    }
+  "stdout": stdout_str,
+  "stderr": stderr_str,
+  "return-value": return_value
+  }
 
 
 def in_toto_mock(name, link_cmd_args):
