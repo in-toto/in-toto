@@ -273,17 +273,15 @@ def execute_link(link_cmd_args, record_streams):
   if record_streams:
 
     # Windows doesn't allow reopening TemporaryFile()s
-    stdout_file = tempfile.mkstemp()
-    stderr_file = tempfile.mkstemp()
-    stdout_name = stdout_file[1]
-    stderr_name = stderr_file[1]
+    stdout_fd, stdout_name = tempfile.mkstemp()
+    stderr_fd, stderr_name = tempfile.mkstemp()
 
     # Using the same fd for the subprocess and the readers doesn't work
     with \
-        io.open(stdout_name, 'wb') as writer, \
         io.open(stdout_name, 'rb', 1) as reader, \
-        io.open(stderr_name, 'wb') as err_write, \
-        io.open(stderr_name, 'rb', 1) as err_read:
+        io.open(stderr_name, 'rb', 1) as err_read, \
+        os.fdopen(stdout_fd, 'wb') as writer, \
+        os.fdopen(stderr_fd, 'wb') as err_write: 
 
       # Popen allows us to do work (read from the file) during the subproc.
       # Disabling buffering here (or during the io.open) does not to fix
@@ -310,11 +308,8 @@ def execute_link(link_cmd_args, record_streams):
       stderr_str = err_read.read()
       return_value = proc.poll()
 
-      os.close(stdout_file[0])
-      os.close(stderr_file[0])
-      
-      os.remove(stdout_name)
-      os.remove(stderr_name) 
+    os.remove(stdout_name)
+    os.remove(stderr_name) 
       
   else:
     return_value = subprocess.call(link_cmd_args)
