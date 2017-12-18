@@ -11,7 +11,7 @@ import securesystemslib.exceptions
 DEFAULT_RSA_KEY_BITS = 3072
 
 def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
-  password=None):
+    password=None):
   """
   <Purpose>
     Generate an RSA key keypair and store public and private portion each
