@@ -128,23 +128,24 @@ class Metablock(object):
   def sign(self, key):
     """
     <Purpose>
-      Signs the pretty printed canonical JSON representation of the Link or
-      Layout object contained in the `signed` property with the passed key and
-      appends the created signature to `signatures`.
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` with the passed key and appends the created
+      signature to `self.signatures`.
+
+      Note: We actually pass the dictionary representation of the data to be
+      signed and `securesystemslib.keys.create_signature` converts it to
+      canonical JSON utf-8 encoded bytes before creating the signature.
 
     <Arguments>
       key:
               A signing key in the format securesystemslib.formats.KEY_SCHEMA
 
     <Returns>
-      The newly created signature dictionary.
+      The dictionary representation of the newly created signature.
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    # We actually pass the dictionary representation of the data to sign
-    # and securesystemslib converts it to canonical JSON utf-8 encoded bytes
-    # before creating the signature.
     signature = securesystemslib.keys.create_signature(key,
         self.signed.signable_dict)
 
@@ -155,10 +156,9 @@ class Metablock(object):
   def sign_gpg(self, gpg_keyid=None, gpg_home=None):
     """
     <Purpose>
-      Signs the pretty printed canonical JSON representation
-      (see models.common.Signable.signable_bytes) of the Link or Layout object
-      contained in the `signed` property using `gpg_verify_signature` and
-      appends the created signature to `signatures`.
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` using `gpg.functions.gpg_sign_object` and
+      appends the created signature to `self.signatures`.
 
     <Arguments>
       gpg_keyid: (optional)
@@ -169,7 +169,7 @@ class Metablock(object):
               is used
 
     <Returns>
-      The newly created signature dictionary.
+      The dictionary representation of the newly created signature.
 
     """
     signature = in_toto.gpg.functions.gpg_sign_object(
@@ -183,14 +183,19 @@ class Metablock(object):
   def verify_signatures(self, keys_dict):
     """
     <Purpose>
-      Verifies all signatures found in the `signatures` property using the keys
-      from the passed dictionary of keys and the pretty printed canonical JSON
-      representation (see models.common.Signable.signable_bytes) of the Link or
-      Layout object contained in `signed`.
+      Verifies all signatures found in `self.signatures` using the public keys
+      from the passed dictionary of keys and the utf-8 encoded canonical JSON
+      bytes of the Link or Layout object contained in `self.signed`.
 
-      If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
+      If a signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
       `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
       `securesystemslib.keys.verify_signature` is used otherwise.
+
+      Note: In case of securesystemslib we actually pass the dictionary
+      representation of the data to be verified and
+      `securesystemslib.keys.verify_signature` converts it to
+      canonical JSON utf-8 encoded bytes before verifying the signature.
+
 
       Verification fails if,
         - the passed keys don't have the right format,
@@ -243,9 +248,6 @@ class Metablock(object):
             self.signed.signable_bytes)
 
       else:
-        # We actually pass the dictionary representation of the data to verify
-        # and securesystemslib converts it to canonical JSON utf-8 encoded
-        # bytes before verifying the signature.
         valid = securesystemslib.keys.verify_signature(
             key, signature, self.signed.signable_dict)
 
