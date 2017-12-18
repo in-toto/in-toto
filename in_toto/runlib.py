@@ -332,17 +332,19 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     gpg_use_default=False, gpg_home=None):
   """
   <Purpose>
-    Calls function to run command passed as link_cmd_args argument, storing
-    its materials, products, by-products and environment information into a
-    link metadata file.
+    Calls functions in this module to run the command passed as link_cmd_args
+    argument and to store materials, products, by-products and environment
+    information into a link metadata file.
 
     The link metadata file is signed either with the passed signing_key, or
     a gpg key identified by the passed gpg_keyid or with the default gpg
     key if gpg_use_default is True.
 
     Even if multiple key parameters are passed, only one key is used for
-    signing (in above order of precedence) and the link file is dumped to
-    `link.FILENAME_FORMAT` using the signing key's keyid.
+    signing (in above order of precedence).
+
+    The link file is dumped to `link.FILENAME_FORMAT` using the signing key's
+    keyid.
 
     If no key parameter is passed the link is neither signed nor dumped.
 
@@ -379,7 +381,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
         securesystemslib.formats.KEY_SCHEMA.
 
   <Side Effects>
-    If a key parameter is passed for signing, the ewly created link metadata
+    If a key parameter is passed for signing, the newly created link metadata
     file is written to disk using the filename scheme: `link.FILENAME_FORMAT`
 
   <Returns>
