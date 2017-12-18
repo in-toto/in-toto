@@ -18,9 +18,22 @@
 
   The actual verification is implemented in verifylib.
 
+  Exits with 0 if verification passes 1 if any exception is raised during
+  verification, i.e. verification fails and 2 if incorrect arguments are passed
+  to the command line tool.
+
+
   Example Usage:
   ```
-  in-toto-verify --layout <root.layout> --layout-keys <layout-key>
+  # Verify layout (path is "metadata/root.layout") with securesystemslib
+  # layout key (path is "keys/owner.pub")
+  in-toto-verify --layout metadata/root.layout --layout-keys keys/owner.pub
+
+  # Verify layout (path is "metadata/root.layout") with GPG layout key
+  # (keyid is 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17) from gpg keyring
+  # at "~/.gnupg"
+  in-toto-verify --layout metadata/root.layout \
+      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
   ```
 
 """
@@ -40,6 +53,10 @@ def in_toto_verify(layout_path, layout_key_paths, layout_gpg_keyids, gpg_home):
     and the signature verification keys from the passed paths and/or from
     layout_gpg_keyids, calls verifylib.in_toto_verify
     and handles exceptions.
+
+    The layout has to be signed by the private key corresponding to each passed
+    public key (path) or gpg key (keyid). If any of the signatures are missing
+    or invalid verification fails.
 
   <Arguments>
     layout_path:
