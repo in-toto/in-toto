@@ -12,9 +12,10 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  signature-algorithm-agnostic frontend for the gpg_* parsing, signing and
-  verifying functions. These functions select the appropriate functions for
-  each algorithm and call it.
+  Provides algorithm-agnostic gpg public key and signature parsing functions.
+  The functions select the appropriate functions for each algorithm and
+  call them.
+
 """
 import struct
 import binascii
@@ -63,8 +64,9 @@ def parse_pubkey_packet(data):
 
   return key_params, keyinfo
 
+
 # this takes the signature as created by pgp and turns it into a tuf-like
-# representation (to be used with gpg_sign_object)
+# representation (to be used with functions.gpg_sign_object)
 def parse_signature_packet(data):
 
   data = in_toto.gpg.util.parse_packet_header(

@@ -25,6 +25,7 @@ import cryptography.exceptions
 import in_toto.gpg.util
 import in_toto.gpg.exceptions
 
+
 def create_pubkey(pubkey_info):
 
   y = int(pubkey_info['keyval']['public']['y'], 16)
@@ -36,6 +37,7 @@ def create_pubkey(pubkey_info):
       backends.default_backend())
 
   return pubkey
+
 
 def get_pubkey_params(data):
   ptr = 0
@@ -78,6 +80,7 @@ def get_pubkey_params(data):
     "q": binascii.hexlify(group_order_q).decode("ascii"),
   }
 
+
 def get_signature_params(data):
 
   ptr = 0
@@ -102,6 +105,7 @@ def get_signature_params(data):
   signature = dsautils.encode_dss_signature(r, s)
 
   return signature
+
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
 

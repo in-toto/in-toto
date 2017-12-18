@@ -34,8 +34,8 @@ SUPPORTED_PUBKEY_PACKET_VERSIONS = {0x04}
 
 SUPPORTED_SIGNATURE_ALGORITHMS = {
     0x01: {
-      "type":"rsa", 
-      "method": "pgp+rsa-pkcsv1.5", 
+      "type":"rsa",
+      "method": "pgp+rsa-pkcsv1.5",
       "handler": rsa
     },
     0x11: {

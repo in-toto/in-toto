@@ -26,6 +26,7 @@ import cryptography.hazmat.primitives.hashes as hashing
 
 import in_toto.gpg.exceptions
 
+
 def get_mpi_length(data):
   """
   <Purpose>
@@ -46,6 +47,7 @@ def get_mpi_length(data):
   """
   bitlength = int(struct.unpack(">H", data)[0])
   return int((bitlength - 1)/8) + 1
+
 
 def hash_object(headers, algorithm, content):
   """
@@ -80,6 +82,7 @@ def hash_object(headers, algorithm, content):
   hasher.update(struct.pack(">I", len(headers)))
 
   return hasher.finalize()
+
 
 def parse_packet_header(data, expected_type):
   """
@@ -142,6 +145,7 @@ def compute_keyid(pubkey_packet_data):
   hasher.update(bytes(pubkey_packet_data))
   return binascii.hexlify(hasher.finalize())
 
+
 def parse_subpackets(subpacket_octets):
   """
   <Purpose>
@@ -181,6 +185,7 @@ def parse_subpackets(subpacket_octets):
     ptr += length
 
   return parsed_subpackets
+
 
 def get_version():
   """

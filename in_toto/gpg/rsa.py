@@ -26,12 +26,14 @@ import cryptography.exceptions
 import in_toto.gpg.util
 import in_toto.gpg.exceptions
 
+
 def create_pubkey(pubkey_info):
   e = int(pubkey_info['keyval']['public']['e'], 16)
   n = int(pubkey_info['keyval']['public']['n'], 16)
   pubkey = rsa.RSAPublicNumbers(e, n).public_key(backends.default_backend())
 
   return pubkey
+
 
 def get_pubkey_params(data):
   ptr = 0
@@ -56,6 +58,7 @@ def get_pubkey_params(data):
     "n": binascii.hexlify(modulus).decode("ascii"),
   }
 
+
 def get_signature_params(data):
   ptr = 0
   signature_length = in_toto.gpg.util.get_mpi_length(data[ptr:ptr+2])
@@ -66,6 +69,7 @@ def get_signature_params(data):
         "This signature was truncated!")
 
   return signature
+
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
 
