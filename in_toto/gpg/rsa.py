@@ -25,9 +25,31 @@ import cryptography.exceptions
 
 import in_toto.gpg.util
 import in_toto.gpg.exceptions
+import in_toto.gpg.formats
 
 
 def create_pubkey(pubkey_info):
+  """
+  <Purpose>
+    Create and return an RSAPublicKey object from the passed pubkey_info
+    using pyca/cryptography.
+
+  <Arguments>
+    pubkey_info:
+            The RSA pubkey info dictionary as specified by
+            gpg.formats.RSA_PUBKEY_SCHEMA
+
+  <Exceptions>
+    securesystemslib.exceptions.FormatError if
+      pubkey_info does not match gpg.formats.RSA_PUBKEY_SCHEMA
+
+  <Returns>
+    A cryptography.hazmat.primitives.asymmetric.rsa.RSAPublicKey based on the
+    passed pubkey_info.
+
+  """
+  in_toto.gpg.formats.RSA_PUBKEY_SCHEMA.check_match(pubkey_info)
+
   e = int(pubkey_info['keyval']['public']['e'], 16)
   n = int(pubkey_info['keyval']['public']['n'], 16)
   pubkey = rsa.RSAPublicNumbers(e, n).public_key(backends.default_backend())
@@ -72,6 +94,34 @@ def get_signature_params(data):
 
 
 def gpg_verify_signature(signature_object, pubkey_info, content):
+  """
+  <Purpose>
+    Verify the passed signature against the passed content with the passed
+    RSA public key using pyca/cryptography.
+
+  <Arguments>
+    signature_object:
+            A signature dictionary as specified by
+            gpg.formats.SIGNATURE_SCHEMA
+
+    pubkey_info:
+            The RSA public key info dictionary as specified by
+            gpg.formats.RSA_PUBKEY_SCHEMA
+
+    content:
+            The signed bytes against which the signature is verified
+
+  <Exceptions>
+    securesystemslib.exceptions.FormatError if:
+      signature_object does not match gpg.formats.SIGNATURE_SCHEMA
+      pubkey_info does not match gpg.formats.RSA_PUBKEY_SCHEMA
+
+  <Returns>
+    True if signature verification passes and False otherwise
+
+  """
+  in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
+  in_toto.gpg.formats.RSA_PUBKEY_SCHEMA.check_match(pubkey_info)
 
   pubkey_object = create_pubkey(pubkey_info)
 
