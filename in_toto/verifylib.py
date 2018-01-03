@@ -36,8 +36,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 from in_toto.models.metadata import Metablock
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
+from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.artifact_rules

@@ -29,7 +29,6 @@
       represents a hook that is run at verification
 """
 
-import json
 import attr
 import six
 import shlex
@@ -38,7 +37,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
 import in_toto.exceptions

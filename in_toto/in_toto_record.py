@@ -43,7 +43,6 @@
   ```
 
 """
-import os
 import sys
 import argparse
 import in_toto.util

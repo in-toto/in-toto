@@ -1,10 +1,6 @@
-import os
 import sys
-import pickle
-import json
 import getpass
 
-from in_toto import log
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.keys

@@ -54,9 +54,7 @@
   ```
 
 """
-import os
 import sys
-import json
 import argparse
 import in_toto.user_settings
 from in_toto import log, exceptions, util

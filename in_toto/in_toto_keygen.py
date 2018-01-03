@@ -31,17 +31,12 @@
   python in_toto_keygen.py -p bob_keys 2048
 
 """
-import os
 import sys
 import argparse
-import json
-import getpass
 import in_toto.util
 import in_toto.user_settings
 from in_toto import log
-import securesystemslib.formats
-import securesystemslib.keys
-import securesystemslib.exceptions
+
 
 def parse_args():
   """
