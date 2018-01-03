@@ -54,10 +54,13 @@ else:
   import subprocess
 
 
-def _hash_artifact(filepath, hash_algorithms=['sha256']):
+def _hash_artifact(filepath, hash_algorithms=None):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
   with securesystemslib.formats.HASHDICT_SCHEMA. """
+  if not hash_algorithms:
+    hash_algorithms = ['sha256']
+
   securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
