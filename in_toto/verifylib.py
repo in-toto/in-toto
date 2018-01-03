@@ -38,7 +38,7 @@ import in_toto.models.link
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError)
+    ThresholdVerificationError, BadReturnValueError, AuthorizationError)
 import in_toto.artifact_rules
 import in_toto.log as log
 
@@ -1062,7 +1062,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
 
     # Take a reference link (e.g. the first in the step_link_dict)
     reference_keyid = key_link_dict.keys()[0]
-    reference_link = key_link_dict[reference_key]
+    reference_link = key_link_dict[reference_keyid]
 
     # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
