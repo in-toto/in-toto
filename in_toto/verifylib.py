@@ -126,7 +126,7 @@ def load_links_for_layout(layout):
         metadata = Metablock.load(filename)
         links_per_step[keyid] = metadata
 
-      except IOError as e:
+      except IOError:
         pass
 
     # Check if the step has been performed by enough number of functionaries
@@ -507,7 +507,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   # Extract destination link
   try:
     dest_link = links[dest_name]
-  except Exception as e:
+  except KeyError:
     raise RuleVerficationError("Rule '{rule}' failed, destination link"
         " '{dest_link}' not found in link dictionary".format(
             rule=" ".join(rule), dest_link=dest_name))
@@ -999,8 +999,6 @@ def verify_all_item_rules(items, links):
   """
 
   for item in items:
-
-    link = links[item.name]
     log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
 

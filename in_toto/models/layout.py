@@ -126,9 +126,10 @@ class Layout(Signable):
           "Invalid _type value for layout (Should be 'layout')")
 
   def _validate_expires(self):
-    """Private method to verify the expiration field."""
+    """Private method to verify if the expiration field has the right format
+    and can be parsed."""
     try:
-      date = parse(self.expires)
+      parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
           self.expires)
     except Exception as e:
@@ -150,7 +151,7 @@ class Layout(Signable):
 
     securesystemslib.formats.KEYDICT_SCHEMA.check_match(self.keys)
 
-    for keyid, key in six.iteritems(self.keys):
+    for junk, key in six.iteritems(self.keys):
       securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
 
   def _validate_steps_and_inspections(self):
