@@ -277,8 +277,8 @@ def execute_link(link_cmd_args, record_streams):
     stderr_str = stderr_file.read()
 
   else:
-      return_value = subprocess.call(link_cmd_args)
-      stdout_str = stderr_str = ""
+    return_value = subprocess.call(link_cmd_args)
+    stdout_str = stderr_str = ""
 
   return {
       "stdout": stdout_str,
