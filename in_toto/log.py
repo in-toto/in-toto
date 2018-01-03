@@ -22,20 +22,20 @@ logging.basicConfig(level=in_toto.settings.LOG_LEVEL, format='%(message)s')
 
 def info(msg):
   """Verbose user feedback. """
-  logging.info("{}".format(msg))
+  logging.info("%s", msg)
 
 def warn(msg):
   """Verbose user warning. """
-  logging.warn("WARNING: {}".format(msg))
+  logging.warn("WARNING: %s", msg)
 
 def error(msg):
   """Prints unexpected errors """
-  logging.error("ERROR: {}".format(msg))
+  logging.error("ERROR: %s", msg)
 
 def pass_verification(msg):
   """Prints passing verification routines. """
-  logging.critical("PASSING: {}".format(msg))
+  logging.critical("PASSING: %s", msg)
 
 def fail_verification(msg):
   """Prints failing verification. """
-  logging.critical("FAILING: {}".format(msg))
+  logging.critical("FAILING: %s", msg)
