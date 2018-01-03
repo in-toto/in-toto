@@ -71,10 +71,6 @@ def in_toto_run(step_name, material_list, product_list,
     None.
   """
 
-  """Load link signing private keys from disk and runs passed command, storing
-  its materials, by-products and return value, and products into link metadata
-  file. The link metadata file is signed and stored to disk. """
-
   try:
     runlib.in_toto_run(step_name, material_list, product_list,
         link_cmd_args, key, record_streams)
