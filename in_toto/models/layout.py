@@ -99,6 +99,11 @@ class Layout(Signable):
 
     self.validate()
 
+  @property
+  def type_(self):
+    """Getter for protected _type attribute. Trailing underscore used by
+    convention (pep8) to avoid conflict with Python's type keyword. """
+    return self._type
 
   @staticmethod
   def read(data):

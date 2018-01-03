@@ -1168,7 +1168,7 @@ def verify_sublayouts(layout, chain_link_dict):
 
     for keyid, link in six.iteritems(key_link_dict):
 
-      if link._type == "layout":
+      if link.type_ == "layout":
         log.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
@@ -1231,7 +1231,6 @@ def get_summary_link(layout, reduced_chain_link_dict):
   last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
   summary_link.materials = first_step_link.signed.materials
-  summary_link._type = first_step_link.signed._type
   summary_link.name = first_step_link.signed.name
 
   summary_link.products = last_step_link.signed.products
