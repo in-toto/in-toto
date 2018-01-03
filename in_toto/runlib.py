@@ -251,7 +251,7 @@ def execute_link(link_cmd_args, record_streams):
       Note: If record_streams is False, the dict values are empty strings.
     - The return value of the executed command.
   """
-  # XXX: The first approach only redirects the stdout/stderr to a tempfile
+  # TODO: The first approach only redirects the stdout/stderr to a tempfile
   # but we actually want to duplicate it, ideas
   #  - Using a pipe won't work because processes like vi will complain
   #  - Wrapping stdout/sterr in Python does not work because the suprocess
@@ -263,7 +263,7 @@ def execute_link(link_cmd_args, record_streams):
   # btw: we ignore them in the layout anyway
 
   if record_streams:
-    # XXX: Use SpooledTemporaryFile if we expect very large outputs
+    # Use SpooledTemporaryFile if we expect very large outputs
     stdout_file = tempfile.TemporaryFile()
     stderr_file = tempfile.TemporaryFile()
 
