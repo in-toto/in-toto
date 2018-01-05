@@ -23,9 +23,9 @@ must unit test any new software feature or change.  Submitted pull requests
 undergo review and automated testing, including, but not limited to:
 
 * Unit and build testing via [Travis CI](https://travis-ci.org/) and
-[Tox](https://tox.readthedocs.io/en/latest/).
+[Tox](https://tox.readthedocs.io/en/latest/)
 * Static code analysis via [Pylint](https://www.pylint.org/) and
-[Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit).
+[Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
 * Review by one or more maintainers
 
 
