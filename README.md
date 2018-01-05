@@ -165,6 +165,17 @@ PGP key fingerprint E9C0 59EC 0D32 64FA B35F 94AD 465B F9F6 F8EB 475A.
 Please do not use the GitHub issue tracker to submit vulnerability reports. The
 issue tracker is intended for bug reports and to make feature requests.
 
+## Instructions for Contributors
+Note: Development of in-toto occurs on the "develop" branch of this repository.
+
+Contributions can be made by submitting GitHub pull requests. Take a look at
+our [development
+guidelines](https://github.com/secure-systems-lab/lab-guidelines/blob/master/dev-workflow.md)
+for detailed instructions. Submitted code should follow our [code style
+guidelines](https://github.com/secure-systems-lab/code-style-guidelines),
+which provide examples of what to do (or not to do) when writing Python code.
+
+
 ## Acknowledgments
 This project is managed by Prof. Justin Cappos and other members of the
 [Secure Systems Lab](https://ssl.engineering.nyu.edu/) at NYU and the
