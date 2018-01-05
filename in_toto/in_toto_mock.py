@@ -33,11 +33,10 @@
 
 """
 
-import os
 import sys
 import argparse
 import in_toto.user_settings
-from in_toto import (util, runlib, log)
+from in_toto import (runlib, log)
 
 def in_toto_mock(name, link_cmd_args):
   """

@@ -116,10 +116,11 @@ class Metablock(object):
 
 
   @property
-  def _type(self):
-    """ Shortcut to the _type property of the contained Link or Layout object,
-    should be one of "link" or "layout". """
-    return self.signed._type
+  def type_(self):
+    """Shortcut to the _type property of the contained Link or Layout object,
+    should be one of "link" or "layout". Trailing underscore used by
+    convention (pep8) to avoid conflict with Python's type keyword. """
+    return self.signed.type_
 
 
   def sign(self, key):

@@ -29,7 +29,6 @@
 
 """
 
-import os
 import sys
 import argparse
 import in_toto.user_settings
@@ -71,10 +70,6 @@ def in_toto_run(step_name, material_list, product_list,
   <Returns>
     None.
   """
-
-  """Load link signing private keys from disk and runs passed command, storing
-  its materials, by-products and return value, and products into link metadata
-  file. The link metadata file is signed and stored to disk. """
 
   try:
     runlib.in_toto_run(step_name, material_list, product_list,
@@ -147,7 +142,7 @@ def main():
   try:
     key = util.prompt_import_rsa_key_from_file(args.key)
   except Exception as e:
-    log.error("in load key - {}".format(args.key))
+    log.error("in load key - {}".format(e))
     sys.exit(1)
 
   if args.no_command:

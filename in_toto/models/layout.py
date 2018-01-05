@@ -29,7 +29,6 @@
       represents a hook that is run at verification
 """
 
-import json
 import attr
 import six
 import shlex
@@ -38,7 +37,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.artifact_rules
 import in_toto.exceptions
@@ -101,6 +99,11 @@ class Layout(Signable):
 
     self.validate()
 
+  @property
+  def type_(self):
+    """Getter for protected _type attribute. Trailing underscore used by
+    convention (pep8) to avoid conflict with Python's type keyword. """
+    return self._type
 
   @staticmethod
   def read(data):
@@ -128,9 +131,10 @@ class Layout(Signable):
           "Invalid _type value for layout (Should be 'layout')")
 
   def _validate_expires(self):
-    """Private method to verify the expiration field."""
+    """Private method to verify if the expiration field has the right format
+    and can be parsed."""
     try:
-      date = parse(self.expires)
+      parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
           self.expires)
     except Exception as e:
@@ -152,7 +156,7 @@ class Layout(Signable):
 
     securesystemslib.formats.KEYDICT_SCHEMA.check_match(self.keys)
 
-    for keyid, key in six.iteritems(self.keys):
+    for junk, key in six.iteritems(self.keys):
       securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
 
   def _validate_steps_and_inspections(self):

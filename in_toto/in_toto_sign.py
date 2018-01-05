@@ -54,9 +54,7 @@
   ```
 
 """
-import os
 import sys
-import json
 import argparse
 import in_toto.user_settings
 from in_toto import log, exceptions, util
@@ -94,14 +92,14 @@ def _sign_and_dump_metadata(metadata, args):
     if args.output:
       out_path = args.output
 
-    elif metadata._type == "link":
+    elif metadata.type_ == "link":
       out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
           keyid=keyid)
 
-    elif metadata._type == "layout":
+    elif metadata.type_ == "layout":
       out_path = args.file
 
-    log.info("Dumping {0} to '{1}'...".format(metadata._type,
+    log.info("Dumping {0} to '{1}'...".format(metadata.type_,
         out_path))
 
     metadata.dump(out_path)
@@ -218,7 +216,7 @@ def main():
 
   metadata = _load_metadata(args.file)
 
-  if metadata._type == "link":
+  if metadata.type_ == "link":
     if len(args.key) > 1:
       parser.print_help()
       parser.exit(2, "wrong arguments: Link metadata can only be signed by"

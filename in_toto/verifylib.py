@@ -36,10 +36,9 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 from in_toto.models.metadata import Metablock
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
+from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError)
+    ThresholdVerificationError, BadReturnValueError, AuthorizationError)
 import in_toto.artifact_rules
 import in_toto.log as log
 
@@ -127,7 +126,7 @@ def load_links_for_layout(layout):
         metadata = Metablock.load(filename)
         links_per_step[keyid] = metadata
 
-      except IOError as e:
+      except IOError:
         pass
 
     # Check if the step has been performed by enough number of functionaries
@@ -508,7 +507,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   # Extract destination link
   try:
     dest_link = links[dest_name]
-  except Exception as e:
+  except KeyError:
     raise RuleVerficationError("Rule '{rule}' failed, destination link"
         " '{dest_link}' not found in link dictionary".format(
             rule=" ".join(rule), dest_link=dest_name))
@@ -1000,8 +999,6 @@ def verify_all_item_rules(items, links):
   """
 
   for item in items:
-
-    link = links[item.name]
     log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
 
@@ -1065,7 +1062,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
 
     # Take a reference link (e.g. the first in the step_link_dict)
     reference_keyid = key_link_dict.keys()[0]
-    reference_link = key_link_dict[reference_key]
+    reference_link = key_link_dict[reference_keyid]
 
     # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
@@ -1171,7 +1168,7 @@ def verify_sublayouts(layout, chain_link_dict):
 
     for keyid, link in six.iteritems(key_link_dict):
 
-      if link._type == "layout":
+      if link.type_ == "layout":
         log.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
@@ -1234,7 +1231,6 @@ def get_summary_link(layout, reduced_chain_link_dict):
   last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
   summary_link.materials = first_step_link.signed.materials
-  summary_link._type = first_step_link.signed._type
   summary_link.name = first_step_link.signed.name
 
   summary_link.products = last_step_link.signed.products

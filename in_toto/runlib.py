@@ -54,10 +54,13 @@ else:
   import subprocess
 
 
-def _hash_artifact(filepath, hash_algorithms=['sha256']):
+def _hash_artifact(filepath, hash_algorithms=None):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
   with securesystemslib.formats.HASHDICT_SCHEMA. """
+  if not hash_algorithms:
+    hash_algorithms = ['sha256']
+
   securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
@@ -251,7 +254,7 @@ def execute_link(link_cmd_args, record_streams):
       Note: If record_streams is False, the dict values are empty strings.
     - The return value of the executed command.
   """
-  # XXX: The first approach only redirects the stdout/stderr to a tempfile
+  # TODO: The first approach only redirects the stdout/stderr to a tempfile
   # but we actually want to duplicate it, ideas
   #  - Using a pipe won't work because processes like vi will complain
   #  - Wrapping stdout/sterr in Python does not work because the suprocess
@@ -263,7 +266,8 @@ def execute_link(link_cmd_args, record_streams):
   # btw: we ignore them in the layout anyway
 
   if record_streams:
-    # XXX: Use SpooledTemporaryFile if we expect very large outputs
+    # We should consider using SpooledTemporaryFile if we expect very large
+    # outputs in the future
     stdout_file = tempfile.TemporaryFile()
     stderr_file = tempfile.TemporaryFile()
 
@@ -277,8 +281,8 @@ def execute_link(link_cmd_args, record_streams):
     stderr_str = stderr_file.read()
 
   else:
-      return_value = subprocess.call(link_cmd_args)
-      stdout_str = stderr_str = ""
+    return_value = subprocess.call(link_cmd_args)
+    stdout_str = stderr_str = ""
 
   return {
       "stdout": stdout_str,

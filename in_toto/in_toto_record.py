@@ -43,7 +43,6 @@
   ```
 
 """
-import os
 import sys
 import argparse
 import in_toto.util
@@ -168,7 +167,7 @@ def main():
   try:
     key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
   except Exception as e:
-    log.error("in load key - {}".format(args.key))
+    log.error("in load key - {}".format(e))
     sys.exit(1)
 
   if args.command == "start":
