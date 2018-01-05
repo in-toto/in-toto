@@ -5,7 +5,8 @@ python:
     - "2.7"
 
 env:
-    TOXENV=py27
+    - TOXENV=lint
+    - TOXENV=py27
 
 install:
     - pip install tox
