@@ -266,7 +266,8 @@ def execute_link(link_cmd_args, record_streams):
   # btw: we ignore them in the layout anyway
 
   if record_streams:
-    # Use SpooledTemporaryFile if we expect very large outputs
+    # We should consider using SpooledTemporaryFile if we expect very large
+    # outputs in the future
     stdout_file = tempfile.TemporaryFile()
     stderr_file = tempfile.TemporaryFile()
 
