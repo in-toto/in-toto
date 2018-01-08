@@ -515,7 +515,10 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
     dest_artifacts = dest_link.signed.materials
-  elif dest_type.lower() == "products":
+
+  # NOTE: Can't reach `else` branch, if the source_type is none of these
+  # types an exception would have been raised above in `unpack_rule`
+  elif dest_type.lower() == "products": # pragma: no branch
     dest_artifacts = dest_link.signed.products
 
   # Filter I - take only queued paths with specified prefix and
@@ -960,7 +963,9 @@ def verify_item_rules(source_name, source_type, rules, links):
       if source_type == "materials":
         source_artifacts_queue = source_materials_queue
 
-    elif rule_type == "modify":
+    # NOTE: Can't reach `else` branch, if the rule is none of these types
+    # an exception would have been raised above in `unpack_rule`
+    elif rule_type == "modify": # pragma: no branch
       source_materials_queue, source_products_queue = verify_modify_rule(
           rule, source_materials_queue, source_products_queue,
           source_materials, source_products)
@@ -969,7 +974,10 @@ def verify_item_rules(source_name, source_type, rules, links):
       # update the generic artifacts queue accordingly.
       if source_type == "materials":
         source_artifacts_queue = source_materials_queue
-      elif source_type == "products":
+
+      # NOTE: Can't reach `else` branch, if the source_type is none of these
+      # types an exception would have been raised above in `unpack_rule`
+      elif source_type == "products": # pragma: no branch
         source_artifacts_queue = source_products_queue
 
 

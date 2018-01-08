@@ -114,7 +114,10 @@ def unpack_rule(rule):
       }
 
   # Type is "MATCH"
-  elif rule_type in COMPLEX_RULES:
+  # NOTE: Can't reach `else` branch, if the rule is neither in GENERIC_RULES
+  # nor in COMPLEX_RULES an exception is raised earlier.
+  elif rule_type in COMPLEX_RULES: # pragma: no branch
+
 
     # ... IN <source-path-prefix> WITH (MATERIALS|PRODUCTS)
     # IN <destination-path-prefix> FROM <step>
@@ -171,8 +174,3 @@ def unpack_rule(rule):
       "dest_type" : dest_type,
       "dest_name": dest_name
     }
-
-  #else:
-  # can't reach else
-  # if it is neither in GENERIC_RULES nor in MATCH_RULES it would
-  # have already raised an exception above when checking if it is in ALL_RULES
