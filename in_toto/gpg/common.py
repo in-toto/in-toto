@@ -153,8 +153,6 @@ def parse_signature_packet(data):
   left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
 
-  # Notice the /8 at the end, this length is the bitlength, not the length of
-  # the data in bytes (as len reports it)
   signature = handler.get_signature_params(data[ptr:])
 
   return {

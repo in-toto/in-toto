@@ -46,6 +46,8 @@ def get_mpi_length(data):
     The length of the MPI contained at the beginning of this data buffer.
   """
   bitlength = int(struct.unpack(">H", data)[0])
+  # Notice the /8 at the end, this length is the bitlength, not the length of
+  # the data in bytes (as len reports it)
   return int((bitlength - 1)/8) + 1
 
 
