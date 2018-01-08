@@ -53,7 +53,9 @@ def parse_pubkey_packet(data):
   ptr += 1
 
   if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
-    raise ValueError("This signature algorithm is not supported!")
+    raise ValueError("This signature algorithm is not supported. please"
+        " verify that this gpg key is used for creating either DSA or RSA"
+        " signatures")
   else:
     keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
     keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
@@ -78,7 +80,7 @@ def parse_signature_packet(data):
   version_number = data[ptr]
   ptr += 1
   if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS: # pragma: no cover
-    raise ValueError("Only version 4 signature packets are supported")
+    raise ValueError("Only version 4 gpg signatures are supported.")
 
   # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
   signature_type = data[ptr]
@@ -90,13 +92,16 @@ def parse_signature_packet(data):
   # "arbitrary text," and it's the one it's defaulted to when doing a signature
   # (i.e., gpg --sign [...])
   if signature_type != SIGNATURE_TYPE_BINARY: # pragma: no cover
-    raise ValueError("We can only use binary signatures on in-toto")
+    raise ValueError("We can only use binary signature types (i.e., "
+        "gpg --sign [...] or signatures created by in-toto).")
 
   signature_algorithm = data[ptr]
   ptr += 1
 
   if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
-    raise ValueError("This signature algorithm is not supported!")
+    raise ValueError("This signature algorithm is not supported. please"
+        " verify that your gpg configuration is creating either DSA or RSA"
+        " signatures")
 
   key_type = SUPPORTED_SIGNATURE_ALGORITHMS[signature_algorithm]['type']
   handler = SIGNATURE_HANDLERS[key_type]
@@ -105,8 +110,8 @@ def parse_signature_packet(data):
   ptr += 1
 
   if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS: # pragma: no cover
-    raise ValueError("This library only supports sha256 as "
-            "the hash algorithm!")
+    raise ValueError("This library only supports SHA256 as "
+        "the hash algorithm!")
 
   # obtain the hashed octets.
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
@@ -116,7 +121,8 @@ def parse_signature_packet(data):
 
   # check wether we were actually able to read this much hashed octets
   if len(hashed_subpackets) != hashed_octet_count: # pragma: no cover
-    raise ValueError("this signature packet is missing hashed octets!")
+    raise ValueError("this signature packet seems to be corrupted."
+        "It is missing hashed octets!")
 
   ptr += hashed_octet_count
   other_headers_ptr = ptr
