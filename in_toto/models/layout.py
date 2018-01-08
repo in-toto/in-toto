@@ -30,7 +30,6 @@
 """
 
 import attr
-import six
 import shlex
 
 from datetime import datetime
