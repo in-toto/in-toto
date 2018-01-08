@@ -50,7 +50,7 @@ SIGNATURE_HANDLERS = {
     "dsa": dsa
 }
 
-# The constants for hash algorithms are taken from section 9.4 of RFC4880. 
+# The constants for hash algorithms are taken from section 9.4 of RFC4880.
 SHA256 = 0x08
 SUPPORTED_HASH_ALGORITHMS = {SHA256}
 

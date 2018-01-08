@@ -52,7 +52,7 @@ def parse_pubkey_packet(data):
     None.
 
   <Returns>
-    a tuple containg the key information and its payload.
+    a tuple containing the key information and its payload.
   """
 
   if not data:
@@ -68,7 +68,7 @@ def parse_pubkey_packet(data):
   if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
     raise ValueError("This pubkey packet version is not supported!")
 
-  # XXX: uncomment this line to decode the time of creation
+  # NOTE: Uncomment this line to decode the time of creation
   # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
   ptr += 4
 
@@ -76,9 +76,9 @@ def parse_pubkey_packet(data):
   ptr += 1
 
   if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
-    raise ValueError("This signature algorithm is not supported. please"
+    raise ValueError("This signature algorithm is not supported. Please"
         " verify that this gpg key is used for creating either DSA or RSA"
-        " signatures")
+        " signatures.")
   else:
     keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
     keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
@@ -109,7 +109,7 @@ def parse_signature_packet(data):
     None.
 
   <Returns>
-    The decoded signature buffer 
+    The decoded signature buffer
   """
 
   data = in_toto.gpg.util.parse_packet_header(
@@ -117,7 +117,7 @@ def parse_signature_packet(data):
   ptr = 0
 
   # we get the version number, which we also expect to be v4, or we bail
-  # FIXME: support v3 type signatures (which I havent' seen in the wild)
+  # FIXME: support v3 type signatures (which I haven't seen in the wild)
   version_number = data[ptr]
   ptr += 1
   if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS: # pragma: no cover
@@ -154,15 +154,15 @@ def parse_signature_packet(data):
     raise ValueError("This library only supports SHA256 as "
         "the hash algorithm!")
 
-  # obtain the hashed octets.
+  # Obtain the hashed octets
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
   hashed_subpackets = data[ptr:ptr+hashed_octet_count]
   hashed_subpacket_info = in_toto.gpg.util.parse_subpackets(hashed_subpackets)
 
-  # check wether we were actually able to read this much hashed octets
+  # Check whether we were actually able to read this much hashed octets
   if len(hashed_subpackets) != hashed_octet_count: # pragma: no cover
-    raise ValueError("this signature packet seems to be corrupted."
+    raise ValueError("This signature packet seems to be corrupted."
         "It is missing hashed octets!")
 
   ptr += hashed_octet_count
@@ -170,15 +170,15 @@ def parse_signature_packet(data):
 
   unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
   ptr += 2
-  # XXX: uncomment this part to get the information from the
-  # unhashes subpackets. They'll be commented as they are unused 
+  # NOTE: Uncomment this part to get the information from the
+  # unhashed subpackets. They'll be commented as they are unused
   # right now
   # unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
   # unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
   #     unhashed_subpackets)
   ptr += unhashed_octet_count
 
-  # this is a somewhat convoluted way to compute the keyid from the signature
+  # This is a somewhat convoluted way to compute the keyid from the signature
   # subpackets. Try to obtain the FULL_KEYID_SUBPACKET and bail even if the
   # partial one is available.
   keyid = filter(lambda x: True if x[0] == FULL_KEYID_SUBPACKET else False,
@@ -190,11 +190,11 @@ def parse_signature_packet(data):
 
   else: # pragma: no cover
     keyid = ""
-    in_toto.log.warn("can't parse the full keyid on this signature packet."
-        "you need at least gpg version '{}'. Your version is '{}'".format(
+    in_toto.log.warn("Can't parse the full keyid on this signature packet."
+        "You need at least gpg version '{}'. Your version is '{}'.".format(
         FULLY_SUPPORTED_MIN_VERSION, in_toto.gpg.util.get_version()))
 
-  # Uncomment this variable to obtain the left-hash-bits information (used for 
+  # Uncomment this variable to obtain the left-hash-bits information (used for
   # early rejection)
   #left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2

@@ -152,7 +152,7 @@ def gpg_export_pubkey(keyid, homedir=None):
     # FIXME: probably needs smarter parsing of what a valid keyid is so as to
     # not export more than one pubkey packet.
     raise ValueError("we need to export an individual key."
-            " Please provide a valid keyid! Keyid was '{}'".format(keyid))
+            " Please provide a valid keyid! Keyid was '{}'.".format(keyid))
 
   homearg = ""
   if homedir:

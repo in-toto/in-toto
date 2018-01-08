@@ -78,7 +78,7 @@ def get_pubkey_params(data):
     None.
 
   <Returns>
-    The decoded signature buffer 
+    The decoded signature buffer
   """
   ptr = 0
 
@@ -139,7 +139,7 @@ def get_signature_params(data):
     None.
 
   <Returns>
-    The decoded signature buffer 
+    The decoded signature buffer
   """
   ptr = 0
   r_length = in_toto.gpg.util.get_mpi_length(data[ptr:ptr+2])

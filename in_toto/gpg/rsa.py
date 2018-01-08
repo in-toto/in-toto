@@ -75,7 +75,7 @@ def get_pubkey_params(data):
     None.
 
   <Returns>
-    The decoded signature buffer 
+    The decoded signature buffer
   """
   ptr = 0
 
@@ -118,7 +118,7 @@ def get_signature_params(data):
     None.
 
   <Returns>
-    The decoded signature buffer 
+    The decoded signature buffer
   """
 
   ptr = 0
