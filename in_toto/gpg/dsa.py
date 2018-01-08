@@ -61,6 +61,25 @@ def create_pubkey(pubkey_info):
 
 
 def get_pubkey_params(data):
+  """
+  <Purpose>
+    Parse the public-key parameters as multi-precision-integers.
+
+  <Arguments>
+    data:
+           the RFC4880-encoded public key parameters data buffer as described
+           in the fifth paragraph of section 5.5.2.
+
+  <Exceptions>
+    in_toto.gpg.exceptions.PacketParsingError: if the public key parameters are
+    malformed
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    The decoded signature buffer 
+  """
   ptr = 0
 
   prime_p_length = in_toto.gpg.util.get_mpi_length(data[ptr: ptr + 2])

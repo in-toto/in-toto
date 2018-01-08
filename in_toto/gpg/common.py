@@ -29,9 +29,31 @@ from in_toto.gpg.constants import (PACKET_TYPES,
         FULLY_SUPPORTED_MIN_VERSION)
 
 
-# XXX this doesn't support armored pubkey packets, so use with care.
-# pubkey packets are a little bit more complicated than the signature ones
 def parse_pubkey_packet(data):
+  """
+  <Purpose>
+    Parse the public key information on an RFC4880-encoded public-key data
+    buffer
+
+  <Arguments>
+    data:
+          the RFC4880-encoded public-key data buffer as described in section
+          5.4 (and 5.5.1.1).
+
+          WARNING: this doesn't support armored pubkey packets, so use with
+          care. pubkey packets are a little bit more complicated than the
+          signature ones
+
+  <Exceptions>
+    ValueError: if the public key packet is not supported or the data is
+      malformed
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    a tuple containg the key information and its payload.
+  """
 
   if not data:
     raise ValueError("Could not parse empty pubkey packet.")
@@ -67,9 +89,27 @@ def parse_pubkey_packet(data):
   return key_params, keyinfo
 
 
-# this takes the signature as created by pgp and turns it into a tuf-like
-# representation (to be used with functions.gpg_sign_object)
 def parse_signature_packet(data):
+  """
+  <Purpose>
+    Parse the signature information on an RFC4880-encoded binary signature data
+    buffer
+
+  <Arguments>
+    data:
+           the RFC4880-encoded binary signature data buffer as described in
+           section 5.2 (and 5.2.3.1).
+
+  <Exceptions>
+    ValueError: if the signature packet is not supported or the data is
+      malformed
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    The decoded signature buffer 
+  """
 
   data = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPES['signature_packet'])

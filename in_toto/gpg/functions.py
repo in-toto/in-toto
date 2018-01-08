@@ -29,7 +29,7 @@ import securesystemslib.formats
 def gpg_sign_object(content, keyid=None, homedir=None):
   """
   <Purpose>
-    Calls gpg2 command line utility to sign the passed content with the key
+    Calls the gpg2 command line utility to sign the passed content with the key
     identified by the passed keyid from the gpg keyring at the passed homedir.
 
     The executed base command is defined in constants.GPG_SIGN_COMMAND.
