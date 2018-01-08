@@ -68,7 +68,8 @@ def parse_pubkey_packet(data):
   if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
     raise ValueError("This pubkey packet version is not supported!")
 
-  time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
+  # XXX: uncomment this line to decode the time of creation
+  # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
   ptr += 4
 
   algorithm = data[ptr]
@@ -169,9 +170,12 @@ def parse_signature_packet(data):
 
   unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
   ptr += 2
-  unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
-  unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
-      unhashed_subpackets)
+  # XXX: uncomment this part to get the information from the
+  # unhashes subpackets. They'll be commented as they are unused 
+  # right now
+  # unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
+  # unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
+  #     unhashed_subpackets)
   ptr += unhashed_octet_count
 
   # this is a somewhat convoluted way to compute the keyid from the signature
@@ -190,7 +194,9 @@ def parse_signature_packet(data):
         "you need at least gpg version '{}'. Your version is '{}'".format(
         FULLY_SUPPORTED_MIN_VERSION, in_toto.gpg.util.get_version()))
 
-  left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
+  # Uncomment this variable to obtain the left-hash-bits information (used for 
+  # early rejection)
+  #left_hash_bits = struct.unpack(">H", data[ptr:ptr+2])[0]
   ptr += 2
 
   signature = handler.get_signature_params(data[ptr:])
