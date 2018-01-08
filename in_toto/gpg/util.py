@@ -19,7 +19,8 @@ import binascii
 import subprocess
 import shlex
 import re
-from distutils.version import StrictVersion
+
+from distutils.version import StrictVersion # pylint: disable=no-name-in-module,import-error
 
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
