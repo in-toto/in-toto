@@ -169,6 +169,10 @@ def parse_subpackets(subpacket_octets):
   """
   parsed_subpackets = []
   ptr = 0
+
+  # as per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
+  # can be encoded in 1, 2 or 5 octets. Depending on the values described here
+  # we unpack 1, 2 or 5 octets to decode the length.
   while ptr < len(subpacket_octets):
     length = subpacket_octets[ptr]
     ptr += 1
