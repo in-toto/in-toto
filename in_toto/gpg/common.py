@@ -23,7 +23,7 @@ import binascii
 import in_toto.log
 import in_toto.gpg.util
 from in_toto.gpg.constants import (PACKET_TYPES,
-        SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_CANONICAL,
+        SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
         FULLY_SUPPORTED_MIN_VERSION)
@@ -83,8 +83,14 @@ def parse_signature_packet(data):
   # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
   signature_type = data[ptr]
   ptr += 1
-  if signature_type != SIGNATURE_TYPE_CANONICAL: # pragma: no cover
-    raise ValueError("We can only use canonical signatures on in-toto")
+
+  # INFO: as per RFC4880 (section 5.2.1) there are multiple types of signatures
+  # with different purposes (e.g., there is one for pubkey signatures, key
+  # revocation, etc.). Binary document signatures are the ones done over
+  # "arbitrary text," and it's the one it's defaulted to when doing a signature
+  # (i.e., gpg --sign [...])
+  if signature_type != SIGNATURE_TYPE_BINARY: # pragma: no cover
+    raise ValueError("We can only use binary signatures on in-toto")
 
   signature_algorithm = data[ptr]
   ptr += 1
