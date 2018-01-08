@@ -47,7 +47,8 @@ def gpg_sign_object(content, keyid=None, homedir=None):
             Path to the gpg keyring. If not passed the default keyring is used.
 
   <Exceptions>
-    None.
+    ValueError: if the gpg command failed to create a valid signature.
+    OSError: if the gpg command is not present or non-executable.
 
   <Side Effects>
     None.
