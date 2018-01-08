@@ -118,7 +118,10 @@ class TestLayoutValidator(unittest.TestCase):
   def test_wrong_steps_list(self):
     """Check that the validate method checks the steps' correctness."""
     self.layout.steps = "not-a-step"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.layout.validate()
 
+    self.layout.steps = ["not-a-step"]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
@@ -138,6 +141,10 @@ class TestLayoutValidator(unittest.TestCase):
     """Check that the validate method checks the inspections' correctness."""
 
     self.layout.inspect = "not-an-inspection"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      self.layout.validate()
+
+    self.layout.inspect = ["not-an-inspection"]
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.layout.validate()
 
@@ -191,6 +198,21 @@ class TestLayoutValidator(unittest.TestCase):
 
     # Clean up
     os.remove(link_path)
+
+
+  def test_wrong_pubkeys(self):
+    """Check validate pubkeys fails with wrong keys."""
+    # Pubkeys must be lists ...
+    tmp_step = Step()
+    tmp_step.pubkeys = "abcd"
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      tmp_step.validate()
+
+    # ... of keyids (hex schema)
+    tmp_step.pubkeys = ["abcdefg"]
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      tmp_step.validate()
+
 
   def test_step_expected_command_shlex(self):
     """Check that a step's `expected_command` passed as string is converted
