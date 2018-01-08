@@ -181,8 +181,10 @@ def parse_signature_packet(data):
   # This is a somewhat convoluted way to compute the keyid from the signature
   # subpackets. Try to obtain the FULL_KEYID_SUBPACKET and bail even if the
   # partial one is available.
-  keyid = filter(lambda x: True if x[0] == FULL_KEYID_SUBPACKET else False,
-          hashed_subpacket_info)
+  keyid = []
+  for subpacket_tuple in hashed_subpacket_info:
+    if subpacket_tuple[0] == FULL_KEYID_SUBPACKET:
+      keyid.append(subpacket_tuple)
 
   # Excluded so that coverage does not vary in different test environments
   if keyid: # pragma: no cover
