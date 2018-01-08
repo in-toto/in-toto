@@ -34,8 +34,8 @@ import argparse
 import in_toto.user_settings
 from in_toto import (util, runlib, log)
 
-def in_toto_run(step_name, material_list, product_list,
-    link_cmd_args, key, record_streams):
+def in_toto_run(step_name, material_list, product_list, link_cmd_args,
+     record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home):
   """
   <Purpose>
     Calls runlib.in_toto_run and catches exceptions
@@ -53,13 +53,20 @@ def in_toto_run(step_name, material_list, product_list,
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     record_streams:
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
+    signing_key:
+            If not None, link metadata is signed with this key.
+            Format is securesystemslib.formats.KEY_SCHEMA
+    gpg_keyid:
+            If not None, link metadata is signed with a gpg key identified
+            by the passed keyid.
+    gpg_use_default:
+            If True, link metadata is signed with default gpg key.
+    gpg_home:
+            Path to GPG keyring (if not set the default keyring is used).
 
   <Exceptions>
     SystemExit if any exception occurs
@@ -72,10 +79,11 @@ def in_toto_run(step_name, material_list, product_list,
   """
 
   try:
-    runlib.in_toto_run(step_name, material_list, product_list,
-        link_cmd_args, key, record_streams)
+    runlib.in_toto_run(step_name, material_list, product_list, link_cmd_args,
+         record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home)
+
   except Exception as e:
-    log.error("in toto run - {}".format(e))
+    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 def main():
@@ -89,7 +97,9 @@ def main():
 
   parser.usage = ("\n"
       "%(prog)s  --step-name <unique step name>\n{0}"
-               " --key <functionary private key path>\n{0}"
+               "{{--key <functionary signing key path>, "
+               " --gpg [<functionary gpg signing key id>]}} \n{0}"
+               "[--gpg-home <path to gpg keyring>]\n{0}"
                "[--materials <filepath>[ <filepath> ...]]\n{0}"
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-streams]\n{0}"
@@ -109,8 +119,15 @@ def main():
   in_toto_args.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution")
 
-  in_toto_args.add_argument("-k", "--key", type=str, required=True,
+  in_toto_args.add_argument("-k", "--key", type=str,
       help="Path to private key to sign link metadata (PEM)")
+
+  parser.add_argument("-g", "--gpg", nargs="?", const=True,
+      help=("GPG keyid to sign link metadata "
+      "(if set without argument, the default key is used)"))
+
+  parser.add_argument("--gpg-home", dest="gpg_home", type=str,
+      help="Path to GPG keyring (if not set the default keyring is used)")
 
   in_toto_args.add_argument("-b", "--record-streams",
       help="If set redirects stdout/stderr and stores to link metadata",
@@ -137,23 +154,44 @@ def main():
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
+  # Regular signing and GPG signing are mutually exclusive
+  if (args.key == None) == (args.gpg == None):
+    parser.print_usage()
+    parser.exit("Specify either `--key <key path>` or `--gpg [<keyid>]`")
+
+  # If `--gpg` was set without argument it has the value `True` and
+  # we will try to sign with the default key
+  gpg_use_default = (args.gpg == True)
+
+  # Otherwise we interpret it as actual keyid
+  gpg_keyid = None
+  if args.gpg != True:
+    gpg_keyid = args.gpg
+
+
   # We load the key here because it might prompt the user for a password in
   # case the key is encrypted. Something that should not happen in the library.
-  try:
-    key = util.prompt_import_rsa_key_from_file(args.key)
-  except Exception as e:
-    log.error("in load key - {}".format(e))
-    sys.exit(1)
+  key = None
+  if args.key:
+    try:
+      key = util.prompt_import_rsa_key_from_file(args.key)
 
+    except Exception as e:
+      log.error("in load key - {}".format(e))
+      sys.exit(1)
+
+  # If no_command is specified run in_toto_run without executing a command
   if args.no_command:
     in_toto_run(args.step_name, args.materials, args.products, [],
-      key, args.record_streams)
-  else:
-    if not args.link_cmd:
-      parser.print_usage()
-      parser.exit("For no command use --no-command option")
-    in_toto_run(args.step_name, args.materials, args.products,
-      args.link_cmd, key, args.record_streams)
+      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+
+  elif not args.link_cmd: # pragma: no branch
+    parser.print_usage()
+    parser.exit("No command specified."
+        " Please specify (or use the --no-command option)")
+
+  in_toto_run(args.step_name, args.materials, args.products, args.link_cmd,
+      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
 
 if __name__ == "__main__":
   main()

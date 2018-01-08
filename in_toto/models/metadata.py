@@ -26,6 +26,9 @@ import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 
+import in_toto.formats
+import in_toto.gpg.functions
+
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
@@ -95,7 +98,6 @@ class Metablock(object):
       None.
 
     """
-
     with open(path, "r") as fp:
       data = json.load(fp)
 
@@ -126,32 +128,74 @@ class Metablock(object):
   def sign(self, key):
     """
     <Purpose>
-      Signs the pretty printed canonical JSON representation
-      (see models.common.Signable.__repr__) of the Link or Layout object
-      contained in the `signed` property with the passed key and appends the
-      created signature to `signatures`.
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` with the passed key and appends the created
+      signature to `self.signatures`.
+
+      Note: We actually pass the dictionary representation of the data to be
+      signed and `securesystemslib.keys.create_signature` converts it to
+      canonical JSON utf-8 encoded bytes before creating the signature.
 
     <Arguments>
       key:
               A signing key in the format securesystemslib.formats.KEY_SCHEMA
 
     <Returns>
-      None.
+      The dictionary representation of the newly created signature.
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    signature = securesystemslib.keys.create_signature(key, self.signed.signable_string)
+    signature = securesystemslib.keys.create_signature(key,
+        self.signed.signable_dict)
+
     self.signatures.append(signature)
+
+    return signature
+
+  def sign_gpg(self, gpg_keyid=None, gpg_home=None):
+    """
+    <Purpose>
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` using `gpg.functions.gpg_sign_object` and
+      appends the created signature to `self.signatures`.
+
+    <Arguments>
+      gpg_keyid: (optional)
+              A gpg keyid, if omitted the default signing key is used
+
+      gpg_home: (optional)
+              The path to the gpg keyring, if omitted the default gpg keyring
+              is used
+
+    <Returns>
+      The dictionary representation of the newly created signature.
+
+    """
+    signature = in_toto.gpg.functions.gpg_sign_object(
+        self.signed.signable_bytes, gpg_keyid, gpg_home)
+
+    self.signatures.append(signature)
+
+    return signature
 
 
   def verify_signatures(self, keys_dict):
     """
     <Purpose>
-      Verifies all signatures found in the `signatures` property using the keys
-      from the passed dictionary of keys and the pretty printed canonical JSON
-      representation (see models.common.Signable.__repr__) of the Link or
-      Layout object contained in `signed`.
+      Verifies all signatures found in `self.signatures` using the public keys
+      from the passed dictionary of keys and the utf-8 encoded canonical JSON
+      bytes of the Link or Layout object contained in `self.signed`.
+
+      If a signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
+      `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
+      `securesystemslib.keys.verify_signature` is used otherwise.
+
+      Note: In case of securesystemslib we actually pass the dictionary
+      representation of the data to be verified and
+      `securesystemslib.keys.verify_signature` converts it to
+      canonical JSON utf-8 encoded bytes before verifying the signature.
+
 
       Verification fails if,
         - the passed keys don't have the right format,
@@ -165,12 +209,12 @@ class Metablock(object):
     <Arguments>
       keys_dict:
               Verifying keys in the format:
-              securesystemslib.formats.KEYDICT_SCHEMA
+              in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
 
     <Exceptions>
       FormatError
             if the passed key dictionary is not conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA
+            in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
 
       SignatureVerificationError
             if the Metablock is not signed
@@ -185,7 +229,7 @@ class Metablock(object):
       None.
 
     """
-    securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
+    in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA.check_match(keys_dict)
 
     if not self.signatures or len(self.signatures) <= 0:
       raise SignatureVerificationError("No signatures found")
@@ -194,9 +238,18 @@ class Metablock(object):
       keyid = signature["keyid"]
       try:
         key = keys_dict[keyid]
+
       except KeyError:
         raise SignatureVerificationError(
             "Signature key not found, key id is '{0}'".format(keyid))
-      if not securesystemslib.keys.verify_signature(
-          key, signature, self.signed.signable_string):
+
+      if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
+        valid = in_toto.gpg.functions.gpg_verify_signature(signature, key,
+            self.signed.signable_bytes)
+
+      else:
+        valid = securesystemslib.keys.verify_signature(
+            key, signature, self.signed.signable_dict)
+
+      if not valid:
         raise SignatureVerificationError("Invalid signature")

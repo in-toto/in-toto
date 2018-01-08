@@ -24,10 +24,12 @@ import tempfile
 import unittest
 from mock import patch
 
+import in_toto.formats
 from in_toto.util import (generate_and_write_rsa_keypair,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_password, prompt_generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
+    prompt_import_rsa_key_from_file,
+    import_gpg_public_keys_from_keyring_as_dict)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -41,6 +43,13 @@ class TestUtil(unittest.TestCase):
     # Create directory where the verification will take place
     self.working_dir = os.getcwd()
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
+
+    # Copy gpg keyring
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+
     os.chdir(self.test_dir)
 
   @classmethod
@@ -119,6 +128,31 @@ class TestUtil(unittest.TestCase):
     # Import private key raises an exception
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       import_rsa_public_keys_from_files_as_dict([name1, name2])
+
+  def test_import_gpg_public_keys_from_keyring_as_dict(self):
+    """Import gpg public keys from keyring and return KEYDICT. """
+
+    keyids = [
+      "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17",
+      "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
+      "8288ef560ed3795f9df2c0db56193089b285da58"
+    ]
+
+    # Succefully import public keys from keychain as keydictionary
+    key_dict = import_gpg_public_keys_from_keyring_as_dict(keyids,
+        gpg_home=self.gnupg_home)
+    in_toto.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(key_dict)
+    self.assertListEqual(sorted(keyids), sorted(key_dict.keys()))
+
+    # Try to import key with invalid keyid
+    with self.assertRaises(ValueError):
+      key_dict = import_gpg_public_keys_from_keyring_as_dict(["bogus-key"],
+          gpg_home=self.gnupg_home)
+
+    # Try to import key that does not exist
+    with self.assertRaises(ValueError):
+      key_dict = import_gpg_public_keys_from_keyring_as_dict(["aaaa"],
+            gpg_home=self.gnupg_home)
 
   def test_prompt_password(self):
     """Call password prompt. """

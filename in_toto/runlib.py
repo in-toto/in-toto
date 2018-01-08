@@ -318,25 +318,35 @@ def in_toto_mock(name, link_cmd_args):
     Newly created Metablock object containing a Link object
 
   """
-  link = in_toto_run(name, ["."], ["."], link_cmd_args, key=False,
+  link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
       record_streams=True)
 
-  link_metadata = Metablock(signed=link)
-
   filename = FILENAME_FORMAT_SHORT.format(step_name=name)
-  log.info("Storing unsigned link metadata to '{}.link'...".format(filename))
+  log.info("Storing unsigned link metadata to '{}'...".format(filename))
   link_metadata.dump(filename)
   return link_metadata
 
 
-def in_toto_run(name, material_list, product_list,
-    link_cmd_args, key=False, record_streams=False):
+def in_toto_run(name, material_list, product_list, link_cmd_args,
+    record_streams=False, signing_key=None, gpg_keyid=None,
+    gpg_use_default=False, gpg_home=None):
   """
   <Purpose>
-    Calls function to run command passed as link_cmd_args argument, storing
-    its materials, by-products and return value, and products into a link
-    metadata file. The link metadata file is signed with the passed key and
-    stored to disk.
+    Calls functions in this module to run the command passed as link_cmd_args
+    argument and to store materials, products, by-products and environment
+    information into a link metadata file.
+
+    The link metadata file is signed either with the passed signing_key, or
+    a gpg key identified by the passed gpg_keyid or with the default gpg
+    key if gpg_use_default is True.
+
+    Even if multiple key parameters are passed, only one key is used for
+    signing (in above order of precedence).
+
+    The link file is dumped to `link.FILENAME_FORMAT` using the signing key's
+    keyid.
+
+    If no key parameter is passed the link is neither signed nor dumped.
 
   <Arguments>
     name:
@@ -351,20 +361,28 @@ def in_toto_run(name, material_list, product_list,
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
-    key: (optional)
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     record_streams: (optional)
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
+    signing_key: (optional)
+            If not None, link metadata is signed with this key.
+            Format is securesystemslib.formats.KEY_SCHEMA
+    gpg_keyid: (optional)
+            If not None, link metadata is signed with a gpg key identified
+            by the passed keyid.
+    gpg_use_default: (optional)
+            If True, link metadata is signed with default gpg key.
+    gpg_home: (optional)
+            Path to GPG keyring (if not set the default keyring is used).
 
   <Exceptions>
-    None.
+    securesystemslib.FormatError if a signing_key is passed and does not match
+        securesystemslib.formats.KEY_SCHEMA.
 
   <Side Effects>
-    Writes newly created link metadata file to disk using the filename scheme
-    from link.FILENAME_FORMAT
+    If a key parameter is passed for signing, the newly created link metadata
+    file is written to disk using the filename scheme: `link.FILENAME_FORMAT`
 
   <Returns>
     Newly created Metablock object containing a Link object
@@ -374,10 +392,10 @@ def in_toto_run(name, material_list, product_list,
   log.info("Running '{}'...".format(name))
 
   # If a key is passed, it has to match the format
-  if key:
-    securesystemslib.formats.KEY_SCHEMA.check_match(key)
-    #FIXME: Add private key format check to securesystemslib formats
-    if not key["keyval"].get("private"):
+  if signing_key:
+    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
+    # FIXME: Add private key format check to formats
+    if not signing_key["keyval"].get("private"):
       raise securesystemslib.exceptions.FormatError(
           "Signing key needs to be a private key.")
 
@@ -402,11 +420,23 @@ def in_toto_run(name, material_list, product_list,
 
   link_metadata = Metablock(signed=link)
 
-  if key:
-    log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-    link_metadata.sign(key)
+  signature = None
+  if signing_key:
+    log.info("Signing link metadata using passed key...")
+    signature = link_metadata.sign(signing_key)
 
-    filename = FILENAME_FORMAT.format(step_name=name, keyid=key["keyid"])
+  elif gpg_keyid:
+    log.info("Signing link metadata using passed GPG keyid...")
+    signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
+
+  elif gpg_use_default:
+    log.info("Signing link metadata using default GPG key ...")
+    signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
+
+  # We need the signature's keyid to write the link to keyid infix'ed filename
+  if signature:
+    signing_keyid = signature["keyid"]
+    filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
     log.info("Storing link metadata to '{}'...".format(filename))
     link_metadata.dump(filename)
 

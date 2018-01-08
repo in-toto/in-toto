@@ -1,0 +1,22 @@
+{
+ "signatures": [
+  {
+   "keyid": "8288ef560ed3795f9df2c0db56193089b285da58",
+   "other_headers": "04000108001d1621048288ef560ed3795f9df2c0db56193089b285da5805025a25a335",
+   "signature": "bc8db9988d722ccc2e34165be012488effec5f73be29d2db4f860154d90b58247ed8a589d13fc11b6301939e926353ecc0484ac14d55183e7c89ca90b315e9399103dcf7a41748f3ee4c55d114ac49fc32bc0f0a512e5324431eff2325555b24d4ae0426aba9cd0c5509ca14c1db2205da1d9ff7a50b1a5219f6fade5d4cd547552344191103d9511971b2e2cca7aa028fe5b3218c6ee3fa5beac94e67602fdd548e554b4bc42fedda42aa5e634b6805e4982ee0ae3c8b91515c61590e2fdce1e02b977e52913fd49e9c3e6c41f1a9eed80669fbb4a60d54cc70a77ada294e0bbe4c28c10312bb00754be626696abbf1b10c7d6ac952b591637f45a20ec26e8f"
+  }
+ ],
+ "signed": {
+  "_type": "link",
+  "byproducts": {},
+  "command": [],
+  "environment": {},
+  "materials": {},
+  "name": "write-code",
+  "products": {
+   "foo.py": {
+    "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+   }
+  }
+ }
+}
