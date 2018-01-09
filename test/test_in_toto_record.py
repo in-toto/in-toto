@@ -118,14 +118,24 @@ class TestInTotoRecordTool(unittest.TestCase):
 
     # Start/stop sign with default gpg keyid
     # Default key signing only works on fully supported gpg versions
-    args = ["--step-name", "test5", "--gpg", "--gpg-home", self.gnupg_home]
+    args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
     if in_toto.gpg.util.is_version_fully_supported():
       self._test_cli_sys_exit(["start"] + args, 0)
       self._test_cli_sys_exit(["stop"] + args, 0)
 
     else:
+      # Fail (exit 1) start recording on not fully supported gpg version
       self._test_cli_sys_exit(["start"] + args, 1)
-      self._test_cli_sys_exit(["stop"] + args, 1)
+
+      # NOTE: Stop recording with default gpg on not fully supported gpg
+      # version actually does not fail, because we get the keyid from the
+      # preliminary link file and then pass it directly to gpg.
+      # We need to create the preliminary link file first, which requires
+      # a call to in-toto-record start, passing a gpg keyid explicitly.
+      self._test_cli_sys_exit(["start", "--step-name", "test6", "--gpg",
+          self.gpg_keyid, "--gpg-home", self.gnupg_home], 0)
+      self._test_cli_sys_exit(["stop"] + args, 0)
+
 
   def test_glob_no_unfinished_files(self):
     """Test record stop with missing unfinished files when globbing (gpg). """
