@@ -13,8 +13,11 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface to create a link metadata file in multiple
-  steps. The commands are:
+  Provides a command line interface to create a link metadata file in two
+  steps, in order to provide evidence for activities that can't be expressed
+  by a single command (for which you should use in-toto-run).
+
+  The commands to start and stop recording evidence are:
 
   start
     Creates a temporary link file containing the file hashes of the passed
