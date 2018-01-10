@@ -27,7 +27,7 @@ import in_toto.settings
 
 try:
   import configparser
-except ImportError:
+except ImportError: # pragam: no cover
   import ConfigParser as configparser
 
 USER_PATH = os.path.expanduser("~")

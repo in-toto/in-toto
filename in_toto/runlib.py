@@ -43,7 +43,7 @@ from in_toto.models.metadata import Metablock
 
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == 'posix' and sys.version_info[0] < 3: # pragma: no cover
   try:
     import subprocess32 as subprocess
   except ImportError:
