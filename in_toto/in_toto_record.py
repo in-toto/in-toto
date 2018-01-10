@@ -117,9 +117,9 @@ def main():
   # we will try to sign with the default key
   gpg_use_default = (args.gpg == True)
 
-  # Otherwise we interpret it as actual keyid
+  # Otherwise gpg_keyid stays either None or gets the passed argument assigned
   gpg_keyid = None
-  if args.gpg != True:
+  if not gpg_use_default and args.gpg:
     gpg_keyid = args.gpg
 
   # We load the key here because it might prompt the user for a password in
@@ -139,12 +139,11 @@ def main():
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
 
-    elif args.command == "stop": # pragma: no branch
+    # Mutually exclusiveness is guaranteed by argparser
+    else: # args.command == "stop":
       in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
-
-    # Else is caught by argparser
 
   except Exception as e:
     in_toto.log.error("in {} record - {}".format(args.command, e))
