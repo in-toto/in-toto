@@ -26,7 +26,7 @@ def info(msg):
 
 def warn(msg):
   """Verbose user warning. """
-  logging.warn("WARNING: %s", msg)
+  logging.warning("WARNING: %s", msg)
 
 def error(msg):
   """Prints unexpected errors """
