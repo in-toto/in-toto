@@ -27,11 +27,9 @@ import shutil
 import tempfile
 from mock import patch
 
-from in_toto.util import (generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
-from in_toto.models.link import Link
+import in_toto.util
+from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from in_toto.in_toto_record import main as in_toto_record_main
-from in_toto.in_toto_record import in_toto_record_start, in_toto_record_stop
 
 WORKING_DIR = os.getcwd()
 
@@ -43,19 +41,32 @@ class TestInTotoRecordTool(unittest.TestCase):
   in_toto_record_start/in_toto_record_stop - calls runlib and error logs/exits
   on Exception. """
 
+
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
     self.test_dir = tempfile.mkdtemp()
+
+    # Find gpg keyring
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
     os.chdir(self.test_dir)
 
-    self.key_path = "test_key"
-    generate_and_write_rsa_keypair(self.key_path)
-    self.key = prompt_import_rsa_key_from_file(self.key_path)
+    # Copy gpg keyring to temp dir
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.gpg_keyid = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
 
-    self.test_artifact = "test_artifact"
-    open(self.test_artifact, "w").close()
+    self.key_path = "test_key"
+    in_toto.util.generate_and_write_rsa_keypair(self.key_path)
+
+    self.test_artifact1 = "test_artifact1"
+    self.test_artifact2 = "test_artifact2"
+    open(self.test_artifact1, "w").close()
+    open(self.test_artifact2, "w").close()
+
 
   @classmethod
   def tearDownClass(self):
@@ -63,81 +74,102 @@ class TestInTotoRecordTool(unittest.TestCase):
     os.chdir(WORKING_DIR)
     shutil.rmtree(self.test_dir)
 
-  def test_main_required_args(self):
-    """Test CLI command record start/stop with required arguments. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path]
-    with patch.object(sys, 'argv', args + ["start"]):
+
+  def _test_cli_sys_exit(self, cli_args, status):
+    """Test helper to mock command line call and assert return value. """
+    with patch.object(sys, "argv", ["in_toto_record.py"]
+        + cli_args), self.assertRaises(SystemExit) as raise_ctx:
       in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop"]):
-      in_toto_record_main()
+    self.assertEqual(raise_ctx.exception.code, status)
 
-  def test_main_optional_args(self):
-    """Test CLI command record start/stop with optional arguments. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path]
-    with patch.object(sys, 'argv', args + ["start", "--materials",
-        self.test_artifact]):
-      in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop", "--products",
-        self.test_artifact]):
-      in_toto_record_main()
 
-  def test_main_wrong_args(self):
-    """Test CLI command record start/stop with missing arguments. """
+  def test_start_stop(self):
+    """Test CLI command record start/stop with various arguments. """
 
-    wrong_args_list = [
-      ["in_toto_record.py"],
-      ["in_toto_record.py", "--step-name", "some"],
-      ["in_toto_record.py", "--key", self.key_path],
-      ["in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "start", "--products"],
-      ["in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "stop", "--materials"]
-    ]
+    # Start/stop recording
+    args = ["--step-name", "test1", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args, 0)
+    self._test_cli_sys_exit(["stop"] + args, 0)
 
-    for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv',
-          wrong_args), self.assertRaises(SystemExit):
-        in_toto_record_main()
+    # Start/stop with recording one artifact
+    args = ["--step-name", "test2", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args + ["--materials",
+        self.test_artifact1], 0)
+    self._test_cli_sys_exit(["stop"] + args + ["--products",
+        self.test_artifact1], 0)
 
-  def test_main_wrong_key_exits(self):
-    """Test CLI command record with wrong key exits and logs error """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        "non-existing-key", "start"]
-    with patch.object(sys, 'argv',
-        args), self.assertRaises(
-        SystemExit):
-      in_toto_record_main()
+    # Start/stop with recording multiple artifacts
+    args = ["--step-name", "test3", "--key", self.key_path]
+    self._test_cli_sys_exit(["start"] + args + ["--materials",
+        self.test_artifact1, self.test_artifact2], 0)
+    self._test_cli_sys_exit(["stop"] + args + ["--products",
+        self.test_artifact2, self.test_artifact2], 0)
 
-  def test_main_verbose(self):
-    """Log level with verbose flag is lesser/equal than logging.INFO. """
-    args = [ "in_toto_record.py", "--step-name", "test-step", "--key",
-        self.key_path, "--verbose"]
+    # Start/stop recording verbosely
+    args = ["--step-name", "test4", "--key", self.key_path, "--verbose"]
+    self._test_cli_sys_exit(["start"] + args, 0)
+    self._test_cli_sys_exit(["stop"] + args, 0)
 
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args + ["start"]):
-      in_toto_record_main()
-    with patch.object(sys, 'argv', args + ["stop"]):
-      in_toto_record_main()
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
+    # Start/stop sign with specified gpg keyid
+    args = ["--step-name", "test5", "--gpg", self.gpg_keyid, "--gpg-home",
+        self.gnupg_home]
+    self._test_cli_sys_exit(["start"] + args, 0)
+    self._test_cli_sys_exit(["stop"] + args, 0)
 
-  def test_in_toto_record_start_stop(self):
-    """in_toto_record_start/stop run through. """
-    in_toto_record_start("test-step", self.key, [self.test_artifact])
-    in_toto_record_stop("test-step", self.key, [self.test_artifact])
+    # Start/stop sign with default gpg keyid
+    args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
+    if in_toto.gpg.util.is_version_fully_supported():
+      self._test_cli_sys_exit(["start"] + args, 0)
+      self._test_cli_sys_exit(["stop"] + args, 0)
 
-  def test_in_toto_record_start_bad_key_error_exit(self):
-    """Error exit in_toto_record_start with bad key. """
-    with self.assertRaises(SystemExit):
-      in_toto_record_start("test-step", "bad-key", [self.test_artifact])
+    else:
+      # Signing with the default GPG key does not work on not
+      # "fully supported versions" of GPG, which makes in-toto-record start
+      # fail with exit code 1 ...
+      self._test_cli_sys_exit(["start"] + args, 1)
+      # ... in-toto-record stop, however, uses a workaround to assess the keyid
+      # based on an existing preliminary link file even if no keyid was passed.
+      # To create that preliminary link file we call start, passing it the GPG
+      # keyid explicitly (remember, start would fail otherwise) and then call
+      # stop using the default GPG key.
+      self._test_cli_sys_exit(["start", "--step-name", "test6", "--gpg",
+          self.gpg_keyid, "--gpg-home", self.gnupg_home], 0)
+      self._test_cli_sys_exit(["stop"] + args, 0)
 
-  def test_in_toto_record_stop_missing_unfinished_link_exit(self):
-    """Error exit in_toto_record_stop with missing unfinished link file. """
-    with self.assertRaises(SystemExit):
-      in_toto_record_stop("test-step", self.key, [self.test_artifact])
+
+  def test_glob_no_unfinished_files(self):
+    """Test record stop with missing unfinished files when globbing (gpg). """
+    args = ["--step-name", "test-no-glob", "--gpg", self.gpg_keyid,
+        "--gpg-home", self.gnupg_home]
+    self._test_cli_sys_exit(["stop"] + args, 1)
+
+  def test_glob_to_many_unfinished_files(self):
+    """Test record stop with to many unfinished files when globbing (gpg). """
+    name = "test-to-many-glob"
+    fn1 = UNFINISHED_FILENAME_FORMAT.format(step_name=name, keyid="a12345678")
+    fn2 = UNFINISHED_FILENAME_FORMAT.format(step_name=name, keyid="b12345678")
+    open(fn1, "w").close()
+    open(fn2, "w").close()
+    args = ["--step-name", name, "--gpg", self.gpg_keyid,
+        "--gpg-home", self.gnupg_home]
+    self._test_cli_sys_exit(["stop"] + args, 1)
+
+  def test_wrong_key(self):
+    """Test CLI command record with wrong key exits 1 """
+    args = ["--step-name", "wrong-key", "--key", "non-existing-key"]
+    self._test_cli_sys_exit(["start"] + args, 1)
+    self._test_cli_sys_exit(["stop"] + args, 1)
+
+  def test_no_key(self):
+    """Test if no key is specified, argparse error exists with 2"""
+    args = ["--step-name", "no-key"]
+    self._test_cli_sys_exit(["start"] + args, 2)
+    self._test_cli_sys_exit(["stop"] + args, 2)
+
+  def test_missing_unfinished_link(self):
+    """Error exit with missing unfinished link file. """
+    args = ["--step-name", "no-link", "--key", self.key_path]
+    self._test_cli_sys_exit(["stop"] + args, 1)
 
 
 if __name__ == '__main__':

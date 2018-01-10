@@ -28,12 +28,13 @@ import sys
 import os
 import tempfile
 import fnmatch
+import glob
 
 import in_toto.settings
 import in_toto.exceptions
 from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
+    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -327,6 +328,17 @@ def in_toto_mock(name, link_cmd_args):
   return link_metadata
 
 
+def _check_match_signing_key(signing_key):
+  """ Helper method to check if the signing_key has securesystemslib's
+  KEY_SCHEMA and the private part is not empty.
+  # FIXME: Add private key format check to formats
+  """
+  securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
+  if not signing_key["keyval"].get("private"):
+    raise securesystemslib.exceptions.FormatError(
+        "Signing key needs to be a private key.")
+
+
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None):
@@ -378,7 +390,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
-        securesystemslib.formats.KEY_SCHEMA.
+        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
+        not match securesystemslib.foramts.KEYID_SCHEMA
 
   <Side Effects>
     If a key parameter is passed for signing, the newly created link metadata
@@ -388,16 +401,13 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     Newly created Metablock object containing a Link object
 
   """
-
   log.info("Running '{}'...".format(name))
 
-  # If a key is passed, it has to match the format
+  # Check key formats to fail early
   if signing_key:
-    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
-    # FIXME: Add private key format check to formats
-    if not signing_key["keyval"].get("private"):
-      raise securesystemslib.exceptions.FormatError(
-          "Signing key needs to be a private key.")
+    _check_match_signing_key(signing_key)
+  if gpg_keyid:
+    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
@@ -443,26 +453,42 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   return link_metadata
 
 
-def in_toto_record_start(step_name, key, material_list):
+def in_toto_record_start(step_name, material_list, signing_key=None,
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
     records passed materials, creates link meta data object from it, signs it
-    with passed key and stores it to disk with UNFINISHED_FILENAME_FORMAT.
+    with passed signing_key, gpg key identified by the passed gpg_keyid
+    or the default gpg key and stores it to disk under
+    UNFINISHED_FILENAME_FORMAT.
+
+    One of signing_key, gpg_keyid or gpg_use_default has to be passed.
 
   <Arguments>
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     material_list:
             List of file or directory paths that should be recorded as
             materials.
+    signing_key: (optional)
+            If not None, link metadata is signed with this key.
+            Format is securesystemslib.formats.KEY_SCHEMA
+    gpg_keyid: (optional)
+            If not None, link metadata is signed with a gpg key identified
+            by the passed keyid.
+    gpg_use_default: (optional)
+            If True, link metadata is signed with default gpg key.
+    gpg_home: (optional)
+            Path to GPG keyring (if not set the default keyring is used).
 
   <Exceptions>
-    None.
+    ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
+          is passed.
+    securesystemslib.FormatError if a signing_key is passed and does not match
+        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
+        not match securesystemslib.foramts.KEYID_SCHEMA
 
   <Side Effects>
     Writes newly created link metadata file to disk using the filename scheme
@@ -472,9 +498,18 @@ def in_toto_record_start(step_name, key, material_list):
     None.
 
   """
-
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.info("Start recording '{}'...".format(step_name))
+
+  # Fail if there is no signing key arg at all
+  if not signing_key and not gpg_keyid and not gpg_use_default:
+    raise ValueError("Pass either a signing key, a gpg keyid or set"
+        " gpg_use_default to True!")
+
+  # Check key formats to fail early
+  if signing_key:
+    _check_match_signing_key(signing_key)
+  if gpg_keyid:
+    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
@@ -487,34 +522,70 @@ def in_toto_record_start(step_name, key, material_list):
 
   link_metadata = Metablock(signed=link)
 
-  log.info("Signing link metadata with key '{:.8}...'...".format(key["keyid"]))
-  link_metadata.sign(key)
+  if signing_key:
+    log.info("Signing link metadata using passed key...")
+    signature = link_metadata.sign(signing_key)
+
+  elif gpg_keyid:
+    log.info("Signing link metadata using passed GPG keyid...")
+    signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
+
+  else:  # (gpg_use_default)
+    log.info("Signing link metadata using default GPG key ...")
+    signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
+
+  # We need the signature's keyid to write the link to keyid infix'ed filename
+  signing_keyid = signature["keyid"]
+
+  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
+    keyid=signing_keyid)
 
   log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(step_name, key, product_list):
+
+def in_toto_record_stop(step_name, product_list, signing_key=None,
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
-    Loads signing key and unfinished link metadata file from disk, verifies
-    that the file was signed with the key, records products, updates unfinished
-    Link object (products and signature), removes unfinished link file from and
+    Loads unfinished link metadata file from disk, verifies
+    that the file was signed with either the passed signing key, a gpg key
+    identified by the passed gpg_keyid or the default gpg key.
+
+    Then records products, updates unfinished Link object
+    (products and signature), removes unfinished link file from and
     stores new link file to disk.
+
+    One of signing_key, gpg_keyid or gpg_use_default has to be passed and it
+    needs to be the same that was used with preceding in_toto_record_start.
 
   <Arguments>
     step_name:
             A unique name to relate link metadata with a step defined in the
             layout.
-    key:
-            Private key to sign link metadata.
-            Format is securesystemslib.formats.KEY_SCHEMA
     product_list:
             List of file or directory paths that should be recorded as products.
+    signing_key: (optional)
+            If not None, link metadata is signed with this key.
+            Format is securesystemslib.formats.KEY_SCHEMA
+    gpg_keyid: (optional)
+            If not None, link metadata is signed with a gpg key identified
+            by the passed keyid.
+    gpg_use_default: (optional)
+            If True, link metadata is signed with default gpg key.
+    gpg_home: (optional)
+            Path to GPG keyring (if not set the default keyring is used).
 
   <Exceptions>
-    None.
+    ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
+      is passed.
+    securesystemslib.FormatError if a signing_key is passed and does not match
+        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
+        not match securesystemslib.foramts.KEYID_SCHEMA
+    LinkNotFoundError if gpg is used for signing and the corresponding
+        preliminary link file can not be found in the current working directory
 
   <Side Effects>
     Writes newly created link metadata file to disk using the filename scheme
@@ -525,27 +596,91 @@ def in_toto_record_stop(step_name, key, product_list):
     None.
 
   """
-  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name, keyid=key["keyid"])
   log.info("Stop recording '{}'...".format(step_name))
 
-  # Expects an a file with name UNFINISHED_FILENAME_FORMAT in the current dir
+  # Check that we have something to sign and if the formats are right
+  if not signing_key and not gpg_keyid and not gpg_use_default:
+    raise ValueError("Pass either a signing key, a gpg keyid or set"
+        " gpg_use_default to True")
+
+  if signing_key:
+    _check_match_signing_key(signing_key)
+  if gpg_keyid:
+    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+
+  # Load preliminary link file
+  # If we have a signing key we can use the keyid to construct the name
+  if signing_key:
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
+        keyid=signing_key["keyid"])
+
+  # FIXME: Currently there is no way to know the default GPG key's keyid and
+  # so we glob for preliminary link files
+  else:
+    unfinished_fn_glob = UNFINISHED_FILENAME_FORMAT_GLOB.format(
+        step_name=step_name, pattern="*")
+    unfinished_fn_list = glob.glob(unfinished_fn_glob)
+
+    if not len(unfinished_fn_list):
+      raise in_toto.exceptions.LinkNotFoundError("Could not find a preliminary"
+          " link for step '{}' in the current working directory.".format(
+          step_name))
+
+    if len(unfinished_fn_list) > 1:
+      raise in_toto.exceptions.LinkNotFoundError("Found more than one"
+          " preliminary links for step '{}' in the current working directory:"
+          " {}. We need exactly one to stop recording.".format(
+          step_name, ", ".join(unfinished_fn_list)))
+
+    unfinished_fn = unfinished_fn_list[0]
+
   log.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
   link_metadata = Metablock.load(unfinished_fn)
 
   # The file must have been signed by the same key
-  log.info("Verifying preliminary link signature...")
-  keydict = {key["keyid"] : key}
-  link_metadata.verify_signatures(keydict)
+  # If we have a signing_key we use it for verification as well
+  if signing_key:
+    log.info("Verifying preliminary link signature using passed signing key...")
+    keyid = signing_key["keyid"]
+    verification_key_dict = {keyid: signing_key}
 
+  elif gpg_keyid:
+    log.info("Verifying preliminary link signature using passed gpg key...")
+    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
+    keyid = gpg_pubkey["keyid"]
+    verification_key_dict = {keyid: gpg_pubkey}
+
+  else: # must be gpg_use_default
+    # FIXME: Currently there is no way to know the default GPG key's keyid
+    # before signing. As a workaround we extract the keyid of the preliminary
+    # Link file's signature and try to export a pubkey from the gpg
+    # keyring. We do this even if a gpg_keyid was specified, because gpg
+    # accepts many different ids (mail, name, parts of an id, ...) but we
+    # need a specific format.
+    log.info("Verifying preliminary link signature using default gpg key...")
+    keyid = link_metadata.signatures[0]["keyid"]
+    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
+    verification_key_dict = {keyid: gpg_pubkey}
+
+  link_metadata.verify_signatures(verification_key_dict)
+
+  # Record products if a product path list was passed
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
   link_metadata.signed.products = record_artifacts_as_dict(product_list)
 
-  log.info("Updating signature with key '{:.8}...'...".format(key["keyid"]))
   link_metadata.signatures = []
-  link_metadata.sign(key)
+  if signing_key:
+    log.info("Updating signature with key '{:.8}...'...".format(keyid))
+    link_metadata.sign(signing_key)
 
+  else: # gpg_keyid or gpg_use_default
+    # In both cases we use the keyid we got from verifying the preliminary
+    # link signature above.
+    log.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
+    link_metadata.sign_gpg(keyid, gpg_home)
+
+  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
   log.info("Storing link metadata to '{}'...".format(fn))
   link_metadata.dump(fn)
 
