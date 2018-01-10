@@ -1,18 +1,24 @@
 dist: trusty
 language: python
-python: 3.6
 
-env:
-    - TOXENV=lint
-    - TOXENV=py27
-    - TOXENV=py34
-    - TOXENV=py35
-    - TOXENV=py36
+matrix:
+    include:
+        # Explicitly tell Travis which Python version to use for which
+        # tox environment, instead of using one Python version in Travis and
+        # hoping that tox and pyenv run the tests in the desired versions.
+        # https://github.com/travis-ci/travis-ci/issues/8363#issuecomment-355090242
+        - python: "2.7"
+          env: TOXENV=py27-unittest
+        - python: "3.4"
+          env: TOXENV=py34-unittest
+        - python: "3.5"
+          env: TOXENV=py35-unittest
+        - python: "3.6"
+          env: TOXENV=py36-unittest
 
-
-before_install:
-    # Workaround for https://github.com/travis-ci/travis-ci/issues/8363
-    - pyenv global system 3.5
+        # Use max Python version supported by both bandit and pylint
+        - python: "3.5"
+          env: TOXENV=lint
 
 install:
     - pip install -U tox
