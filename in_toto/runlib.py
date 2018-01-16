@@ -169,10 +169,6 @@ def record_artifacts_as_dict(artifacts):
   for artifact in _apply_exclude_patterns(norm_artifacts,
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
 
-    if not os.path.exists(artifact):
-      log.warn("path: {} does not exist, skipping..".format(artifact))
-      continue
-
     if os.path.isfile(artifact):
       # Path was already normalized above
       artifacts_dict[artifact] = _hash_artifact(artifact)
@@ -217,6 +213,11 @@ def record_artifacts_as_dict(artifacts):
         for filepath in _apply_exclude_patterns(filepaths,
             in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
           artifacts_dict[filepath] = _hash_artifact(filepath)
+
+    # Path is no file and no directory
+    else:
+      log.warn("path: {} does not exist, skipping..".format(artifact))
+
 
   # Change back to where original current working dir
   if in_toto.settings.ARTIFACT_BASE_PATH:
