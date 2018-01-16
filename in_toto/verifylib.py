@@ -38,7 +38,8 @@ import in_toto.models.link
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError, AuthorizationError)
+    ThresholdVerificationError, BadReturnValueError,
+    SignatureVerificationError)
 import in_toto.artifact_rules
 import in_toto.log as log
 
@@ -225,31 +226,31 @@ def verify_layout_expiration(layout):
     raise LayoutExpiredError("Layout expired")
 
 
-def verify_layout_signatures(layout, keys_dict):
+def verify_layout_signatures(layout_metablock, keys_dict):
   """
   <Purpose>
-    Iteratively verifies all signatures of a Layout object using the passed
-    keys.
+    Iteratively verifies the signatures of a Metablock object containing
+    a Layout object for every verification key in the passed keys dictionary.
+
+    Requires at least one key to be passed and requires every passed key to
+    find a valid signature.
 
   <Arguments>
-    layout:
-            A Layout object whose signatures are verified.
+    layout_metablock:
+            A Metablock object containing a Layout whose signatures are
+            verified.
 
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA.
+            securesystemslib.formats.ANY_VERIFY_KEY_DICT_SCHEMA.
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    securesystemslib.exceptions.FormatError
+      if the passed key dict does not match ANY_VERIFY_KEY_DICT_SCHEMA.
 
-  <Side Effects>
-    Verifies cryptographic Layout signatures.
-
-  """
-  layout.verify_signatures(keys_dict)
-
+    SignatureVerificationError
+      if the any empty verification key dictionary was passed, or
+      if any of the passed verification keys fails to verify a signature.
 
 def verify_link_signatures(link, keys_dict):
   """
@@ -269,12 +270,20 @@ def verify_link_signatures(link, keys_dict):
     Raises an exception if a needed key can not be found in the passed
     keys_dict or if a verification fails.
     TBA (see https://github.com/in-toto/in-toto/issues/6)
+  in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA.check_match(keys_dict)
 
   <Side Effects>
     Verifies cryptographic Link signatures.
+  # Fail if an empty verification key dictionary was passed
+  if len(keys_dict) < 1:
+    raise SignatureVerificationError("Layout signature verification"
+        " requires at least one key.")
 
   """
   link.verify_signatures(keys_dict)
+  # Fail if any of the passed keys can't verify a signature on the Layout
+  for junk, verify_key in six.iteritems(keys_dict):
+    layout_metablock.verify_signature(verify_key)
 
 
 def verify_all_steps_signatures(layout, chain_link_dict):
