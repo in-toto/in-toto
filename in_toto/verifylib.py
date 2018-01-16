@@ -1040,12 +1040,13 @@ def verify_all_item_rules(items, links):
 def verify_threshold_constraints(layout, chain_link_dict):
   """
   <Purpose>
-    Verifies that each step of a layout meets its signature threshold, i.e.:
-    For each step there are at least `step.threshold` corresponding links,
-    signed by different functionaries.
+    Verifies that all links corresponding to a given step report the same
+    materials and products.
 
-    Furthermore, verifies that all links corresponding to a given step report
-    the same materials and products.
+    NOTE: This function does not verify if the signatures of each link
+    corresponding to a step are valid or created by a different authorized
+    functionary. This should be done earlier, using the function
+    `verify_link_signature_thresholds`.
 
   <Arguments>
     layout:
@@ -1062,10 +1063,11 @@ def verify_threshold_constraints(layout, chain_link_dict):
             }
 
   <Exceptions>
-    raises an Exception if threshold is not verified.
-    ThresholdVerificationError if the step is not performed by enough
-    functionaries or if the materials and products for a step are not same
-    for all functionaries.
+    ThresholdVerificationError
+        If there are not enough (threshold) links for a steps
+
+        If the artifacts for all links of a step are not equal
+
 
   <Side Effects>
     None.
@@ -1087,6 +1089,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
     key_link_dict = chain_link_dict[step.name]
 
     # Check if we have at least <threshold> links for this step
+    # NOTE: This is already done in `verify_link_signature_thresholds`,
+    # Should we remove the check?
     if len(key_link_dict) < step.threshold:
       raise ThresholdVerificationError("Step '{0}' not performed"
           " by enough functionaries!".format(step.name))
@@ -1097,8 +1101,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
 
     # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
-
-      # compare their properties
+      # TODO: Do we only care for artifacts, or do we want to
+      # assert equality of other properties as well?
       if (reference_link.signed.materials != link.signed.materials or
           reference_link.signed.products != link.signed.products):
         raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
@@ -1153,6 +1157,7 @@ def reduce_chain_links(chain_link_dict):
     reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
 
   return reduced_chain_link_dict
+
 
 def verify_sublayouts(layout, chain_link_dict):
   """
