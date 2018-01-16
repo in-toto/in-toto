@@ -180,76 +180,71 @@ class Metablock(object):
     return signature
 
 
-  def verify_signatures(self, keys_dict):
+  def verify_signature(self, verify_key):
     """
     <Purpose>
       Verifies all signatures found in `self.signatures` using the public keys
       from the passed dictionary of keys and the utf-8 encoded canonical JSON
       bytes of the Link or Layout object contained in `self.signed`.
 
-      If a signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
+      If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
       `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
-      `securesystemslib.keys.verify_signature` is used otherwise.
+      if the signature matches `securesystemslib.formats.SIGNATURE_SCHEMA`
+      `securesystemslib.keys.verify_signature` is used.
 
       Note: In case of securesystemslib we actually pass the dictionary
       representation of the data to be verified and
       `securesystemslib.keys.verify_signature` converts it to
       canonical JSON utf-8 encoded bytes before verifying the signature.
 
-
-      Verification fails if,
-        - the passed keys don't have the right format,
-        - the object is not signed,
-        - there is a signature for which no key was passed,
-        - if any of the signatures is actually broken.
-
-      Note:
-      This will be revised with in-toto/in-toto#135
-
     <Arguments>
-      keys_dict:
-              Verifying keys in the format:
-              in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
+      verify_key:
+              Verifying key in the format:
+              in_toto.formats.ANY_VERIFY_KEY_SCHEMA
 
     <Exceptions>
       FormatError
-            if the passed key dictionary is not conformant with
-            in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA
+            If the passed key is not conformant with
+            `in_toto.formats.ANY_VERIFY_KEY_SCHEMA`
 
       SignatureVerificationError
-            if the Metablock is not signed
+            If the Metablock does not carry a signature signed with the
+            private key corresponding to the passed verification key
 
-            if the Metablock carries a signature for which no key is found in
-            the passed key dictionary, which means that multiple signatures
-            have to be verified at once
+            If the signature corresponding to the passed verification key
+            does not match securesystemslib's or in_toto.gpg's
+            signature schema.
 
-            if any of the verified signatures is actually broken
+            If the verified signature is invalid.
 
     <Returns>
       None.
 
     """
-    in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA.check_match(keys_dict)
+    in_toto.formats.ANY_VERIFY_KEY_SCHEMA.check_match(verify_key)
+    verify_keyid = verify_key["keyid"]
 
-    if not self.signatures or len(self.signatures) <= 0:
-      raise SignatureVerificationError("No signatures found")
-
+    # Find signature by verification key id and raise exception if not found
+    signature = None
     for signature in self.signatures:
-      keyid = signature["keyid"]
-      try:
-        key = keys_dict[keyid]
+      if signature["keyid"] == verify_keyid:
+        break
+    else:
+      raise SignatureVerificationError("No signature found for key '{}'"
+          .format(verify_keyid))
 
-      except KeyError:
-        raise SignatureVerificationError(
-            "Signature key not found, key id is '{0}'".format(keyid))
+    if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
+      valid = in_toto.gpg.functions.gpg_verify_signature(signature, verify_key,
+          self.signed.signable_bytes)
 
-      if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
-        valid = in_toto.gpg.functions.gpg_verify_signature(signature, key,
-            self.signed.signable_bytes)
+    elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
+      valid = securesystemslib.keys.verify_signature(
+          verify_key, signature, self.signed.signable_dict)
 
-      else:
-        valid = securesystemslib.keys.verify_signature(
-            key, signature, self.signed.signable_dict)
+    else:
+      # TODO: Add Metablock format validator that prevent malformed signatures
+      valid = False
 
-      if not valid:
-        raise SignatureVerificationError("Invalid signature")
+    if not valid:
+      raise SignatureVerificationError("Invalid signature for keyid '{}'"
+          .format(verify_keyid))
