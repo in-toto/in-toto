@@ -623,13 +623,13 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   if signing_key:
     log.info("Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
-    verification_key_dict = {keyid: signing_key}
+    verification_key = signing_key
 
   elif gpg_keyid:
     log.info("Verifying preliminary link signature using passed gpg key...")
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
-    verification_key_dict = {keyid: gpg_pubkey}
+    verification_key = gpg_pubkey
 
   else: # must be gpg_use_default
     # FIXME: Currently there is no way to know the default GPG key's keyid
@@ -641,9 +641,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     log.info("Verifying preliminary link signature using default gpg key...")
     keyid = link_metadata.signatures[0]["keyid"]
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
-    verification_key_dict = {keyid: gpg_pubkey}
+    verification_key = gpg_pubkey
 
-  link_metadata.verify_signatures(verification_key_dict)
+  link_metadata.verify_signature(verification_key)
 
   # Record products if a product path list was passed
   if product_list:

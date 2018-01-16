@@ -282,7 +282,7 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify signed metadata. """
     link = in_toto_run(self.step_name, None, None,
         ["echo", "test"], True, self.key)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
 
   def test_in_toto_run_no_signature(self):
     """Successfully run, verify empty signature field. """
@@ -379,7 +379,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
     os.remove(self.link_name_unfinished)
 
   def test_no_key_arguments(self):
@@ -443,7 +443,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [], self.key)
     link = Metablock.load(self.link_name)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
     os.remove(self.link_name)
 
   def test_replace_unfinished_metadata(self):
