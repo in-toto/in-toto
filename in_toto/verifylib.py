@@ -1281,16 +1281,23 @@ def in_toto_verify(layout, layout_key_dict):
     Does entire in-toto supply chain verification of a final product
     by performing the following actions:
 
-        1.  Verify layout signature(s)
+        1.  Verify layout signature(s), requires at least one verification key
+            to be passed, and a valid signature for each passed key.
 
         2.  Verify layout expiration
 
-        3.  Load link metadata for every Step defined in the layout
-            NOTE: link files are expected to have the corresponding step
+        3.  Load link metadata for every Step defined in the layout and
+            fail if less links than the defined threshold for a step are found.
+            NOTE: Link files are expected to have the corresponding step
             and the functionary, who carried out the step, encoded in their
             filename.
 
-        4.  Verify functionary signature for every Link
+        4.  Verify functionary signature for every loaded Link, skipping links
+            with failing signatures or signed by unauthorized functionaries,
+            and fail if less than `threshold` links validly signed by different
+            authorized functionaries can be found.
+            The routine returns a dictionary containing only links with valid
+            signatures by authorized functionaries.
 
         5.  Verify sublayouts
             NOTE: Replaces the layout object in the chain_link_dict with an
@@ -1301,7 +1308,8 @@ def in_toto_verify(layout, layout_key_dict):
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
 
-        7.  Verify threshold constraints
+        7.  Verify threshold constraints, i.e. if all links corresponding to
+            one step have recorded the same artifacts (materials and products).
 
         8.  Verify rules defined in each Step's expected_materials and
             expected_products field
