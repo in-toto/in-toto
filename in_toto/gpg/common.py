@@ -114,6 +114,7 @@ def parse_signature_packet(data):
 
   data = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPES['signature_packet'])
+
   ptr = 0
 
   # we get the version number, which we also expect to be v4, or we bail
@@ -188,7 +189,7 @@ def parse_signature_packet(data):
 
   # Excluded so that coverage does not vary in different test environments
   if keyid: # pragma: no cover
-    keyid = binascii.hexlify(keyid[0][1][2:])
+    keyid = binascii.hexlify(keyid[0][1][2:]).decode("ascii")
 
   else: # pragma: no cover
     keyid = ""

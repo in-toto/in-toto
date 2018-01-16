@@ -902,8 +902,8 @@ def verify_item_rules(source_name, source_type, rules, links):
   source_materials = links[source_name].signed.materials
   source_products = links[source_name].signed.products
 
-  source_materials_queue = source_materials.keys()
-  source_products_queue = source_products.keys()
+  source_materials_queue = list(source_materials.keys())
+  source_products_queue = list(source_products.keys())
 
   # Create generic source artifacts list and queue depending on the source type
   if source_type == "materials":
@@ -1069,7 +1069,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
           " by enough functionaries!".format(step.name))
 
     # Take a reference link (e.g. the first in the step_link_dict)
-    reference_keyid = key_link_dict.keys()[0]
+    reference_keyid = list(key_link_dict.keys())[0]
     reference_link = key_link_dict[reference_keyid]
 
     # Iterate over all links to compare their properties with a reference_link
@@ -1127,7 +1127,7 @@ def reduce_chain_links(chain_link_dict):
     # Extract the key_link_dict for this step from the passed chain_link_dict
     # take one exemplary link (e.g. the first in the step_link_dict)
     # form the reduced_chain_link_dict to return
-    reduced_chain_link_dict[step_name] = key_link_dict.values()[0]
+    reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
 
   return reduced_chain_link_dict
 

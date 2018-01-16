@@ -17,6 +17,7 @@
   Test runlib functions.
 
 """
+import six
 
 import os
 import unittest
@@ -142,14 +143,13 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     for setting in ["path/does/not/exist", 12345, True]:
       in_toto.settings.ARTIFACT_BASE_PATH = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
-        print setting
         record_artifacts_as_dict(["."])
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
     in_toto.settings.ARTIFACT_BASE_PATH = "subdir"
     artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
         sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
     self.assertEquals(os.getcwd(), self.test_dir)
 
@@ -158,7 +158,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     in_toto.settings.ARTIFACT_BASE_PATH = ".."
     os.chdir("subdir/subsubdir")
     artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
         sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
     self.assertEquals(os.getcwd(),
         os.path.join(self.test_dir, "subdir/subsubdir"))
@@ -176,10 +176,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Traverse dir and subdirs. Record three files. """
     artifacts_dict = record_artifacts_as_dict(["."])
 
-    for key, val in artifacts_dict.iteritems():
+    for key, val in six.iteritems(artifacts_dict):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
       sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2",
           "subdir/subsubdir/foosubsub"]))
 
@@ -187,10 +187,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Explicitly record files and subdirs. """
     artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
-    for key, val in artifacts_dict.iteritems():
+    for key, val in six.iteritems(artifacts_dict):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
       sorted(["foo", "subdir/foosub1", "subdir/foosub2",
           "subdir/subsubdir/foosubsub"]))
 
@@ -200,19 +200,19 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     artifacts_dict = record_artifacts_as_dict(["."])
 
     securesystemslib.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
-    self.assertListEqual(artifacts_dict.keys(), ["bar"])
+    self.assertListEqual(list(artifacts_dict.keys()), ["bar"])
 
   def test_exclude_subdir(self):
     """Traverse dot. Exclude subdir (and subsubdir). """
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subdir"]
     artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(artifacts_dict.keys()), sorted(["bar", "foo"]))
+    self.assertListEqual(sorted(list(artifacts_dict.keys())), sorted(["bar", "foo"]))
 
   def test_exclude_files_in_subdir(self):
     """Traverse dot. Exclude files in subdir but not subsubdir. """
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*foosub?"]
     artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
       sorted(["bar", "foo", "subdir/subsubdir/foosubsub"]))
 
   def test_exclude_subsubdir(self):
@@ -220,10 +220,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subsubdir"]
     artifacts_dict = record_artifacts_as_dict(["."])
 
-    for key, val in artifacts_dict.iteritems():
+    for key, val in six.iteritems(artifacts_dict):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
-    self.assertListEqual(sorted(artifacts_dict.keys()),
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
         sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
   def test_bad_artifact_exclude_patterns_setting(self):
@@ -231,7 +231,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     for setting in ["not a list of settings", 12345, True]:
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
-        print setting
         record_artifacts_as_dict(["."])
 
 
@@ -314,8 +313,8 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify properly recorded artifacts. """
     link = in_toto_run(self.step_name, [self.test_artifact],
         [self.test_artifact], ["echo", "test"])
-    self.assertEqual(link.signed.materials.keys(),
-        link.signed.products.keys(), [self.test_artifact])
+    self.assertEqual(list(link.signed.materials.keys()),
+        list(link.signed.products.keys()), [self.test_artifact])
 
   def test_in_toto_run_verify_workdir(self):
     """Successfully run, verify cwd. """
@@ -372,7 +371,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
-    self.assertEquals(link.signed.materials.keys(), [self.test_material])
+    self.assertEquals(list(link.signed.materials.keys()), [self.test_material])
     os.remove(self.link_name_unfinished)
 
   def test_create_unfininished_metadata_verify_signature(self):
@@ -428,7 +427,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
-    self.assertEquals(link.signed.products.keys(), [self.test_product])
+    self.assertEquals(list(link.signed.products.keys()), [self.test_product])
     os.remove(self.link_name)
 
   def test_create_metadata_with_expected_cwd(self):

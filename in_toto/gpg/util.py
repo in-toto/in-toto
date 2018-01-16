@@ -146,7 +146,7 @@ def compute_keyid(pubkey_packet_data):
   hasher.update(b'\x99')
   hasher.update(struct.pack(">H", len(pubkey_packet_data)))
   hasher.update(bytes(pubkey_packet_data))
-  return binascii.hexlify(hasher.finalize())
+  return binascii.hexlify(hasher.finalize()).decode("ascii")
 
 
 def parse_subpackets(subpacket_octets):
@@ -207,7 +207,8 @@ def get_version():
 
   """
   command = shlex.split(in_toto.gpg.constants.GPG_VERSION_COMMAND)
-  process = subprocess.Popen(command, stdout=subprocess.PIPE)
+  process = subprocess.Popen(command, stdout=subprocess.PIPE,
+      universal_newlines=True)
   full_version_info, junk = process.communicate()
 
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)

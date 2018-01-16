@@ -52,10 +52,10 @@ def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
   else:
     private_pem = private
 
-  with open(filepath + ".pub", "w") as fo_public:
+  with open(filepath + ".pub", "wb") as fo_public:
     fo_public.write(public.encode("utf-8"))
 
-  with open(filepath, "w") as fo_private:
+  with open(filepath, "wb") as fo_private:
     fo_private.write(private_pem.encode("utf-8"))
 
 

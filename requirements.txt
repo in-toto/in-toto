@@ -3,3 +3,4 @@ sphinx
 attrs
 python-dateutil
 iso8601
+six
