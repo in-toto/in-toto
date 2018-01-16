@@ -50,7 +50,7 @@ if os.name == 'posix' and sys.version_info[0] < 3: # pragma: no cover
     log.warn("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
         " install and use the much more recent subprocess32")
     import subprocess
-else:
+else: # pragma: no cover
   import subprocess
 
 
