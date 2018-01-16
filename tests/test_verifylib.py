@@ -36,9 +36,11 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
     verify_command_alignment, run_all_inspections, in_toto_verify,
     verify_sublayouts, get_summary_link, _raise_on_bad_retval,
-    load_links_for_layout)
+    load_links_for_layout, verify_link_signature_thresholds,
+    verify_threshold_constraints)
 from in_toto.exceptions import (RuleVerficationError,
-    SignatureVerificationError, LayoutExpiredError, BadReturnValueError)
+    SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
+    ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
 import in_toto.log as log
 
@@ -940,6 +942,8 @@ class TestInTotoVerify(unittest.TestCase):
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
+    self.alice = alice
+
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
@@ -972,17 +976,10 @@ class TestInTotoVerify(unittest.TestCase):
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
-  def test_verify_failing_missing_key(self):
-    """Test fail verification with missing layout key. """
-    layout = Metablock.load(self.layout_double_signed_path)
-    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.bob_path])
-    with self.assertRaises(SignatureVerificationError):
-      in_toto_verify(layout, layout_key_dict)
-
   def test_verify_failing_layout_expired(self):
     """Test fail verification with expired layout. """
     layout = Metablock.load(self.layout_expired_path)
-    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(LayoutExpiredError):
       in_toto_verify(layout, layout_key_dict)
 
@@ -1015,6 +1012,260 @@ class TestInTotoVerify(unittest.TestCase):
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerficationError):
       in_toto_verify(layout, layout_key_dict)
+
+  def test_verify_layout_signatures_fail_with_no_keys(self):
+    """Layout signature verification fails when no keys are passed. """
+    layout_metablock = Metablock(signed=Layout())
+    with self.assertRaises(SignatureVerificationError):
+      in_toto_verify(layout_metablock, {})
+
+  def test_verify_layout_signatures_fail_with_malformed_signature(self):
+    """Layout signature verification fails with malformed signatures. """
+    layout_metablock = Metablock(signed=Layout())
+    signature = layout_metablock.sign(self.alice)
+    pubkey = self.alice
+    pubkey["keyval"]["private"] = ""
+
+    del signature["sig"]
+    layout_metablock.signed.signatures = [signature]
+    with self.assertRaises(SignatureVerificationError):
+      in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
+
+
+
+
+
+class TestInTotoVerifyThresholds(unittest.TestCase):
+  """Test verifylib functions related to signature thresholds.
+
+    - verifylib.verify_link_signature_thresholds
+    - verifylib.verify_threshold_constraints """
+
+
+  @classmethod
+  def setUpClass(self):
+    """Load test keys from demo files. """
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    self.alice = import_rsa_key_from_file(
+        os.path.join(demo_files, "alice"))
+    self.alice_pubkey = import_rsa_key_from_file(
+        os.path.join(demo_files, "alice.pub"))
+    self.alice_keyid = self.alice["keyid"]
+
+    self.bob = import_rsa_key_from_file(
+        os.path.join(demo_files, "bob"))
+    self.bob_pubkey = import_rsa_key_from_file(
+        os.path.join(demo_files, "bob.pub"))
+    self.bob_keyid = self.bob["keyid"]
+
+    self.name = "test"
+    self.foo_hash = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+
+
+  def test_thresholds_skip_unauthorized_links(self):
+    """Ignore links with unauthorized signatures. """
+    # Layout with one step, one authorized functionary and threshold 1
+    layout = Layout(
+        keys={
+          self.bob_keyid: self.bob_pubkey
+        },
+        steps=[
+          Step(
+            name=self.name,
+            pubkeys=[self.bob_keyid])
+          ]
+      )
+
+    # Signed links (one authorized the other one not)
+    link_bob = Metablock(signed=Link(name=self.name))
+    link_bob.sign(self.bob)
+    link_alice = Metablock(signed=Link(name=self.name))
+    link_alice.sign(self.alice)
+
+    # The dictionary of links per step passed to the verify function
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob,
+        self.alice_keyid: link_alice
+      }
+    }
+
+    # The dictionary of links expected to be returned, not containing the
+    # unauthorized link, but enough (threshold) authorized links
+    expected_chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob
+      }
+    }
+    # Verify signatures/thresholds
+    returned_chain_link_dict = verify_link_signature_thresholds(
+        layout, chain_link_dict)
+    # Test that the returned dict is as expected
+    self.assertDictEqual(returned_chain_link_dict, expected_chain_link_dict)
+
+
+  def test_thresholds_skip_links_with_failing_signature(self):
+    """Ignore links with failing signatures. """
+
+    # Layout with one step, two authorized functionaries and threshold 1
+    layout = Layout(
+        keys={
+          self.bob_keyid: self.bob_pubkey,
+          self.alice_keyid: self.alice_pubkey,
+        },
+        steps=[
+          Step(
+            name=self.name,
+            pubkeys=[self.bob_keyid, self.alice_keyid],
+            threshold=1)
+          ]
+        )
+
+    # Authorized links (one signed one not)
+    link_bob = Metablock(signed=Link(name=self.name))
+    link_bob.sign(self.bob)
+    link_alice = Metablock(signed=Link(name=self.name))
+
+    # The dictionary of links per step passed to the verify function
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob,
+        self.alice_keyid: link_alice
+      }
+    }
+
+    # The dictionary of links expected to be returned, not containing the
+    # unauthorized link, but enough (threshold) authorized links
+    expected_chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob
+      }
+    }
+
+    # Verify signatures/thresholds
+    returned_chain_link_dict = verify_link_signature_thresholds(
+        layout, chain_link_dict)
+    # Test that the returned dict is as expected
+    self.assertDictEqual(returned_chain_link_dict, expected_chain_link_dict)
+
+
+  def test_thresholds_fail_with_not_enough_valid_links(self):
+    """ Fail with not enough authorized links. """
+
+    # Layout with one step, two authorized functionaries and threshold 2
+    layout = Layout(
+        keys={
+          self.bob_keyid: self.bob_pubkey,
+          self.alice_keyid: self.alice_pubkey,
+        },
+        steps=[
+          Step(
+            name=self.name,
+            pubkeys=[self.bob_keyid, self.alice_keyid],
+            threshold=2)
+          ]
+        )
+
+    # Only one authorized and validly signed link
+    link_bob = Metablock(signed=Link(name=self.name))
+    link_bob.sign(self.bob)
+
+    # The dictionary of links per step passed to the verify function
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob
+      }
+    }
+
+    # Fail signature threshold verification with not enough links
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_threshold_constraints_fail_with_not_enough_links(self):
+    """ Fail with not enough links. """
+    # Layout with one step and threshold 2
+    layout = Layout(steps=[Step(name=self.name, threshold=2)])
+    # Authorized (unsigned) link
+    # This function does not care for signatures it just verifies if the
+    # different links have recorded the same artifacts. Signature verification
+    # happens earlier in the final product verification (see tests above)
+    link_bob = Metablock(signed=Link(name=self.name))
+
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob,
+      }
+    }
+
+    with self.assertRaises(ThresholdVerificationError):
+      verify_threshold_constraints(layout, chain_link_dict)
+
+
+  def test_treshold_constraints_fail_with_unequal_links(self):
+    """ Test that the links for a step recorded the same artifacts. """
+    # Layout with one step and threshold 2
+    layout = Layout(steps=[Step(name=self.name, threshold=2)])
+    link_bob = Metablock(
+        signed=Link(
+          name=self.name,
+          materials={
+            "foo": { "sha256": self.foo_hash}
+          }
+        )
+      )
+    # Cf. signing comment in test_thresholds_constraints_with_not_enough_links
+    link_alice = Metablock(signed=Link(name=self.name))
+
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob,
+        self.alice_keyid: link_alice,
+      }
+    }
+
+    with self.assertRaises(ThresholdVerificationError):
+      verify_threshold_constraints(layout, chain_link_dict)
+
+
+
+  def test_treshold_constraints_pas_with_equal_links(self):
+    """ Pass threshold constraint verification with equal links. """
+    # Layout with one step and threshold 2
+    layout = Layout(steps=[Step(name=self.name, threshold=2)])
+    # Two authorized links with equal artifact recordings (materials)
+    # Cf. signing comment in test_thresholds_constraints_with_not_enough_links
+    link_bob = Metablock(
+        signed=Link(
+          name=self.name,
+          materials={
+            "foo": { "sha256": self.foo_hash}
+          }
+        )
+      )
+    link_alice = Metablock(
+        signed=Link(
+          name=self.name,
+          materials={
+            "foo": { "sha256": self.foo_hash}
+          }
+        )
+      )
+
+    chain_link_dict = {
+      self.name: {
+        self.bob_keyid: link_bob,
+        self.alice_keyid: link_alice,
+      }
+    }
+
+    verify_threshold_constraints(layout, chain_link_dict)
+
+
+
 
 
 class TestVerifySublayouts(unittest.TestCase):
