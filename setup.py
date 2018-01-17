@@ -65,8 +65,8 @@ setup(
     'Topic :: Software Development'
   ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-  install_requires=["six", "securesystemslib==0.10.8", "attrs",
-                    "python-dateutil", "iso8601"],
+  install_requires=["six", "cryptography>=2.1.3", "securesystemslib==0.10.8",
+                    "attrs", "python-dateutil", "iso8601"],
   test_suite="test.runtests",
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
