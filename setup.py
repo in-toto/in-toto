@@ -31,7 +31,7 @@
     pip install git+https://github.com/in-toto/in-toto@develop
     ```
 """
-from setuptools import setup, find_packages
+from setuptools import setup
 
 version = "0.1.1"
 
@@ -64,7 +64,7 @@ setup(
     'Topic :: Security',
     'Topic :: Software Development'
   ],
-  packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+  packages=["in_toto", "in_toto.models", "in_toto.gpg"],
   # securesystemslib 0.10.8 requires cryptography>=2.1.3, and thereby dictates
   # the minimum version of cryptography for in-toto. The maximum version
   # is dictated by what is available.
