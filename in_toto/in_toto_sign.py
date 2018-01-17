@@ -255,7 +255,7 @@ def main():
     log.logging.getLogger().setLevel(log.logging.INFO)
 
   # Override defaults in settings.py with environment variables and RCfiles
-  in_toto.user_settings.set_settings()
+  #in_toto.user_settings.set_settings()
 
 
   # Additional argparse sanitization
