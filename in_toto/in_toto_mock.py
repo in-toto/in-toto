@@ -35,7 +35,6 @@
 
 import sys
 import argparse
-import in_toto.user_settings
 from in_toto import (runlib, log)
 
 def in_toto_mock(name, link_cmd_args):
@@ -94,9 +93,6 @@ def main():
 
   # Turn on all the `log.info()` in the library
   log.logging.getLogger().setLevel(log.logging.INFO)
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  #in_toto.user_settings.set_settings()
 
   in_toto_mock(args.name, args.link_cmd)
 
