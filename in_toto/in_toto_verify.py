@@ -40,7 +40,6 @@
 import sys
 import argparse
 
-import in_toto.user_settings
 import in_toto.log as log
 import in_toto.util
 from in_toto import verifylib
@@ -147,9 +146,6 @@ def main():
   # Turn on all the `log.info()` in the library
   if args.verbose:
     log.logging.getLogger().setLevel(log.logging.INFO)
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  #in_toto.user_settings.set_settings()
 
   # For verifying at least one of --layout-keys or --gpg must be specified
   # Note: Passing both at the same time is possible.

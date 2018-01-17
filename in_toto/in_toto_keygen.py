@@ -34,7 +34,6 @@
 import sys
 import argparse
 import in_toto.util
-import in_toto.user_settings
 from in_toto import log
 
 
@@ -86,9 +85,6 @@ def main():
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
   args = parse_args()
-
-  # Override defaults in settings.py with environment variables and RCfiles
-  #in_toto.user_settings.set_settings()
 
   try:
     if args.prompt:
