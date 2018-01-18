@@ -184,7 +184,7 @@ def parse_signature_packet(data):
   # partial one is available.
   keyid = []
   for subpacket_tuple in hashed_subpacket_info:
-    if subpacket_tuple[0] == FULL_KEYID_SUBPACKET:
+    if subpacket_tuple[0] == FULL_KEYID_SUBPACKET: # pragma: no cover
       keyid.append(subpacket_tuple)
 
   # Excluded so that coverage does not vary in different test environments
