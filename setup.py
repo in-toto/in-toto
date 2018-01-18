@@ -70,7 +70,7 @@ setup(
   # is dictated by what is available.
   install_requires=["six", "cryptography", "securesystemslib==0.10.8",
                     "attrs", "python-dateutil", "iso8601"],
-  test_suite="test.runtests",
+  test_suite="tests.runtests",
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-mock = in_toto.in_toto_mock:main",
