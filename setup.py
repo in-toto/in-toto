@@ -60,16 +60,20 @@ setup(
     'Programming Language :: Python',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: Implementation :: CPython',
     'Topic :: Security',
     'Topic :: Software Development'
   ],
-  # securesystemslib 0.10.8 requires cryptography>=2.1.3, and thereby dictates
-  # the minimum version of cryptography for in-toto. The maximum version
-  # is dictated by what is available.
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "cryptography", "securesystemslib==0.10.8", "attrs",
+  # securesystemslib 0.10.9 requires cryptography>=2.1.3, and thereby dictates
+  # the minimum version of cryptography for in-toto. The maximum version
+  # is dictated by what is available.
+  install_requires=["six", "cryptography", "securesystemslib==0.10.9", "attrs",
                     "python-dateutil", "iso8601"],
   test_suite="tests.runtests",
   entry_points={

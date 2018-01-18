@@ -1,4 +1,4 @@
-securesystemslib==0.10.8
+securesystemslib==0.10.9
 cryptography
 sphinx
 attrs
