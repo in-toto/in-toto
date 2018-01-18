@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+export PATH := $(CURDIR)/bin:$(PATH)
+export PYBUILD_DESTDIR = debian/in-toto
+export PYBUILD_SYSTEM = distutils
+export PYBUILD_TEST_ARGS = test 
+export PYBUILD_NAME = in_toto
+
+%:
+	dh $@ --with python2  --buildsystem=pybuild

@@ -1,0 +1,15 @@
+in-toto: hacking tips
+========================
+
+Running the test suite
+----------------------
+
+In order to test you need unittest installed. An easy way to run the tests is
+to run
+
+    $ PYTHONPATH=. ./tests/runtests.py
+
+A more elaborate suite runner uses tox and virtualenv. If you have them
+installed, simply run:
+
+    $ tox
