@@ -180,7 +180,7 @@ class Metablock(object):
     return signature
 
 
-  def verify_signature(self, verify_key):
+  def verify_signature(self, verification_key):
     """
     <Purpose>
       Verifies all signatures found in `self.signatures` using the public keys
@@ -198,14 +198,14 @@ class Metablock(object):
       canonical JSON utf-8 encoded bytes before verifying the signature.
 
     <Arguments>
-      verify_key:
+      verification_key:
               Verifying key in the format:
-              in_toto.formats.ANY_VERIFY_KEY_SCHEMA
+              in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA
 
     <Exceptions>
       FormatError
             If the passed key is not conformant with
-            `in_toto.formats.ANY_VERIFY_KEY_SCHEMA`
+            `in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA`
 
       SignatureVerificationError
             If the Metablock does not carry a signature signed with the
@@ -221,25 +221,25 @@ class Metablock(object):
       None.
 
     """
-    in_toto.formats.ANY_VERIFY_KEY_SCHEMA.check_match(verify_key)
-    verify_keyid = verify_key["keyid"]
+    in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
+    verification_keyid = verification_key["keyid"]
 
     # Find signature by verification key id and raise exception if not found
     signature = None
     for signature in self.signatures:
-      if signature["keyid"] == verify_keyid:
+      if signature["keyid"] == verification_keyid:
         break
     else:
       raise SignatureVerificationError("No signature found for key '{}'"
-          .format(verify_keyid))
+          .format(verification_keyid))
 
     if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
-      valid = in_toto.gpg.functions.gpg_verify_signature(signature, verify_key,
-          self.signed.signable_bytes)
+      valid = in_toto.gpg.functions.gpg_verify_signature(signature,
+          verification_key, self.signed.signable_bytes)
 
     elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
       valid = securesystemslib.keys.verify_signature(
-          verify_key, signature, self.signed.signable_dict)
+          verification_key, signature, self.signed.signable_dict)
 
     else:
       # TODO: Add Metablock format validator that prevent malformed signatures
@@ -247,4 +247,4 @@ class Metablock(object):
 
     if not valid:
       raise SignatureVerificationError("Invalid signature for keyid '{}'"
-          .format(verify_keyid))
+          .format(verification_keyid))

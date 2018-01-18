@@ -242,18 +242,18 @@ def verify_layout_signatures(layout_metablock, keys_dict):
 
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.ANY_VERIFY_KEY_DICT_SCHEMA.
+            securesystemslib.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
   <Exceptions>
     securesystemslib.exceptions.FormatError
-      if the passed key dict does not match ANY_VERIFY_KEY_DICT_SCHEMA.
+      if the passed key dict does not match ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
     SignatureVerificationError
       if the any empty verification key dictionary was passed, or
       if any of the passed verification keys fails to verify a signature.
 
   """
-  in_toto.formats.ANY_VERIFY_KEY_DICT_SCHEMA.check_match(keys_dict)
+  in_toto.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
 
   # Fail if an empty verification key dictionary was passed
   if len(keys_dict) < 1:
