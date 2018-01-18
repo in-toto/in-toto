@@ -224,7 +224,8 @@ class Metablock(object):
     in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
     verification_keyid = verification_key["keyid"]
 
-    # Find signature by verification key id and raise exception if not found
+    # Find a signature that corresponds to this verification keyid and raise
+    # an exception if it doesn't exist
     signature = None
     for signature in self.signatures:
       if signature["keyid"] == verification_keyid:
