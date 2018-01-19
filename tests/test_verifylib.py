@@ -1205,7 +1205,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
       verify_threshold_constraints(layout, chain_link_dict)
 
 
-  def test_treshold_constraints_fail_with_unequal_links(self):
+  def test_threshold_constraints_fail_with_unequal_links(self):
     """ Test that the links for a step recorded the same artifacts. """
     # Layout with one step and threshold 2
     layout = Layout(steps=[Step(name=self.name, threshold=2)])
@@ -1232,7 +1232,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 
-  def test_treshold_constraints_pas_with_equal_links(self):
+  def test_threshold_constraints_pas_with_equal_links(self):
     """ Pass threshold constraint verification with equal links. """
     # Layout with one step and threshold 2
     layout = Layout(steps=[Step(name=self.name, threshold=2)])
