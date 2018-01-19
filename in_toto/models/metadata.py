@@ -183,9 +183,10 @@ class Metablock(object):
   def verify_signature(self, verification_key):
     """
     <Purpose>
-      Verifies all signatures found in `self.signatures` using the public keys
-      from the passed dictionary of keys and the utf-8 encoded canonical JSON
-      bytes of the Link or Layout object contained in `self.signed`.
+      Verifies the signature, found in `self.signatures`, corresponding to the
+      passed verification key, identified by the key's keyid, using the passed
+      verification key and the utf-8 encoded canonical JSON bytes of the Link
+      or Layout object, contained in `self.signed`.
 
       If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
       `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
@@ -215,7 +216,7 @@ class Metablock(object):
             does not match securesystemslib's or in_toto.gpg's
             signature schema.
 
-            If the verified signature is invalid.
+            If the signature to be verified is malformed or invalid.
 
     <Returns>
       None.
