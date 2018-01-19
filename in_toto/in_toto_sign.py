@@ -65,6 +65,7 @@
 
 """
 import sys
+import six
 import argparse
 from in_toto import log, exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
@@ -173,8 +174,11 @@ def _verify_metadata(metadata, args):
           args.gpg, args.gpg_home)
 
 
-    metadata.verify_signatures(pub_key_dict)
-    log.pass_verification("Signature verification passed")
+    for keyid, verification_key in six.iteritems(pub_key_dict):
+      metadata.verify_signature(verification_key)
+      log.pass_verification("Signature verification passed for keyid '{}'"
+          .format(keyid))
+
     sys.exit(0)
 
   except exceptions.SignatureVerificationError as e:

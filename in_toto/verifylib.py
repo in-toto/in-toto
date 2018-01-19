@@ -38,7 +38,8 @@ import in_toto.models.link
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError, AuthorizationError)
+    ThresholdVerificationError, BadReturnValueError,
+    SignatureVerificationError)
 import in_toto.artifact_rules
 import in_toto.log as log
 
@@ -225,64 +226,52 @@ def verify_layout_expiration(layout):
     raise LayoutExpiredError("Layout expired")
 
 
-def verify_layout_signatures(layout, keys_dict):
+def verify_layout_signatures(layout_metablock, keys_dict):
   """
   <Purpose>
-    Iteratively verifies all signatures of a Layout object using the passed
-    keys.
+    Iteratively verifies the signatures of a Metablock object containing
+    a Layout object for every verification key in the passed keys dictionary.
+
+    Requires at least one key to be passed and requires every passed key to
+    find a valid signature.
 
   <Arguments>
-    layout:
-            A Layout object whose signatures are verified.
+    layout_metablock:
+            A Metablock object containing a Layout whose signatures are
+            verified.
 
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA.
+            securesystemslib.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    securesystemslib.exceptions.FormatError
+      if the passed key dict does not match ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
-  <Side Effects>
-    Verifies cryptographic Layout signatures.
-
-  """
-  layout.verify_signatures(keys_dict)
-
-
-def verify_link_signatures(link, keys_dict):
-  """
-  <Purpose>
-    Iteratively verifies all signatures of a Link object using the passed
-    keys.
-
-  <Arguments>
-    link:
-            Metablock object (containing a Link) whose signatures are verified.
-
-    keys_dict:
-            A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA.
-
-  <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
-
-  <Side Effects>
-    Verifies cryptographic Link signatures.
+    SignatureVerificationError
+      if the any empty verification key dictionary was passed, or
+      if any of the passed verification keys fails to verify a signature.
 
   """
-  link.verify_signatures(keys_dict)
+  in_toto.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
+
+  # Fail if an empty verification key dictionary was passed
+  if len(keys_dict) < 1:
+    raise SignatureVerificationError("Layout signature verification"
+        " requires at least one key.")
+
+  # Fail if any of the passed keys can't verify a signature on the Layout
+  for junk, verify_key in six.iteritems(keys_dict):
+    layout_metablock.verify_signature(verify_key)
 
 
-def verify_all_steps_signatures(layout, chain_link_dict):
+def verify_link_signature_thresholds(layout, chain_link_dict):
   """
   <Purpose>
-    Extracts the Steps of a passed Layout and iteratively verifies the
-    the signatures of the Link object(s) related to each Step by the name field.
-    The public keys used for verification are also extracted from the Layout.
+    Verify that for each step of the layout there are at least `threshold`
+    links, signed by different authorized functionaries and return the chain
+    link dictionary containing only authorized links whose signatures
+    were successfully verified.
 
   <Arguments>
     layout:
@@ -300,34 +289,68 @@ def verify_all_steps_signatures(layout, chain_link_dict):
             }
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    ThresholdVerificationError
+            If any of the steps of the passed layout does not have enough
+            (`step.threshold`) links signed by different authorized
+            functionaries.
+
+  <Returns>
+    A chain_link_dict containing only links with valid signatures created by
+    authorized functionaries.
 
   """
+
+  verfied_chain_link_dict = {}
+  # Check signatures on passed links, if they are valid and authorized, but
+  # don't fail yet, instead add authorized links with passing signatures
+  # to a `verfied_chain_link_dict` and check later if the threshold
+  # requirements are fulfilled. That is, we don't care if there are a few
+  # bad links, as long as we have enough good links. Only the good links will
+  # be considered for further final product verification.
   for step in layout.steps:
-    # Find the according link for this step
-    key_link_dict = chain_link_dict[step.name]
+    # Contains all links corresponding to a step with successfully verified
+    # signatures, authorized to perform the step
+    verified_key_link_dict = {}
 
-    for keyid, link in six.iteritems(key_link_dict):
-      keys_dict = {}
+    # Iterate over links corresponding to a step
+    for keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
 
-      # Create the dictionary of keys for this step
-      # Only one key with the matching keyid in the
-      # filename is added to the dictionary which ensures
-      # that the link has been signed by that key
-      if keyid in step.pubkeys:
-        keys_dict[keyid] = layout.keys[keyid]
+      # Skip unauthorized links
+      if keyid not in step.pubkeys:
+        log.info("Skipping link. Keyid '{0}' is not authorized to sign links"
+            " for step '{1}'".format(keyid, step.name))
+        continue
+
+      # Verify signature and skip invalidly signed links
+      try:
+        verify_key = layout.keys.get(keyid)
+        link.verify_signature(verify_key)
+
+      except SignatureVerificationError:
+        log.info("Skipping link. Broken link signature with keyid '{0}'"
+            " for step '{1}'".format(keyid, step.name))
+
       else:
-        raise AuthorizationError("Unauthorized Key! '{0}'".format(keyid))
+        # Good link: The signature is valid and the signer was authorized
+        verified_key_link_dict[keyid] = link
 
-      log.info("Verifying signature(s) for '{0}'...".format(
-          in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
-              keyid=keyid)))
+    # Add all good links for a step to the dictionary of links for all steps
+    verfied_chain_link_dict[step.name] = verified_key_link_dict
 
-      # Verify link metadata file's signatures
-      verify_link_signatures(link, keys_dict)
+  # For each step, verify that we have enough validly signed links signed by
+  # different authorized functionaries.
+  # TODO: To guarantee that links are signed by different functionaries
+  # we rely on the layout to not carry duplicate verification keys under
+  # different dictionary keys, e.g. {keyid1: KEY1, keyid2: KEY1}
+  # Maybe we should add such a check to the layout validation? Or here?
+  for step in layout.steps:
+    valid_authorized_links_cnt = len(verfied_chain_link_dict[step.name])
+    if valid_authorized_links_cnt < step.threshold:
+      raise ThresholdVerificationError("Step requires at least '{}' links"
+          " validly signed by different authorized functionaries. Only"
+          " found '{}'".format(step.threshold, valid_authorized_links_cnt))
 
+  return verfied_chain_link_dict
 
 def verify_command_alignment(command, expected_command):
   """
@@ -1017,12 +1040,13 @@ def verify_all_item_rules(items, links):
 def verify_threshold_constraints(layout, chain_link_dict):
   """
   <Purpose>
-    Verifies that each step of a layout meets its signature threshold, i.e.:
-    For each step there are at least `step.threshold` corresponding links,
-    signed by different functionaries.
+    Verifies that all links corresponding to a given step report the same
+    materials and products.
 
-    Furthermore, verifies that all links corresponding to a given step report
-    the same materials and products.
+    NOTE: This function does not verify if the signatures of each link
+    corresponding to a step are valid or created by a different authorized
+    functionary. This should be done earlier, using the function
+    `verify_link_signature_thresholds`.
 
   <Arguments>
     layout:
@@ -1039,10 +1063,11 @@ def verify_threshold_constraints(layout, chain_link_dict):
             }
 
   <Exceptions>
-    raises an Exception if threshold is not verified.
-    ThresholdVerificationError if the step is not performed by enough
-    functionaries or if the materials and products for a step are not same
-    for all functionaries.
+    ThresholdVerificationError
+        If there are not enough (threshold) links for a steps
+
+        If the artifacts for all links of a step are not equal
+
 
   <Side Effects>
     None.
@@ -1064,6 +1089,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
     key_link_dict = chain_link_dict[step.name]
 
     # Check if we have at least <threshold> links for this step
+    # NOTE: This is already done in `verify_link_signature_thresholds`,
+    # Should we remove the check?
     if len(key_link_dict) < step.threshold:
       raise ThresholdVerificationError("Step '{0}' not performed"
           " by enough functionaries!".format(step.name))
@@ -1074,8 +1101,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
 
     # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
-
-      # compare their properties
+      # TODO: Do we only care for artifacts, or do we want to
+      # assert equality of other properties as well?
       if (reference_link.signed.materials != link.signed.materials or
           reference_link.signed.products != link.signed.products):
         raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
@@ -1130,6 +1157,7 @@ def reduce_chain_links(chain_link_dict):
     reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
 
   return reduced_chain_link_dict
+
 
 def verify_sublayouts(layout, chain_link_dict):
   """
@@ -1253,16 +1281,23 @@ def in_toto_verify(layout, layout_key_dict):
     Does entire in-toto supply chain verification of a final product
     by performing the following actions:
 
-        1.  Verify layout signature(s)
+        1.  Verify layout signature(s), requires at least one verification key
+            to be passed, and a valid signature for each passed key.
 
         2.  Verify layout expiration
 
-        3.  Load link metadata for every Step defined in the layout
-            NOTE: link files are expected to have the corresponding step
+        3.  Load link metadata for every Step defined in the layout and
+            fail if less links than the defined threshold for a step are found.
+            NOTE: Link files are expected to have the corresponding step
             and the functionary, who carried out the step, encoded in their
             filename.
 
-        4.  Verify functionary signature for every Link
+        4.  Verify functionary signature for every loaded Link, skipping links
+            with failing signatures or signed by unauthorized functionaries,
+            and fail if less than `threshold` links validly signed by different
+            authorized functionaries can be found.
+            The routine returns a dictionary containing only links with valid
+            signatures by authorized functionaries.
 
         5.  Verify sublayouts
             NOTE: Replaces the layout object in the chain_link_dict with an
@@ -1273,7 +1308,8 @@ def in_toto_verify(layout, layout_key_dict):
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
 
-        7.  Verify threshold constraints
+        7.  Verify threshold constraints, i.e. if all links corresponding to
+            one step have recorded the same artifacts (materials and products).
 
         8.  Verify rules defined in each Step's expected_materials and
             expected_products field
@@ -1326,7 +1362,7 @@ def in_toto_verify(layout, layout_key_dict):
   chain_link_dict = load_links_for_layout(layout)
 
   log.info("Verifying link metadata signatures...")
-  verify_all_steps_signatures(layout, chain_link_dict)
+  chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 
   log.info("Verifying sublayouts...")
   chain_link_dict = verify_sublayouts(layout, chain_link_dict)

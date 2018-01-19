@@ -50,7 +50,7 @@ if os.name == 'posix' and sys.version_info[0] < 3: # pragma: no cover
     log.warn("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
         " install and use the much more recent subprocess32")
     import subprocess
-else:
+else: # pragma: no cover
   import subprocess
 
 
@@ -169,10 +169,6 @@ def record_artifacts_as_dict(artifacts):
   for artifact in _apply_exclude_patterns(norm_artifacts,
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
 
-    if not os.path.exists(artifact):
-      log.warn("path: {} does not exist, skipping..".format(artifact))
-      continue
-
     if os.path.isfile(artifact):
       # Path was already normalized above
       artifacts_dict[artifact] = _hash_artifact(artifact)
@@ -217,6 +213,11 @@ def record_artifacts_as_dict(artifacts):
         for filepath in _apply_exclude_patterns(filepaths,
             in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
           artifacts_dict[filepath] = _hash_artifact(filepath)
+
+    # Path is no file and no directory
+    else:
+      log.warn("path: {} does not exist, skipping..".format(artifact))
+
 
   # Change back to where original current working dir
   if in_toto.settings.ARTIFACT_BASE_PATH:
@@ -623,13 +624,13 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   if signing_key:
     log.info("Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
-    verification_key_dict = {keyid: signing_key}
+    verification_key = signing_key
 
   elif gpg_keyid:
     log.info("Verifying preliminary link signature using passed gpg key...")
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
-    verification_key_dict = {keyid: gpg_pubkey}
+    verification_key = gpg_pubkey
 
   else: # must be gpg_use_default
     # FIXME: Currently there is no way to know the default GPG key's keyid
@@ -641,9 +642,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     log.info("Verifying preliminary link signature using default gpg key...")
     keyid = link_metadata.signatures[0]["keyid"]
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
-    verification_key_dict = {keyid: gpg_pubkey}
+    verification_key = gpg_pubkey
 
-  link_metadata.verify_signatures(verification_key_dict)
+  link_metadata.verify_signature(verification_key)
 
   # Record products if a product path list was passed
   if product_list:

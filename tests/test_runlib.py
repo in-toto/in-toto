@@ -29,7 +29,8 @@ import in_toto.exceptions
 from in_toto.models.metadata import Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
-    in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns)
+    in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
+    _hash_artifact)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
@@ -233,6 +234,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       with self.assertRaises(in_toto.exceptions.SettingsError):
         record_artifacts_as_dict(["."])
 
+  def test_hash_artifact_passing_algorithm(self):
+    """Test _hash_artifact passing hash algorithm. """
+    self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
+
+
 
 class TestInTotoRun(unittest.TestCase):
   """"
@@ -282,7 +288,7 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify signed metadata. """
     link = in_toto_run(self.step_name, None, None,
         ["echo", "test"], True, self.key)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
 
   def test_in_toto_run_no_signature(self):
     """Successfully run, verify empty signature field. """
@@ -379,7 +385,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
     os.remove(self.link_name_unfinished)
 
   def test_no_key_arguments(self):
@@ -443,7 +449,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [], self.key)
     link = Metablock.load(self.link_name)
-    link.verify_signatures({self.key["keyid"] : self.key})
+    link.verify_signature(self.key)
     os.remove(self.link_name)
 
   def test_replace_unfinished_metadata(self):
