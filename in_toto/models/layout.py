@@ -136,6 +136,8 @@ class Layout(Signable):
     """Private method to verify if the expiration field has the right format
     and can be parsed."""
     try:
+      # We do both 'parse' and 'check_match' because the format check does not
+      # detect bogus dates (e.g. Jan 35th) and parse can do more formats.
       parse(self.expires)
       securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
           self.expires)
