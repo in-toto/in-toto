@@ -48,3 +48,6 @@ ANY_PUBKEY_DICT_SCHEMA = ssl_schema.DictOf(
 
 ANY_SIGNATURE_SCHEMA = ssl_schema.OneOf([ssl_formats.SIGNATURE_SCHEMA,
     gpg_formats.SIGNATURE_SCHEMA])
+
+ANY_STRING_SCHEMA = ssl_schema.AnyString()
+LIST_OF_ANY_STRING_SCHEMA = ssl_schema.ListOf(ANY_STRING_SCHEMA)
