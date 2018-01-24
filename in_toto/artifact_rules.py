@@ -28,10 +28,10 @@ def unpack_rule(rule):
 
   <Arguments>
     rule:
-        The rule to be unpacked, one of:
+        The list of rule elements, in one of the following formats:
         MATCH <pattern> [IN <source-path-prefix>] WITH (MATERIALS|PRODUCTS)
             [IN <destination-path-prefix>] FROM <step>,
-        CREATE <path,
+        CREATE <pattern>,
         DELETE <pattern>,
         MODIFY <pattern>,
         ALLOW <pattern>,
@@ -107,8 +107,6 @@ def unpack_rule(rule):
   # NOTE: Can't reach `else` branch, if the rule is neither in GENERIC_RULES
   # nor in COMPLEX_RULES an exception is raised earlier.
   elif rule_type in COMPLEX_RULES: # pragma: no branch
-
-
     # ... IN <source-path-prefix> WITH (MATERIALS|PRODUCTS)
     # IN <destination-path-prefix> FROM <step>
     if (rule_len == 10 and rule_lower[2] == "in" and
