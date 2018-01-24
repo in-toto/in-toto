@@ -6,6 +6,7 @@
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
 
 <Started>
   Nov 19, 2016
@@ -14,11 +15,13 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Test artifact rule unpacking.
+  Test artifact rule packing and unpacking.
 
 """
 import unittest
-from in_toto.artifact_rules import unpack_rule
+from in_toto.artifact_rules import (unpack_rule, pack_rule, pack_rule_data,
+    pack_create_rule, pack_delete_rule, pack_modify_rule, pack_allow_rule,
+    pack_disallow_rule)
 import securesystemslib.exceptions
 
 
@@ -56,13 +59,17 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       unpack_rule(rule)
 
-  def test_unpack_generic_rule(self):
-    """Test generic rule proper unpacking. """
+  def test_unpack_and_pack_generic_rule(self):
+    """Test generic rule proper packing and unpacking. """
     rule = ["CREATE", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
     self.assertEquals(rule_data["rule_type"], "create")
     self.assertEquals(rule_data["pattern"], "foo")
+
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_create_rule("foo"))
+
 
     rule = ["DELETE", "foo"]
     rule_data = unpack_rule(rule)
@@ -70,11 +77,19 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["rule_type"], "delete")
     self.assertEquals(rule_data["pattern"], "foo")
 
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_delete_rule("foo"))
+
+
     rule = ["MODIFY", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
     self.assertEquals(rule_data["rule_type"], "modify")
     self.assertEquals(rule_data["pattern"], "foo")
+
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_modify_rule("foo"))
+
 
     rule = ["ALLOW", "foo"]
     rule_data = unpack_rule(rule)
@@ -82,15 +97,22 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["rule_type"], "allow")
     self.assertEquals(rule_data["pattern"], "foo")
 
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_allow_rule("foo"))
+
+
     rule = ["DISALLOW", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
     self.assertEquals(rule_data["rule_type"], "disallow")
     self.assertEquals(rule_data["pattern"], "foo")
 
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_disallow_rule("foo"))
 
-  def test_unpack_match_rule(self):
-    """Check match rule proper unpacking. """
+
+  def test_unpack_and_pack_match_rule(self):
+    """Check match rule proper packing and unpacking. """
 
     rule = ["MATCH", "foo", "IN", "source-path", "WITH",
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
@@ -102,6 +124,12 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["dest_prefix"], "dest-path")
     self.assertEquals(rule_data["dest_type"], "products")
     self.assertEquals(rule_data["dest_name"], "step-name")
+
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_rule("MATCH", "foo",
+        source_prefix="source-path", dest_type="PRODUCTS",
+        dest_prefix="dest-path", dest_name="step-name"))
+
 
     rule = ["MATCH", "foo", "IN", "source-path", "WITH",
         "MATERIALS", "FROM", "step-name"]
@@ -114,6 +142,12 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["dest_type"], "materials")
     self.assertEquals(rule_data["dest_name"], "step-name")
 
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_rule("MATCH", "foo",
+        source_prefix="source-path", dest_type="MATERIALS",
+        dest_name="step-name"))
+
+
     rule = ["MATCH", "foo", "WITH",
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
@@ -125,8 +159,11 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["dest_type"], "products")
     self.assertEquals(rule_data["dest_name"], "step-name")
 
-    rule = ["MATCH", "foo", "WITH",
-        "PRODUCTS", "FROM", "step-name"]
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_rule("MATCH", "foo",
+        dest_type="PRODUCTS", dest_prefix="dest-path", dest_name="step-name"))
+
+    rule = ["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 6)
     self.assertEquals(rule_data["rule_type"], "match")
@@ -135,6 +172,55 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule_data["dest_prefix"], "")
     self.assertEquals(rule_data["dest_type"], "products")
     self.assertEquals(rule_data["dest_name"], "step-name")
+
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_rule("MATCH", "foo",
+        dest_type="PRODUCTS", dest_name="step-name"))
+
+
+  def test_pack_rule_wrong_types(self):
+    """Test argument validation for pack_rule. """
+    # pattern must be a string
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", None)
+
+    # rule_type must be a string...
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule(1, "foo")
+
+    # ... and one of the allowed rule types
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("not-a-rule-type", "foo")
+
+    # For match rules a dest_type must be passed ...
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", dest_name="step-name")
+
+    # ... and be one of materials or products
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", dest_type="not-a-dest-type",
+          dest_name="step-name")
+
+    # For match rules dest_name must be a string ...
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", dest_type="materials",
+          dest_name=1)
+
+    # ... and non-empty
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", dest_type="materials",
+          dest_name="")
+
+    # For match rules, if a source_prefix is passed it must be a string
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", source_prefix=1, dest_type="products",
+          dest_prefix="dest-path", dest_name="step-name")
+
+   # For match rules, if a dest_prefix is passed it must be a string
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      pack_rule("match", "foo", dest_type="products",
+          dest_prefix=["not-a-string"], dest_name="step-name")
+
 
   def test_unpack_match_rule_wrong_length(self):
     """Check match rule syntax error, too few or many arguments. """
@@ -185,6 +271,6 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       unpack_rule(rule)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
   unittest.main()
