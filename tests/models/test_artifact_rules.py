@@ -61,31 +61,31 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     rule = ["CREATE", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["type"], "create")
+    self.assertEquals(rule_data["rule_type"], "create")
     self.assertEquals(rule_data["pattern"], "foo")
 
     rule = ["DELETE", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["type"], "delete")
+    self.assertEquals(rule_data["rule_type"], "delete")
     self.assertEquals(rule_data["pattern"], "foo")
 
     rule = ["MODIFY", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["type"], "modify")
+    self.assertEquals(rule_data["rule_type"], "modify")
     self.assertEquals(rule_data["pattern"], "foo")
 
     rule = ["ALLOW", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["type"], "allow")
+    self.assertEquals(rule_data["rule_type"], "allow")
     self.assertEquals(rule_data["pattern"], "foo")
 
     rule = ["DISALLOW", "foo"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["type"], "disallow")
+    self.assertEquals(rule_data["rule_type"], "disallow")
     self.assertEquals(rule_data["pattern"], "foo")
 
 
@@ -96,7 +96,7 @@ class TestArtifactRuleUnpack(unittest.TestCase):
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["type"], "match")
+    self.assertEquals(rule_data["rule_type"], "match")
     self.assertEquals(rule_data["pattern"], "foo")
     self.assertEquals(rule_data["source_prefix"], "source-path")
     self.assertEquals(rule_data["dest_prefix"], "dest-path")
@@ -107,7 +107,7 @@ class TestArtifactRuleUnpack(unittest.TestCase):
         "MATERIALS", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["type"], "match")
+    self.assertEquals(rule_data["rule_type"], "match")
     self.assertEquals(rule_data["pattern"], "foo")
     self.assertEquals(rule_data["source_prefix"], "source-path")
     self.assertEquals(rule_data["dest_prefix"], "")
@@ -118,7 +118,7 @@ class TestArtifactRuleUnpack(unittest.TestCase):
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["type"], "match")
+    self.assertEquals(rule_data["rule_type"], "match")
     self.assertEquals(rule_data["pattern"], "foo")
     self.assertEquals(rule_data["source_prefix"], "")
     self.assertEquals(rule_data["dest_prefix"], "dest-path")
@@ -129,7 +129,7 @@ class TestArtifactRuleUnpack(unittest.TestCase):
         "PRODUCTS", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
     self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["type"], "match")
+    self.assertEquals(rule_data["rule_type"], "match")
     self.assertEquals(rule_data["pattern"], "foo")
     self.assertEquals(rule_data["source_prefix"], "")
     self.assertEquals(rule_data["dest_prefix"], "")

@@ -956,7 +956,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     # Unpack rules for dispatching and rule format verification
     rule_data = in_toto.artifact_rules.unpack_rule(rule)
-    rule_type = rule_data["type"]
+    rule_type = rule_data["rule_type"]
 
     # MATCH, ALLOW, DISALLOW operate equally on either products or materials
     # depending on the source_type

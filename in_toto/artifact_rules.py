@@ -47,14 +47,14 @@ def unpack_rule(rule):
     A dictionary of the artifact rule data,
     if it is a generic rule the dictionary is:
     {
-      "type": rule[0], i.e.: ("CREATE"|"MODIFY"|"DELETE"|"ALLOW"|"DISALLOW")
-      "pattern" : rule[1], i.e. path pattern
+      "rule_type": rule[0] ("CREATE"|"MODIFY"|"DELETE"|"ALLOW"|"DISALLOW")
+      "pattern" : rule[1], a path pattern
     }
 
     if it is a match rule, the dictionary is:
     {
-      "type": rule[0], i.e. "MATCH",
-      "pattern": rule[1], i.e. path pattern
+      "rule_type": rule[0],  ("MATCH"),
+      "pattern": rule[1], a path pattern
       "source_prefix": path or empty string
       "dest_prefix": path or empty string
       "dest_type" : destination artifact type, ("MATERIAL"|"PRODUCT")
@@ -99,7 +99,7 @@ def unpack_rule(rule):
         "Got:\n\t{}".format(rule))
     else:
       return {
-        "type": rule_type,
+        "rule_type": rule_type,
         "pattern": pattern,
       }
 
@@ -157,7 +157,7 @@ def unpack_rule(rule):
           "Got: \n\t{}".format(rule))
 
     return {
-      "type": rule_type,
+      "rule_type": rule_type,
       "pattern": pattern,
       "source_prefix": source_prefix,
       "dest_prefix": dest_prefix,
