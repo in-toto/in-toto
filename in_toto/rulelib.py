@@ -1,6 +1,6 @@
 """
 <Module Name>
-  in_toto/artifact_rules.py
+  in_toto/rulelib.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>

@@ -2,7 +2,7 @@
 
 """
 <Program Name>
-  models/test_artifact_rules.py
+  test_rulelib.py
 
 <Author>
   Santiago Torres-Arias <santiago@nyu.edu>
@@ -19,7 +19,7 @@
 
 """
 import unittest
-from in_toto.artifact_rules import (unpack_rule, pack_rule, pack_rule_data,
+from in_toto.rulelib import (unpack_rule, pack_rule, pack_rule_data,
     pack_create_rule, pack_delete_rule, pack_modify_rule, pack_allow_rule,
     pack_disallow_rule)
 import securesystemslib.exceptions

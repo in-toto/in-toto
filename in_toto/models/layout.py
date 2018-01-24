@@ -38,7 +38,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
 
 from in_toto.models.common import Signable, ValidationMixin
-import in_toto.artifact_rules
+import in_toto.rulelib
 import in_toto.exceptions
 import in_toto.formats
 
@@ -271,7 +271,7 @@ class Step(ValidationMixin):
           "Material rules should be a list!")
 
     for rule in self.expected_materials:
-      in_toto.artifact_rules.unpack_rule(rule)
+      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_expected_products(self):
     """Private method to check that product rules are correctly formed."""
@@ -280,7 +280,7 @@ class Step(ValidationMixin):
           "Product rules should be a list!")
 
     for rule in self.expected_products:
-      in_toto.artifact_rules.unpack_rule(rule)
+      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
@@ -359,7 +359,7 @@ class Inspection(ValidationMixin):
           "The material rules should be a list!")
 
     for rule in self.expected_materials:
-      in_toto.artifact_rules.unpack_rule(rule)
+      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_expected_products(self):
     """Private method to check that the product rules are correct."""
@@ -368,7 +368,7 @@ class Inspection(ValidationMixin):
           "The product rules should be a list!")
 
     for rule in self.expected_products:
-      in_toto.artifact_rules.unpack_rule(rule)
+      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
