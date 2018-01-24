@@ -29,12 +29,13 @@ import securesystemslib.exceptions
 import in_toto.formats
 import in_toto.gpg.functions
 
+from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False, init=False)
-class Metablock(object):
+class Metablock(ValidationMixin):
   """ This object holds the in-toto metablock data structure. This includes
   the fields "signed" and "signatures", i.e., what was signed and the
   signatures. """
@@ -45,6 +46,8 @@ class Metablock(object):
   def __init__(self, **kwargs):
     self.signatures = kwargs.get("signatures", [])
     self.signed = kwargs.get("signed")
+
+    self.validate()
 
 
   def __repr__(self):
@@ -244,9 +247,32 @@ class Metablock(object):
           verification_key, signature, self.signed.signable_dict)
 
     else:
-      # TODO: Add Metablock format validator that prevent malformed signatures
       valid = False
 
     if not valid:
       raise SignatureVerificationError("Invalid signature for keyid '{}'"
           .format(verification_keyid))
+
+
+  def _validate_signed(self):
+    """Private method to check if the 'signed' attribute contains a valid
+    Layout or Link object. """
+
+    if not (isinstance(self.signed, Layout) or isinstance(self.signed, Link)):
+      raise securesystemslib.exceptions.FormatError("The Metblock's 'signed'"
+        " property has has to be of type 'Link' or 'Layout'.")
+
+    # If the signed object is a Link or Layout object validate it.
+    self.signed.validate()
+
+
+  def _validate_signatures(self):
+    """Private method to check that the 'signatures' attribute is a list of
+    signatures in the format 'in_toto.formats.ANY_SIGNATURE_SCHEMA'. """
+
+    if not isinstance(self.signatures, list):
+      raise securesystemslib.exceptions.FormatError("The Metablock's"
+        " 'signatures' property has to be of type 'list'.")
+
+    for signature in self.signatures:
+      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
