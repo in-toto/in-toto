@@ -17,7 +17,7 @@
   syntax.
 
 """
-import six
+import in_toto.formats
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -66,17 +66,7 @@ def unpack_rule(rule):
   GENERIC_RULES = {"create", "modify", "delete", "allow", "disallow",}
   COMPLEX_RULES = {"match",}
   ALL_RULES = GENERIC_RULES | COMPLEX_RULES
-
-  if not isinstance(rule, list):
-    raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " rules must be of type list.\n"
-        "Got: \n\t'{0}'".format(rule))
-
-  for rule_elem in rule:
-    if not isinstance(rule_elem, six.string_types):
-      raise securesystemslib.exceptions.FormatError("Wrong rule format,"
-        " all rule elements must be of type string.\n"
-        "Got: \n\t{}".format(rule))
+  in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(rule)
 
   # Create all lower rule copy to case insensitively parse out tokens whose
   # position we don't know yet
