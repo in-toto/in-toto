@@ -228,6 +228,17 @@ class SupplyChainItem(ValidationMixin):
         indent=1, separators=(",", ": "), sort_keys=True)
 
 
+  def add_material_rule_from_string(self, rule_string):
+    securesystemslib.schema.AnyString().check_match(rule_string)
+    rule_list = shlex.split(rule_string)
+    self.expected_materials.append(rule_list)
+
+
+  def add_product_rule_from_string(self, rule_string):
+    securesystemslib.schema.AnyString().check_match(rule_string)
+    rule_list = shlex.split(rule_string)
+    self.expected_products.append(rule_list)
+
 
   def _validate_expected_materials(self):
     """Private method to check that material rules are correctly formed."""

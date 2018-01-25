@@ -79,5 +79,16 @@ class TestSupplyChainItem(unittest.TestCase):
     json.loads(repr(SupplyChainItem()))
 
 
+  def test_add_rule_from_string(self):
+    """Test that add_rule_from string methods set property correctly. """
+    item = SupplyChainItem()
+    item.add_material_rule_from_string("CREATE foo")
+    self.assertListEqual(item.expected_materials[-1], ["CREATE", "foo"])
+    item.add_product_rule_from_string("ALLOW bar")
+    self.assertListEqual(item.expected_products[-1], ["ALLOW", "bar"])
+
+    item.validate()
+
+
 if __name__ == "__main__":
   unittest.main()
