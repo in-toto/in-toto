@@ -32,6 +32,7 @@ from six import string_types
 
 import attr
 import shlex
+import json
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -221,6 +222,11 @@ class SupplyChainItem(ValidationMixin):
     self.name = kwargs.get("name")
     self.expected_materials = kwargs.get("expected_materials", [])
     self.expected_products = kwargs.get("expected_products", [])
+
+  def __repr__(self):
+    return json.dumps(attr.asdict(self),
+        indent=1, separators=(",", ": "), sort_keys=True)
+
 
 
   def _validate_expected_materials(self):

@@ -74,5 +74,10 @@ class TestSupplyChainItem(unittest.TestCase):
     item.validate()
 
 
+  def test_repr(self):
+    """Test repr returns a JSON parseable string. """
+    json.loads(repr(SupplyChainItem()))
+
+
 if __name__ == "__main__":
   unittest.main()
