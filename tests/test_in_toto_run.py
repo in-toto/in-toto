@@ -195,4 +195,4 @@ class TestInTotoRunTool(unittest.TestCase):
           ["echo", "test"], False, "bad-key", None, False, None)
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()

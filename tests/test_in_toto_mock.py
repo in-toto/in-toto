@@ -95,4 +95,4 @@ class TestInTotoMockTool(unittest.TestCase):
       in_toto_mock(self.test_step, ["exit", "1"])
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()

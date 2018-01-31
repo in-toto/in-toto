@@ -129,4 +129,4 @@ class TestInTotoKeyGenTool(unittest.TestCase):
       securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
 
 if __name__ == '__main__':
-  unittest.main(buffer=True)
+  unittest.main()

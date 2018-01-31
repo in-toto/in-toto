@@ -294,4 +294,4 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 2)
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()
