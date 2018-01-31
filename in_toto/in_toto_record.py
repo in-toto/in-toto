@@ -94,8 +94,12 @@ def main():
       help="Path to GPG keyring (if not set the default keyring is used)",
       metavar="<gpg keyring path>")
 
-  parent_parser.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", default=False, action="store_true")
+  verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
+  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", action="store_true")
+
+  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
+      help="Suppress all output.", action="store_true")
 
   subparser_start = subparsers.add_parser("start", parents=[parent_parser])
   subparser_stop = subparsers.add_parser("stop", parents=[parent_parser])
@@ -110,9 +114,7 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    in_toto.log.logging.getLogger().setLevel(in_toto.log.logging.INFO)
+  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()

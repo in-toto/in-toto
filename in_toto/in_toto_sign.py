@@ -254,16 +254,19 @@ def main():
       help="append to existing signatures (only available for Layout"
       " metadata")
 
-  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
-
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
 
+  verbosity_args = parser.add_mutually_exclusive_group(required=False)
+  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", action="store_true")
+
+  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
+      help="Suppress all output.", action="store_true")
+
   args = parser.parse_args()
 
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
-
+  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Additional argparse sanitization
   # NOTE: This tool is starting to have many inter-dependent argument

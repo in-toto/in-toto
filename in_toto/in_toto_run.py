@@ -110,7 +110,7 @@ def main():
                "[--products <filepath>[ <filepath> ...]]\n{0}"
                "[--record-streams]\n{0}"
                "[--no-command]\n{0}"
-               "[--verbose] -- <cmd> [args]\n\n"
+               "[--verbose | --quiet] -- <cmd> [args]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -143,8 +143,12 @@ def main():
       help="Set if step does not have a command",
       dest="no_command", default=False, action="store_true")
 
-  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", default=False, action="store_true")
+  verbosity_args = parser.add_mutually_exclusive_group(required=False)
+  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", action="store_true")
+
+  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
+      help="Suppress all output.", action="store_true")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
@@ -153,9 +157,7 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()

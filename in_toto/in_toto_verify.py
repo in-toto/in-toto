@@ -125,7 +125,7 @@ def main():
                "{{--layout-keys <filepath>[ <filepath> ...], "
                " --gpg <keyid> [ <keyid> ...]}} \n{0}"
                "[--gpg-home <path to gpg keyring>]\n{0}"
-               "[--verbose]\n\n"
+               "[--verbose | --quiet]\n\n"
                .format(lpad))
 
   in_toto_args = parser.add_argument_group("in-toto options")
@@ -143,14 +143,18 @@ def main():
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       help="Path to GPG keyring (if not set the default keyring is used)")
 
-  in_toto_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", default=False, action="store_true")
+
+  verbosity_args = parser.add_mutually_exclusive_group(required=False)
+  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", action="store_true")
+
+  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
+      help="Suppress all output.", action="store_true")
+
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
+  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # For verifying at least one of --layout-keys or --gpg must be specified
   # Note: Passing both at the same time is possible.
