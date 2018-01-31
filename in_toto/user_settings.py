@@ -22,13 +22,17 @@
 """
 import os
 import six
-import in_toto.log
+import logging
 import in_toto.settings
 
 try:
   import configparser
 except ImportError: # pragma: no cover
   import ConfigParser as configparser
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
+
 
 USER_PATH = os.path.expanduser("~")
 
@@ -205,11 +209,11 @@ def set_settings():
   for setting in IN_TOTO_SETTINGS:
     user_setting = user_settings.get(setting)
     if user_setting:
-      in_toto.log.info("Setting (user): {0}={1}".format(
+      log.info("Setting (user): {0}={1}".format(
           setting, user_setting))
       setattr(in_toto.settings, setting, user_setting)
 
     else:
       default_setting = getattr(in_toto.settings, setting)
-      in_toto.log.info("Setting (default): {0}={1}".format(
+      log.info("Setting (default): {0}={1}".format(
           setting, default_setting))

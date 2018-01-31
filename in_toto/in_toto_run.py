@@ -31,8 +31,14 @@
 
 import sys
 import argparse
+import logging
 import in_toto.user_settings
-from in_toto import (util, runlib, log)
+from in_toto import (util, runlib)
+
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
+
 
 def in_toto_run(step_name, material_list, product_list, link_cmd_args,
      record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home):

@@ -28,10 +28,10 @@ import sys
 import os
 import fnmatch
 import glob
+import logging
 
 import in_toto.settings
 import in_toto.exceptions
-from in_toto import log
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 
@@ -41,13 +41,18 @@ import securesystemslib.exceptions
 
 from in_toto.models.metadata import Metablock
 
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
+
+
 # POSIX users (Linux, BSD, etc.) are strongly encouraged to
 # install and use the much more recent subprocess32
 if os.name == 'posix' and sys.version_info[0] < 3: # pragma: no cover
   try:
     import subprocess32 as subprocess
   except ImportError:
-    log.warn("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
+    log.warning("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
         " install and use the much more recent subprocess32")
     import subprocess
 else: # pragma: no cover
@@ -204,7 +209,7 @@ def record_artifacts_as_dict(artifacts):
           if os.path.isfile(norm_filepath):
             filepaths.append(norm_filepath)
           else:
-            log.warn("File '{}' appears to be a broken symlink. Skipping..."
+            log.info("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
 
         # Apply exclude patterns on normalized filepaths and
@@ -216,7 +221,7 @@ def record_artifacts_as_dict(artifacts):
 
     # Path is no file and no directory
     else:
-      log.warn("path: {} does not exist, skipping..".format(artifact))
+      log.info("path: {} does not exist, skipping..".format(artifact))
 
 
   # Change back to where original current working dir

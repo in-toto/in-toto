@@ -39,11 +39,16 @@
 """
 import sys
 import argparse
+import logging
 
-import in_toto.log as log
 import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock
+
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
+
 
 def in_toto_verify(layout_path, layout_key_paths, layout_gpg_keyids, gpg_home):
   """
@@ -104,7 +109,7 @@ def in_toto_verify(layout_path, layout_key_paths, layout_gpg_keyids, gpg_home):
     verifylib.in_toto_verify(layout, layout_key_dict)
 
   except Exception as e:
-    log.fail_verification("{0} - {1}".format(type(e).__name__, e))
+    log.info("{0} - {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 def main():

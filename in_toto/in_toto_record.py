@@ -56,10 +56,14 @@
 """
 import sys
 import argparse
+import logging
 import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
-import in_toto.log
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
+
 
 def main():
   """Parse arguments, load key from disk (if passed) and call
@@ -130,7 +134,7 @@ def main():
       key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
 
     except Exception as e:
-      in_toto.log.error("in load key - {}".format(e))
+      log.error("in load key - {}".format(e))
       sys.exit(1)
 
   try:
@@ -146,7 +150,7 @@ def main():
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
 
   except Exception as e:
-    in_toto.log.error("in {} record - {}".format(args.command, e))
+    log.error("in {} record - {}".format(args.command, e))
     sys.exit(1)
 
   sys.exit(0)

@@ -35,7 +35,12 @@
 
 import sys
 import argparse
-from in_toto import (runlib, log)
+import logging
+import in_toto.runlib
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
+
 
 def in_toto_mock(name, link_cmd_args):
   """
@@ -61,7 +66,7 @@ def in_toto_mock(name, link_cmd_args):
   """
 
   try:
-    runlib.in_toto_mock(name, link_cmd_args)
+    in_toto.runlib.in_toto_mock(name, link_cmd_args)
   except Exception as e:
     log.error("in toto mock - {}".format(e))
     sys.exit(1)
@@ -91,8 +96,8 @@ def main():
 
   args = parser.parse_args()
 
-  # Turn on all the `log.info()` in the library
-  log.logging.getLogger().setLevel(log.logging.INFO)
+  # Default to verbose
+  log.setLevel(logging.INFO)
 
   in_toto_mock(args.name, args.link_cmd)
 

@@ -17,13 +17,17 @@
 """
 import subprocess
 import shlex
+import logging
 
-import in_toto.log
 import in_toto.gpg.common
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
     SIGNATURE_HANDLERS)
 
 import securesystemslib.formats
+
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
 
 
 def gpg_sign_object(content, keyid=None, homedir=None):
@@ -78,7 +82,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   # for signing, c.f. `gpg_export_pubkey`.
   # Excluded so that coverage does not vary in different test environments
   if not signature["keyid"]: # pragma: no cover
-    in_toto.log.warn("the created signature has no keyid. We will export the"
+    log.warning("the created signature has no keyid. We will export the"
         " public portion of the signing key to compute the keyid.")
     signature["keyid"] = gpg_export_pubkey(keyid, homedir)["keyid"]
 
