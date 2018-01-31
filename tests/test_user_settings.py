@@ -20,14 +20,11 @@ import six
 import os
 import sys
 import unittest
-import logging
 import shutil
 import tempfile
 import in_toto.settings
 import in_toto.user_settings
 
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestUserSettings(unittest.TestCase):
   @classmethod

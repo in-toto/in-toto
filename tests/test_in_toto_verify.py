@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import logging
 import argparse
 import shutil
 import tempfile
@@ -32,13 +31,9 @@ from in_toto.models.layout import Layout
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from in_toto.in_toto_verify import in_toto_verify
-from in_toto import log
 from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
 
-
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestInTotoVerifyTool(unittest.TestCase):
   """
@@ -132,18 +127,6 @@ class TestInTotoVerifyTool(unittest.TestCase):
         "--layout-keys", self.alice_path, self.bob_path]
     with patch.object(sys, 'argv', args):
       in_toto_verify_main()
-
-  def test_main_verbose(self):
-    """Test in-toto-verify CLI tool with verbose flag. """
-    args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
-        "--layout-keys", self.alice_path, "--verbose"]
-
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args):
-      in_toto_verify_main()
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
 
   def test_in_toto_verify_pass_all(self):
     """Test in-toto-verify function pass verification. """
