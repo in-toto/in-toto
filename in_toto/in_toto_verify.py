@@ -88,8 +88,8 @@ def main():
       help="Root layout to use for verification", metavar="<layout path>")
 
   named_args.add_argument("-k", "--layout-keys", type=str,
-    nargs="+", help="Key(s) to verify root layout signature",
-    metavar="<verification key path>")
+      nargs="+", help="Key(s) to verify root layout signature",
+      metavar="<verification key path>")
 
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<gpg keyid>",
       help=("GPG keyid to verify metadata root layout signature. "
