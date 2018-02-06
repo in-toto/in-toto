@@ -120,8 +120,8 @@ def main():
   # Note: Passing both at the same time is possible.
   if (args.layout_keys == None) and (args.gpg == None):
     parser.print_help()
-    parser.exit(2, "wrong arguments: specify at least one of "
-      " `--layout-keys path [path ...]` or `--gpg id [id ...]`")
+    parser.error("wrong arguments: specify at least one of"
+        " `--layout-keys path [path ...]` or `--gpg id [id ...]`")
 
   try:
     log.info("Loading layout...")

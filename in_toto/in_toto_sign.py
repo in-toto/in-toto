@@ -273,19 +273,19 @@ def main():
   # restrictions. Maybe we should make it less sophisticated at some point.
   if args.verify and (args.append or args.output):
     parser.print_help()
-    parser.exit(2, "conflicting arguments: don't specify any of"
+    parser.error("conflicting arguments: don't specify any of"
         " 'append' or 'output' when verifying signatures")
 
   # Regular signing and GPG signing are mutually exclusive
   if (args.key == None) == (args.gpg == None):
     parser.print_help()
-    parser.exit(2, "wrong arguments: specify either `--key PATH [PATH ...]`"
+    parser.error("wrong arguments: specify either `--key PATH [PATH ...]`"
       " or `--gpg [KEYID [KEYID ...]]`")
 
   # For gpg verification we must specify a keyid (no default key is loaded)
   if args.verify and args.gpg != None and len(args.gpg) < 1:
     parser.print_help()
-    parser.exit(2, "missing arguments: specify at least one keyid for GPG"
+    parser.error("missing arguments: specify at least one keyid for GPG"
       " signature verification (`--gpg KEYID ...`)")
 
   metadata = _load_metadata(args.file)
@@ -302,12 +302,12 @@ def main():
     if ((args.key != None and len(args.key) > 1) or
         (args.gpg != None and len(args.gpg) > 1)):
       parser.print_help()
-      parser.exit(2, "too many arguments: {} Hence signing Link metadata"
+      parser.error("too many arguments: {} Hence signing Link metadata"
           " with multiple keys is not allowed.".format(link_error_message))
 
     if args.append:
       parser.print_help()
-      parser.exit(2, "wrong arguments: {}. Hence adding signatures to"
+      parser.error("wrong arguments: {}. Hence adding signatures to"
           " existing signatures on Link metadata is not allowed."
           .format(link_error_message))
 

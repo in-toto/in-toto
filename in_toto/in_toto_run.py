@@ -141,7 +141,7 @@ def main():
   # Regular signing and GPG signing are mutually exclusive
   if (args.key == None) == (args.gpg == None):
     parser.print_usage()
-    parser.exit("Specify either `--key <key path>` or `--gpg [<keyid>]`")
+    parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
@@ -158,7 +158,7 @@ def main():
 
   elif not args.link_cmd: # pragma: no branch
     parser.print_usage()
-    parser.exit("No command specified."
+    parser.error("No command specified."
         " Please specify (or use the --no-command option)")
 
 
