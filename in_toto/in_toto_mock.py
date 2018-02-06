@@ -96,7 +96,8 @@ def main():
 
   args = parser.parse_args()
 
-  # Default to verbose
+  # in-toto-mock should NOT be used to secure the supply chain but only to
+  # TRY out in-toto-run, with fewer command lines args and max. user feedback.
   log.setLevel(logging.INFO)
 
   in_toto_mock(args.name, args.link_cmd)
