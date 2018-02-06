@@ -19,14 +19,18 @@
 """
 import struct
 import binascii
+import logging
 
-import in_toto.log
 import in_toto.gpg.util
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
         FULLY_SUPPORTED_MIN_VERSION)
+
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
 
 
 def parse_pubkey_packet(data):
@@ -193,7 +197,7 @@ def parse_signature_packet(data):
 
   else: # pragma: no cover
     keyid = ""
-    in_toto.log.warn("Can't parse the full keyid on this signature packet."
+    log.warning("Can't parse the full keyid on this signature packet."
         "You need at least gpg version '{}'. Your version is '{}'.".format(
         FULLY_SUPPORTED_MIN_VERSION, in_toto.gpg.util.get_version()))
 

@@ -42,7 +42,6 @@ from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
-import in_toto.log as log
 
 import securesystemslib.exceptions
 import in_toto.exceptions
@@ -149,7 +148,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
 
     with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
-      mock_logging.warn.assert_called_with("Run command '{0}'"
+      mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
           .format(self.command, expected_command))
 
@@ -159,7 +158,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
 
     with patch("in_toto.verifylib.log") as mock_logging:
       verify_command_alignment(self.command, expected_command)
-      mock_logging.warn.assert_called_with("Run command '{0}'"
+      mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
           .format(self.command, expected_command))
 
@@ -1387,4 +1386,4 @@ class TestGetSummaryLink(unittest.TestCase):
 
 
 if __name__ == "__main__":
-  unittest.main(buffer=False)
+  unittest.main()

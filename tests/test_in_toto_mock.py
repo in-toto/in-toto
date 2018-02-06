@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import logging
 import argparse
 import shutil
 import tempfile
@@ -29,9 +28,6 @@ from mock import patch
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
 from in_toto.in_toto_mock import in_toto_mock
-
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestInTotoMockTool(unittest.TestCase):
   """Test in_toto_mock's main() - requires sys.argv patching; and
@@ -51,6 +47,7 @@ class TestInTotoMockTool(unittest.TestCase):
     self.test_link = self.test_step + ".link"
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
+
 
   @classmethod
   def tearDownClass(self):
@@ -98,4 +95,4 @@ class TestInTotoMockTool(unittest.TestCase):
       in_toto_mock(self.test_step, ["exit", "1"])
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()

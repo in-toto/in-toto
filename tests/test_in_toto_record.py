@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import logging
 import argparse
 import shutil
 import tempfile
@@ -32,9 +31,6 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from in_toto.in_toto_record import main as in_toto_record_main
 
 WORKING_DIR = os.getcwd()
-
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestInTotoRecordTool(unittest.TestCase):
   """Test in_toto_record's main() - requires sys.argv patching; and
@@ -105,11 +101,6 @@ class TestInTotoRecordTool(unittest.TestCase):
     self._test_cli_sys_exit(["stop"] + args + ["--products",
         self.test_artifact2, self.test_artifact2], 0)
 
-    # Start/stop recording verbosely
-    args = ["--step-name", "test4", "--key", self.key_path, "--verbose"]
-    self._test_cli_sys_exit(["start"] + args, 0)
-    self._test_cli_sys_exit(["stop"] + args, 0)
-
     # Start/stop sign with specified gpg keyid
     args = ["--step-name", "test5", "--gpg", self.gpg_keyid, "--gpg-home",
         self.gnupg_home]
@@ -173,4 +164,4 @@ class TestInTotoRecordTool(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main(buffer=True)
+  unittest.main()

@@ -17,21 +17,17 @@ import os
 import sys
 import json
 import shutil
-import logging
 import tempfile
 import unittest
 
 from mock import patch
-from in_toto import log, exceptions
+from in_toto import exceptions
 import in_toto.gpg.util
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
 
 WORKING_DIR = os.getcwd()
-
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestInTotoSignTool(unittest.TestCase):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
@@ -122,20 +118,19 @@ class TestInTotoSignTool(unittest.TestCase):
         "--verify"
         ], 0)
 
-    # Sign Link, replacing old signature,
-    # and write to same file as input (verbosely)
+    # Sign Link, replacing old signature
+    # and write to same file as input
     self._test_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.bob_path,
         "-o", self.link_path,
-        "-v"
         ], 0)
 
     # Verify Link
     self._test_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.bob_pub_path,
-        "--verify", "-v"
+        "--verify"
         ], 0)
 
     # Replace signature to Link and store to new file using passed
@@ -299,4 +294,4 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 2)
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()

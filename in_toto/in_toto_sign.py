@@ -67,12 +67,19 @@
 import sys
 import six
 import argparse
-from in_toto import log, exceptions, util
+import logging
+
+from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 import in_toto.gpg.functions
 
 import securesystemslib.formats
+
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
+
 
 def _sign_and_dump_metadata(metadata, args):
   """
@@ -176,13 +183,13 @@ def _verify_metadata(metadata, args):
 
     for keyid, verification_key in six.iteritems(pub_key_dict):
       metadata.verify_signature(verification_key)
-      log.pass_verification("Signature verification passed for keyid '{}'"
+      log.info("Signature verification passed for keyid '{}'"
           .format(keyid))
 
     sys.exit(0)
 
   except exceptions.SignatureVerificationError as e:
-    log.fail_verification("Signature verification failed: {}".format(e))
+    log.error("Signature verification failed: {}".format(e))
     sys.exit(1)
 
   except Exception as e:
@@ -247,16 +254,19 @@ def main():
       help="append to existing signatures (only available for Layout"
       " metadata")
 
-  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
-
   parser.add_argument("--verify", action="store_true",
       help="verify signatures")
 
+  verbosity_args = parser.add_mutually_exclusive_group(required=False)
+  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
+      help="Verbose execution.", action="store_true")
+
+  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
+      help="Suppress all output.", action="store_true")
+
   args = parser.parse_args()
 
-  if args.verbose:
-    log.logging.getLogger().setLevel(log.logging.INFO)
-
+  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Additional argparse sanitization
   # NOTE: This tool is starting to have many inter-dependent argument

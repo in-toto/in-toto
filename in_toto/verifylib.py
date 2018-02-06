@@ -26,6 +26,7 @@ import datetime
 import iso8601
 import fnmatch
 import six
+import logging
 from dateutil import tz
 
 import securesystemslib.exceptions
@@ -41,7 +42,11 @@ from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
 import in_toto.artifact_rules
-import in_toto.log as log
+
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
+
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -382,7 +387,7 @@ def verify_command_alignment(command, expected_command):
   # https://github.com/in-toto/in-toto/pull/47
   # We chose the simplest solution for now, i.e. Warn if they do not align.
   if command != expected_command:
-    log.warn("Run command '{0}' differs from expected command '{1}'"
+    log.warning("Run command '{0}' differs from expected command '{1}'"
         .format(command, expected_command))
 
 
@@ -1388,7 +1393,7 @@ def in_toto_verify(layout, layout_key_dict):
   verify_all_item_rules(layout.inspect, combined_links)
 
   # We made it this far without exception that means, verification passed
-  log.pass_verification("The software product passed all verification.")
+  log.info("The software product passed all verification.")
 
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded

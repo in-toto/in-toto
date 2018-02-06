@@ -14,7 +14,6 @@
 import os
 import sys
 import unittest
-import logging
 import argparse
 import shutil
 import tempfile
@@ -24,15 +23,11 @@ from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_generate_and_write_rsa_keypair, prompt_password,
     import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
     prompt_import_rsa_key_from_file)
-from in_toto import log
 from in_toto import exceptions
 import securesystemslib
 from securesystemslib.keys import generate_rsa_key
 
 WORKING_DIR = os.getcwd()
-
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
 
 class TestInTotoKeyGenTool(unittest.TestCase):
   """Test in_toto_keygen's main() - requires sys.argv patching; error
@@ -134,4 +129,4 @@ class TestInTotoKeyGenTool(unittest.TestCase):
       securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
 
 if __name__ == '__main__':
-  unittest.main(buffer=True)
+  unittest.main()

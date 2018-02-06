@@ -33,8 +33,12 @@
 """
 import sys
 import argparse
+import logging
+
 import in_toto.util
-from in_toto import log
+
+# Command line interfaces should use in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger("in_toto")
 
 
 def parse_args():

@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import logging
 import argparse
 import shutil
 import glob
@@ -38,8 +37,7 @@ from in_toto.models.link import FILENAME_FORMAT
 
 import in_toto.gpg.util
 
-# Suppress all the user feedback that we print using a base logger
-logging.getLogger().setLevel(logging.CRITICAL)
+
 
 class TestInTotoRunTool(unittest.TestCase):
   """Test in_toto_run's main() - requires sys.argv patching; and
@@ -182,22 +180,6 @@ class TestInTotoRunTool(unittest.TestCase):
       in_toto_run_main()
     self.assertFalse(os.path.exists(self.test_link))
 
-  def test_main_verbose(self):
-    """Log level with verbose flag is lesser/equal than logging.INFO. """
-
-    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
-        self.key_path, "--materials", self.test_artifact, "--products",
-        self.test_artifact, "--record-streams", "--verbose",
-        "--", "echo", "test"]
-
-    original_log_level = logging.getLogger().getEffectiveLevel()
-    with patch.object(sys, 'argv', args ):
-      in_toto_run_main()
-    self.assertTrue(os.path.exists(self.test_link))
-
-    self.assertLessEqual(logging.getLogger().getEffectiveLevel(), logging.INFO)
-    # Reset log level
-    logging.getLogger().setLevel(original_log_level)
 
   def test_successful_in_toto_run(self):
     """Call in_toto_run successfully """
@@ -213,4 +195,4 @@ class TestInTotoRunTool(unittest.TestCase):
           ["echo", "test"], False, "bad-key", None, False, None)
 
 if __name__ == "__main__":
-  unittest.main(buffer=True)
+  unittest.main()
