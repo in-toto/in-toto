@@ -27,11 +27,6 @@
 
   The actual verification is implemented in verifylib.
 
-  Exits with 0 if verification passes 1 if any exception is raised during
-  verification, i.e. verification fails and 2 if incorrect arguments are passed
-  to the command line tool.
-
-
   Example Usage:
   ```
   # Verify layout (path is "metadata/root.layout") with securesystemslib
@@ -59,6 +54,12 @@
 
   gpg home:
           Path to GPG keyring (if not set the default keyring is used).
+
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred (verification failed)
+  0 if no exception occurred (verification passed)
 
 """
 import sys

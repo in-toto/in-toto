@@ -39,6 +39,12 @@
           A list where the first element is a command and the remaining
           elements are arguments passed to that command.
 
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
+
 """
 import sys
 import argparse

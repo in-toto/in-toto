@@ -53,6 +53,12 @@
   in-toto-record stop --step-name edit-foo --gpg --products path/to/foo
   ```
 
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
+
 """
 import sys
 import argparse

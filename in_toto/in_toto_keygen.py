@@ -30,6 +30,12 @@
 
   python in_toto_keygen.py -p bob_keys 2048
 
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
+
 """
 import sys
 import argparse

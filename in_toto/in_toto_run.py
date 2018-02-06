@@ -55,6 +55,12 @@
   gpg_home:
           Path to GPG keyring (if not set the default keyring is used).
 
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
+
 """
 
 import sys
