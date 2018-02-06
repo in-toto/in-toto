@@ -76,6 +76,7 @@ def main():
   # The subparsers inherit the arguments from the parent parser
   parent_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest="command")
+  subparsers.required = True
 
   # FIXME: Do we limit the allowed characters for the name?
   parent_parser.add_argument("-n", "--step-name", type=str, required=True,
