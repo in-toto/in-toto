@@ -31,8 +31,15 @@
   in-toto-mock --name write-code -- touch foo.py
   ```
 
-"""
+<Arguments>
+  name:
+          A unique name to relate mock link metadata with a step defined
+          in the layout.
+  command:
+          A list where the first element is a command and the remaining
+          elements are arguments passed to that command.
 
+"""
 import sys
 import argparse
 import logging
@@ -42,34 +49,6 @@ import in_toto.runlib
 log = logging.getLogger("in_toto")
 
 
-def in_toto_mock(name, link_cmd_args):
-  """
-  <Purpose>
-    Calls runlib.in_toto_mock with name and link_cmd_args.
-
-  <Arguments>
-    name:
-            A unique name to relate mock link metadata with a step defined
-            in the layout.
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-
-  <Exceptions>
-    SystemExit if any exception occurs
-
-  <Side Effects>
-    Calls sys.exit(1) if an exception is raised
-
-  <Returns>
-    None.
-  """
-
-  try:
-    in_toto.runlib.in_toto_mock(name, link_cmd_args)
-  except Exception as e:
-    log.error("in toto mock - {}".format(e))
-    sys.exit(1)
 
 def main():
   """Parse arguments and call in_toto_mock. """
@@ -100,7 +79,15 @@ def main():
   # TRY out in-toto-run, with fewer command lines args and max. user feedback.
   log.setLevel(logging.INFO)
 
-  in_toto_mock(args.name, args.link_cmd)
+  try:
+    in_toto.runlib.in_toto_mock(args.name, args.link_cmd)
+
+  except Exception as e:
+    log.error("in toto mock - {}".format(e))
+    sys.exit(1)
+
+  sys.exit(0)
+
 
 if __name__ == "__main__":
   main()

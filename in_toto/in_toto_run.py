@@ -27,6 +27,34 @@
       -- vi foo.py
   ```
 
+<Arguments>
+  step_name:
+          A unique name to relate link metadata with a step defined in the
+          layout.
+  material_list:
+          List of file or directory paths that should be recorded as
+          materials.
+  product_list:
+          List of file or directory paths that should be recorded as
+          products.
+  link_cmd_args:
+          A list where the first element is a command and the remaining
+          elements are arguments passed to that command.
+  record_streams:
+          A bool that specifies whether to redirect standard output and
+          and standard error to a temporary file which is returned to the
+          caller (True) or not (False).
+  signing_key:
+          If not None, link metadata is signed with this key.
+          Format is securesystemslib.formats.KEY_SCHEMA
+  gpg_keyid:
+          If not None, link metadata is signed with a gpg key identified
+          by the passed keyid.
+  gpg_use_default:
+          If True, link metadata is signed with default gpg key.
+  gpg_home:
+          Path to GPG keyring (if not set the default keyring is used).
+
 """
 
 import sys
@@ -39,58 +67,6 @@ from in_toto import (util, runlib)
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
 
-
-def in_toto_run(step_name, material_list, product_list, link_cmd_args,
-     record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home):
-  """
-  <Purpose>
-    Calls runlib.in_toto_run and catches exceptions
-
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    material_list:
-            List of file or directory paths that should be recorded as
-            materials.
-    product_list:
-            List of file or directory paths that should be recorded as
-            products.
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    record_streams:
-            A bool that specifies whether to redirect standard output and
-            and standard error to a temporary file which is returned to the
-            caller (True) or not (False).
-    signing_key:
-            If not None, link metadata is signed with this key.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    gpg_keyid:
-            If not None, link metadata is signed with a gpg key identified
-            by the passed keyid.
-    gpg_use_default:
-            If True, link metadata is signed with default gpg key.
-    gpg_home:
-            Path to GPG keyring (if not set the default keyring is used).
-
-  <Exceptions>
-    SystemExit if any exception occurs
-
-  <Side Effects>
-    Calls sys.exit(1) if an exception is raised
-
-  <Returns>
-    None.
-  """
-
-  try:
-    runlib.in_toto_run(step_name, material_list, product_list, link_cmd_args,
-         record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home)
-
-  except Exception as e:
-    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
-    sys.exit(1)
 
 def main():
   """Parse arguments, load key from disk (prompts for password if key is
@@ -176,30 +152,33 @@ def main():
   if args.gpg != True:
     gpg_keyid = args.gpg
 
-
-  # We load the key here because it might prompt the user for a password in
-  # case the key is encrypted. Something that should not happen in the library.
-  key = None
-  if args.key:
-    try:
-      key = util.prompt_import_rsa_key_from_file(args.key)
-
-    except Exception as e:
-      log.error("in load key - {}".format(e))
-      sys.exit(1)
-
   # If no_command is specified run in_toto_run without executing a command
   if args.no_command:
-    in_toto_run(args.step_name, args.materials, args.products, [],
-      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+    args.link_cmd = []
 
   elif not args.link_cmd: # pragma: no branch
     parser.print_usage()
     parser.exit("No command specified."
         " Please specify (or use the --no-command option)")
 
-  in_toto_run(args.step_name, args.materials, args.products, args.link_cmd,
-      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+
+  try:
+    # We load the key here because it might prompt the user for a password in
+    # case the key is encrypted. Something that should not happen in the lib.
+    key = None
+    if args.key:
+      key = util.prompt_import_rsa_key_from_file(args.key)
+
+    runlib.in_toto_run(args.step_name, args.materials, args.products,
+        args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
+        args.gpg_home)
+
+  except Exception as e:
+    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
+    sys.exit(1)
+
+  sys.exit(0)
+
 
 if __name__ == "__main__":
   main()
