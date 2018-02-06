@@ -74,48 +74,41 @@ def main():
 
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata")
-  # Whitespace padding to align with program name
-  lpad = (len(parser.prog) + 1) * " "
 
-  parser.usage = ("\n"
-      "%(prog)s  --step-name <unique step name>\n{0}"
-               "{{--key <functionary signing key path>, "
-               " --gpg [<functionary gpg signing key id>]}} \n{0}"
-               "[--gpg-home <path to gpg keyring>]\n{0}"
-               "[--materials <filepath>[ <filepath> ...]]\n{0}"
-               "[--products <filepath>[ <filepath> ...]]\n{0}"
-               "[--record-streams]\n{0}"
-               "[--no-command]\n{0}"
-               "[--verbose | --quiet] -- <cmd> [args]\n\n"
-               .format(lpad))
+  parser.usage = ("%(prog)s <named arguments> [optional arguments]"
+      " -- <command> [args]")
 
-  in_toto_args = parser.add_argument_group("in-toto options")
+  named_args = parser.add_argument_group("required named arguments")
 
   # FIXME: Do we limit the allowed characters for the name?
-  in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata")
+  named_args.add_argument("-n", "--step-name", type=str, required=True,
+      help="Unique name for link metadata", metavar="<unique step name>")
 
-  in_toto_args.add_argument("-m", "--materials", type=str, required=False,
-      nargs='+', help="Files to record before link command execution")
+  parser.add_argument("-m", "--materials", type=str, required=False,
+      nargs='+', help="Files to record before link command execution",
+      metavar="<material path>")
 
-  in_toto_args.add_argument("-p", "--products", type=str, required=False,
-      nargs='+', help="Files to record after link command execution")
+  parser.add_argument("-p", "--products", type=str, required=False,
+      nargs='+', help="Files to record after link command execution",
+      metavar="<product path>")
 
-  in_toto_args.add_argument("-k", "--key", type=str,
-      help="Path to private key to sign link metadata (PEM)")
+  named_args.add_argument("-k", "--key", type=str,
+      help="Path to private key to sign link metadata (PEM)",
+      metavar="<signing key path>")
 
-  parser.add_argument("-g", "--gpg", nargs="?", const=True,
-      help=("GPG keyid to sign link metadata "
+  named_args.add_argument("-g", "--gpg", nargs="?", const=True,
+      metavar="<gpg keyid>", help=("GPG keyid to sign link metadata "
       "(if set without argument, the default key is used)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      help="Path to GPG keyring (if not set the default keyring is used)")
+      help="Path to GPG keyring (if not set the default keyring is used)",
+      metavar="<gpg keyring path>")
 
-  in_toto_args.add_argument("-b", "--record-streams",
+  parser.add_argument("-b", "--record-streams",
       help="If set redirects stdout/stderr and stores to link metadata",
       dest="record_streams", default=False, action="store_true")
 
-  in_toto_args.add_argument("-x", "--no-command",
+  parser.add_argument("-x", "--no-command",
       help="Set if step does not have a command",
       dest="no_command", default=False, action="store_true")
 
@@ -126,9 +119,10 @@ def main():
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
 
+
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
-  in_toto_args.add_argument("link_cmd", nargs="*",
+  parser.add_argument("link_cmd", nargs="*", metavar="<command>",
     help="Link command to be executed with options and arguments")
 
   args = parser.parse_args()

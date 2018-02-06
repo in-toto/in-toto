@@ -54,23 +54,18 @@ def main():
   """Parse arguments and call in_toto_mock. """
   parser = argparse.ArgumentParser(
       description="Executes link command and records metadata")
-  # Whitespace padding to align with program name
-  lpad = (len(parser.prog) + 1) * " "
 
-  parser.usage = ("\n"
-      "%(prog)s  --name <unique step name>\n{0}"
-               " -- <cmd> [args]\n\n"
-               .format(lpad))
+  parser.usage = "%(prog)s [-h] --name <unique step name> -- <command> [args]"
 
-  in_toto_args = parser.add_argument_group("in-toto options")
+  named_args = parser.add_argument_group("required named arguments")
 
   # FIXME: Do we limit the allowed characters for the name?
-  in_toto_args.add_argument("-n", "--name", type=str, required=True,
-      help="Unique name for link metadata")
+  named_args.add_argument("-n", "--name", type=str, required=True,
+      help="Unique name for link metadata", metavar="<unique step name>")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
-  in_toto_args.add_argument("link_cmd", nargs="+",
+  parser.add_argument("link_cmd", nargs="+", metavar="<command>",
     help="Link command to be executed with options and arguments")
 
   args = parser.parse_args()
