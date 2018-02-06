@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 <Program Name>
   test_in_toto_mock.py
@@ -17,7 +16,6 @@
   Test in_toto_mock command line tool.
 
 """
-
 import os
 import sys
 import unittest
@@ -27,11 +25,15 @@ import tempfile
 from mock import patch
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
-from in_toto.in_toto_mock import in_toto_mock
 
-class TestInTotoMockTool(unittest.TestCase):
+import tests.common
+
+
+
+class TestInTotoMockTool(tests.common.CliTestCase):
   """Test in_toto_mock's main() - requires sys.argv patching; and
   in_toto_mock- calls runlib and error logs/exits on Exception. """
+  cli_main_func = staticmethod(in_toto_mock_main)
 
   @classmethod
   def setUpClass(self):
@@ -61,38 +63,36 @@ class TestInTotoMockTool(unittest.TestCase):
     except OSError:
       pass
 
+
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
 
-    args = [ "in_toto_mock.py", "--name", self.test_step, "--", "echo", "test"]
-    with patch.object(sys, 'argv', args):
-      in_toto_mock_main()
+    args = ["--name", self.test_step, "--", "echo", "test"]
+    self.assert_cli_sys_exit(args, 0)
 
     self.assertTrue(os.path.exists(self.test_link))
+
 
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
 
     wrong_args_list = [
-      ["in_toto_mock.py"],
-      ["in_toto_mock.py", "--name", "test-step"],
-      ["in_toto_mock.py", "--", "echo", "blub"]]
+      [],
+      ["--name", "test-step"],
+      ["--", "echo", "blub"]]
 
     for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
-        in_toto_mock_main()
+      self.assert_cli_sys_exit(wrong_args, 2)
       self.assertFalse(os.path.exists(self.test_link))
 
-  def test_successful_in_toto_mock(self):
-    """Call in_toto_mock successfully """
-    in_toto_mock(self.test_step, ["echo", "test"])
 
-    self.assertTrue(os.path.exists(self.test_link))
+  def test_main_bad_cmd(self):
+    """Test CLI command with non-existing command. """
+    # TODO: Is it safe to assume this command does not exist, or should we
+    # assert for it?
+    args = ["-n", "bad-command", "--", "ggadsfljasdhlasdfljvzxc"]
+    self.assert_cli_sys_exit(args, 1)
 
-  def test_in_toto_run_bad_command_exit(self):
-    """Error exit in_toto_mock for bad command. """
-    with self.assertRaises(SystemExit):
-      in_toto_mock(self.test_step, ["exit", "1"])
 
 if __name__ == "__main__":
   unittest.main()

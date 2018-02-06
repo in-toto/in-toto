@@ -30,12 +30,14 @@ from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
-from in_toto.in_toto_verify import in_toto_verify
 from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
 
+import tests.common
 
-class TestInTotoVerifyTool(unittest.TestCase):
+
+
+class TestInTotoVerifyTool(tests.common.CliTestCase):
   """
   Tests
     - in_toto_verify's main() - requires sys.argv patching;
@@ -49,6 +51,8 @@ class TestInTotoVerifyTool(unittest.TestCase):
     - signed layout
     - multiple signed layout (using two project owner keys)
   """
+  cli_main_func = staticmethod(in_toto_verify_main)
+
 
   @classmethod
   def setUpClass(self):
@@ -96,51 +100,52 @@ class TestInTotoVerifyTool(unittest.TestCase):
     layout_template.sign(bob)
     layout_template.dump(self.layout_double_signed_path)
 
+
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp dir. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
 
+
   def test_main_required_args(self):
     """Test in-toto-verify CLI tool with required arguments. """
-    args = [ "in-toto-verify", "--layout", self.layout_single_signed_path,
+    args = ["--layout", self.layout_single_signed_path,
         "--layout-keys", self.alice_path]
 
-    with patch.object(sys, 'argv', args):
-      in_toto_verify_main()
+    self.assert_cli_sys_exit(args, 0)
+
 
   def test_main_wrong_args(self):
     """Test in-toto-verify CLI tool with wrong arguments. """
     wrong_args_list = [
-      ["in-toto-verify"],
-      ["in-toto-verify", "--layout", self.layout_single_signed_path],
-      ["in-toto-verify", "--key", self.alice_path]]
+      [],
+      ["--layout", self.layout_single_signed_path],
+      ["--key", self.alice_path]]
 
     for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
-        in_toto_verify_main()
+      self.assert_cli_sys_exit(wrong_args, 2)
+
 
   def test_main_multiple_keys(self):
     """Test in-toto-verify CLI tool with multiple keys. """
-    args = [ "in-toto-verify", "--layout", self.layout_double_signed_path,
+    args = ["--layout", self.layout_double_signed_path,
         "--layout-keys", self.alice_path, self.bob_path]
-    with patch.object(sys, 'argv', args):
-      in_toto_verify_main()
-
-  def test_in_toto_verify_pass_all(self):
-    """Test in-toto-verify function pass verification. """
-    in_toto_verify(self.layout_single_signed_path, [self.alice_path], None, None)
-
-  def test_in_toto_verify_fail(self):
-    """Test in-toto-verify function fail verification. """
-    with self.assertRaises(SystemExit):
-      in_toto_verify("wrong-layout-path", [self.alice_path], None, None)
+    self.assert_cli_sys_exit(args, 0)
 
 
-class TestInTotoVerifyToolGPG(unittest.TestCase):
+  def test_main_failing_bad_layout_path(self):
+    """Test in-toto-verify CLI tool with bad layout path. """
+    args = ["-l", "not-a-path-to-a-layout", "-k", self.alice_path]
+    self.assert_cli_sys_exit(args, 1)
+
+
+
+class TestInTotoVerifyToolGPG(tests.common.CliTestCase):
   """ Tests in-toto-verify like TestInTotoVerifyTool but with
   gpg project owner and functionary keys. """
+  cli_main_func = staticmethod(in_toto_verify_main)
+
 
   @classmethod
   def setUpClass(self):
@@ -185,11 +190,10 @@ class TestInTotoVerifyToolGPG(unittest.TestCase):
   def test_gpg_signed_layout_with_gpg_functionary_keys(self):
     """ Successfully test demo supply chain where the layout lists gpg keys
     as functionary keys and is signed with a gpg key. """
-    args = [ "in-toto-verify", "--layout", self.layout_path,
+    args = ["--layout", self.layout_path,
             "--gpg", self.owner_gpg_keyid, "--gpg-home", self.gnupg_home]
 
-    with patch.object(sys, 'argv', args):
-      in_toto_verify_main()
+    self.assert_cli_sys_exit(args, 0)
 
 
 if __name__ == "__main__":
