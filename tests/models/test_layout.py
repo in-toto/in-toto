@@ -28,7 +28,7 @@ import in_toto.verifylib
 import securesystemslib.exceptions
 
 class TestLayoutValidator(unittest.TestCase):
-  """Test verifylib.verify_delete_rule(rule, artifact_queue) """
+  """Test in_toto.models.layout.Layout validators. """
 
   def setUp(self):
     """Populate a base layout that we can use."""
@@ -185,8 +185,8 @@ class TestLayoutValidator(unittest.TestCase):
 
     link_path = os.path.abspath(link_name)
     link = in_toto.models.link.Link(name=name)
-    link._type = "wrong-type"
     metadata = Metablock(signed=link)
+    metadata.signed._type = "wrong-type"
     metadata.dump(link_path)
 
     # Add the single step to the test layout and try to read the failing link
