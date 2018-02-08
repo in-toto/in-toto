@@ -362,11 +362,7 @@ class Layout(Signable):
       A list of functionary keyids.
 
     """
-    keyid_list = []
-    for keyid in list(self.keys.keys()):
-      keyid_list.append(keyid)
-
-    return keyid_list
+    return list(self.keys.keys())
 
 
   def add_functionary_key(self, key):
