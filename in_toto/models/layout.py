@@ -641,12 +641,20 @@ class SupplyChainItem(ValidationMixin):
   def add_material_rule_from_string(self, rule_string):
     securesystemslib.schema.AnyString().check_match(rule_string)
     rule_list = shlex.split(rule_string)
+
+    # Raises format error if the parsed rule_string is not a valid rule
+    in_toto.rulelib.unpack_rule(rule_list)
+
     self.expected_materials.append(rule_list)
 
 
   def add_product_rule_from_string(self, rule_string):
     securesystemslib.schema.AnyString().check_match(rule_string)
     rule_list = shlex.split(rule_string)
+
+    # Raises format error if the parsed rule_string is not a valid rule
+    in_toto.rulelib.unpack_rule(rule_list)
+
     self.expected_products.append(rule_list)
 
 
