@@ -32,6 +32,7 @@ from six import string_types
 
 import attr
 import shlex
+import json
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -194,8 +195,74 @@ class Layout(Signable):
             "There is a repeated name in the steps! {}".format(inspection.name))
       names_seen.add(inspection.name)
 
+
+
 @attr.s(repr=False, init=False)
-class Step(ValidationMixin):
+class SupplyChainItem(ValidationMixin):
+  """
+  Represents an item of the supply chain, i.e. a Step or an Inspection.
+
+  <Attributes>
+    name:
+      A unique name used to identify the related link metadata
+
+    expected_materials and expected_products:
+      A list of artifact rules used to verify if the materials or products of
+      the item (found in the according link metadata file) link correctly with
+      other items of the supply chain
+
+  """
+  name = attr.ib()
+  expected_materials = attr.ib()
+  expected_products = attr.ib()
+
+
+  def __init__(self, **kwargs):
+    super(SupplyChainItem, self).__init__()
+    self.name = kwargs.get("name")
+    self.expected_materials = kwargs.get("expected_materials", [])
+    self.expected_products = kwargs.get("expected_products", [])
+
+  def __repr__(self):
+    return json.dumps(attr.asdict(self),
+        indent=1, separators=(",", ": "), sort_keys=True)
+
+
+  def add_material_rule_from_string(self, rule_string):
+    securesystemslib.schema.AnyString().check_match(rule_string)
+    rule_list = shlex.split(rule_string)
+    self.expected_materials.append(rule_list)
+
+
+  def add_product_rule_from_string(self, rule_string):
+    securesystemslib.schema.AnyString().check_match(rule_string)
+    rule_list = shlex.split(rule_string)
+    self.expected_products.append(rule_list)
+
+
+  def _validate_expected_materials(self):
+    """Private method to check that material rules are correctly formed."""
+    if type(self.expected_materials) != list:
+      raise securesystemslib.exceptions.FormatError(
+          "Material rules should be a list!")
+
+    for rule in self.expected_materials:
+      in_toto.rulelib.unpack_rule(rule)
+
+
+  def _validate_expected_products(self):
+    """Private method to check that product rules are correctly formed."""
+    if type(self.expected_products) != list:
+      raise securesystemslib.exceptions.FormatError(
+          "Product rules should be a list!")
+
+    for rule in self.expected_products:
+      in_toto.rulelib.unpack_rule(rule)
+
+
+
+@attr.s(repr=False, init=False)
+class Step(SupplyChainItem):
   """
   Represents a step of the supply chain performed by a functionary.
   A step relates to a link metadata file generated when the step was
@@ -203,12 +270,10 @@ class Step(ValidationMixin):
 
   <Attributes>
     name:
-        a unique name used to identify the related link metadata
+        cf. SupplyChainItem
 
     expected_materials and expected_products:
-        a list of artifact rules used to verify if the materials or products of
-        the step (found in the according link metadata file) link correctly with
-        other steps of the supply chain
+        cf. SupplyChainItem
 
     pubkeys:
         a list of keyids of the functionaries authorized to perform the step
@@ -221,24 +286,20 @@ class Step(ValidationMixin):
 
   """
   _type = attr.ib()
-  name = attr.ib()
-  expected_materials = attr.ib()
-  expected_products = attr.ib()
   pubkeys = attr.ib()
   expected_command = attr.ib()
   threshold = attr.ib()
 
+
   def __init__(self, **kwargs):
-    super(Step, self).__init__()
+    super(Step, self).__init__(**kwargs)
     self._type = "step"
-    self.name = kwargs.get("name")
-    self.expected_materials = kwargs.get("expected_materials", [])
-    self.expected_products = kwargs.get("expected_products", [])
     self.pubkeys = kwargs.get("pubkeys", [])
     self.expected_command = kwargs.get("expected_command", [])
     self.threshold = kwargs.get("threshold", 1)
 
     self.validate()
+
 
   @staticmethod
   def read(data):
@@ -256,6 +317,7 @@ class Step(ValidationMixin):
       raise securesystemslib.exceptions.FormatError(
           "Invalid _type value for step (Should be 'step')")
 
+
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
     if type(self.threshold) != int:
@@ -263,23 +325,6 @@ class Step(ValidationMixin):
           "Invalid threshold '{}', value must be an int."
           .format(self.threshold))
 
-  def _validate_expected_materials(self):
-    """Private method to check that material rules are correctly formed."""
-    if type(self.expected_materials) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "Material rules should be a list!")
-
-    for rule in self.expected_materials:
-      in_toto.rulelib.unpack_rule(rule)
-
-  def _validate_expected_products(self):
-    """Private method to check that product rules are correctly formed."""
-    if type(self.expected_products) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "Product rules should be a list!")
-
-    for rule in self.expected_products:
-      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
@@ -290,6 +335,7 @@ class Step(ValidationMixin):
     for keyid in self.pubkeys:
       securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
 
+
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
     if type(self.expected_command) != list:
@@ -299,18 +345,16 @@ class Step(ValidationMixin):
 
 
 @attr.s(repr=False, init=False)
-class Inspection(ValidationMixin):
+class Inspection(SupplyChainItem):
   """
   Represents an inspection which performs a command during layout verification.
 
   <Attributes>
     name:
-        a unique name used to identify related link metadata
-        link metadata for Inspections are just created and used on the fly
-        and not stored to disk
+        c.f. SupplyChainItem
 
     expected_materials and expected_products:
-        cf. Step Attributes
+        cf. SupplyChainItem
 
     run:
         the command to execute during layout verification
@@ -318,13 +362,11 @@ class Inspection(ValidationMixin):
   """
   _type = attr.ib()
   name = attr.ib()
-  expected_materials = attr.ib()
-  expected_products = attr.ib()
   run = attr.ib()
 
-  def __init__(self, **kwargs):
-    super(Inspection, self).__init__()
 
+  def __init__(self, **kwargs):
+    super(Inspection, self).__init__(**kwargs)
     self._type = "inspection"
     self.name = kwargs.get("name")
     self.expected_materials = kwargs.get("expected_materials", [])
@@ -333,6 +375,7 @@ class Inspection(ValidationMixin):
     self.run = kwargs.get("run", [])
 
     self.validate()
+
 
   @staticmethod
   def read(data):
@@ -349,23 +392,6 @@ class Inspection(ValidationMixin):
       raise securesystemslib.exceptions.FormatError(
           "The _type field must be set to 'inspection'!")
 
-  def _validate_expected_materials(self):
-    """Private method to check that the material rules are correct."""
-    if type(self.expected_materials) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "The material rules should be a list!")
-
-    for rule in self.expected_materials:
-      in_toto.rulelib.unpack_rule(rule)
-
-  def _validate_expected_products(self):
-    """Private method to check that the product rules are correct."""
-    if type(self.expected_products) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "The product rules should be a list!")
-
-    for rule in self.expected_products:
-      in_toto.rulelib.unpack_rule(rule)
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""

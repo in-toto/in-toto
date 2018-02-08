@@ -41,49 +41,6 @@ class TestInspectionValidator(unittest.TestCase):
     self.inspection._type = "inspection"
     self.inspection._validate_type()
 
-  def test_wrong_expected_materials(self):
-    """Test that the material rule validators catch malformed ones."""
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.expected_materials = [["NONFOO"]]
-      self.inspection._validate_expected_materials()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.expected_materials = "PFF"
-      self.inspection._validate_expected_materials()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    # for more thorough tests, check the test_rulelib.py module
-    self.inspection.expected_materials = [["CREATE", "foo"]]
-    self.inspection._validate_expected_materials()
-    self.inspection.validate()
-
-  def test_wrong_expected_products(self):
-    """Test that the product rule validators catch malformed values."""
-
-    self.inspection.expected_products = [["NONFOO"]]
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection._validate_expected_products()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    self.inspection.expected_products = "PFF"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection._validate_expected_products()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.inspection.validate()
-
-    # for more thorough tests, check the test_rulelib.py module
-    self.inspection.expected_products = [["CREATE", "foo"]]
-    self.inspection._validate_expected_products()
-    self.inspection.validate()
 
   def test_wrong_run(self):
     """Test that the run validators catch malformed values."""
@@ -106,6 +63,6 @@ class TestInspectionValidator(unittest.TestCase):
     inspection.set_run_from_string("echo 'foo bar'")
     self.assertListEqual(inspection.run, ["echo", "foo bar"])
 
-if __name__ == '__main__':
 
+if __name__ == "__main__":
   unittest.main()
