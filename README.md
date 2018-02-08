@@ -35,8 +35,11 @@ The in-toto software supply chain layout consists of the following parts:
    correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools. Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
-*Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/demo/blob/master/owner_alice/create_layout.py),
-a script that creates the in-toto demo layout.*
+Take a look at the [demo layout creation example](layout-creation.md)
+for further information on how to create an in-toto layout. Or try our
+experimental [layout creation web tool](https://in-toto.engineering.nyu.edu/).
+
+
 
 #### Artifact Rules
 A software supply chain usually operates on a set of files, such as source code, executables, packages, or the like. in-toto calls these files artifacts. A material is an artifact that will be used when a step or inspection is carried out. Likewise, a product is an artifact that results from carrying out a step.
