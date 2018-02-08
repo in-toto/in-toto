@@ -95,6 +95,10 @@ class TestLayoutMethods(unittest.TestCase):
     layout.set_relative_expiration(days=3, months=2, years=1)
     layout._validate_expires()
 
+    # It's possible to add an expiration date in the past
+    layout.set_relative_expiration(days=-3, months=-2, years=-1)
+    layout._validate_expires()
+
 
   def test_get_step_name_list(self):
     """Test getting list of step names. """
