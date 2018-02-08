@@ -135,6 +135,11 @@ class TestStepValidator(unittest.TestCase):
     self.step._validate_expected_command()
     self.step.validate()
 
-if __name__ == '__main__':
+  def test_set_expected_command_from_string(self):
+    """Test shelx parse command string to list. """
+    step = Step()
+    step.set_expected_command_from_string("echo 'foo bar'")
+    self.assertListEqual(step.expected_command, ["echo", "foo bar"])
 
+if __name__ == "__main__":
   unittest.main()

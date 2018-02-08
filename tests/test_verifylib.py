@@ -86,7 +86,7 @@ class TestRunAllInspections(unittest.TestCase):
         "steps": [],
         "inspect": [{
           "name": "touch-bar",
-          "run": "touch bar",
+          "run": ["touch", "bar"],
         }]
       })
 
@@ -124,7 +124,7 @@ class TestRunAllInspections(unittest.TestCase):
         "steps": [],
         "inspect": [{
           "name": "non-zero-inspection",
-          "run": "expr 1 / 0",
+          "run": ["expr", "1", "/", "0"],
         }]
     })
     with self.assertRaises(BadReturnValueError):

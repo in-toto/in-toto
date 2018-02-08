@@ -44,6 +44,7 @@ import in_toto.formats
 
 import securesystemslib.exceptions
 import securesystemslib.formats
+import securesystemslib.schema
 
 
 
@@ -234,17 +235,7 @@ class Step(ValidationMixin):
     self.expected_materials = kwargs.get("expected_materials", [])
     self.expected_products = kwargs.get("expected_products", [])
     self.pubkeys = kwargs.get("pubkeys", [])
-
-    # Accept expected command as string or list, if it is a string we split it
-    # using shell like syntax.
-    self.expected_command = kwargs.get("expected_command")
-    if self.expected_command:
-      if not isinstance(self.expected_command, list):
-        self.expected_command = shlex.split(self.expected_command)
-
-    else:
-      self.expected_command = []
-
+    self.expected_command = kwargs.get("expected_command", [])
     self.threshold = kwargs.get("threshold", 1)
 
     self.validate()
@@ -252,6 +243,12 @@ class Step(ValidationMixin):
   @staticmethod
   def read(data):
     return Step(**data)
+
+
+  def set_expected_command_from_string(self, command_string):
+    securesystemslib.schema.AnyString().check_match(command_string)
+    self.expected_command = shlex.split(command_string)
+
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to step."""
@@ -333,20 +330,18 @@ class Inspection(ValidationMixin):
     self.expected_materials = kwargs.get("expected_materials", [])
     self.expected_products = kwargs.get("expected_products", [])
 
-    # Accept run command as string or list, if it is a string we split it
-    # using shell like syntax.
-    self.run = kwargs.get("run")
-    if self.run:
-      if not isinstance(self.run, list):
-        self.run = shlex.split(self.run)
-    else:
-      self.run = []
+    self.run = kwargs.get("run", [])
 
     self.validate()
 
   @staticmethod
   def read(data):
     return Inspection(**data)
+
+  def set_run_from_string(self, command_string):
+    securesystemslib.schema.AnyString().check_match(command_string)
+    self.run = shlex.split(command_string)
+
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to inspection."""
