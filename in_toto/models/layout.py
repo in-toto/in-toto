@@ -779,17 +779,12 @@ class Inspection(SupplyChainItem):
 
   """
   _type = attr.ib()
-  name = attr.ib()
   run = attr.ib()
 
 
   def __init__(self, **kwargs):
     super(Inspection, self).__init__(**kwargs)
     self._type = "inspection"
-    self.name = kwargs.get("name")
-    self.expected_materials = kwargs.get("expected_materials", [])
-    self.expected_products = kwargs.get("expected_products", [])
-
     self.run = kwargs.get("run", [])
 
     self.validate()
