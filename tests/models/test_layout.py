@@ -121,9 +121,14 @@ class TestLayoutMethods(unittest.TestCase):
     """Test removing step by name. """
     names = ["a", "b", "c"]
     layout = Layout(steps=[Step(name=name) for name in names])
-    layout.remove_step_by_name("b")
-    self.assertEqual(len(layout.steps), 2)
-    self.assertTrue("b" not in layout.get_step_name_list())
+
+    self.assertEqual(len(layout.steps), 3)
+    self.assertTrue("b" in layout.get_step_name_list())
+    # Items are only removed if they exist
+    for _ in range(2):
+      layout.remove_step_by_name("b")
+      self.assertEqual(len(layout.steps), 2)
+      self.assertTrue("b" not in layout.get_step_name_list())
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       layout.get_step_by_name([])
@@ -150,9 +155,15 @@ class TestLayoutMethods(unittest.TestCase):
     """Test removing inspection by name. """
     names = ["a", "b", "c"]
     layout = Layout(inspect=[Inspection(name=name) for name in names])
-    layout.remove_inspection_by_name("b")
-    self.assertEqual(len(layout.inspect), 2)
-    self.assertTrue("b" not in layout.get_inspection_name_list())
+
+    self.assertEqual(len(layout.inspect), 3)
+    self.assertTrue("b" in layout.get_inspection_name_list())
+    # Items are only removed if they exist
+    for _ in range(2):
+      layout.remove_inspection_by_name("b")
+      self.assertEqual(len(layout.inspect), 2)
+      self.assertTrue("b" not in layout.get_inspection_name_list())
+
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       layout.remove_inspection_by_name(False)
