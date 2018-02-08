@@ -111,7 +111,7 @@ class Layout(Signable):
     # Assign a default expiration (one month) if not expiration date is passed
     # TODO: Is one month a sensible default? In any case, we need a valid
     # expiration date in order for the layout object to validate.
-    # (c.f. self._validate_expires)
+    # (see self._validate_expires)
     self.expires = kwargs.get("expires")
     if not self.expires:
       self.set_relative_expiration(months=1)
@@ -142,7 +142,7 @@ class Layout(Signable):
     """
     <Purpose>
       Static method to instantiate a layout object from a Python dictionary,
-      e.g.: by parsing its JSON representation. The method expects any
+      e.g. by parsing its JSON representation. The method expects any
       contained steps and inspections to be Python dictionaries as well, and
       tries to instantiate the corresponding objects using the step's and
       inspection's read methods respectively.
@@ -493,7 +493,8 @@ class Layout(Signable):
     return key_dict
 
 
-  def add_functionary_keys_from_gpg_keyids(self, gpg_keyid_list, gpg_home=None):
+  def add_functionary_keys_from_gpg_keyids(self, gpg_keyid_list,
+      gpg_home=None):
     """
     <Purpose>
       Load functionary public keys from the GPG keychain, located at the
@@ -573,7 +574,7 @@ class Layout(Signable):
     names_seen = set()
     if type(self.steps) != list:
       raise securesystemslib.exceptions.FormatError(
-          "The steps section should be a list!")
+          "The steps field should be a list!")
 
     for step in self.steps:
       if not isinstance(step, Step):
@@ -610,16 +611,7 @@ class Layout(Signable):
 @attr.s(repr=False, init=False)
 class SupplyChainItem(ValidationMixin):
   """
-  Represents an item of the supply chain, i.e. a Step or an Inspection.
-
-  <Attributes>
-    name:
-      A unique name used to identify the related link metadata
-
-    expected_materials and expected_products:
-      A list of artifact rules used to verify if the materials or products of
-      the item (found in the according link metadata file) link correctly with
-      other items of the supply chain
+  Parent class for items of the supply chain, i.e. Steps and Inspections.
 
   """
   name = attr.ib()
@@ -628,17 +620,50 @@ class SupplyChainItem(ValidationMixin):
 
 
   def __init__(self, **kwargs):
+    """
+    <Purpose>
+      Instantiate a new SupplyChainItem object with optional initial values.
+
+    <Optional Keyword Arguments>
+      name:
+              A unique name used to identify the related link metadata
+
+      expected_materials and expected_products:
+              A list of artifact rules used to verify if the materials or
+              products of the item (found in the according link metadata file)
+              link correctly with other items of the supply chain.
+
+    """
     super(SupplyChainItem, self).__init__()
     self.name = kwargs.get("name")
     self.expected_materials = kwargs.get("expected_materials", [])
     self.expected_products = kwargs.get("expected_products", [])
 
+
   def __repr__(self):
+    """Returns an indented JSON string of the metadata object. """
     return json.dumps(attr.asdict(self),
         indent=1, separators=(",", ": "), sort_keys=True)
 
 
   def add_material_rule_from_string(self, rule_string):
+    """
+    <Purpose>
+      Convenience method to parse the passed rule string into a list and append
+      it to the item's list of expected_materials.
+
+    <Arguments>
+      rule_string:
+              An artifact rule string, whose list representation is parseable
+              by in_toto.rulelib.unpack_rule
+
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError:
+              If the passed rule_string is not a string.
+              If the parsed rule_string cannot be unpacked using rulelib.
+
+    """
     securesystemslib.schema.AnyString().check_match(rule_string)
     rule_list = shlex.split(rule_string)
 
@@ -649,6 +674,23 @@ class SupplyChainItem(ValidationMixin):
 
 
   def add_product_rule_from_string(self, rule_string):
+    """
+    <Purpose>
+      Convenience method to parse the passed rule string into a list and append
+      it to the item's list of expected_products.
+
+    <Arguments>
+      rule_string:
+              An artifact rule string, whose list representation is parseable
+              by in_toto.rulelib.unpack_rule
+
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError:
+              If the passed rule_string is not a string.
+              If the parsed rule_string cannot be unpacked using rulelib.
+
+    """
     securesystemslib.schema.AnyString().check_match(rule_string)
     rule_list = shlex.split(rule_string)
 
@@ -682,25 +724,11 @@ class SupplyChainItem(ValidationMixin):
 @attr.s(repr=False, init=False)
 class Step(SupplyChainItem):
   """
-  Represents a step of the supply chain performed by a functionary.
-  A step relates to a link metadata file generated when the step was
-  performed.
-
-  <Attributes>
-    name:
-        cf. SupplyChainItem
-
-    expected_materials and expected_products:
-        cf. SupplyChainItem
-
-    pubkeys:
-        a list of keyids of the functionaries authorized to perform the step
-
-    expected_command:
-        the command expected to have performed this step
-
-    threshold:
-        the least number of functionaries expected to perform this step
+  Represents a step of the supply chain performed by a functionary. A step
+  relates to link metadata generated when the step was performed.
+  Materials and products used/produced by the step are constrained by the
+  artifact rules in the step's expected_materials and expected_products
+  attributes.
 
   """
   _type = attr.ib()
@@ -710,6 +738,33 @@ class Step(SupplyChainItem):
 
 
   def __init__(self, **kwargs):
+    """
+    <Purpose>
+      Instantiates a new step object with optional initial values.
+
+    <Optional Keyword Arguments>
+      name:
+              see parent class SupplyChainItem
+
+      expected_materials and expected_products:
+              see parent class SupplyChainItem
+
+      pubkeys:
+              A list of keyids of the functionaries authorized to perform the
+              step
+
+      expected_command:
+              The command expected to have performed this step
+
+      threshold:
+              The least number of functionaries expected to perform this step
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If the instantiated step has invalid properties, e.g. because
+              any of the assigned keyword arguments are invalid.
+
+    """
     super(Step, self).__init__(**kwargs)
     self._type = "step"
     self.pubkeys = kwargs.get("pubkeys", [])
@@ -721,10 +776,41 @@ class Step(SupplyChainItem):
 
   @staticmethod
   def read(data):
+    """
+    <Purpose>
+      Static method to instantiate a step object from a Python dictionary,
+      e.g. by parsing its JSON representation.
+
+    <Arguments>
+      data:
+              A dictionary containing step metadata.
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If any of the step's properties is invalid.
+
+    <Returns>
+      The newly created step object.
+
+    """
     return Step(**data)
 
 
   def set_expected_command_from_string(self, command_string):
+    """
+    <Purpose>
+      Convenience method to parse the passed command_string into a list and
+      assign it to the step's expected_command attribute.
+
+    <Arguments>
+      command_string:
+              A string containing a command and command arguments.
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If the passed command_string is not a string.
+
+    """
     securesystemslib.schema.AnyString().check_match(command_string)
     self.expected_command = shlex.split(command_string)
 
@@ -765,17 +851,10 @@ class Step(SupplyChainItem):
 @attr.s(repr=False, init=False)
 class Inspection(SupplyChainItem):
   """
-  Represents an inspection which performs a command during layout verification.
-
-  <Attributes>
-    name:
-        c.f. SupplyChainItem
-
-    expected_materials and expected_products:
-        cf. SupplyChainItem
-
-    run:
-        the command to execute during layout verification
+  Represents an inspection whose command in the run attribute is executed
+  during final product verification. Materials and products used/produced by
+  the inspection are constrained by the artifact rules in the inspection's
+  expected_materials and expected_products attributes.
 
   """
   _type = attr.ib()
@@ -783,6 +862,26 @@ class Inspection(SupplyChainItem):
 
 
   def __init__(self, **kwargs):
+    """
+    <Purpose>
+        Instantiates a new inspection object with optional initial values.
+
+    <Optional Keyword Arguments>
+      name:
+              see parent class SupplyChainItem
+
+      expected_materials and expected_products:
+              see parent class SupplyChainItem
+
+      run:
+              The command to be executed during final product verification
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If the instantiated inspection has invalid properties, e.g.
+              because any of the assigned keyword arguments are invalid.
+
+    """
     super(Inspection, self).__init__(**kwargs)
     self._type = "inspection"
     self.run = kwargs.get("run", [])
@@ -792,9 +891,41 @@ class Inspection(SupplyChainItem):
 
   @staticmethod
   def read(data):
+    """
+    <Purpose>
+      Static method to instantiate an inspection object from a Python
+      dictionary, e.g. by parsing its JSON representation.
+
+    <Arguments>
+      data:
+              A dictionary containing inspection metadata.
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If any of the inspection's properties is invalid.
+
+    <Returns>
+      The newly created inspection object.
+
+    """
     return Inspection(**data)
 
+
   def set_run_from_string(self, command_string):
+    """
+    <Purpose>
+      Convenience method to parse the passed command_string into a list and
+      assign it to the inspection's run attribute.
+
+    <Arguments>
+      command_string:
+              A string containing a command and command arguments.
+
+    <Exceptions>
+      securesystemslib.exceptions.FormatError
+              If the passed command_string is not a string.
+
+    """
     securesystemslib.schema.AnyString().check_match(command_string)
     self.run = shlex.split(command_string)
 
