@@ -58,7 +58,7 @@ class TestInspectionValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    # for more thorough tests, check the test_artifact_rules.py module
+    # for more thorough tests, check the test_rulelib.py module
     self.inspection.expected_materials = [["CREATE", "foo"]]
     self.inspection._validate_expected_materials()
     self.inspection.validate()
@@ -80,7 +80,7 @@ class TestInspectionValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.inspection.validate()
 
-    # for more thorough tests, check the test_artifact_rules.py module
+    # for more thorough tests, check the test_rulelib.py module
     self.inspection.expected_products = [["CREATE", "foo"]]
     self.inspection._validate_expected_products()
     self.inspection.validate()

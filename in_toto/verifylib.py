@@ -41,12 +41,10 @@ from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
-import in_toto.artifact_rules
-
+import in_toto.rulelib
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
-
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -528,7 +526,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     A list of artifacts that were matched by the rule.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
   dest_name = rule_data["dest_name"]
   dest_type = rule_data["dest_type"]
 
@@ -654,7 +652,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
     The updated products queue (minus newly created artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
 
   matched_products = fnmatch.filter(
@@ -712,7 +710,7 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
     The updated materials queue (minus deleted artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_materials = fnmatch.filter(
       source_materials_queue, rule_data["pattern"])
@@ -766,7 +764,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
     The updated materials and products queues (minus modified artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   # Filter materials and products using the pattern and create sets to
   # take advantage of Python set operations
@@ -831,7 +829,7 @@ def verify_allow_rule(rule, source_artifacts_queue):
     The source artifact queue minus the files that were matched by the rule.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_artifacts = fnmatch.filter(
       source_artifacts_queue, rule_data["pattern"])
@@ -864,7 +862,7 @@ def verify_disallow_rule(rule, source_artifacts_queue):
     None.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_artifacts = fnmatch.filter(
       source_artifacts_queue, rule_data["pattern"])
@@ -955,8 +953,8 @@ def verify_item_rules(source_name, source_type, rules, links):
     log.info("Verifying '{}'...".format(" ".join(rule)))
 
     # Unpack rules for dispatching and rule format verification
-    rule_data = in_toto.artifact_rules.unpack_rule(rule)
-    rule_type = rule_data["type"]
+    rule_data = in_toto.rulelib.unpack_rule(rule)
+    rule_type = rule_data["rule_type"]
 
     # MATCH, ALLOW, DISALLOW operate equally on either products or materials
     # depending on the source_type

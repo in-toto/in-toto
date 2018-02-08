@@ -75,7 +75,7 @@ class TestStepValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
-    # for more thorough tests, check the test_artifact_rules.py module
+    # for more thorough tests, check the test_rulelib.py module
     self.step.expected_materials = [["CREATE", "foo"]]
     self.step._validate_expected_materials()
     self.step.validate()
@@ -97,7 +97,7 @@ class TestStepValidator(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       self.step.validate()
 
-    # for more thorough tests, check the test_artifact_rules.py module
+    # for more thorough tests, check the test_rulelib.py module
     self.step.expected_products = [["CREATE", "foo"]]
     self.step._validate_expected_products()
     self.step.validate()
