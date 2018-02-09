@@ -82,6 +82,9 @@ def main():
   # The subparsers inherit the arguments from the parent parser
   parent_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest="command")
+
+  # Workaround to make subcommands mandatory in Python>=3.3
+  # https://bugs.python.org/issue9253#msg186387
   subparsers.required = True
 
   # FIXME: Do we limit the allowed characters for the name?
