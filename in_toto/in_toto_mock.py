@@ -13,37 +13,40 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Stripped down variant of in-toto-run command that can be used to mock metadata
-  generation of in-toto-run, without the need to specify a key and knowing all
-  the command line arguments. Generated MockLink is unsigned and includes working
-  directory, byproducts and used current directory as material and products.
-
-  Provides a command line interface which takes any link command of the software
-  supply chain as input and generates mock in_toto metadata.
-
-  in_toto_mock options are separated from the command to be executed by
-  a double dash.
-
-  The implementation of the tasks can be found in runlib.
-
-  Example Usage
-  ```
-  in-toto-mock --name write-code -- touch foo.py
-  ```
-
-<Arguments>
-  name:
-          A unique name to relate mock link metadata with a step defined
-          in the layout.
-  command:
-          A list where the first element is a command and the remaining
-          elements are arguments passed to that command.
-
+  Provides a command line interface for runlib.in_toto_mock.
 
 <Return Codes>
   2 if an exception occurred during argument parsing
   1 if an exception occurred
   0 if no exception occurred
+
+<Help>
+usage: in-toto-mock [-h] --name <name> -- <command> [args]
+
+A stripped down variant of 'in-toto-run' that can be used to create unsigned
+link metadata for the passed command, recording all files in the current
+working directory as materials and products.
+
+This command should not be used to secure the supply chain but only to try
+out the 'in-toto-run' command.
+
+positional arguments:
+  <command>             Command to be executed with options and arguments,
+                        separated from 'in-toto-mock' options by double dash
+                        '--'.
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+required named arguments:
+  -n <name>, --name <name>
+                        Name used to associate the resulting link metadata
+                        with the corresponding step defined in an in-toto
+                        layout.
+
+examples:
+  Generate link metadata 'foo' for the activity of creating file 'bar'.
+    in-toto-mock --name foo -- touch bar
 
 """
 import sys
@@ -59,20 +62,38 @@ log = logging.getLogger("in_toto")
 def main():
   """Parse arguments and call in_toto_mock. """
   parser = argparse.ArgumentParser(
-      description="Executes link command and records metadata")
+     formatter_class=argparse.RawDescriptionHelpFormatter,
+      description="""
+A stripped down variant of 'in-toto-run' that can be used to create unsigned
+link metadata for the passed command, recording all files in the current
+working directory as materials and products.
 
-  parser.usage = "%(prog)s [-h] --name <unique step name> -- <command> [args]"
+This command should not be used to secure the supply chain but only to try
+out the 'in-toto-run' command.""")
+
+  parser.usage = "%(prog)s [-h] --name <name> -- <command> [args]"
+
+  parser.epilog = """
+examples:
+  Generate link metadata 'foo' for the activity of creating file 'bar'.
+    {prog} --name foo -- touch bar
+
+""".format(prog=parser.prog)
 
   named_args = parser.add_argument_group("required named arguments")
 
   # FIXME: Do we limit the allowed characters for the name?
   named_args.add_argument("-n", "--name", type=str, required=True,
-      help="Unique name for link metadata", metavar="<name>")
+      metavar="<name>", help=(
+      "Name used to associate the resulting link metadata with the"
+      " corresponding step defined in an in-toto layout."))
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
   parser.add_argument("link_cmd", nargs="+", metavar="<command>",
-    help="Link command to be executed with options and arguments")
+      help=(
+      "Command to be executed with options and arguments, separated from"
+      " 'in-toto-mock' options by double dash '--'."))
 
   args = parser.parse_args()
 
