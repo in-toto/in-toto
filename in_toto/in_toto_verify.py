@@ -14,7 +14,7 @@
 
 <Purpose>
   Provides a command line interface that wraps the verification of
-  in_toto final product.
+  in-toto final product.
 
   Loads the layout metadata as Metablock object (containing a Layout object)
   and the signature verification keys from the passed paths and/or from

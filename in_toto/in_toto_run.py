@@ -14,9 +14,9 @@
 
 <Purpose>
   Provides a command line interface which takes any link command of the software
-  supply chain as input and wraps in_toto metadata recording.
+  supply chain as input and wraps in-toto metadata recording.
 
-  in_toto run options are separated from the command to be executed by
+  in-toto-run options are separated from the command to be executed by
   a double dash.
 
   The implementation of the tasks can be found in runlib.
