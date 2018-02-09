@@ -13,51 +13,81 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface to create a link metadata file in two
-  steps, in order to provide evidence for activities that can't be expressed
-  by a single command (for which you should use in-toto-run).
-
-  The commands to start and stop recording evidence are:
-
-  start
-    Creates a temporary link file containing the file hashes of the passed
-    materials and signs it with the passed functionary's key under
-    .<step name>.<keyid>.link-unfinished
-
-  stop
-    Expects a .<step name>.<keyid>.link-unfinished in the current directory
-    signed by the passed functionary's key, adds the file hashes of the passed
-    products, updates the signature and renames the file
-    .<step name>.<keyid>.link-unfinished to <step name>.<keyid>.link
-
-  The implementation of the tasks can be found in runlib.
-
-<Example Usage>
-  Create link file signed with specified 'key' stored on disk and record all
-  files in current working directory as materials and products.
-  Any files in the current working directory that you edit between running
-  the commands will have different hashes in their corresponding material and
-  product entries of the resulting link file 'edit-files.<keyid>.link'.
-
-  ```
-  in-toto-record start --step-name edit-files -key /path/to/key --materials .
-  in-toto-record stop --step-name edit-files -key /path/to/key --products .
-  ```
-
-  # Create link file signed with the default gpg key and record a file named
-  # 'foo' as material and product.
-  # If you edit foo between running the commands the recorded hashes in the
-  # resulting link file 'edit-foo.<keyid>.link' will differ.
-  ```
-  in-toto-record start --step-name edit-foo --gpg --materials path/to/foo
-  in-toto-record stop --step-name edit-foo --gpg --products path/to/foo
-  ```
-
+  Provides a command line interface for runlib.in_toto_record_start and
+  runlib.in_toto_record_stop.
 
 <Return Codes>
   2 if an exception occurred during argument parsing
   1 if an exception occurred
   0 if no exception occurred
+
+<Help>
+usage: in-toto-record [-h] {start,stop} ...
+
+Creates a signed link metadata file in two steps, in order to provide evidence
+for supply chain steps that cannot be carried out by a single command (for
+which 'in-toto-run' should be used). Returns nonzero value on failure and zero
+otherwise.
+
+positional arguments:
+  {start,stop}
+    start       Creates a preliminary link file recording the paths and hashes
+                of the passed materials and signs it with the passed
+                functionary's key. The resulting link file is stored as
+                '.<name>.<keyid prefix>.link-unfinished'.
+    stop        Expects a preliminary link file '.<name>.<keyid prefix>.link-
+                unfinished' in the CWD, signed by the passed functionary's
+                key. If found, it records and adds the paths and hashes of the
+                passed products to the link metadata file, updates the
+                signature and renames the file to '<name>.<keyid
+                prefix>.link'.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -k <path>, --key <path>
+                        Path to a PEM formatted private key file used to sign
+                        the resulting link metadata. (passing one of '--key'
+                        or '--gpg' is required)
+  -g [<id>], --gpg [<id>]
+                        GPG keyid used to sign the resulting link metadata.
+                        When '--gpg' is passed without keyid, the keyring's
+                        default GPG key is used. (passing one of '--key' or '
+                        --gpg' is required)
+  --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
+                        gpg' option. If '--gpg-home' is not passed, the
+                        default GPG keyring is used.
+  -v, --verbose         Verbose execution.
+  -q, --quiet           Suppress all output.
+
+optional arguments (start subcommand only):
+  -m <path> [<path> ...], --materials <path> [<path> ...]
+                        Paths to files or directories, whose paths and hashes
+                        are stored in the resulting link metadata's material
+                        section when running the 'start' subcommand.
+
+optional arguments (stop subcommand only):
+  -p <path> [<path> ...], --products <path> [<path> ...]
+                        Paths to files or directories, whose paths and hashes
+                        are stored in the resulting link metadata's product
+                        section when running the 'stop' subcommand.
+
+required named arguments:
+  -n <name>, --step-name <name>
+                        Name used to associate the resulting link metadata
+                        with the corresponding step defined in an in-toto
+                        layout.
+
+examples:
+  Create link metadata file in two commands, signing it with the private key
+  loaded from 'key_file', recording all files in the CWD as materials (on
+  start), and as products (on stop).
+    in-toto-record start -n edit-files -k path/to/key_file -m .
+    in-toto-record stop -n edit-files -k path/to/key_file -p .
+
+  Create link metadata file signed with the default GPG key from the default
+  GPG keychain and record a file named 'foo' as material and product.
+    in-toto-record start -n edit-foo --gpg -m path/to/foo
+    in-toto-record stop -n edit-foo --gpg -p path/to/foo
 
 """
 import sys
@@ -77,7 +107,27 @@ def main():
   on the specified subcommand. """
 
   parser = argparse.ArgumentParser(
-      description="Starts or stops link metadata recording")
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description="""
+Creates a signed link metadata file in two steps, in order to provide evidence
+for supply chain steps that cannot be carried out by a single command (for
+which 'in-toto-run' should be used). Returns nonzero value on failure and zero
+otherwise.""")
+
+  parser.epilog = """
+examples:
+  Create link metadata file in two commands, signing it with the private key
+  loaded from 'key_file', recording all files in the CWD as materials (on
+  start), and as products (on stop).
+    {prog} start -n edit-files -k path/to/key_file -m .
+    {prog} stop -n edit-files -k path/to/key_file -p .
+
+
+  Create link metadata file signed with the default GPG key from the default
+  GPG keychain and record a file named 'foo' as material and product.
+    {prog} start -n edit-foo --gpg -m path/to/foo
+    {prog} stop -n edit-foo --gpg -p path/to/foo
+""".format(prog=parser.prog)
 
   # The subparsers inherit the arguments from the parent parser
   parent_parser = argparse.ArgumentParser(add_help=False)
@@ -87,22 +137,32 @@ def main():
   # https://bugs.python.org/issue9253#msg186387
   subparsers.required = True
 
+  parent_named_args = parent_parser.add_argument_group(
+      "required named arguments")
+
   # FIXME: Do we limit the allowed characters for the name?
-  parent_parser.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata", metavar="<name>")
+  parent_named_args.add_argument("-n", "--step-name", type=str, required=True,
+      metavar="<name>", help=(
+      "Name used to associate the resulting link metadata with the"
+      " corresponding step defined in an in-toto layout."))
 
   # Either a key or a gpg key id have to be specified but not both
   key_args_group = parent_parser.add_mutually_exclusive_group(required=True)
-  key_args_group.add_argument("-k", "--key", type=str,
-      help="Path to private key to sign link metadata (PEM)",
-      metavar="<path>")
+  key_args_group.add_argument("-k", "--key", type=str, metavar="<path>", help=(
+      "Path to a PEM formatted private key file used to sign the resulting"
+      " link metadata."
+      " (passing one of '--key' or '--gpg' is required)"))
+
   key_args_group.add_argument("-g", "--gpg", nargs="?", const=True,
-      metavar="<id>", help=("GPG keyid to sign link metadata "
-      "(if set without argument, the default key is used)"))
+      metavar="<id>", help=(
+      "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
+      " passed without keyid, the keyring's default GPG key is used."
+      " (passing one of '--key' or '--gpg' is required)"))
 
   parent_parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      help="Path to GPG keyring (if not set the default keyring is used)",
-      metavar="<path>")
+      metavar="<path>", help=(
+      "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
+      " '--gpg-home' is not passed, the default GPG keyring is used."))
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -111,16 +171,32 @@ def main():
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
 
-  subparser_start = subparsers.add_parser("start", parents=[parent_parser])
-  subparser_stop = subparsers.add_parser("stop", parents=[parent_parser])
+  subparser_start = subparsers.add_parser("start", parents=[parent_parser],
+      help=(
+      "Creates a preliminary link file recording the paths and hashes of"
+      " the passed materials and signs it with the passed functionary's"
+      " key. The resulting link file is stored as"
+      " '.<name>.<keyid prefix>.link-unfinished'."))
+
+  subparser_stop = subparsers.add_parser("stop", parents=[parent_parser],
+      help=(
+      "Expects a preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
+      " in the CWD, signed by the passed functionary's key. If found, it"
+      " records and adds the paths and hashes of the passed products to the"
+      " link metadata file, updates the signature and renames the file to"
+      " '<name>.<keyid prefix>.link'."))
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
-      nargs='+', help="Files to record before link command execution",
-      metavar="<path>")
+      nargs='+', metavar="<path>", help=(
+      "Paths to files or directories, whose paths and hashes are stored in the"
+      " resulting link metadata's material section when running the 'start'"
+      " subcommand."))
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
-      nargs='+', help="Files to record after link command execution",
-      metavar="<path>")
+      nargs='+', metavar="<path>", help=(
+      "Paths to files or directories, whose paths and hashes are stored in the"
+      " resulting link metadata's product section when running the 'stop'"
+      " subcommand."))
 
   args = parser.parse_args()
 
