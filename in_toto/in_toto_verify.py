@@ -13,53 +13,66 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface that wraps the verification of
-  in-toto final product.
-
-  Loads the layout metadata as Metablock object (containing a Layout object)
-  and the signature verification keys from the passed paths and/or from
-  layout_gpg_keyids, calls verifylib.in_toto_verify
-  and handles exceptions.
-
-  The layout has to be signed by the private key corresponding to each passed
-  public key (path) or gpg key (keyid). If any of the signatures are missing
-  or invalid verification fails.
-
-  The actual verification is implemented in verifylib.
-
-  Example Usage:
-  ```
-  # Verify layout (path is "metadata/root.layout") with securesystemslib
-  # layout key (path is "keys/owner.pub")
-  in-toto-verify --layout metadata/root.layout --layout-keys keys/owner.pub
-
-  # Verify layout (path is "metadata/root.layout") with GPG layout key
-  # (keyid is 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17) from gpg keyring
-  # at "~/.gnupg"
-  in-toto-verify --layout metadata/root.layout \
-      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
-  ```
-
-<Arguments>
-  layout:
-          Path to layout metadata file that is being verified.
-
-  layout keys:
-          List of path(s) to project owner public key(s), used to verify the
-          root layout's signature(s).
-
-  gpg:
-          List of project owner GPG keyid(s), used to verify the root
-          layout's signature(s).
-
-  gpg home:
-          Path to GPG keyring (if not set the default keyring is used).
-
+  Provides a command line interface for verifylib.in_toto_verify.
 
 <Return Codes>
   2 if an exception occurred during argument parsing
   1 if an exception occurred (verification failed)
   0 if no exception occurred (verification passed)
+
+<Help>
+usage: in-toto-verify <named arguments> [optional arguments]
+
+Verifies that a software supply chain was carried out according to the passed
+in-toto supply chain layout.
+
+The verification includes the following checks:
+  * the layout was signed with the the passed key(s),
+  * the layout has not expired,
+  * signed link metadata files exist for each step of the layout in the CWD,
+  * link files are provided by the required number of authorized functionaries,
+  * the materials and products for each step, as reported by the corresponding
+    link files, adhere to the artifact rules specified by the step.
+
+Additionally, inspection commands defined in the layout are executed
+sequentially, followed by applying the inspection's artifact rules.
+
+The command returns a nonzero value if verification fails and zero otherwise.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
+                        gpg' option. If '--gpg-home' is not passed, the
+                        default GPG keyring is used.
+  -v, --verbose         Verbose execution.
+  -q, --quiet           Suppress all output.
+
+required named arguments:
+  -l <path>, --layout <path>
+                        Path to root layout specifying the software supply
+                        chain to be verified.
+  -k <path> [<path> ...], --layout-keys <path> [<path> ...]
+                        Path(s) to PEM formatted public key(s), used to verify
+                        the passed root layout's signature(s). Passing at
+                        least one key using '--layout-keys' and/or '--gpg' is
+                        required. For each passed key the layout must carry a
+                        valid signature.
+  -g <id> [<id> ...], --gpg <id> [<id> ...]
+                        GPG keyid, identifying a public key in the GPG
+                        keychain, used to verify the passed root layout's
+                        signature(s). Passing at least one key using '--
+                        layout-keys' and/or '--gpg' is required. For each
+                        passed key the layout must carry a valid signature.
+
+examples:
+  Verify supply chain in 'root.layout', signed with private part of
+  'key_file.pub'.
+      in-toto-verify --layout root.layout --layout-keys key_file.pub
+
+  Verify supply chain in 'root.layout', sighed with GPG key '...7E0C8A17',
+  whose public part can be found in the GPG keyring at '~/.gnupg'.
+      in-toto-verify --layout root.layout \
+      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
 
 """
 import sys
@@ -77,27 +90,68 @@ log = logging.getLogger("in_toto")
 
 def main():
   """Parse arguments and call in_toto_verify. """
+
   parser = argparse.ArgumentParser(
-      description="Verifies in-toto final product")
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description="""
+Verifies that a software supply chain was carried out according to the passed
+in-toto supply chain layout.
+
+The verification includes the following checks:
+  * the layout was signed with the the passed key(s),
+  * the layout has not expired,
+  * signed link metadata files exist for each step of the layout in the CWD,
+  * link files are provided by the required number of authorized functionaries,
+  * the materials and products for each step, as reported by the corresponding
+    link files, adhere to the artifact rules specified by the step.
+
+Additionally, inspection commands defined in the layout are executed
+sequentially, followed by applying the inspection's artifact rules.
+
+The command returns a nonzero value if verification fails and zero otherwise.
+""")
 
   parser.usage = "%(prog)s <named arguments> [optional arguments]"
+
+  parser.epilog = """
+examples:
+  Verify supply chain in 'root.layout', signed with private part of
+  'key_file.pub'.
+      {prog} --layout root.layout --layout-keys key_file.pub
+
+  Verify supply chain in 'root.layout', sighed with GPG key '...7E0C8A17',
+  whose public part can be found in the GPG keyring at '~/.gnupg'.
+      {prog} --layout root.layout \\
+      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
+""".format(prog=parser.prog)
 
   named_args = parser.add_argument_group("required named arguments")
 
   named_args.add_argument("-l", "--layout", type=str, required=True,
-      help="Root layout to use for verification", metavar="<path>")
+      metavar="<path>", help=(
+      "Path to root layout specifying the software supply chain to be"
+      " verified." ))
 
-  named_args.add_argument("-k", "--layout-keys", type=str,
-      nargs="+", help="Key(s) to verify root layout signature",
-      metavar="<path>")
+  named_args.add_argument("-k", "--layout-keys", type=str, metavar="<path>",
+      nargs="+", help=(
+      "Path(s) to PEM formatted public key(s), used to verify the passed root"
+      " layout's signature(s)."
+      " Passing at least one key using '--layout-keys' and/or '--gpg' is"
+      " required. For each passed key the layout must carry a valid"
+      " signature."))
 
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
-      help=("GPG keyid to verify metadata root layout signature. "
-      "(if set without argument, the default key is used)"))
+      help=(
+      "GPG keyid, identifying a public key in the GPG keychain, used to verify"
+      " the passed root layout's signature(s)."
+      " Passing at least one key using '--layout-keys' and/or '--gpg' is"
+      " required. For each passed key the layout must carry a valid"
+      " signature."))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      help="Path to GPG keyring (if not set the default keyring is used)",
-      metavar="<path>")
+      metavar="<path>", help=("Path to GPG keyring to load GPG key identified"
+      " by '--gpg' option.  If '--gpg-home' is not passed, the default GPG"
+      " keyring is used."))
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
