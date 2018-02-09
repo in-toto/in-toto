@@ -232,20 +232,21 @@ def main():
     description="Sign in-toto Link or Layout metadata (or verify signatures)")
 
   parser.add_argument("-f", "--file", type=str, required=True,
-      help="read metadata file from passed path (required)")
+      help="read metadata file from passed path (required)", metavar="<path>")
 
-  parser.add_argument("-k", "--key", nargs="+",
+  parser.add_argument("-k", "--key", nargs="+", metavar="<path>",
       help="key path(s) used to sign or verify metadata.")
 
-  parser.add_argument("-g", "--gpg", nargs="*",
+  parser.add_argument("-g", "--gpg", nargs="*", metavar="<id>",
       help=("GPG keyids to sign or verify metadata. "
       "(if passed without arguments, the default key is used)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      help="Path to GPG keyring (if not set the default keyring is used)")
+      help="Path to GPG keyring (if not set the default keyring is used)",
+      metavar="<path>")
 
   # Only when signing
-  parser.add_argument("-o", "--output", type=str,
+  parser.add_argument("-o", "--output", type=str, metavar="<path>",
       help="store signed metadata file to passed path, if not passed Layout"
       " metadata is written to the input file and Link metadata is written to"
       " '<step name>.<short signing key id>.link'")

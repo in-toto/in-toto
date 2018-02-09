@@ -88,27 +88,27 @@ def main():
 
   # FIXME: Do we limit the allowed characters for the name?
   named_args.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata", metavar="<unique step name>")
+      help="Unique name for link metadata", metavar="<name>")
 
   parser.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution",
-      metavar="<material path>")
+      metavar="<path>")
 
   parser.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution",
-      metavar="<product path>")
+      metavar="<path>")
 
   named_args.add_argument("-k", "--key", type=str,
       help="Path to private key to sign link metadata (PEM)",
-      metavar="<signing key path>")
+      metavar="<path>")
 
   named_args.add_argument("-g", "--gpg", nargs="?", const=True,
-      metavar="<gpg keyid>", help=("GPG keyid to sign link metadata "
+      metavar="<id>", help=("GPG keyid to sign link metadata "
       "(if set without argument, the default key is used)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       help="Path to GPG keyring (if not set the default keyring is used)",
-      metavar="<gpg keyring path>")
+      metavar="<path>")
 
   parser.add_argument("-b", "--record-streams",
       help="If set redirects stdout/stderr and stores to link metadata",

@@ -85,19 +85,19 @@ def main():
   named_args = parser.add_argument_group("required named arguments")
 
   named_args.add_argument("-l", "--layout", type=str, required=True,
-      help="Root layout to use for verification", metavar="<layout path>")
+      help="Root layout to use for verification", metavar="<path>")
 
   named_args.add_argument("-k", "--layout-keys", type=str,
       nargs="+", help="Key(s) to verify root layout signature",
-      metavar="<verification key path>")
+      metavar="<path>")
 
-  named_args.add_argument("-g", "--gpg", nargs="+", metavar="<gpg keyid>",
+  named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
       help=("GPG keyid to verify metadata root layout signature. "
       "(if set without argument, the default key is used)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       help="Path to GPG keyring (if not set the default keyring is used)",
-      metavar="<gpg keyring path>")
+      metavar="<path>")
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",

@@ -67,7 +67,7 @@ def main():
 
   # FIXME: Do we limit the allowed characters for the name?
   named_args.add_argument("-n", "--name", type=str, required=True,
-      help="Unique name for link metadata", metavar="<unique step name>")
+      help="Unique name for link metadata", metavar="<name>")
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?

@@ -89,20 +89,20 @@ def main():
 
   # FIXME: Do we limit the allowed characters for the name?
   parent_parser.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata", metavar="<unique step name>")
+      help="Unique name for link metadata", metavar="<name>")
 
   # Either a key or a gpg key id have to be specified but not both
   key_args_group = parent_parser.add_mutually_exclusive_group(required=True)
   key_args_group.add_argument("-k", "--key", type=str,
       help="Path to private key to sign link metadata (PEM)",
-      metavar="<signing key path>")
+      metavar="<path>")
   key_args_group.add_argument("-g", "--gpg", nargs="?", const=True,
-      metavar="<gpg keyid>", help=("GPG keyid to sign link metadata "
+      metavar="<id>", help=("GPG keyid to sign link metadata "
       "(if set without argument, the default key is used)"))
 
   parent_parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       help="Path to GPG keyring (if not set the default keyring is used)",
-      metavar="<gpg keyring path>")
+      metavar="<path>")
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -116,11 +116,11 @@ def main():
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', help="Files to record before link command execution",
-      metavar="<material path>")
+      metavar="<path>")
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
       nargs='+', help="Files to record after link command execution",
-      metavar="<product path>")
+      metavar="<path>")
 
   args = parser.parse_args()
 
