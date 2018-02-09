@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 <Program Name>
   in_toto_sign.py
