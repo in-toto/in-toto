@@ -76,8 +76,8 @@ def main():
 
   args = parser.parse_args()
 
-  # in-toto-mock should NOT be used to secure the supply chain but only to
-  # TRY out in-toto-run, with fewer command lines args and max. user feedback.
+  # in-toto-mock should not be used to secure the supply chain but only to try
+  # out in-toto-run with max. user feedback, hence we set a verbose log level
   log.setLevel(logging.INFO)
 
   try:
