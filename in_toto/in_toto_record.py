@@ -135,18 +135,13 @@ def main():
   if not gpg_use_default and args.gpg:
     gpg_keyid = args.gpg
 
-  # We load the key here because it might prompt the user for a password in
-  # case the key is encrypted. Something that should not happen in the library.
-  key = None
-  if args.key:
-    try:
+  try:
+    # We load the key here because it might prompt the user for a password in
+    # case the key is encrypted. Something that should not happen in the lib.
+    key = None
+    if args.key:
       key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
 
-    except Exception as e:
-      log.error("in load key - {}".format(e))
-      sys.exit(1)
-
-  try:
     if args.command == "start":
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
           signing_key=key, gpg_keyid=gpg_keyid,
@@ -159,7 +154,8 @@ def main():
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
 
   except Exception as e:
-    log.error("in {} record - {}".format(args.command, e))
+    log.error("(in-toto-record {0}) {1}: {2}"
+        .format(args.command, type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

@@ -137,7 +137,7 @@ def main():
     verifylib.in_toto_verify(layout, layout_key_dict)
 
   except Exception as e:
-    log.error("{0} - {1}".format(type(e).__name__, e))
+    log.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

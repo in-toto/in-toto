@@ -84,7 +84,7 @@ def main():
     in_toto.runlib.in_toto_mock(args.name, args.link_cmd)
 
   except Exception as e:
-    log.error("in toto mock - {}".format(e))
+    log.error("(in-toto-mock) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

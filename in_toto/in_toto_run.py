@@ -174,7 +174,7 @@ def main():
         args.gpg_home)
 
   except Exception as e:
-    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
+    log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)
