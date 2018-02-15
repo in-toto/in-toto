@@ -34,7 +34,7 @@
     "keys": {
         "7b3abb26b97b655ab9296bd15b0bd02e1c768c43": {
             "hashes": [
-                "pgp+SHA1"
+                "pgp+SHA2"
             ],
             "keyid": "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
             "keyval": {
@@ -49,7 +49,7 @@
         },
         "8288ef560ed3795f9df2c0db56193089b285da58": {
             "hashes": [
-                "pgp+SHA1"
+                "pgp+SHA2"
             ],
             "keyid": "8288ef560ed3795f9df2c0db56193089b285da58",
             "keyval": {
