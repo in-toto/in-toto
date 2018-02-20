@@ -30,7 +30,7 @@
 
   >>> rsa_pubkey = {
       'type': 'rsa',
-      'hashes': ['pgp+SHA1'],
+      'hashes': ['pgp+SHA2'],
       'keyid': '8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17',
       'keyval': {
         'public': {
