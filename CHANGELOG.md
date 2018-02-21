@@ -1,5 +1,24 @@
 # Changelog
 
+## in-toto v0.2.1
+
+* Model changes
+  - Add metablock validators
+  - Add abstract class for layout steps and inspections
+  - Disallow passing command string to step and inspection constructor
+  - Add custom `__repr__` for step and inspection objects
+  - Add layout creation convenience methods
+* Command Line tool changes
+  - Add missing shebangs
+  - Enhance help messages
+  - Fix argparse bug for required subcommand in in-toto-record
+  - Rename short option to record streams in in-toto-run
+* Fix gpg hashing algorithm name
+* Add layout creation example document
+* Refactor logging and user feedback
+* Rename artifact_rules module to rulelib and add convenience methods
+
+
 ## in-toto v0.2.0
 
 * Fix link metadata bug in in_toto_mock
