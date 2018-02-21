@@ -165,7 +165,7 @@ examples:
       "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
       " '--gpg-home' is not passed, the default GPG keyring is used."))
 
-  parser.add_argument("-b", "--record-streams", dest="record_streams",
+  parser.add_argument("-s", "--record-streams", dest="record_streams",
       default=False, action="store_true", help=(
       "If passed 'stdout' and 'stderr' of the executed command are redirected"
       " and stored in the resulting link metadata."))
