@@ -67,10 +67,13 @@ required named arguments:
 examples:
   Verify supply chain in 'root.layout', signed with private part of
   'key_file.pub'.
+
       in-toto-verify --layout root.layout --layout-keys key_file.pub
 
-  Verify supply chain in 'root.layout', sighed with GPG key '...7E0C8A17',
+
+  Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
   whose public part can be found in the GPG keyring at '~/.gnupg'.
+
       in-toto-verify --layout root.layout \
       --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
 
@@ -117,13 +120,18 @@ The command returns a nonzero value if verification fails and zero otherwise.
 examples:
   Verify supply chain in 'root.layout', signed with private part of
   'key_file.pub'.
+
       {prog} --layout root.layout --layout-keys key_file.pub
 
-  Verify supply chain in 'root.layout', sighed with GPG key '...7E0C8A17',
+
+  Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
   whose public part can be found in the GPG keyring at '~/.gnupg'.
+
       {prog} --layout root.layout \\
       --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
+
 """.format(prog=parser.prog)
+
 
   named_args = parser.add_argument_group("required named arguments")
 

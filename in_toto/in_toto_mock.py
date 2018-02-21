@@ -46,6 +46,7 @@ required named arguments:
 
 examples:
   Generate link metadata 'foo' for the activity of creating file 'bar'.
+
     in-toto-mock --name foo -- touch bar
 
 """
@@ -76,9 +77,11 @@ out the 'in-toto-run' command.""")
   parser.epilog = """
 examples:
   Generate link metadata 'foo' for the activity of creating file 'bar'.
+
     {prog} --name foo -- touch bar
 
 """.format(prog=parser.prog)
+
 
   named_args = parser.add_argument_group("required named arguments")
 

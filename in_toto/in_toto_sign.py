@@ -68,20 +68,29 @@ required named arguments:
 
 examples:
   Append two signatures to 'unsigned.layout' file and write to 'root.layout'.
+
       in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
+
 
   Replace signature in link file. And write to default filename, i.e.
   'package.<priv_key's keyid prefix>.link'.
+
       in-toto-sign -f package.2f89b927.link -k priv_key
 
+
   Verify layout signed with 3 keys.
+
       in-toto-sign -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
 
+
   Sign layout with default gpg key in default gpg keyring.
-      in-toto-sign -f gpg.layout --gpg
+
+      in-toto-sign -f root.layout --gpg
+
 
   Verify layout with a gpg key identified by keyid '...439F3C2'.
-      in-toto-sign -f gpg.layout --verify \
+
+      in-toto-sign -f root.layout --verify \
       --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
 
 """
@@ -269,23 +278,33 @@ Returns nonzero value on failure and zero otherwise.""")
   parser.epilog = """
 examples:
   Append two signatures to 'unsigned.layout' file and write to 'root.layout'.
+
       {prog} -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
+
 
   Replace signature in link file. And write to default filename, i.e.
   'package.<priv_key's keyid prefix>.link'.
+
       {prog} -f package.2f89b927.link -k priv_key
 
+
   Verify layout signed with 3 keys.
+
       {prog} -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
 
+
   Sign layout with default gpg key in default gpg keyring.
-      {prog} -f gpg.layout --gpg
+
+      {prog} -f root.layout --gpg
+
 
   Verify layout with a gpg key identified by keyid '...439F3C2'.
-      {prog} -f gpg.layout --verify \\
+
+      {prog} -f root.layout --verify \\
       --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
 
 """.format(prog=parser.prog)
+
 
   named_args = parser.add_argument_group("required named arguments")
 

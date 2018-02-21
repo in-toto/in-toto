@@ -81,11 +81,14 @@ examples:
   Create link metadata file in two commands, signing it with the private key
   loaded from 'key_file', recording all files in the CWD as materials (on
   start), and as products (on stop).
+
     in-toto-record start -n edit-files -k path/to/key_file -m .
     in-toto-record stop -n edit-files -k path/to/key_file -p .
 
+
   Create link metadata file signed with the default GPG key from the default
   GPG keychain and record a file named 'foo' as material and product.
+
     in-toto-record start -n edit-foo --gpg -m path/to/foo
     in-toto-record stop -n edit-foo --gpg -p path/to/foo
 
@@ -119,14 +122,17 @@ examples:
   Create link metadata file in two commands, signing it with the private key
   loaded from 'key_file', recording all files in the CWD as materials (on
   start), and as products (on stop).
+
     {prog} start -n edit-files -k path/to/key_file -m .
     {prog} stop -n edit-files -k path/to/key_file -p .
 
 
   Create link metadata file signed with the default GPG key from the default
   GPG keychain and record a file named 'foo' as material and product.
+
     {prog} start -n edit-foo --gpg -m path/to/foo
     {prog} stop -n edit-foo --gpg -p path/to/foo
+
 """.format(prog=parser.prog)
 
   # The subparsers inherit the arguments from the parent parser

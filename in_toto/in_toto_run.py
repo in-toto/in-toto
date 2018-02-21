@@ -76,7 +76,8 @@ examples:
 
       in-toto-run -n tag -p . -k key_file -- git tag v1.0
 
-  Create tarball, storing files 'project' directory as materials and the
+
+  Create tarball, storing files in 'project' directory as materials and the
   tarball as product, signing the link file with GPG key '...7E0C8A17'.
 
       in-toto-run -n package -m project -p project.tar.gz \
@@ -120,12 +121,15 @@ examples:
       {prog} -n tag -p . -k key_file -- git tag v1.0
 
 
-  Create tarball, storing files 'project' directory as materials and the
+  Create tarball, storing files in 'project' directory as materials and the
   tarball as product, signing the link file with GPG key '...7E0C8A17'.
 
       {prog} -n package -m project -p project.tar.gz \\
              -g 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
-             -- tar czf project.tar.gz project""".format(prog=parser.prog)
+             -- tar czf project.tar.gz project
+
+""".format(prog=parser.prog)
+
 
   named_args = parser.add_argument_group("required named arguments")
 
