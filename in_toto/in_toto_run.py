@@ -13,19 +13,76 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides a command line interface which takes any link command of the software
-  supply chain as input and wraps in_toto metadata recording.
+  Provides a command line interface for runlib.in_toto_run.
 
-  in_toto run options are separated from the command to be executed by
-  a double dash.
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
 
-  The implementation of the tasks can be found in runlib.
+<Help>
+usage: in-toto-run <named arguments> [optional arguments] -- <command> [args]
 
-  Example Usage
-  ```
-  in-toto-run --step-name write-code --materials . --products . --key bob \
-      -- vi foo.py
-  ```
+Executes the passed command and records paths and hashes of 'materials' (i.e.
+files before command execution) and 'products' (i.e. files after command
+execution) and stores them together with other information (executed command,
+return value, stdout, stderr, ...) to a link metadata file, which is signed
+with the passed key.  Returns nonzero value on failure and zero otherwise.
+
+positional arguments:
+  <command>             Command to be executed with options and arguments,
+                        separated from 'in-toto-run' options by double dash
+                        '--'.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m <path> [<path> ...], --materials <path> [<path> ...]
+                        Paths to files or directories, whose paths and hashes
+                        are stored in the resulting link metadata before the
+                        command is executed.
+  -p <path> [<path> ...], --products <path> [<path> ...]
+                        Paths to files or directories, whose paths and hashes
+                        are stored in the resulting link metadata after the
+                        command is executed.
+  --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
+                        gpg' option. If '--gpg-home' is not passed, the
+                        default GPG keyring is used.
+  -b, --record-streams  If passed 'stdout' and 'stderr' of the executed
+                        command are redirected and stored in the resulting
+                        link metadata.
+  -x, --no-command      Generate link metadata without executing a command,
+                        e.g. for a 'signed off by' step.
+  -v, --verbose         Verbose execution.
+  -q, --quiet           Suppress all output.
+
+required named arguments:
+  -n <name>, --step-name <name>
+                        Name used to associate the resulting link metadata
+                        with the corresponding step defined in an in-toto
+                        layout.
+  -k <path>, --key <path>
+                        Path to a PEM formatted private key file used to sign
+                        the resulting link metadata. (passing one of '--key'
+                        or '--gpg' is required)
+  -g [<id>], --gpg [<id>]
+                        GPG keyid used to sign the resulting link metadata.
+                        When '--gpg' is passed without keyid, the keyring's
+                        default GPG key is used. (passing one of '--key' or '
+                        --gpg' is required)
+
+examples:
+  Tag a git repo, storing files in CWD as products, signing the resulting link
+  file with the private key loaded from 'key_file'.
+
+      in-toto-run -n tag -p . -k key_file -- git tag v1.0
+
+
+  Create tarball, storing files in 'project' directory as materials and the
+  tarball as product, signing the link file with GPG key '...7E0C8A17'.
+
+      in-toto-run -n package -m project -p project.tar.gz \
+             -g 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \
+             -- tar czf project.tar.gz project
 
 """
 
@@ -40,108 +97,83 @@ from in_toto import (util, runlib)
 log = logging.getLogger("in_toto")
 
 
-def in_toto_run(step_name, material_list, product_list, link_cmd_args,
-     record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home):
-  """
-  <Purpose>
-    Calls runlib.in_toto_run and catches exceptions
-
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    material_list:
-            List of file or directory paths that should be recorded as
-            materials.
-    product_list:
-            List of file or directory paths that should be recorded as
-            products.
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    record_streams:
-            A bool that specifies whether to redirect standard output and
-            and standard error to a temporary file which is returned to the
-            caller (True) or not (False).
-    signing_key:
-            If not None, link metadata is signed with this key.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    gpg_keyid:
-            If not None, link metadata is signed with a gpg key identified
-            by the passed keyid.
-    gpg_use_default:
-            If True, link metadata is signed with default gpg key.
-    gpg_home:
-            Path to GPG keyring (if not set the default keyring is used).
-
-  <Exceptions>
-    SystemExit if any exception occurs
-
-  <Side Effects>
-    Calls sys.exit(1) if an exception is raised
-
-  <Returns>
-    None.
-  """
-
-  try:
-    runlib.in_toto_run(step_name, material_list, product_list, link_cmd_args,
-         record_streams, signing_key, gpg_keyid, gpg_use_default, gpg_home)
-
-  except Exception as e:
-    log.error("(in-toto-run) - {0}: {1}".format(type(e).__name__, e))
-    sys.exit(1)
-
 def main():
   """Parse arguments, load key from disk (prompts for password if key is
   encrypted) and call in_toto_run. """
 
   parser = argparse.ArgumentParser(
-      description="Executes link command and records metadata")
-  # Whitespace padding to align with program name
-  lpad = (len(parser.prog) + 1) * " "
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description="""
+Executes the passed command and records paths and hashes of 'materials' (i.e.
+files before command execution) and 'products' (i.e. files after command
+execution) and stores them together with other information (executed command,
+return value, stdout, stderr, ...) to a link metadata file, which is signed
+with the passed key.  Returns nonzero value on failure and zero otherwise.""")
 
-  parser.usage = ("\n"
-      "%(prog)s  --step-name <unique step name>\n{0}"
-               "{{--key <functionary signing key path>, "
-               " --gpg [<functionary gpg signing key id>]}} \n{0}"
-               "[--gpg-home <path to gpg keyring>]\n{0}"
-               "[--materials <filepath>[ <filepath> ...]]\n{0}"
-               "[--products <filepath>[ <filepath> ...]]\n{0}"
-               "[--record-streams]\n{0}"
-               "[--no-command]\n{0}"
-               "[--verbose | --quiet] -- <cmd> [args]\n\n"
-               .format(lpad))
+  parser.usage = ("%(prog)s <named arguments> [optional arguments]"
+      " -- <command> [args]")
 
-  in_toto_args = parser.add_argument_group("in-toto options")
+  parser.epilog = """
+examples:
+  Tag a git repo, storing files in CWD as products, signing the resulting link
+  file with the private key loaded from 'key_file'.
+
+      {prog} -n tag -p . -k key_file -- git tag v1.0
+
+
+  Create tarball, storing files in 'project' directory as materials and the
+  tarball as product, signing the link file with GPG key '...7E0C8A17'.
+
+      {prog} -n package -m project -p project.tar.gz \\
+             -g 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
+             -- tar czf project.tar.gz project
+
+""".format(prog=parser.prog)
+
+
+  named_args = parser.add_argument_group("required named arguments")
 
   # FIXME: Do we limit the allowed characters for the name?
-  in_toto_args.add_argument("-n", "--step-name", type=str, required=True,
-      help="Unique name for link metadata")
+  named_args.add_argument("-n", "--step-name", type=str, required=True,
+      metavar="<name>", help=(
+      "Name used to associate the resulting link metadata with the"
+      " corresponding step defined in an in-toto layout."))
 
-  in_toto_args.add_argument("-m", "--materials", type=str, required=False,
-      nargs='+', help="Files to record before link command execution")
+  parser.add_argument("-m", "--materials", type=str, required=False,
+      nargs='+', metavar="<path>", help=(
+      "Paths to files or directories, whose paths and hashes are stored in the"
+      " resulting link metadata before the command is executed."))
 
-  in_toto_args.add_argument("-p", "--products", type=str, required=False,
-      nargs='+', help="Files to record after link command execution")
+  parser.add_argument("-p", "--products", type=str, required=False,
+      nargs='+', metavar="<path>", help=(
+      "Paths to files or directories, whose paths and hashes are stored in the"
+      " resulting link metadata after the command is executed."))
 
-  in_toto_args.add_argument("-k", "--key", type=str,
-      help="Path to private key to sign link metadata (PEM)")
+  named_args.add_argument("-k", "--key", type=str, metavar="<path>", help=(
+      "Path to a PEM formatted private key file used to sign the resulting"
+      " link metadata."
+      " (passing one of '--key' or '--gpg' is required)"))
 
-  parser.add_argument("-g", "--gpg", nargs="?", const=True,
-      help=("GPG keyid to sign link metadata "
-      "(if set without argument, the default key is used)"))
+  named_args.add_argument("-g", "--gpg", nargs="?", const=True, metavar="<id>",
+      help=(
+      "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
+      " passed without keyid, the keyring's default GPG key is used."
+      " (passing one of '--key' or '--gpg' is required)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      help="Path to GPG keyring (if not set the default keyring is used)")
+      metavar="<path>", help=(
+      "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
+      " '--gpg-home' is not passed, the default GPG keyring is used."))
 
-  in_toto_args.add_argument("-b", "--record-streams",
-      help="If set redirects stdout/stderr and stores to link metadata",
-      dest="record_streams", default=False, action="store_true")
+  parser.add_argument("-s", "--record-streams", dest="record_streams",
+      default=False, action="store_true", help=(
+      "If passed 'stdout' and 'stderr' of the executed command are redirected"
+      " and stored in the resulting link metadata."))
 
-  in_toto_args.add_argument("-x", "--no-command",
-      help="Set if step does not have a command",
-      dest="no_command", default=False, action="store_true")
+  parser.add_argument("-x", "--no-command", dest="no_command", default=False,
+    action="store_true", help=(
+    "Generate link metadata without executing a command, e.g. for a 'signed"
+    " off by' step."))
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -150,10 +182,13 @@ def main():
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
 
+
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
-  in_toto_args.add_argument("link_cmd", nargs="*",
-    help="Link command to be executed with options and arguments")
+  parser.add_argument("link_cmd", nargs="*", metavar="<command>",
+      help=(
+      "Command to be executed with options and arguments, separated from"
+      " 'in-toto-run' options by double dash '--'."))
 
   args = parser.parse_args()
 
@@ -165,7 +200,7 @@ def main():
   # Regular signing and GPG signing are mutually exclusive
   if (args.key == None) == (args.gpg == None):
     parser.print_usage()
-    parser.exit("Specify either `--key <key path>` or `--gpg [<keyid>]`")
+    parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
@@ -176,30 +211,32 @@ def main():
   if args.gpg != True:
     gpg_keyid = args.gpg
 
-
-  # We load the key here because it might prompt the user for a password in
-  # case the key is encrypted. Something that should not happen in the library.
-  key = None
-  if args.key:
-    try:
-      key = util.prompt_import_rsa_key_from_file(args.key)
-
-    except Exception as e:
-      log.error("in load key - {}".format(e))
-      sys.exit(1)
-
   # If no_command is specified run in_toto_run without executing a command
   if args.no_command:
-    in_toto_run(args.step_name, args.materials, args.products, [],
-      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+    args.link_cmd = []
 
   elif not args.link_cmd: # pragma: no branch
     parser.print_usage()
-    parser.exit("No command specified."
+    parser.error("No command specified."
         " Please specify (or use the --no-command option)")
 
-  in_toto_run(args.step_name, args.materials, args.products, args.link_cmd,
-      args.record_streams, key, gpg_keyid, gpg_use_default, args.gpg_home)
+  try:
+    # We load the key here because it might prompt the user for a password in
+    # case the key is encrypted. Something that should not happen in the lib.
+    key = None
+    if args.key:
+      key = util.prompt_import_rsa_key_from_file(args.key)
+
+    runlib.in_toto_run(args.step_name, args.materials, args.products,
+        args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
+        args.gpg_home)
+
+  except Exception as e:
+    log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
+    sys.exit(1)
+
+  sys.exit(0)
+
 
 if __name__ == "__main__":
   main()

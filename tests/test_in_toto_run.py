@@ -32,16 +32,17 @@ from in_toto.util import (generate_and_write_rsa_keypair,
 
 from in_toto.models.link import Link
 from in_toto.in_toto_run import main as in_toto_run_main
-from in_toto.in_toto_run import in_toto_run
 from in_toto.models.link import FILENAME_FORMAT
 
 import in_toto.gpg.util
+import tests.common
 
 
 
-class TestInTotoRunTool(unittest.TestCase):
+class TestInTotoRunTool(tests.common.CliTestCase):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
+  cli_main_func = staticmethod(in_toto_run_main)
 
   @classmethod
   def setUpClass(self):
@@ -84,35 +85,31 @@ class TestInTotoRunTool(unittest.TestCase):
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
 
-    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
-        self.key_path, "--", "echo", "test"]
-    with patch.object(sys, 'argv', args):
-      in_toto_run_main()
+    args = ["--step-name", self.test_step, "--key", self.key_path, "--",
+        "echo", "test"]
 
+    self.assert_cli_sys_exit(args, 0)
     self.assertTrue(os.path.exists(self.test_link))
+
 
   def test_main_optional_args(self):
     """Test CLI command with optional arguments. """
 
-    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+    args = ["--step-name", self.test_step, "--key",
         self.key_path, "--materials", self.test_artifact, "--products",
         self.test_artifact, "--record-streams", "--", "echo", "test"]
 
-    with patch.object(sys, 'argv', args):
-      in_toto_run_main()
-
+    self.assert_cli_sys_exit(args, 0)
     self.assertTrue(os.path.exists(self.test_link))
 
 
   def test_main_with_specified_gpg_key(self):
     """Test CLI command with specified gpg key. """
-    args = [ "in_toto_run.py", "-n", self.test_step,
+    args = ["-n", self.test_step,
             "--gpg", self.non_default_gpg_keyid,
             "--gpg-home", self.gnupg_home, "--", "ls"]
 
-    with patch.object(sys, 'argv', args):
-      in_toto_run_main()
-
+    self.assert_cli_sys_exit(args, 0)
     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
         keyid=self.non_default_gpg_keyid)
 
@@ -121,12 +118,11 @@ class TestInTotoRunTool(unittest.TestCase):
 
   def test_main_with_default_gpg_key(self):
     """Test CLI command with default gpg key. """
-    args = [ "in_toto_run.py", "-n", self.test_step,
+    args = ["-n", self.test_step,
             "--gpg", "--gpg-home", self.gnupg_home, "--", "ls"]
 
     if in_toto.gpg.util.is_version_fully_supported():
-      with patch.object(sys, 'argv', args):
-        in_toto_run_main()
+      self.assert_cli_sys_exit(args, 0)
 
       link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
           keyid=self.default_gpg_keyid)
@@ -135,8 +131,7 @@ class TestInTotoRunTool(unittest.TestCase):
 
     # Default key signing fails on not fully supported gpg versions
     else:
-      with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
-        in_toto_run_main()
+      self.assert_cli_sys_exit(args, 1)
 
   def test_main_no_command_arg(self):
     """Test CLI command with --no-command argument. """
@@ -144,55 +139,38 @@ class TestInTotoRunTool(unittest.TestCase):
     args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
         self.key_path, "--no-command"]
 
-    with patch.object(sys, 'argv', args):
-      in_toto_run_main()
-
+    self.assert_cli_sys_exit(args, 0)
     self.assertTrue(os.path.exists(self.test_link))
 
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
 
     wrong_args_list = [
-      ["in_toto_run.py"],
-      ["in_toto_run.py", "--step-name", "some"],
-      ["in_toto_run.py", "--key", self.key_path],
-      ["in_toto_run.py", "--", "echo", "blub"],
-      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path],
-      ["in_toto_run.py", "--step-name", "--", "echo", "blub"],
-      ["in_toto_run.py", "--key", self.key_path, "--", "echo", "blub"],
-      ["in_toto_run.py", "--step-name", "test-step", "--key", self.key_path, "--"],
-      ["in_toto_run.py", "--step-name", "test-step",
+      [],
+      ["--step-name", "some"],
+      ["--key", self.key_path],
+      ["--", "echo", "blub"],
+      ["--step-name", "test-step", "--key", self.key_path],
+      ["--step-name", "--", "echo", "blub"],
+      ["--key", self.key_path, "--", "echo", "blub"],
+      ["--step-name", "test-step", "--key", self.key_path, "--"],
+      ["--step-name", "test-step",
           "--key", self.key_path, "--gpg", "--", "echo", "blub"]
     ]
 
     for wrong_args in wrong_args_list:
-      with patch.object(sys, 'argv', wrong_args), self.assertRaises(SystemExit):
-        in_toto_run_main()
+      self.assert_cli_sys_exit(wrong_args, 2)
       self.assertFalse(os.path.exists(self.test_link))
 
   def test_main_wrong_key_exits(self):
     """Test CLI command with wrong key argument, exits and logs error """
 
-    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+    args = ["--step-name", self.test_step, "--key",
        "non-existing-key", "--", "echo", "test"]
 
-    with patch.object(sys, 'argv', args), self.assertRaises(SystemExit):
-      in_toto_run_main()
+    self.assert_cli_sys_exit(args, 1)
     self.assertFalse(os.path.exists(self.test_link))
 
-
-  def test_successful_in_toto_run(self):
-    """Call in_toto_run successfully """
-    in_toto_run(self.test_step, [self.test_artifact], [self.test_artifact],
-        ["echo", "test"], False, self.key, None, False, None)
-
-    self.assertTrue(os.path.exists(self.test_link))
-
-  def test_in_toto_run_bad_key_error_exit(self):
-    """Error exit in_toto_run with bad key. """
-    with self.assertRaises(SystemExit):
-      in_toto_run(self.test_step, [self.test_artifact], [self.test_artifact],
-          ["echo", "test"], False, "bad-key", None, False, None)
 
 if __name__ == "__main__":
   unittest.main()

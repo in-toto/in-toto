@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 <Program Name>
   in_toto_keygen.py
@@ -19,7 +20,7 @@
   generated. By default it is set as 3072.
 
   General Usage:
-  python in_toto_keygen.py [-p] <filename> [bits]
+  in-toto-keygen [-p] <filename> [bits]
 
   Example Usage:
   Suppose Bob wants to create the keys of size 2048 bits and dump them with
@@ -28,7 +29,13 @@
   would be encrypted and dumped as "bob_keys" and public key would be dumped
   as "bob_keys.pub". Bob will use the following command:
 
-  python in_toto_keygen.py -p bob_keys 2048
+  in-toto-keygen -p bob_keys 2048
+
+
+<Return Codes>
+  2 if an exception occurred during argument parsing
+  1 if an exception occurred
+  0 if no exception occurred
 
 """
 import sys
@@ -100,7 +107,7 @@ def main():
       sys.exit(0)
 
   except Exception as e:
-    log.error('The following error occurred - {}'.format(e))
+    log.error("(in-toto-keygen) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 if __name__ == "__main__":

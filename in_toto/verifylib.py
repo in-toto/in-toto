@@ -13,7 +13,7 @@
 
 <Purpose>
 
-  Provides a library to verify a in_toto final product containing
+  Provides a library to verify an in-toto final product containing
   a software supply chain layout.
 
   Take a look at `in_toto_verify`'s docstring for more details about the

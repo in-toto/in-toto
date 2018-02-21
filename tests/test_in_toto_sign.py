@@ -26,12 +26,16 @@ import in_toto.gpg.util
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
+import tests.common
 
 WORKING_DIR = os.getcwd()
 
-class TestInTotoSignTool(unittest.TestCase):
+
+
+class TestInTotoSignTool(tests.common.CliTestCase):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
+  cli_main_func = staticmethod(in_toto_sign_main)
 
   @classmethod
   def setUpClass(self):
@@ -78,41 +82,33 @@ class TestInTotoSignTool(unittest.TestCase):
     shutil.rmtree(self.test_dir)
 
 
-  def _test_cli_sys_exit(self, cli_args, status):
-    """Test helper to mock command line call and assert return value. """
-    with patch.object(sys, "argv", ["in_toto_sign.py"]
-        + cli_args), self.assertRaises(SystemExit) as raise_ctx:
-      in_toto_sign_main()
-    self.assertEqual(raise_ctx.exception.code, status)
-
-
   def test_sign_and_verify(self):
     """Test signing and verifying Layout and Link metadata with
     different combinations of arguments. """
 
     # Sign Layout with multiple keys and write to "tmp.layout"
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.alice_path, self.bob_path,
         "-o", "tmp.layout",
         ], 0)
 
     # Verify "tmp.layout" (requires all keys)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "tmp.layout",
         "-k", self.alice_pub_path, self.bob_pub_path,
         "--verify",
         ], 0)
 
     # Sign Layout "tmp.layout", appending new signature, write to "tmp.layout"
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "tmp.layout",
         "-k", self.carl_path,
         "-a"
         ], 0)
 
     # Verify "tmp.layout" (has three signatures now)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "tmp.layout",
         "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
         "--verify"
@@ -120,14 +116,14 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Sign Link, replacing old signature
     # and write to same file as input
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.bob_path,
         "-o", self.link_path,
         ], 0)
 
     # Verify Link
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.bob_pub_path,
         "--verify"
@@ -135,12 +131,12 @@ class TestInTotoSignTool(unittest.TestCase):
 
     # Replace signature to Link and store to new file using passed
     # key's (alice) id as infix
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.alice_path
         ], 0)
     # Verify Link with alice's keyid as infix
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "package.556caebd.link",
         "-k", self.alice_pub_path,
         "--verify"
@@ -149,14 +145,14 @@ class TestInTotoSignTool(unittest.TestCase):
     # Default key signing only works on fully supported gpg versions
     if in_toto.gpg.util.is_version_fully_supported():
       # Sign Layout with default gpg key
-      self._test_cli_sys_exit([
+      self.assert_cli_sys_exit([
           "-f", self.layout_path,
           "-g",
           "-o", "tmp_gpg.layout",
           "--gpg-home", self.gnupg_home
           ], 0)
       # Verify Layout signed with default gpg key
-      self._test_cli_sys_exit([
+      self.assert_cli_sys_exit([
           "-f", "tmp_gpg.layout",
           "-g", self.default_gpg_keyid,
           "--gpg-home", self.gnupg_home,
@@ -164,13 +160,13 @@ class TestInTotoSignTool(unittest.TestCase):
           ], 0)
 
     # Sign Layout with two gpg keys
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-g", self.gpg_keyid1, self.gpg_keyid2,
         "-o", "tmp_gpg.layout",
         "--gpg-home", self.gnupg_home
         ], 0)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "tmp_gpg.layout",
         "-g", self.gpg_keyid1, self.gpg_keyid2,
         "--gpg-home", self.gnupg_home,
@@ -180,7 +176,7 @@ class TestInTotoSignTool(unittest.TestCase):
 
   def test_fail_signing(self):
     """Fail signing with an invalid key. """
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.carl_path, self.link_path,
         ], 2)
@@ -189,21 +185,21 @@ class TestInTotoSignTool(unittest.TestCase):
   def test_fail_verification(self):
     """Fail signature verification. """
     # Fail with wrong key (not used for signing)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.carl_pub_path,
         "--verify"
         ], 1)
 
     # Fail with wrong key (not a valid pub key)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.carl_path,
         "--verify"
         ], 2)
 
     # Fail with wrong gpg keyid (not used for signing)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-g", self.default_gpg_keyid,
         "--gpg-home", self.gnupg_home,
@@ -211,7 +207,7 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 1)
 
     # Fail with wrong gpg keyid (not a valid keyid)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-g", "bogus-gpg-keyid",
         "--gpg-home", self.gnupg_home,
@@ -224,7 +220,7 @@ class TestInTotoSignTool(unittest.TestCase):
     """Fail with wrong combination of arguments. """
 
     # Conflicting "verify" and signing options (--verify -o)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", "key-not-used",
         "--verify",
@@ -232,7 +228,7 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 2)
 
     # Conflicting "verify" and signing options (--verify -oa)
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", "key-not-used",
         "--verify",
@@ -240,38 +236,38 @@ class TestInTotoSignTool(unittest.TestCase):
         ], 2)
 
     # Wrong "append" option for Link metadata
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", "key-not-used",
         "-a"
         ], 2)
 
     # Wrong multiple keys for Link metadata
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.alice_path, self.bob_path,
         ], 2)
 
     # Wrong multiple gpg keys for Link metadata
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-g", self.gpg_keyid1, self.gpg_keyid2,
         ], 2)
 
     # Only one of gpg or regular key can be passed
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.alice_path,
         "-g"
         ], 2)
 
     # At least one of gpg or regular key must be passed
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.layout_path,
         ], 2)
 
     # For verification if gpg option is passed there must be a key id argument
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
       "-f", self.layout_path,
       "--verify",
       "-g"
@@ -281,14 +277,14 @@ class TestInTotoSignTool(unittest.TestCase):
     """Fail with wrong metadata. """
 
     # Not valid JSON
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", self.alice_pub_path,
         "-k", "key-not-used",
         ], 2)
 
     # Valid JSON but not valid Link or Layout
     open("tmp.json", "wb").write(json.dumps({}).encode("utf-8"))
-    self._test_cli_sys_exit([
+    self.assert_cli_sys_exit([
         "-f", "tmp.json",
         "-k", "key-not-used",
         ], 2)
