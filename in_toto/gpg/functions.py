@@ -23,6 +23,8 @@ import in_toto.gpg.common
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
     SIGNATURE_HANDLERS)
 
+from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
+
 import securesystemslib.formats
 
 
@@ -172,7 +174,7 @@ def gpg_export_pubkey(keyid, homedir=None):
   return {
     "method": keyinfo['method'],
     "type": keyinfo['type'],
-    "hashes": ["pgp+SHA1"],
+    "hashes": [GPG_HASH_ALGORITHM_STRING],
     "keyid": keyinfo['keyid'],
     "keyval" : {
       "private": "",

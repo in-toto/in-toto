@@ -30,7 +30,7 @@
 
   >>> rsa_pubkey = {
       'type': 'rsa',
-      'hashes': ['pgp+SHA1'],
+      'hashes': ['pgp+SHA2'],
       'keyid': '8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17',
       'keyval': {
         'public': {
@@ -58,6 +58,10 @@ import securesystemslib.schema as ssl_schema
 import securesystemslib.formats as ssl_formats
 
 
+GPG_HASH_ALGORITHM_STRING = "pgp+SHA2"
+PGP_RSA_PUBKEY_METHOD_STRING = "pgp+rsa-pkcsv1.5"
+PGP_DSA_PUBKEY_METHOD_STRING = "pgp+dsa-fips-180-2"
+
 RSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
   object_name = "RSA_PUBKEYVAL_SCHEMA",
   e = ssl_schema.AnyString(),
@@ -68,8 +72,8 @@ RSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 RSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "RSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("rsa"),
-  method = ssl_schema.String("pgp+rsa-pkcsv1.5"),
-  hashes = ssl_schema.ListOf(ssl_schema.String("pgp+SHA1")),
+  method = ssl_schema.String(PGP_RSA_PUBKEY_METHOD_STRING),
+  hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = RSA_PUBKEYVAL_SCHEMA,
@@ -90,8 +94,8 @@ DSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 DSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "DSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("dsa"),
-  method = ssl_schema.String("pgp+dsa-fips-180-2"),
-  hashes = ssl_schema.ListOf(ssl_schema.String("pgp+SHA1")),
+  method = ssl_schema.String(PGP_DSA_PUBKEY_METHOD_STRING),
+  hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = DSA_PUBKEYVAL_SCHEMA,
