@@ -23,6 +23,7 @@ import shutil
 import copy
 import tempfile
 import unittest
+import glob
 from mock import patch
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -30,7 +31,8 @@ from dateutil.relativedelta import relativedelta
 import in_toto.settings
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import Link, FILENAME_FORMAT
-from in_toto.models.layout import Step, Inspection, Layout
+from in_toto.models.layout import (Step, Inspection, Layout,
+    SUBLAYOUT_LINK_DIR_FORMAT)
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
     verify_match_rule, verify_item_rules, verify_all_item_rules,
@@ -1309,10 +1311,23 @@ class TestVerifySublayouts(unittest.TestCase):
     alice = import_rsa_key_from_file("alice")
     alice_pub = import_rsa_key_from_file("alice.pub")
 
+    # From the perspective of the superlayout, the sublayout is treated as
+    # a link corresponding to a step, hence needs a name.
+    sub_layout_name = "sub_layout"
+
+    # Sublayout links are expected in a directory relative to the superlayout's
+    # link directory
+    sub_layout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
+        name=sub_layout_name, keyid=alice["keyid"])
+
+    for sublayout_link_name in glob.glob("*.link"):
+      dest_path = os.path.join(sub_layout_link_dir, sublayout_link_name)
+      os.renames(sublayout_link_name, dest_path)
+
+
     # Copy, sign and dump sub layout as link from template
     layout_template = Metablock.load("demo.layout.template")
     sub_layout = copy.deepcopy(layout_template)
-    sub_layout_name = "sub_layout"
     sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
         keyid=alice_pub["keyid"])
     sub_layout.sign(alice)
@@ -1339,7 +1354,119 @@ class TestVerifySublayouts(unittest.TestCase):
   def test_verify_demo_as_sublayout(self):
     """Test super layout's passing sublayout verification. """
     verify_sublayouts(
-        self.super_layout, self.super_layout_links)
+        self.super_layout, self.super_layout_links, ".")
+
+
+
+
+
+class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase):
+  """Test verifylib.in_toto_verify with multiple levels of sublayouts. """
+
+  def test_verify_multi_level_sublayout(self):
+    # Backup original cwd
+    working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(test_dir)
+
+    # We don't need to copy the demo files, we just load the keys
+    keys = {}
+    for key_name in ["alice", "bob", "carl"]:
+      keys[key_name + "_priv"] = import_rsa_key_from_file(
+          os.path.join(demo_files, key_name))
+      keys[key_name + "_pub"] = import_rsa_key_from_file(
+          os.path.join(demo_files, key_name + ".pub"))
+
+
+    # Create layout hierarchy
+
+    # Root layout
+    # The root layout is the layout that will be passed to `in_toto_verify`
+    # It only has one step which is a sublayout, into which verification
+    # recurses. Only the root layout and root layout verification key will be
+    # passed to verification.
+    root_layout_pub_key_dict = {
+        keys["alice_pub"]["keyid"]: keys["alice_pub"]
+      }
+
+    root_layout_name = "root.layout"
+    root_layout_step_name = "delegated-to-bob"
+
+    root_layout = Metablock(signed=Layout(
+        keys={
+          keys["bob_pub"]["keyid"]: keys["bob_pub"]
+        },
+        steps=[
+            Step(
+              name=root_layout_step_name,
+              pubkeys=[
+                keys["bob_pub"]["keyid"]
+              ]
+            )
+          ]
+        )
+      )
+    root_layout.sign(keys["alice_priv"])
+
+
+    # Sublayout (first level)
+    # The first level sublayout wil be treated as a link from the
+    # superlayout's perspective and loaded from the current working directory.
+    # The link for the only step of this sublayout will be placed in a
+    # namespaced subdir, that link itself is a sublayout (subsublayout).
+    bobs_layout_name = FILENAME_FORMAT.format(
+        step_name=root_layout_step_name,
+        keyid=keys["bob_pub"]["keyid"])
+
+    bobs_layout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
+        name=root_layout_step_name,
+        keyid=keys["bob_pub"]["keyid"])
+    os.mkdir(bobs_layout_link_dir)
+
+    bobs_layout_step_name = "delegated-to-carl"
+
+    bobs_layout = Metablock(signed=Layout(
+        keys={
+          keys["carl_pub"]["keyid"]: keys["carl_pub"]
+          },
+        steps=[
+            Step(
+              name=bobs_layout_step_name,
+              pubkeys=[keys["carl_pub"]["keyid"]]
+            )
+          ]
+        )
+      )
+    bobs_layout.sign(keys["bob_priv"])
+    bobs_layout.dump(bobs_layout_name)
+
+
+    # Subsublayout (second level)
+    # The subsublayout will be placed in the namespaced link dir
+    # of its superlayout (sublayout from the root layout's perspective), for
+    # for which it serves as link.
+    carls_layout_name = FILENAME_FORMAT.format(
+            step_name=bobs_layout_step_name,
+            keyid=keys["carl_pub"]["keyid"])
+
+    carls_layout_path = os.path.join(bobs_layout_link_dir, carls_layout_name)
+    carls_layout = Metablock(signed=Layout())
+    carls_layout.sign(keys["carl_priv"])
+    carls_layout.dump(carls_layout_path)
+
+    in_toto_verify(root_layout, root_layout_pub_key_dict)
+
+    os.chdir(working_dir)
+    shutil.rmtree(test_dir)
+
+
+
 
 
 class TestGetSummaryLink(unittest.TestCase):
