@@ -389,7 +389,7 @@ class TestLayoutValidator(unittest.TestCase):
         name=name, pubkeys=[functionary_key["keyid"]]))
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      in_toto.verifylib.load_links_for_layout(self.layout)
+      in_toto.verifylib.load_links_for_layout(self.layout, ".")
 
     # Clean up
     os.remove(link_path)

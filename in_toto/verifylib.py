@@ -85,7 +85,7 @@ def _raise_on_bad_retval(return_value, command=None):
     raise BadReturnValueError(msg.format(what="zero"))
 
 
-def load_links_for_layout(layout):
+def load_links_for_layout(layout, link_dir_path):
   """
   <Purpose>
     Try to load all existing metadata files for each Step of the Layout
@@ -97,6 +97,10 @@ def load_links_for_layout(layout):
   <Arguments>
     layout:
           Layout object
+
+    link_dir_path:
+          A path to directory where links are loaded from
+
 
   <Side Effects>
     Calls function to read files from disk
@@ -122,12 +126,13 @@ def load_links_for_layout(layout):
 
     # We try to load a link for every authorized functionary, but don't fail
     # if the file does not exist (authorized != required)
-    # FIXME: Should we really pass on IOError, or just skip inexistent links
+    # FIXME: Should we really pass on IOError, or just skip inexistent links?
     for keyid in step.pubkeys:
       filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+      filepath = os.path.join(link_dir_path, filename)
 
       try:
-        metadata = Metablock.load(filename)
+        metadata = Metablock.load(filepath)
         links_per_step[keyid] = metadata
 
       except IOError:
@@ -1278,7 +1283,8 @@ def get_summary_link(layout, reduced_chain_link_dict):
 
   return Metablock(signed=summary_link)
 
-def in_toto_verify(layout, layout_key_dict):
+
+def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1339,6 +1345,11 @@ def in_toto_verify(layout, layout_key_dict):
             Dictionary of project owner public keys, used to verify the
             layout's signature.
 
+    link_dir_path: (optional)
+            A path to the directory from which link metadata files
+            corresponding to the steps in the passed layout are loaded.
+            Default is the current working directory.
+
   <Exceptions>
     None.
 
@@ -1348,8 +1359,8 @@ def in_toto_verify(layout, layout_key_dict):
   <Returns>
     A link which summarizes the materials and products of the overall
     software supply chain (used by super-layout verification if any)
-  """
 
+  """
   log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
@@ -1362,13 +1373,13 @@ def in_toto_verify(layout, layout_key_dict):
   verify_layout_expiration(layout)
 
   log.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout)
+  chain_link_dict = load_links_for_layout(layout, link_dir_path)
 
   log.info("Verifying link metadata signatures...")
   chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 
   log.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict)
+  chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
 
   log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)

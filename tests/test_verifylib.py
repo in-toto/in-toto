@@ -1328,7 +1328,7 @@ class TestVerifySublayouts(unittest.TestCase):
     self.super_layout.steps.append(sub_layout_step)
 
     # Load the super layout links (i.e. the sublayout)
-    self.super_layout_links = load_links_for_layout(self.super_layout)
+    self.super_layout_links = load_links_for_layout(self.super_layout, ".")
 
   @classmethod
   def tearDownClass(self):
