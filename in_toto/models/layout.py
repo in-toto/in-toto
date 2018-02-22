@@ -49,6 +49,11 @@ import securesystemslib.schema
 import securesystemslib.interface
 
 
+# Link metadata for sublayouts are expected to be found in a subdirectory
+# with the following name, relative to the verification directory
+SUBLAYOUT_LINK_DIR_FORMAT = "{name}.{keyid:.8}"
+
+
 
 @attr.s(repr=False, init=False)
 class Layout(Signable):
