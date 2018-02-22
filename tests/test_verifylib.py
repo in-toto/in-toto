@@ -890,6 +890,8 @@ class TestInTotoVerify(unittest.TestCase):
     self.layout_failing_step_rule_path = "failing-step-rule.layout"
     self.layout_failing_inspection_rule_path = "failing-inspection-rule.layout"
     self.layout_failing_inspection_retval = "failing-inspection-retval.layout"
+    self.layout_no_steps_no_inspections = "no_steps_no_inspections.layout"
+
 
     # Import layout signing keys
     alice = import_rsa_key_from_file("alice")
@@ -941,6 +943,10 @@ class TestInTotoVerify(unittest.TestCase):
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
+    # dump empty layout
+    layout = Metablock(signed=Layout())
+    layout.sign(alice)
+    layout.dump(self.layout_no_steps_no_inspections)
     self.alice = alice
 
   @classmethod
@@ -959,6 +965,13 @@ class TestInTotoVerify(unittest.TestCase):
     """Test pass verification of double-signed layout. """
     layout = Metablock.load(self.layout_double_signed_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
+    in_toto_verify(layout, layout_key_dict)
+
+  def test_verify_passing_empty_layout(self):
+    """Test pass verification of layout without steps or inspections. """
+    layout = Metablock.load(self.layout_no_steps_no_inspections)
+    layout_key_dict = import_rsa_public_keys_from_files_as_dict(
+        [self.alice_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_wrong_key(self):

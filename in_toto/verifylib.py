@@ -1260,21 +1260,21 @@ def get_summary_link(layout, reduced_chain_link_dict):
     products of the overall software supply chain.
 
   """
-
   # Create empty link object
   summary_link = in_toto.models.link.Link()
 
   # Take first and last link in the order the corresponding
-  # steps appear in the layout
-  first_step_link = reduced_chain_link_dict[layout.steps[0].name]
-  last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
+  # steps appear in the layout, if there are any.
+  if len(layout.steps) > 0:
+    first_step_link = reduced_chain_link_dict[layout.steps[0].name]
+    last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-  summary_link.materials = first_step_link.signed.materials
-  summary_link.name = first_step_link.signed.name
+    summary_link.materials = first_step_link.signed.materials
+    summary_link.name = first_step_link.signed.name
 
-  summary_link.products = last_step_link.signed.products
-  summary_link.byproducts = last_step_link.signed.byproducts
-  summary_link.command = last_step_link.signed.command
+    summary_link.products = last_step_link.signed.products
+    summary_link.byproducts = last_step_link.signed.byproducts
+    summary_link.command = last_step_link.signed.command
 
   return Metablock(signed=summary_link)
 
