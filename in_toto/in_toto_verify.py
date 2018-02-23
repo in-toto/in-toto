@@ -41,6 +41,10 @@ The command returns a nonzero value if verification fails and zero otherwise.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --link-dir <path>     Path to directory where link metadata files for steps
+                        defined in the root layout should be loaded from. If
+                        not passed links are loaded from the current working
+                        directory.
   --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
                         gpg' option. If '--gpg-home' is not passed, the
                         default GPG keyring is used.
@@ -69,6 +73,13 @@ examples:
   'key_file.pub'.
 
       in-toto-verify --layout root.layout --layout-keys key_file.pub
+
+
+  Verify supply chain like above but load links corresponding to steps of
+  root.layout from 'link_dir'.
+
+      in-toto-verify --layout root.layout --layout-keys key_file.pub \
+          --link-dir link_dir
 
 
   Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
@@ -124,11 +135,19 @@ examples:
       {prog} --layout root.layout --layout-keys key_file.pub
 
 
+  Verify supply chain like above but load links corresponding to steps of
+  root.layout from 'link_dir'.
+
+      {prog} --layout root.layout --layout-keys key_file.pub \\
+          --link-dir link_dir
+
+
   Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
   whose public part can be found in the GPG keyring at '~/.gnupg'.
 
       {prog} --layout root.layout \\
       --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
+
 
 """.format(prog=parser.prog)
 
@@ -155,6 +174,12 @@ examples:
       " Passing at least one key using '--layout-keys' and/or '--gpg' is"
       " required. For each passed key the layout must carry a valid"
       " signature."))
+
+  parser.add_argument("--link-dir", dest="link_dir", type=str,
+      metavar="<path>", default=".", help=(
+          "Path to directory where link metadata files for steps defined in"
+          " the root layout should be loaded from. If not passed links are"
+          " loaded from the current working directory."))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       metavar="<path>", help=("Path to GPG keyring to load GPG key identified"
@@ -196,7 +221,7 @@ examples:
           in_toto.util.import_gpg_public_keys_from_keyring_as_dict(
           args.gpg, gpg_home=args.gpg_home))
 
-    verifylib.in_toto_verify(layout, layout_key_dict)
+    verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 
   except Exception as e:
     log.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))

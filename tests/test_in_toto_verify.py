@@ -140,6 +140,20 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
     self.assert_cli_sys_exit(args, 1)
 
 
+  def test_main_link_dir(self):
+    """Test in-toto-verify CLI tool with explicit link dir. """
+
+    # Use current working directory explicitly to load links
+    args = ["--layout", self.layout_single_signed_path,
+        "--layout-keys", self.alice_path, "--link-dir", "."]
+    self.assert_cli_sys_exit(args, 0)
+
+    # Fail with an explicit link directory, where no links are found
+    args = ["--layout", self.layout_single_signed_path,
+        "--layout-keys", self.alice_path, "--link-dir", "bad-link-dir", "-v"]
+    self.assert_cli_sys_exit(args, 1)
+
+
 
 class TestInTotoVerifyToolGPG(tests.common.CliTestCase):
   """ Tests in-toto-verify like TestInTotoVerifyTool but with

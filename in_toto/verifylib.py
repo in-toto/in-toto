@@ -38,6 +38,7 @@ import in_toto.models.layout
 import in_toto.models.link
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
+from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
 from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
@@ -85,7 +86,7 @@ def _raise_on_bad_retval(return_value, command=None):
     raise BadReturnValueError(msg.format(what="zero"))
 
 
-def load_links_for_layout(layout):
+def load_links_for_layout(layout, link_dir_path):
   """
   <Purpose>
     Try to load all existing metadata files for each Step of the Layout
@@ -97,6 +98,10 @@ def load_links_for_layout(layout):
   <Arguments>
     layout:
           Layout object
+
+    link_dir_path:
+          A path to directory where links are loaded from
+
 
   <Side Effects>
     Calls function to read files from disk
@@ -122,12 +127,13 @@ def load_links_for_layout(layout):
 
     # We try to load a link for every authorized functionary, but don't fail
     # if the file does not exist (authorized != required)
-    # FIXME: Should we really pass on IOError, or just skip inexistent links
+    # FIXME: Should we really pass on IOError, or just skip inexistent links?
     for keyid in step.pubkeys:
       filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+      filepath = os.path.join(link_dir_path, filename)
 
       try:
-        metadata = Metablock.load(filename)
+        metadata = Metablock.load(filepath)
         links_per_step[keyid] = metadata
 
       except IOError:
@@ -1162,7 +1168,7 @@ def reduce_chain_links(chain_link_dict):
   return reduced_chain_link_dict
 
 
-def verify_sublayouts(layout, chain_link_dict):
+def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
   """
   <Purpose>
     Checks if any step has been delegated by the functionary, recurses into
@@ -1184,6 +1190,12 @@ def verify_sublayouts(layout, chain_link_dict):
               }, ...
             }
 
+    superlayout_link_dir_path:
+            A path to a directory, where links of the superlayout are loaded
+            from. Links of the sublayout are expected to be in a subdirectory
+            relative to this path, with a name in the format
+            in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+
   <Exceptions>
     raises an Exception if verification of the delegated step fails.
 
@@ -1202,7 +1214,6 @@ def verify_sublayouts(layout, chain_link_dict):
     }
 
   """
-
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
 
     for keyid, link in six.iteritems(key_link_dict):
@@ -1215,15 +1226,27 @@ def verify_sublayouts(layout, chain_link_dict):
         # corresponding to the link
         layout_key_dict = {keyid: layout.keys.get(keyid)}
 
+        # Sublayout links are expected to be in a directory with the following
+        # name relative the the current link directory path, i.e. if there
+        # are multiple levels of sublayout nesting, the links are expected to
+        # be nested accordingly
+        sublayout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
+            name=step_name, keyid=keyid)
+
+        sublayout_link_dir_path = os.path.join(
+            superlayout_link_dir_path, sublayout_link_dir)
+
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict)
+        summary_link = in_toto_verify(link, layout_key_dict,
+            link_dir_path=sublayout_link_dir_path)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
         key_link_dict[keyid] = summary_link
 
   return chain_link_dict
+
 
 def get_summary_link(layout, reduced_chain_link_dict):
   """
@@ -1260,25 +1283,26 @@ def get_summary_link(layout, reduced_chain_link_dict):
     products of the overall software supply chain.
 
   """
-
   # Create empty link object
   summary_link = in_toto.models.link.Link()
 
   # Take first and last link in the order the corresponding
-  # steps appear in the layout
-  first_step_link = reduced_chain_link_dict[layout.steps[0].name]
-  last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
+  # steps appear in the layout, if there are any.
+  if len(layout.steps) > 0:
+    first_step_link = reduced_chain_link_dict[layout.steps[0].name]
+    last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-  summary_link.materials = first_step_link.signed.materials
-  summary_link.name = first_step_link.signed.name
+    summary_link.materials = first_step_link.signed.materials
+    summary_link.name = first_step_link.signed.name
 
-  summary_link.products = last_step_link.signed.products
-  summary_link.byproducts = last_step_link.signed.byproducts
-  summary_link.command = last_step_link.signed.command
+    summary_link.products = last_step_link.signed.products
+    summary_link.byproducts = last_step_link.signed.byproducts
+    summary_link.command = last_step_link.signed.command
 
   return Metablock(signed=summary_link)
 
-def in_toto_verify(layout, layout_key_dict):
+
+def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1303,10 +1327,17 @@ def in_toto_verify(layout, layout_key_dict):
             signatures by authorized functionaries.
 
         5.  Verify sublayouts
-            NOTE: Replaces the layout object in the chain_link_dict with an
-            unsigned summary link (the actual links of the sublayouts are
-            verified). The summary link is used just like a regular link
-            to verify command alignments, thresholds and inspections below.
+            Recurses into layout verification for each link of the
+            superlayout that is a layout itself (i.e. sublayout).
+            Links for the sublayout are expected to be in a subdirectory
+            relative to the superlayout's link_dir_path, with a name in the
+            format: in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+
+            The successfully verified sublayout is replaced with an unsigned
+            summary link in the chain_link_dict of the superlayout.
+            The summary link is then used just like a regular link
+            to verify command alignments, thresholds and inspections according
+            to the superlayout.
 
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
@@ -1339,6 +1370,11 @@ def in_toto_verify(layout, layout_key_dict):
             Dictionary of project owner public keys, used to verify the
             layout's signature.
 
+    link_dir_path: (optional)
+            A path to the directory from which link metadata files
+            corresponding to the steps in the passed layout are loaded.
+            Default is the current working directory.
+
   <Exceptions>
     None.
 
@@ -1348,8 +1384,8 @@ def in_toto_verify(layout, layout_key_dict):
   <Returns>
     A link which summarizes the materials and products of the overall
     software supply chain (used by super-layout verification if any)
-  """
 
+  """
   log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
@@ -1362,13 +1398,13 @@ def in_toto_verify(layout, layout_key_dict):
   verify_layout_expiration(layout)
 
   log.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout)
+  chain_link_dict = load_links_for_layout(layout, link_dir_path)
 
   log.info("Verifying link metadata signatures...")
   chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 
   log.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict)
+  chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
 
   log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
