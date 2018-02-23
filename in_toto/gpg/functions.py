@@ -169,7 +169,16 @@ def gpg_export_pubkey(keyid, homedir=None):
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
   key_packet, junk = process.communicate()
 
-  pubkey, keyinfo = in_toto.gpg.common.parse_pubkey_packet(key_packet)
+  # iterate over the keys received and find the one we really want.
+  pubkeys = in_toto.gpg.common.parse_pubkeys_from_packets(key_packet)
+  for _pubkey in pubkeys:
+    if _pubkey[1]['keyid'].endswith(keyid.lower()):
+      pubkey, keyinfo = _pubkey
+      break
+  else:
+    raise Exception("ayylmao")
+
+  #pubkey, keyinfo, ptr = in_toto.gpg.common.parse_pubkey_packet(key_packet)
 
   return {
     "method": keyinfo['method'],

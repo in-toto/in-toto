@@ -27,6 +27,7 @@ FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 PACKET_TYPES = {
     'signature_packet': 0x02,
     'main_pubkey_packet': 0x06,
+    'pub_subkey_packet': 0x0E,
 }
 
 SUPPORTED_SIGNATURE_PACKET_VERSIONS = {0x04}

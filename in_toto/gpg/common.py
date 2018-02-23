@@ -32,6 +32,42 @@ from in_toto.gpg.constants import (PACKET_TYPES,
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
+def parse_pubkeys_from_packets(data):
+  """
+  <Purpose>
+    Parse the public key information on an RFC4880-encoded public-key data
+    buffer
+
+  <Arguments>
+    data:
+          the RFC4880-encoded public-key data buffer as described in section
+          5.4 (and 5.5.1.1).
+
+          WARNING: this doesn't support armored pubkey packets, so use with
+          care. pubkey packets are a little bit more complicated than the
+          signature ones
+
+  <Exceptions>
+    ValueError: if the public key packet is not supported or the data is
+      malformed
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    a tuple containing the key information and its payload.
+  """
+  pubkeys = []
+  packet_start = 0
+  while packet_start < len(data):
+    packet, length, _type = in_toto.gpg.util.parse_packet_header(data[packet_start:])
+    if _type == PACKET_TYPES['main_pubkey_packet']\
+        or _type == PACKET_TYPES['pub_subkey_packet']:
+          pubkeys.append(parse_pubkey_packet(data[packet_start:]))
+    packet_start += length
+
+  return pubkeys
+
 
 def parse_pubkey_packet(data):
   """
@@ -62,8 +98,12 @@ def parse_pubkey_packet(data):
   if not data:
     raise ValueError("Could not parse empty pubkey packet.")
 
-  data = in_toto.gpg.util.parse_packet_header(
-      data, PACKET_TYPES['main_pubkey_packet'])
+  data, junk_length, _type = in_toto.gpg.util.parse_packet_header(
+      data, None)
+
+  if _type != PACKET_TYPES['main_pubkey_packet'] \
+      and _type !=  PACKET_TYPES['pub_subkey_packet']:
+        raise ValueError("This is neither a main or sub pubkey packet ({})".format(_type))
 
   ptr = 0
   keyinfo = {}
@@ -116,7 +156,7 @@ def parse_signature_packet(data):
     The decoded signature buffer
   """
 
-  data = in_toto.gpg.util.parse_packet_header(
+  data, junk_length, junk_type = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPES['signature_packet'])
 
   ptr = 0
