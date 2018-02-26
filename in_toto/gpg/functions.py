@@ -95,7 +95,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   """
   <Purpose>
     Verifies the passed signature against the passed content using the
-    passed public key.
+    passed public key, or one of its subkeys, associated by the signature's
+    keyid.
 
     The function selects the appropriate verification algorithm (rsa or dsa)
     based on the "type" field in the passed public key object.
@@ -122,9 +123,18 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   """
   in_toto.gpg.formats.PUBKEY_SCHEMA.check_match(pubkey_info)
   in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
-
   handler = SIGNATURE_HANDLERS[pubkey_info['type']]
-  return handler.gpg_verify_signature(signature_object, pubkey_info, content)
+  sig_keyid = signature_object["keyid"]
+
+  verification_key = pubkey_info
+
+  # If the keyid on the signature matches a subkey of the passed key,
+  # we use that subkey for verification instead of the main key.
+  if sig_keyid in list(pubkey_info.get("subkeys", {}).keys()):
+    verification_key = pubkey_info["subkeys"][sig_keyid]
+
+  return handler.gpg_verify_signature(
+      signature_object, verification_key, content)
 
 
 def gpg_export_pubkey(keyid, homedir=None):

@@ -187,9 +187,10 @@ class Metablock(ValidationMixin):
     """
     <Purpose>
       Verifies the signature, found in `self.signatures`, corresponding to the
-      passed verification key, identified by the key's keyid, using the passed
-      verification key and the utf-8 encoded canonical JSON bytes of the Link
-      or Layout object, contained in `self.signed`.
+      passed verification key, or in case of GPG one of its subkeys, identified
+      by the key's keyid, using the passed verification key and the utf-8
+      encoded canonical JSON bytes of the Link or Layout object, contained in
+      `self.signed`.
 
       If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
       `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
@@ -213,11 +214,12 @@ class Metablock(ValidationMixin):
 
       SignatureVerificationError
             If the Metablock does not carry a signature signed with the
-            private key corresponding to the passed verification key
+            private key corresponding to the passed verification key or one
+            of its subkeys
 
-            If the signature corresponding to the passed verification key
-            does not match securesystemslib's or in_toto.gpg's
-            signature schema.
+            If the signature corresponding to the passed verification key or
+            one of its subkeys does not match securesystemslib's or
+            in_toto.gpg's signature schema.
 
             If the signature to be verified is malformed or invalid.
 
@@ -228,12 +230,17 @@ class Metablock(ValidationMixin):
     in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
     verification_keyid = verification_key["keyid"]
 
-    # Find a signature that corresponds to this verification keyid and raise
-    # an exception if it doesn't exist
+    # Find a signature that corresponds to the keyid of the passed
+    # verification key or one of its subkeys
     signature = None
     for signature in self.signatures:
       if signature["keyid"] == verification_keyid:
         break
+
+      elif signature["keyid"] in list(
+          verification_key.get("subkeys", {}).keys()):
+        break
+
     else:
       raise SignatureVerificationError("No signature found for key '{}'"
           .format(verification_keyid))
