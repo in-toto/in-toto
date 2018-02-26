@@ -20,3 +20,6 @@
 """
 class PacketParsingError(Exception):
   pass
+
+class KeyNotFoundError(Exception):
+  pass
