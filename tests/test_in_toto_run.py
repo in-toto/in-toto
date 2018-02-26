@@ -55,6 +55,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
 
     # Copy gpg keyring
     self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
+    self.default_gpg_subkeyid = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
     self.non_default_gpg_keyid = "8288ef560ed3795f9df2c0db56193089b285da58"
     gpg_keyring_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
@@ -125,7 +126,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
       self.assert_cli_sys_exit(args, 0)
 
       link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-          keyid=self.default_gpg_keyid)
+          keyid=self.default_gpg_subkeyid)
 
       self.assertTrue(os.path.exists(link_filename))
 

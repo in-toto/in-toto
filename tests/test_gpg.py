@@ -32,15 +32,25 @@ from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
 from in_toto.gpg.util import is_version_fully_supported
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
+from in_toto.gpg.common import parse_pubkey_packet
 
 import securesystemslib.formats
 import securesystemslib.exceptions
+
+class TestCommon(unittest.TestCase):
+  """Test common functions of the in_toto.gpg module. """
+  def test_parse_empty_pubkey_packet(self):
+    """Test that passing nothing to parse_pubkey_packet raises ValueError. """
+    with self.assertRaises(ValueError):
+      parse_pubkey_packet(None)
+
 
 class TestGPGRSA(unittest.TestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
 
   default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
+  subkey_keyid = "C5A0ABE6EC19D0D65F85E2C39BE9DF5131D924E9"
 
   @classmethod
   def setUpClass(self):
@@ -87,6 +97,15 @@ class TestGPGRSA(unittest.TestCase):
         our_exported_key.public_numbers().n)
     self.assertEquals(ssh_key.public_numbers().e,
         our_exported_key.public_numbers().e)
+
+    # We export the whole master key bundle which must contain the subkey
+    self.assertTrue(self.subkey_keyid.lower() in
+        list(key_data["subkeys"].keys()))
+
+    # When passing the subkey keyid we also export the whole keybundle
+    key_data2 = gpg_export_pubkey(self.subkey_keyid, homedir=self.gnupg_home)
+    self.assertDictEqual(key_data, key_data2)
+
 
   def test_gpg_sign_and_verify_object_with_default_key(self):
     """Create a signature using the default key on the keyring """

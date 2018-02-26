@@ -68,7 +68,7 @@ def parse_pubkey_packet(data):
       data, None)
 
   if (_type != PACKET_TYPES['main_pubkey_packet'] and
-      _type !=  PACKET_TYPES['pub_subkey_packet']):
+      _type !=  PACKET_TYPES['pub_subkey_packet']): # pragma: no cover
     raise ValueError("This is neither a main or sub pubkey packet ({})".format(_type))
 
   ptr = 0
