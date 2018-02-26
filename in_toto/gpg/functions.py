@@ -20,10 +20,10 @@ import shlex
 import logging
 
 import in_toto.gpg.common
+import in_toto.gpg.exceptions
+import in_toto.gpg.formats
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
-    SIGNATURE_HANDLERS)
-
-from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
+    SIGNATURE_HANDLERS, PACKET_TYPES)
 
 import securesystemslib.formats
 
@@ -130,9 +130,12 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 def gpg_export_pubkey(keyid, homedir=None):
   """
   <Purpose>
-    Calls gpg2 command line utility to export the gpg public key identified by
-    the passed keyid from the gpg keyring at the passed homedir in a format
-    suitable for in-toto.
+    Calls gpg2 command line utility to export the gpg public key bundle
+    identified by the passed keyid from the gpg keyring at the passed homedir
+    in a format suitable for in-toto.
+
+    Note: The identified key is exported including the corresponding main
+    key and all subkeys.
 
     The executed base command is defined in
     constants.GPG_EXPORT_PUBKEY_COMMAND.
@@ -145,7 +148,13 @@ def gpg_export_pubkey(keyid, homedir=None):
             Path to the gpg keyring. If not passed the default keyring is used.
 
   <Exceptions>
-    Value Error if the keyid does not match the required format
+    ValueError
+            if the keyid does not match the required format.
+
+    in_toto.gpg.execeptions.KeyNotFoundError
+            if no key or subkey was found for that keyid.
+
+
 
   <Side Effects>
     None.
@@ -169,24 +178,46 @@ def gpg_export_pubkey(keyid, homedir=None):
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
   key_packet, junk = process.communicate()
 
-  # iterate over the keys received and find the one we really want.
-  pubkeys = in_toto.gpg.common.parse_pubkeys_from_packets(key_packet)
-  for _pubkey in pubkeys:
-    if _pubkey[1]['keyid'].endswith(keyid.lower()):
-      pubkey, keyinfo = _pubkey
+  # Iterate over the public key packet and parse out main and subkeys
+  # TODO: Should we only export keys with signing capabilities?
+  main_public_key = None
+  sub_public_keys = {}
+
+  packet_start = 0
+  while packet_start < len(key_packet):
+    junk, length, _type = in_toto.gpg.util.parse_packet_header(
+        key_packet[packet_start:])
+
+    if _type == PACKET_TYPES['main_pubkey_packet']:
+      main_public_key = in_toto.gpg.common.parse_pubkey_packet(
+          key_packet[packet_start:])
+
+    elif _type == PACKET_TYPES['pub_subkey_packet']:
+      sub_public_key = in_toto.gpg.common.parse_pubkey_packet(
+          key_packet[packet_start:])
+      sub_public_keys[sub_public_key["keyid"]] = sub_public_key
+
+    packet_start += length
+
+  # Since GPG returns all pubkeys associated with a keyid (main key and
+  # subkeys) we check which key matches the passed keyid.
+  # If the matching key is a subkey, we warn the user because we return
+  # the whole bundle (main plus all subkeys) and not only the subkey.
+  # If no matching key is found we raise a KeyNotFoundError.
+  for idx, public_key in enumerate(
+      [main_public_key] + list(sub_public_keys.values())):
+    if public_key and public_key["keyid"].endswith(keyid.lower()):
+      if idx > 1:
+        log.warning("Exporting master key '{}' including subkeys '{}'. For"
+            " passed keyid '{}'.".format(main_public_key["keyid"],
+            ", ".join(list(sub_public_keys.keys())), keyid))
       break
+
   else:
-    raise Exception("ayylmao")
+    raise in_toto.gpg.exceptions.KeyNotFoundError(
+        "No key found for gpg keyid '{}'".format(keyid))
 
-  #pubkey, keyinfo, ptr = in_toto.gpg.common.parse_pubkey_packet(key_packet)
+  # Add subkeys dictionary to master pubkey "subkeys" field and return bundle
+  main_public_key["subkeys"] = sub_public_keys
 
-  return {
-    "method": keyinfo['method'],
-    "type": keyinfo['type'],
-    "hashes": [GPG_HASH_ALGORITHM_STRING],
-    "keyid": keyinfo['keyid'],
-    "keyval" : {
-      "private": "",
-      "public": pubkey
-      }
-    }
+  return main_public_key

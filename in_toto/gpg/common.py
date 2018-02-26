@@ -28,45 +28,11 @@ from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
         FULLY_SUPPORTED_MIN_VERSION)
 
+from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
-def parse_pubkeys_from_packets(data):
-  """
-  <Purpose>
-    Parse the public key information on an RFC4880-encoded public-key data
-    buffer
-
-  <Arguments>
-    data:
-          the RFC4880-encoded public-key data buffer as described in section
-          5.4 (and 5.5.1.1).
-
-          WARNING: this doesn't support armored pubkey packets, so use with
-          care. pubkey packets are a little bit more complicated than the
-          signature ones
-
-  <Exceptions>
-    ValueError: if the public key packet is not supported or the data is
-      malformed
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    a tuple containing the key information and its payload.
-  """
-  pubkeys = []
-  packet_start = 0
-  while packet_start < len(data):
-    packet, length, _type = in_toto.gpg.util.parse_packet_header(data[packet_start:])
-    if _type == PACKET_TYPES['main_pubkey_packet']\
-        or _type == PACKET_TYPES['pub_subkey_packet']:
-          pubkeys.append(parse_pubkey_packet(data[packet_start:]))
-    packet_start += length
-
-  return pubkeys
 
 
 def parse_pubkey_packet(data):
@@ -92,7 +58,7 @@ def parse_pubkey_packet(data):
     None.
 
   <Returns>
-    a tuple containing the key information and its payload.
+    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA
   """
 
   if not data:
@@ -101,9 +67,9 @@ def parse_pubkey_packet(data):
   data, junk_length, _type = in_toto.gpg.util.parse_packet_header(
       data, None)
 
-  if _type != PACKET_TYPES['main_pubkey_packet'] \
-      and _type !=  PACKET_TYPES['pub_subkey_packet']:
-        raise ValueError("This is neither a main or sub pubkey packet ({})".format(_type))
+  if (_type != PACKET_TYPES['main_pubkey_packet'] and
+      _type !=  PACKET_TYPES['pub_subkey_packet']):
+    raise ValueError("This is neither a main or sub pubkey packet ({})".format(_type))
 
   ptr = 0
   keyinfo = {}
@@ -131,7 +97,16 @@ def parse_pubkey_packet(data):
   keyinfo['keyid'] = in_toto.gpg.util.compute_keyid(data)
   key_params = handler.get_pubkey_params(data[ptr:])
 
-  return key_params, keyinfo
+  return {
+    "method": keyinfo['method'],
+    "type": keyinfo['type'],
+    "hashes": [GPG_HASH_ALGORITHM_STRING],
+    "keyid": keyinfo['keyid'],
+    "keyval" : {
+      "private": "",
+      "public": key_params
+      }
+    }
 
 
 def parse_signature_packet(data):
