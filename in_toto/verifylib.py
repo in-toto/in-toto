@@ -36,6 +36,7 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
+import in_toto.formats
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
@@ -282,6 +283,10 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     link dictionary containing only authorized links whose signatures
     were successfully verified.
 
+    NOTE: Note if the layout's key store (`layout.keys`) lists a key `K`, with
+    a subkey `K'`, then `K'` is authorized implicitly, to sign any link that
+    `K` is authorized to sign. The inverse is not true.
+
   <Arguments>
     layout:
             A Layout object whose Steps are extracted and verified.
@@ -308,6 +313,14 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     authorized functionaries.
 
   """
+  # Create an inverse keys-subkeys dictionary, with subkey keyids as
+  # dictionary keys and main keys as dictionary values.
+  # NOTE: We assume that a given subkey can only belong to one master key
+  # TODO: Is this a safe assumption? Should we assert for it?
+  main_keys_for_subkeys = {}
+  for main_key in list(layout.keys.values()):
+    for sub_keyid in main_key.get("subkeys", []):
+      main_keys_for_subkeys[sub_keyid] = main_key
 
   verfied_chain_link_dict = {}
   # Check signatures on passed links, if they are valid and authorized, but
@@ -317,31 +330,54 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
   # bad links, as long as we have enough good links. Only the good links will
   # be considered for further final product verification.
   for step in layout.steps:
-    # Contains all links corresponding to a step with successfully verified
-    # signatures, authorized to perform the step
+    # Will contain all links corresponding to a step with successfully
+    # verified signatures, authorized to perform the step
     verified_key_link_dict = {}
 
     # Iterate over links corresponding to a step
-    for keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
+    for link_keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
+      # Check if the link's keyid is authorized to provide a link for the step.
+      # Iterate over authorized keyids to find a key or subkey corresponding
+      # to the given link. Subkeys of authorized main keys are authorized
+      # implicitly.
+      for authorized_keyid in step.pubkeys:
 
-      # Skip unauthorized links
-      if keyid not in step.pubkeys:
+        authorized_key = layout.keys.get(authorized_keyid)
+        main_key_for_subkey = main_keys_for_subkeys.get(authorized_keyid)
+
+        # The signing key is authorized
+        if authorized_key and link_keyid == authorized_keyid:
+          verification_key = authorized_key
+          break
+
+        # The signing key is an authorized subkey
+        elif main_key_for_subkey and link_keyid == authorized_keyid:
+          verification_key = main_key_for_subkey
+          break
+
+        # The signing key is a subkey belonging to an authorized key
+        elif (authorized_key and
+            link_keyid in authorized_key.get("subkeys", {}).keys()):
+          verification_key = authorized_key
+          break
+
+      else:
         log.info("Skipping link. Keyid '{0}' is not authorized to sign links"
-            " for step '{1}'".format(keyid, step.name))
+            " for step '{1}'".format(link_keyid, step.name))
         continue
 
       # Verify signature and skip invalidly signed links
       try:
-        verify_key = layout.keys.get(keyid)
-        link.verify_signature(verify_key)
+        link.verify_signature(verification_key)
 
       except SignatureVerificationError:
         log.info("Skipping link. Broken link signature with keyid '{0}'"
-            " for step '{1}'".format(keyid, step.name))
+            " for step '{1}'".format(link_keyid, step.name))
 
       else:
         # Good link: The signature is valid and the signer was authorized
-        verified_key_link_dict[keyid] = link
+        verified_key_link_dict[link_keyid] = link
+
 
     # Add all good links for a step to the dictionary of links for all steps
     verfied_chain_link_dict[step.name] = verified_key_link_dict
