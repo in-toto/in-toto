@@ -44,6 +44,7 @@ from in_toto.exceptions import (RuleVerficationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
+import in_toto.gpg.functions
 
 import securesystemslib.exceptions
 import in_toto.exceptions
@@ -1282,6 +1283,153 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 
+class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
+  """
+  Test the following 8 scenarios for combinations of link authorization,
+  where a link is either signed by a master or subkey (SIG), and the
+  corresponding step authorizes either the master or subkey (AUTH), and the
+  corresponding top level key in the layout key store is either a master key
+  (bundle, i.e. with subkeys) or a subkey (KEY).
+
+  M ... Masterkey
+  S ... Subkey
+
+  SIG   AUTH  KEY (bundle) |  Verifable |  Comment
+  ----------------------------------------------------------------------------
+  M     M     M            |  Yes       |  Normal scenario
+  M     M     S            |  No        |  Cannot find key in key store
+  M     S     M            |  No        |  Unallowed trust delegation
+  M     S     S            |  No        |  Unallowed trust delegation
+  S     M     M            |  Yes       |  Allowed trust delegation
+  S     M     S            |  No        |  Cannot associate keys
+  S     S     M            |  Yes       |  Can find key in key store
+  S     S     S            |  Yes       |  Generalizes to normal scenario
+
+  """
+
+  @classmethod
+  def setUpClass(self):
+    # Create directory to run the tests without having everything blow up
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+
+    self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
+    self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
+
+    master_key = in_toto.gpg.functions.gpg_export_pubkey(
+        self.master, self.gnupg_home)
+    sub_key = master_key["subkeys"][self.sub]
+
+    self.pub_key_dict = {
+      self.master: master_key,
+      self.sub: sub_key
+    }
+
+    self.step_name = "name"
+
+    os.chdir(self.test_dir)
+
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def _verify_link_signature_tresholds(self, sig_id, auth_id, key_id):
+    metablock = Metablock(signed=Link(name=self.step_name))
+    metablock.sign_gpg(sig_id, self.gnupg_home)               # SIG
+
+    chain_link_dict = {
+      self.step_name : {
+        sig_id : metablock                                    # SIG
+      }
+    }
+
+    layout = Layout(
+      steps=[
+        Step(
+            name=self.step_name,
+            pubkeys=[auth_id]                                 # AUTH
+          )
+        ],
+      keys={
+          key_id: self.pub_key_dict[key_id]                   # KEY
+        }
+      )
+    return layout, chain_link_dict
+
+
+  def test_verify_link_signature_thresholds__M_M_M(self):
+    """Normal scenario """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.master, self.master, self.master)
+    verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__M_M_S(self):
+    """Cannot find key in key store """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.master, self.master, self.sub)
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__M_S_M(self):
+    """Unallowed trust delegation. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.master, self.sub, self.master)
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__M_S_S(self):
+    """Unallowed trust delegation. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.master, self.sub, self.sub)
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__S_M_M(self):
+    """Allowed trust delegation. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.sub, self.master, self.master)
+    verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__S_M_S(self):
+    """Cannot associate keys. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.sub, self.master, self.sub)
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__S_S_M(self):
+    """No trust delegation and can find key in key store. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.sub, self.sub, self.master)
+    verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_link_signature_thresholds__S_S_S(self):
+    """Generalizes to normal scenario. """
+    layout, chain_link_dict = self._verify_link_signature_tresholds(
+        self.sub, self.sub, self.sub)
+    verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+
+
+
 class TestVerifySublayouts(unittest.TestCase):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
   Call with one-step super layout that has a sublayout (demo layout). """
@@ -1523,6 +1671,7 @@ class TestGetSummaryLink(unittest.TestCase):
     self.assertEquals(sum_link.signed.byproducts, self.package_link.signed.byproducts)
     self.assertEquals(sum_link.signed.byproducts.get("return-value"),
         self.package_link.signed.byproducts.get("return-value"))
+
 
 
 if __name__ == "__main__":
