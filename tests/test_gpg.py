@@ -50,7 +50,9 @@ class TestGPGRSA(unittest.TestCase):
   module"""
 
   default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
-  subkey_keyid = "C5A0ABE6EC19D0D65F85E2C39BE9DF5131D924E9"
+  signing_subkey_keyid = "C5A0ABE6EC19D0D65F85E2C39BE9DF5131D924E9"
+  encryption_subkey_keyid = "6A112FD3390B2E53AFC2E57F8FC8E12099AECEEA"
+  unsupported_subkey_keyid = "611A9B648E16F54E8A7FAD5DA51E8CDF3B06524F"
 
   @classmethod
   def setUpClass(self):
@@ -98,12 +100,17 @@ class TestGPGRSA(unittest.TestCase):
     self.assertEquals(ssh_key.public_numbers().e,
         our_exported_key.public_numbers().e)
 
-    # We export the whole master key bundle which must contain the subkey
-    self.assertTrue(self.subkey_keyid.lower() in
-        list(key_data["subkeys"].keys()))
+    subkey_keyids = list(key_data["subkeys"].keys())
+    # We export the whole master key bundle which must contain the subkeys
+    self.assertTrue(self.signing_subkey_keyid.lower() in subkey_keyids)
+    # Currently we do not exclude encryption subkeys
+    self.assertTrue(self.encryption_subkey_keyid.lower() in subkey_keyids)
+    # However we do exclude subkeys, whose algorithm we do not support
+    self.assertFalse(self.unsupported_subkey_keyid.lower() in subkey_keyids)
 
     # When passing the subkey keyid we also export the whole keybundle
-    key_data2 = gpg_export_pubkey(self.subkey_keyid, homedir=self.gnupg_home)
+    key_data2 = gpg_export_pubkey(self.signing_subkey_keyid,
+        homedir=self.gnupg_home)
     self.assertDictEqual(key_data, key_data2)
 
 
@@ -126,6 +133,7 @@ class TestGPGRSA(unittest.TestCase):
     else:
       with self.assertRaises(ValueError):
         gpg_sign_object(test_data, homedir=self.gnupg_home)
+
 
   def test_gpg_sign_and_verify_object(self):
     """Create a signature using a specific key on the keyring """
