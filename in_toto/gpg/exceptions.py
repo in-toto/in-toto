@@ -23,3 +23,9 @@ class PacketParsingError(Exception):
 
 class KeyNotFoundError(Exception):
   pass
+
+class PacketVersionNotSupportedError(Exception):
+  pass
+
+class SignatureAlgorithmNotSupportedError(Exception):
+  pass
