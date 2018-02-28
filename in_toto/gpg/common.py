@@ -127,6 +127,86 @@ def parse_pubkey_payload(data):
     }
 
 
+def parse_pubkey_bundle(data, keyid):
+  """
+  <Purpose>
+    Parse the public key data received by GPG_EXPORT_PUBKEY_COMMAND and
+    construct a public key dictionary, containing a main key and optional
+    subkeys, where either the main key or the subkeys are identified by
+    the passed keyid.
+
+    NOTE: If the keyid matches one of the subkeys, a warning is issued to
+    notify the user about potential privilege escalation.
+
+  <Arguments>
+    data:
+          Public key data as written to stdout by GPG_EXPORT_PUBKEY_COMMAND.
+
+  <Exceptions>
+    ValueError:
+          If no data is passed
+
+    in_toto.gpg.exceptions.KeyNotFoundError
+          If neither the main key or one of the subkeys match the passed
+          keyid.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA containing
+    available subkeys, where either the main key or one of the subkeys match
+    the passed keyid.
+
+  """
+  main_public_key = None
+  sub_public_keys = {}
+
+  # Iterate over the passed public key data and parse out main and sub keys.
+  # The individual keys' headers identify the key as main or sub key.
+  packet_start = 0
+  while packet_start < len(data):
+    payload, length, _type = in_toto.gpg.util.parse_packet_header(
+        data[packet_start:])
+
+    try:
+      if _type == PACKET_TYPES["main_pubkey_packet"]:
+        main_public_key = in_toto.gpg.common.parse_pubkey_payload(payload)
+
+      elif _type == PACKET_TYPES["pub_subkey_packet"]:
+        sub_public_key = in_toto.gpg.common.parse_pubkey_payload(payload)
+        sub_public_keys[sub_public_key["keyid"]] = sub_public_key
+
+    # The data might contain non-supported subkeys, which we just ignore
+    except (ValueError, PacketVersionNotSupportedError,
+        SignatureAlgorithmNotSupportedError):
+      pass
+
+    packet_start += length
+
+  # Since GPG returns all pubkeys associated with a keyid (main key and
+  # subkeys) we check which key matches the passed keyid.
+  # If the matching key is a subkey, we warn the user because we return
+  # the whole bundle (main plus all subkeys) and not only the subkey.
+  # If no matching key is found we raise a KeyNotFoundError.
+  for idx, public_key in enumerate(
+      [main_public_key] + list(sub_public_keys.values())):
+    if public_key and public_key["keyid"].endswith(keyid.lower()):
+      if idx > 1:
+        log.warning("Exporting master key '{}' including subkeys '{}'. For"
+            " passed keyid '{}'.".format(main_public_key["keyid"],
+            ", ".join(list(sub_public_keys.keys())), keyid))
+      break
+
+  else:
+    raise KeyNotFoundError("No key found for gpg keyid '{}'".format(keyid))
+
+  # Add subkeys dictionary to master pubkey "subkeys" field if subkeys exist
+  if sub_public_keys:
+    main_public_key["subkeys"] = sub_public_keys
+
+  return main_public_key
+
 
 def parse_pubkey_packet(data):
   """
