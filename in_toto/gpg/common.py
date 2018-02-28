@@ -22,6 +22,8 @@ import binascii
 import logging
 
 import in_toto.gpg.util
+from in_toto.gpg.exceptions import (PacketVersionNotSupportedError,
+    SignatureAlgorithmNotSupportedError, KeyNotFoundError)
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
@@ -32,6 +34,97 @@ from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
+
+
+def parse_pubkey_payload(data):
+  """
+  <Purpose>
+    Parse the passed public-key packet (payload only) and construct a
+    public key dictionary.
+
+  <Arguments>
+    data:
+          An RFC4880 public key packet payload as described in section 5.5.2.
+          (version 4) of the RFC.
+
+          NOTE: The payload can be parsed from a full key packet (header +
+          payload) by using in_toto.gpg.util.parse_packet_header.
+
+          WARNING: this doesn't support armored pubkey packets, so use with
+          care. pubkey packets are a little bit more complicated than the
+          signature ones
+
+  <Exceptions>
+    ValueError
+          If the passed public key data is empty.
+
+    in_toto.gpg.exceptions.PacketVersionNotSupportedError
+          If the packet version does not match
+          in_toto.gpg.constants.SUPPORTED_PUBKEY_PACKET_VERSIONS
+
+    in_toto.gpg.exceptions.SignatureAlgorithmNotSupportedError
+          If the signature algorithm does not match one of
+          in_toto.gpg.constants.SUPPORTED_SIGNATURE_ALGORITHMS
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA
+
+  """
+  if not data:
+    raise ValueError("Could not parse empty pubkey payload.")
+
+  ptr = 0
+  keyinfo = {}
+  version_number = data[ptr]
+  ptr += 1
+  if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
+    raise PacketVersionNotSupportedError(
+        "This pubkey packet version is not supported!")
+
+  # NOTE: Uncomment this line to decode the time of creation
+  # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
+  ptr += 4
+
+  algorithm = data[ptr]
+
+  ptr += 1
+
+  # TODO: Should we only export keys with signing capabilities?
+  # Section 5.5.2 of RFC4880 describes a public-key algorithm octet with one
+  # of the values described in section 9.1 that could be used to determine the
+  # capabilities. However, in case of RSA subkeys this field doesn't seem to
+  # correctly encode the capabilities. It always has the value 1, i.e.
+  # RSA (Encrypt or Sign).
+  # For RSA public keys we would have to parse the subkey's signature created
+  # with the master key, for the signature's key flags subpacket, identified
+  # by the value 27 (see section 5.2.3.1.) containing a list of binary flags
+  # as described in section 5.2.3.21.
+  if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
+    raise SignatureAlgorithmNotSupportedError(
+        "This signature algorithm is not supported. Please"
+        " verify that this gpg key is used for creating either DSA or RSA"
+        " signatures.")
+  else:
+    keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
+    keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
+    handler = SIGNATURE_HANDLERS[keyinfo['type']]
+
+  keyinfo['keyid'] = in_toto.gpg.util.compute_keyid(data)
+  key_params = handler.get_pubkey_params(data[ptr:])
+
+  return {
+    "method": keyinfo['method'],
+    "type": keyinfo['type'],
+    "hashes": [GPG_HASH_ALGORITHM_STRING],
+    "keyid": keyinfo['keyid'],
+    "keyval" : {
+      "private": "",
+      "public": key_params
+      }
+    }
 
 
 

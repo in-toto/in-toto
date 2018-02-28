@@ -32,17 +32,17 @@ from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
 from in_toto.gpg.util import is_version_fully_supported
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
-from in_toto.gpg.common import parse_pubkey_packet
+from in_toto.gpg.common import parse_pubkey_payload
 
 import securesystemslib.formats
 import securesystemslib.exceptions
 
 class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
-  def test_parse_empty_pubkey_packet(self):
-    """Test that passing nothing to parse_pubkey_packet raises ValueError. """
+  def test_parse_empty_pubkey_payload(self):
+    """Test that passing nothing to parse_pubkey_payload raises ValueError. """
     with self.assertRaises(ValueError):
-      parse_pubkey_packet(None)
+      parse_pubkey_payload(None)
 
 
 class TestGPGRSA(unittest.TestCase):
