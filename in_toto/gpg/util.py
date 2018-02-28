@@ -87,25 +87,24 @@ def hash_object(headers, algorithm, content):
   return hasher.finalize()
 
 
-def parse_packet_header(data, expected_type = None):
+def parse_packet_header(data, expected_type=None):
   """
   <Purpose>
-    Parse an RFC4880 packet header and return its payload
+    Parse an RFC4880 packet header and return its payload, length and type.
 
   <Arguments>
-    data: the packet header buffer
-
-    expected_type (optional): The type of packet expected, as described in
-      section 5.2.3.1 of RFC4880. None disables expected_type checking
+    data:
+            An RFC4880 packet as described in section 4.2 of the rfc.
 
   <Exceptions>
-    None
+    in_toto.gpg.exceptions.PacketParsingError
+            If the expected_type was passed and does not match the packet type
 
   <Side Effects>
-    None
+    None.
 
   <Returns>
-    The RFC4880-compliant packet, its length and its type
+    The RFC4880-compliant packet payload, its length and its type.
   """
   data = bytearray(data)
   packet_type = (data[0] & 0x3c ) >> 2
