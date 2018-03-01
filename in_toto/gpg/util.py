@@ -190,9 +190,11 @@ def parse_subpackets(subpacket_octets):
       ptr += 4
 
     packet_type = subpacket_octets[ptr]
-    packet_payload = subpacket_octets[ptr:ptr + length]
+    ptr += 1
+
+    packet_payload = subpacket_octets[ptr:ptr + length - 1]
     parsed_subpackets.append((packet_type, packet_payload))
-    ptr += length
+    ptr += length - 1
 
   return parsed_subpackets
 

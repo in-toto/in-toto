@@ -28,7 +28,7 @@ from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
         SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
-        FULLY_SUPPORTED_MIN_VERSION)
+        PARTIAL_KEYID_SUBPACKET)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
@@ -212,7 +212,12 @@ def parse_signature_packet(data):
   """
   <Purpose>
     Parse the signature information on an RFC4880-encoded binary signature data
-    buffer
+    buffer.
+
+    NOTE: Older gpg versions (< FULLY_SUPPORTED_MIN_VERSION) might only
+    reveal the partial key id. It is the callers responsibility to determine
+    the full keyid based on the partial keyid, e.g. by exporting the related
+    public and replacing the paritla keyid with the full keyid.
 
   <Arguments>
     data:
@@ -227,9 +232,9 @@ def parse_signature_packet(data):
     None.
 
   <Returns>
-    The decoded signature buffer
-  """
+    A signature dictionary matching in_toto.gpg.formats.SIGNATURE_SCHEMA
 
+  """
   data, junk_length, junk_type = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPES['signature_packet'])
 
@@ -289,31 +294,33 @@ def parse_signature_packet(data):
 
   unhashed_octet_count = struct.unpack(">H", data[ptr: ptr + 2])[0]
   ptr += 2
-  # NOTE: Uncomment this part to get the information from the
-  # unhashed subpackets. They'll be commented as they are unused
-  # right now
-  # unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
-  # unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
-  #     unhashed_subpackets)
+
+  unhashed_subpackets = data[ptr:ptr+unhashed_octet_count]
+  unhashed_subpacket_info = in_toto.gpg.util.parse_subpackets(
+      unhashed_subpackets)
+
   ptr += unhashed_octet_count
 
-  # This is a somewhat convoluted way to compute the keyid from the signature
-  # subpackets. Try to obtain the FULL_KEYID_SUBPACKET and bail even if the
-  # partial one is available.
-  keyid = []
+  keyid = ""
+  # Newer signatures types contain the full keyid in subpacket 33
   for subpacket_tuple in hashed_subpacket_info:
     if subpacket_tuple[0] == FULL_KEYID_SUBPACKET: # pragma: no cover
-      keyid.append(subpacket_tuple)
+      # NOTE: The first byte of the payload is a version number
+      # https://archive.cert.uni-stuttgart.de/openpgp/2016/06/msg00004.html
+      keyid = binascii.hexlify(subpacket_tuple[1][1:]).decode("ascii")
+      break
 
-  # Excluded so that coverage does not vary in different test environments
-  if keyid: # pragma: no cover
-    keyid = binascii.hexlify(keyid[0][1][2:]).decode("ascii")
+  short_keyid = ""
+  # We also return the short keyid, because the full might not be available
+  for subpacket_tuple in unhashed_subpacket_info:
+    if subpacket_tuple[0] == PARTIAL_KEYID_SUBPACKET: # pragma: no branch
+      short_keyid = binascii.hexlify(subpacket_tuple[1]).decode("ascii")
+      break
 
-  else: # pragma: no cover
-    keyid = ""
-    log.warning("Can't parse the full keyid on this signature packet."
-        "You need at least gpg version '{}'. Your version is '{}'.".format(
-        FULLY_SUPPORTED_MIN_VERSION, in_toto.gpg.util.get_version()))
+  # Fail if there is no keyid at all (this should not happen)
+  if not (keyid or short_keyid): # pragma: no cover
+    raise ValueError("The signature packet seems to be corrupted. It is"
+        " missing the issuer subpacket.")
 
   # Uncomment this variable to obtain the left-hash-bits information (used for
   # early rejection)
@@ -324,6 +331,7 @@ def parse_signature_packet(data):
 
   return {
     'keyid': "{}".format(keyid),
+    'short_keyid': "{}".format(short_keyid),
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
