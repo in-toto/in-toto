@@ -1294,16 +1294,19 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
   M ... Masterkey
   S ... Subkey
 
-  SIG   AUTH  KEY (bundle) |  Verifable |  Comment
-  ----------------------------------------------------------------------------
-  M     M     M            |  Yes       |  Normal scenario
-  M     M     S            |  No        |  Cannot find key in key store
-  M     S     M            |  No        |  Unallowed trust delegation
-  M     S     S            |  No        |  Unallowed trust delegation
-  S     M     M            |  Yes       |  Allowed trust delegation
-  S     M     S            |  No        |  Cannot associate keys
-  S     S     M            |  Yes       |  Can find key in key store
-  S     S     S            |  Yes       |  Generalizes to normal scenario
+  SIG AUTH KEY(bundle)| OK  | Comment
+  ---------------------------------------------------------------
+  M   M    M          | Yes | Normal scenario (*)
+  M   M    S          | No  | Cannot find key in key store + cannot sign (*)
+  M   S    M          | No  | Unallowed trust delegation + cannot sign (*)
+  M   S    S          | No  | Unallowed trust delegation + cannot sign (*)
+  S   M    M          | Yes | Allowed trust delegation
+  S   M    S          | No  | Cannot associate keys
+  S   S    M          | Yes | Can find key in key store
+  S   S    S          | Yes | Generalizes to normal scenario
+
+  (*) NOTE: Master keys with a subkey with signing capability always use that
+  subkey, even if the master keyid is specified and has signing capability.
 
   """
 
@@ -1327,9 +1330,17 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
         self.master, self.gnupg_home)
     sub_key = master_key["subkeys"][self.sub]
 
+    # We need a gpg key without subkeys to test the normal scenario (M M M),
+    # because keys with signing subkeys always use that subkey for signing.
+    self.master2 = "7B3ABB26B97B655AB9296BD15B0BD02E1C768C43"
+    master_key2 = in_toto.gpg.functions.gpg_export_pubkey(
+        self.master2, self.gnupg_home)
+
+
     self.pub_key_dict = {
       self.master: master_key,
-      self.sub: sub_key
+      self.sub: sub_key,
+      self.master2: master_key2
     }
 
     self.step_name = "name"
@@ -1345,11 +1356,11 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
 
   def _verify_link_signature_tresholds(self, sig_id, auth_id, key_id):
     metablock = Metablock(signed=Link(name=self.step_name))
-    metablock.sign_gpg(sig_id, self.gnupg_home)               # SIG
+    metablock.sign_gpg(sig_id, self.gnupg_home)                        # SIG
 
     chain_link_dict = {
       self.step_name : {
-        sig_id : metablock                                    # SIG
+        sig_id : metablock                                             # SIG
       }
     }
 
@@ -1357,45 +1368,35 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
       steps=[
         Step(
             name=self.step_name,
-            pubkeys=[auth_id]                                 # AUTH
+            pubkeys=[auth_id]                                          # AUTH
           )
         ],
       keys={
-          key_id: self.pub_key_dict[key_id]                   # KEY
+          key_id: self.pub_key_dict[key_id]                            # KEY
         }
       )
     return layout, chain_link_dict
 
 
   def test_verify_link_signature_thresholds__M_M_M(self):
-    """Normal scenario """
+    """Normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master, self.master, self.master)
+        self.master2, self.master2, self.master2)
+
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
-  def test_verify_link_signature_thresholds__M_M_S(self):
-    """Cannot find key in key store """
-    layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master, self.master, self.sub)
-    with self.assertRaises(ThresholdVerificationError):
-      verify_link_signature_thresholds(layout, chain_link_dict)
+  def test_verify_link_signature_thresholds__M_M_S__M_S_M__M_S_S(self):
+    """Cannot sign with master key if subkey is present. """
+    # The scenarios MMS, MSM, MSS are impossible because we cannot sign
+    # with a master key, if there is a subkey with signing capability
+    # GPG will always use that subkey.
+    # Even if gpg would use the masterkey, these scenarios are not allowed,
+    # see table in docstring of testcase
+    signature = in_toto.gpg.functions.gpg_sign_object(
+        b"data", self.master, self.gnupg_home)
 
-
-  def test_verify_link_signature_thresholds__M_S_M(self):
-    """Unallowed trust delegation. """
-    layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master, self.sub, self.master)
-    with self.assertRaises(ThresholdVerificationError):
-      verify_link_signature_thresholds(layout, chain_link_dict)
-
-
-  def test_verify_link_signature_thresholds__M_S_S(self):
-    """Unallowed trust delegation. """
-    layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master, self.sub, self.sub)
-    with self.assertRaises(ThresholdVerificationError):
-      verify_link_signature_thresholds(layout, chain_link_dict)
+    self.assertTrue(signature["keyid"] == self.sub)
 
 
   def test_verify_link_signature_thresholds__S_M_M(self):
