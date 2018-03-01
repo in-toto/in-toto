@@ -172,17 +172,21 @@ def parse_subpackets(subpacket_octets):
   parsed_subpackets = []
   ptr = 0
 
-  # as per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
+  # As per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
   # can be encoded in 1, 2 or 5 octets. Depending on the values described here
   # we unpack 1, 2 or 5 octets to decode the length.
+  # The subpacket length includes packet type (first octet) and payload, but
+  # not the length of the length.
   while ptr < len(subpacket_octets):
     length = subpacket_octets[ptr]
     ptr += 1
+
     if length > 192 and length < 255 : # pragma: no cover
-      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 102))
+      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 192))
+      ptr += 1
+
     if length == 255: # pragma: no cover
-      length = 0
-      length = struct.unpack(">I", subpacket_octets[ptr: ptr+4])
+      length = struct.unpack(">I", subpacket_octets[ptr:ptr + 4])
       ptr += 4
 
     packet_type = subpacket_octets[ptr]
