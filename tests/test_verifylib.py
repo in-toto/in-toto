@@ -40,7 +40,7 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_sublayouts, get_summary_link, _raise_on_bad_retval,
     load_links_for_layout, verify_link_signature_thresholds,
     verify_threshold_constraints)
-from in_toto.exceptions import (RuleVerficationError,
+from in_toto.exceptions import (RuleVerificationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
@@ -178,7 +178,7 @@ class TestVerifyDeleteRule(unittest.TestCase):
     materials_queue = ["foo"]
     products_queue = ["foo"]
     rule = ["DELETE", "foo"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_delete_rule(rule, materials_queue, products_queue)
 
   def test_fail_delete_star(self):
@@ -188,7 +188,7 @@ class TestVerifyDeleteRule(unittest.TestCase):
     products_queue = ["foo"]
     rule = ["DELETE", "*"]
 
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
         verify_delete_rule(rule, materials_queue, products_queue)
 
   def test_pass_delete_file(self):
@@ -238,14 +238,14 @@ class TestVerifyCreateRule(unittest.TestCase):
     materials_queue = ["foo"]
     products_queue = ["foo"]
     rule = ["CREATE", "foo"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_create_rule(rule, materials_queue, products_queue)
 
     # Not all (*) products newly created
     materials_queue = ["foo"]
     products_queue = ["foo", "bar"]
     rule = ["CREATE", "*"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_create_rule(rule, materials_queue, products_queue)
 
   def test_pass(self):
@@ -350,27 +350,27 @@ class TestVerifyModifyRule(unittest.TestCase):
 
     # Single file not modified
     rule = ["MODIFY", "bar"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
 
     # Some files not modified
     rule = ["MODIFY", "*"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
 
     # Pattern filters bar as material but not as product
     materials_queue = ["foo", "bar"]
     products_queue = ["foo"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
 
     # Pattern filters bar as product but not as material
     materials_queue = ["foo"]
     products_queue = ["foo", "bar"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
 
@@ -423,17 +423,17 @@ class TestVerifyDisallowRule(unittest.TestCase):
     """ Test different failing disallow rule scenarios. """
     queue = ["foo", "bar", "foobar"]
     rule = ["DISALLOW", "foo"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_disallow_rule(rule, queue)
 
     queue = ["foo", "bar", "foobar"]
     rule = ["DISALLOW", "foo*"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_disallow_rule(rule, queue)
 
     queue = ["foo", "bar", "foobar"]
     rule = ["DISALLOW", "*"]
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_disallow_rule(rule, queue)
 
 
@@ -647,7 +647,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     rule = ["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-null"]
     artifacts = {}
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
   def test_fail_path_not_in_destination_materials(self):
@@ -659,7 +659,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": self.sha256_bar},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
   def test_fail_path_not_in_destination_products(self):
@@ -671,7 +671,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
   def test_fail_hash_not_eual(self):
@@ -683,7 +683,7 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": "aaaaaaaaaa"},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       verify_match_rule(rule, queue, artifacts, self.links)
 
 
@@ -1017,14 +1017,14 @@ class TestInTotoVerify(unittest.TestCase):
     """Test fail verification with failing step artifact rule. """
     layout = Metablock.load(self.layout_failing_step_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection artifact rule. """
     layout = Metablock.load(self.layout_failing_inspection_rule_path)
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
-    with self.assertRaises(RuleVerficationError):
+    with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_layout_signatures_fail_with_no_keys(self):
