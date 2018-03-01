@@ -105,23 +105,8 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
 
     # Start/stop sign with default gpg keyid
     args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
-    if in_toto.gpg.util.is_version_fully_supported():
-      self.assert_cli_sys_exit(["start"] + args, 0)
-      self.assert_cli_sys_exit(["stop"] + args, 0)
-
-    else:
-      # Signing with the default GPG key does not work on not
-      # "fully supported versions" of GPG, which makes in-toto-record start
-      # fail with exit code 1 ...
-      self.assert_cli_sys_exit(["start"] + args, 1)
-      # ... in-toto-record stop, however, uses a workaround to assess the keyid
-      # based on an existing preliminary link file even if no keyid was passed.
-      # To create that preliminary link file we call start, passing it the GPG
-      # keyid explicitly (remember, start would fail otherwise) and then call
-      # stop using the default GPG key.
-      self.assert_cli_sys_exit(["start", "--step-name", "test6", "--gpg",
-          self.gpg_keyid, "--gpg-home", self.gnupg_home], 0)
-      self.assert_cli_sys_exit(["stop"] + args, 0)
+    self.assert_cli_sys_exit(["start"] + args, 0)
+    self.assert_cli_sys_exit(["stop"] + args, 0)
 
 
   def test_glob_no_unfinished_files(self):

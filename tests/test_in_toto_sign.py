@@ -142,22 +142,20 @@ class TestInTotoSignTool(tests.common.CliTestCase):
         "--verify"
         ], 0)
 
-    # Default key signing only works on fully supported gpg versions
-    if in_toto.gpg.util.is_version_fully_supported():
-      # Sign Layout with default gpg key
-      self.assert_cli_sys_exit([
-          "-f", self.layout_path,
-          "-g",
-          "-o", "tmp_gpg.layout",
-          "--gpg-home", self.gnupg_home
-          ], 0)
-      # Verify Layout signed with default gpg key
-      self.assert_cli_sys_exit([
-          "-f", "tmp_gpg.layout",
-          "-g", self.default_gpg_keyid,
-          "--gpg-home", self.gnupg_home,
-          "--verify"
-          ], 0)
+    # Sign Layout with default gpg key
+    self.assert_cli_sys_exit([
+        "-f", self.layout_path,
+        "-g",
+        "-o", "tmp_gpg.layout",
+        "--gpg-home", self.gnupg_home
+        ], 0)
+    # Verify Layout signed with default gpg key
+    self.assert_cli_sys_exit([
+        "-f", "tmp_gpg.layout",
+        "-g", self.default_gpg_keyid,
+        "--gpg-home", self.gnupg_home,
+        "--verify"
+        ], 0)
 
     # Sign Layout with two gpg keys
     self.assert_cli_sys_exit([

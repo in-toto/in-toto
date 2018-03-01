@@ -48,7 +48,6 @@ class TestCommon(unittest.TestCase):
 class TestGPGRSA(unittest.TestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
-
   default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
   signing_subkey_keyid = "C5A0ABE6EC19D0D65F85E2C39BE9DF5131D924E9"
   encryption_subkey_keyid = "6A112FD3390B2E53AFC2E57F8FC8E12099AECEEA"
@@ -68,11 +67,13 @@ class TestGPGRSA(unittest.TestCase):
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
     os.chdir(self.test_dir)
 
+
   @classmethod
   def tearDownClass(self):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
+
 
   def test_gpg_export_pubkey(self):
     """ export a public key and make sure the parameters are the right ones:
@@ -120,19 +121,12 @@ class TestGPGRSA(unittest.TestCase):
     test_data = b'test_data'
     wrong_data = b'something malicious'
 
-    if is_version_fully_supported():
-      signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
-      key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
 
-      self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
-      self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+    self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
 
-    # On not fully supported versions > 2.1.x this will fail because we
-    # can't compute a keyid from the created signature and computing the
-    # keyid from an exported pubkey will fail because we can't identify it.
-    else:
-      with self.assertRaises(ValueError):
-        gpg_sign_object(test_data, homedir=self.gnupg_home)
 
 
   def test_gpg_sign_and_verify_object(self):
@@ -144,9 +138,9 @@ class TestGPGRSA(unittest.TestCase):
     signature = gpg_sign_object(test_data, keyid=self.default_keyid,
         homedir=self.gnupg_home)
     key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
-
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
 
   def test_gpg_sign_and_verify_object_default_keyring(self):
     """Sign/verify using keyring from envvar. """
@@ -229,19 +223,12 @@ class TestGPGDSA(unittest.TestCase):
     test_data = b'test_data'
     wrong_data = b'something malicious'
 
-    if is_version_fully_supported():
-      signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
-      key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
 
-      self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
-      self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+    self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
 
-    # On not fully supported versions > 2.1.x this will fail because we
-    # can't compute a keyid from the created signature and computing the
-    # keyid from an exported pubkey will fail because we can't identify it.
-    else:
-      with self.assertRaises(ValueError):
-        gpg_sign_object(test_data, homedir=self.gnupg_home)
 
   def test_gpg_sign_and_verify_object(self):
     """Create a signature using a specific key on the keyring """

@@ -122,17 +122,13 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     args = ["-n", self.test_step,
             "--gpg", "--gpg-home", self.gnupg_home, "--", "ls"]
 
-    if in_toto.gpg.util.is_version_fully_supported():
-      self.assert_cli_sys_exit(args, 0)
+    self.assert_cli_sys_exit(args, 0)
 
-      link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-          keyid=self.default_gpg_subkeyid)
+    link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
+        keyid=self.default_gpg_subkeyid)
 
-      self.assertTrue(os.path.exists(link_filename))
+    self.assertTrue(os.path.exists(link_filename))
 
-    # Default key signing fails on not fully supported gpg versions
-    else:
-      self.assert_cli_sys_exit(args, 1)
 
   def test_main_no_command_arg(self):
     """Test CLI command with --no-command argument. """

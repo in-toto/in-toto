@@ -23,7 +23,7 @@ import in_toto.gpg.common
 import in_toto.gpg.exceptions
 import in_toto.gpg.formats
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
-    SIGNATURE_HANDLERS)
+    SIGNATURE_HANDLERS, FULLY_SUPPORTED_MIN_VERSION)
 
 import securesystemslib.formats
 
@@ -40,6 +40,12 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
     The executed base command is defined in constants.GPG_SIGN_COMMAND.
 
+    NOTE: On not fully supported versions of GPG, i.e. versions below
+    in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION the returned signature
+    does not contain the full keyid. As a work around, we export the public
+    key bundle identified by the short keyid to compute the full keyid and
+    add it to the returned signature.
+
   <Arguments>
     content:
             The content to be signed. (bytes)
@@ -47,24 +53,35 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     keyid: (optional)
             The keyid of the gpg signing keyid. If not passed the default
             key in the keyring is used.
-            Note: On not fully supported gpg versions the keyid must be passed.
 
     homedir: (optional)
             Path to the gpg keyring. If not passed the default keyring is used.
 
   <Exceptions>
-    ValueError: if the gpg command failed to create a valid signature.
-    OSError: if the gpg command is not present or non-executable.
+    securesystemslib.exceptions.FormatError:
+            If the keyid was passed and does not match
+            securesystemslib.formats.KEYID_SCHEMA
+
+    ValueError:
+            If the gpg command failed to create a valid signature.
+
+    OSError:
+            If the gpg command is not present or non-executable.
+
+    in_toto.gpg.execeptions.KeyNotFoundError:
+            If the used gpg version is not fully supported
+            and no public key can be found for short keyid.
 
   <Side Effects>
     None.
 
   <Returns>
     The created signature in the format: gpg.formats.SIGNATURE_SCHEMA.
-  """
 
+  """
   keyarg = ""
   if keyid:
+    securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
     keyarg = "--default-key {}".format(keyid)
 
   homearg = ""
@@ -78,15 +95,43 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
-  # On GPG < 2.1 we cannot derive the keyid from the signature data.
-  # Instead we try to compute the keyid from the public part of the signing key
-  # Note: This fails if no keyid was passed, e.g. if the default key was used
-  # for signing, c.f. `gpg_export_pubkey`.
-  # Excluded so that coverage does not vary in different test environments
+  # On GPG < 2.1 we cannot derive the full keyid from the signature data.
+  # Instead we try to compute the keyid from the public part of the signing
+  # key or its subkeys, identified by the short keyid.
+  # Exclude the following code from coverage for consistent coverage accross
+  # test environments.
   if not signature["keyid"]: # pragma: no cover
-    log.warning("the created signature has no keyid. We will export the"
-        " public portion of the signing key to compute the keyid.")
-    signature["keyid"] = gpg_export_pubkey(keyid, homedir)["keyid"]
+    log.warning("The created signature does not include the hashed subpacket"
+        " '33' (full keyid). You probably have a gpg version <{}."
+        " We will export the public keys associated with the short keyid to"
+        " compute the full keyid.".format(FULLY_SUPPORTED_MIN_VERSION))
+
+    short_keyid = signature["short_keyid"]
+
+    # Export public key bundle (main key including with optional subkeys)
+    public_key_bundle = gpg_export_pubkey(short_keyid, homedir)
+
+    # Test if the short keyid matches the main key ...
+    main_key_full_keyid = public_key_bundle["keyid"]
+    if main_key_full_keyid.endswith(short_keyid.lower()):
+      signature["keyid"] = main_key_full_keyid
+
+    # ... or one of the subkeys and add the full keyid to the signature dict.
+    else:
+      for sub_key_full_keyid in list(
+          public_key_bundle.get("subkeys", {}).keys()):
+
+        if sub_key_full_keyid.endswith(short_keyid.lower()):
+          signature["keyid"] = sub_key_full_keyid
+          break
+
+  # If there is still no full keyid something went wrong
+  if not signature["keyid"]: # pragma: no cover
+    raise ValueError("Full keyid could not be determined for signature '{}'".
+        format(signature))
+
+  # If we have a full keyid it is safe to remove the short keyid to save space
+  del signature["short_keyid"]
 
   return signature
 
