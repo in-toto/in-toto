@@ -23,19 +23,27 @@ import os
 import shutil
 import tempfile
 import unittest
+from six import string_types
 
 import cryptography.hazmat.primitives.serialization as serialization
 import cryptography.hazmat.backends as backends
 
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
-from in_toto.gpg.util import is_version_fully_supported
+from in_toto.gpg.util import get_version, is_version_fully_supported
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import parse_pubkey_payload
 
 import securesystemslib.formats
 import securesystemslib.exceptions
+
+class TestUtil(unittest.TestCase):
+  """Test util functions. """
+  def test_version_utils_return_types(self):
+    """Run dummy tests for coverage. """
+    self.assertTrue(isinstance(get_version(), string_types))
+    self.assertTrue(isinstance(is_version_fully_supported(), bool))
 
 class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
