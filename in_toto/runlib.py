@@ -403,7 +403,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list)
+  materials_dict = record_artifacts_as_dict(material_list, follow_links=True)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -413,7 +413,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  products_dict = record_artifacts_as_dict(product_list)
+  products_dict = record_artifacts_as_dict(product_list, follow_links=True)
 
   log.info("Creating link metadata...")
   link = in_toto.models.link.Link(name=name,
@@ -505,7 +505,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list)
+  materials_dict = record_artifacts_as_dict(material_list, follow_links=True)
 
   log.info("Creating preliminary link metadata...")
   link = in_toto.models.link.Link(name=step_name,
@@ -659,7 +659,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   # Record products if a product path list was passed
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  link_metadata.signed.products = record_artifacts_as_dict(product_list)
+  link_metadata.signed.products = record_artifacts_as_dict(
+      product_list, follow_links=True)
 
   link_metadata.signatures = []
   if signing_key:
