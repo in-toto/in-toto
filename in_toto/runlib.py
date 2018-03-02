@@ -87,7 +87,7 @@ def _apply_exclude_patterns(names, exclude_patterns):
   return names
 
 
-def record_artifacts_as_dict(artifacts):
+def record_artifacts_as_dict(artifacts, follow_links=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -129,6 +129,11 @@ def record_artifacts_as_dict(artifacts):
     artifacts:
             A list of file or directory paths used as materials or products for
             the link command.
+
+    follow_links: (optional)
+            Follow symbolic links if the linked dir exists (default is False).
+            NOTE: This parameter toggles following linked directories only,
+            linked files are always recorded, independently of this parameter.
 
   <Exceptions>
     in_toto.exceptions.SettingsError
@@ -179,8 +184,7 @@ def record_artifacts_as_dict(artifacts):
       artifacts_dict[artifact] = _hash_artifact(artifact)
 
     elif os.path.isdir(artifact):
-      for root, dirs, files in os.walk(artifact):
-
+      for root, dirs, files in os.walk(artifact, followlinks=follow_links):
         # Create a list of normalized dirpaths
         dirpaths = []
         for dirname in dirs:
@@ -208,6 +212,7 @@ def record_artifacts_as_dict(artifacts):
           # result in an error later when trying to read the file
           if os.path.isfile(norm_filepath):
             filepaths.append(norm_filepath)
+
           else:
             log.info("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
