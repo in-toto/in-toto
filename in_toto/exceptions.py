@@ -8,7 +8,7 @@ class LayoutExpiredError(Error):
   """Indicates that the layout expired. """
   pass
 
-class RuleVerficationError(Error):
+class RuleVerificationError(Error):
   """Indicates that artifact rule verification failed. """
   pass
 

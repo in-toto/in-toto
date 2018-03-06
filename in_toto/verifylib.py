@@ -39,7 +39,7 @@ import in_toto.models.link
 from in_toto.models.metadata import Metablock
 from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
 from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
-from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
+from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
 import in_toto.rulelib
@@ -518,7 +518,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     FormatError
         if the rule does not conform with the rule format.
 
-    RuleVerficationError
+    RuleVerificationError
         if the destination link is not found in the passed link dictionary.
         if the corresponding destination artifact of a filtered source artifact
         is not found.
@@ -540,7 +540,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   try:
     dest_link = links[dest_name]
   except KeyError:
-    raise RuleVerficationError("Rule '{rule}' failed, destination link"
+    raise RuleVerificationError("Rule '{rule}' failed, destination link"
         " '{dest_link}' not found in link dictionary".format(
             rule=" ".join(rule), dest_link=dest_name))
 
@@ -596,14 +596,14 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     try:
       dest_artifact = dest_artifacts[full_dest_path]
     except Exception:
-      raise RuleVerficationError("Rule '{rule}' failed, destination artifact"
+      raise RuleVerificationError("Rule '{rule}' failed, destination artifact"
           " '{path}' not found in {type} of '{name}'"
               .format(rule=" ".join(rule), path=full_dest_path, name=dest_name,
                   type=dest_type))
 
     # Compare the hashes of source and destination artifacts
     if source_artifact != dest_artifact:
-      raise RuleVerficationError("Rule '{rule}' failed, source artifact"
+      raise RuleVerificationError("Rule '{rule}' failed, source artifact"
           " '{source}' and destination artifact '{dest}' hashes don't match."
               .format(rule=" ".join(rule), source=full_source_path,
                   dest=full_dest_path))
@@ -647,7 +647,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if a product filtered by the pattern also appears in the materials
         queue.
 
@@ -666,7 +666,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
 
   for matched_product in matched_products:
     if matched_product in source_materials_queue:
-      raise RuleVerficationError("Rule '{0}' failed, product '{1}' was found"
+      raise RuleVerificationError("Rule '{0}' failed, product '{1}' was found"
           " in materials but should have been newly created."
               .format(" ".join(rule), matched_product))
 
@@ -705,7 +705,7 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if a material filtered by the pattern also appears in the products
         queue.
 
@@ -723,7 +723,7 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
 
   for matched_material in matched_materials:
     if matched_material in source_products_queue:
-      raise RuleVerficationError("Rule '{0}' failed, material '{1}' was found"
+      raise RuleVerificationError("Rule '{0}' failed, material '{1}' was found"
           " in products but should have been deleted."
               .format(" ".join(rule), matched_material))
 
@@ -758,7 +758,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
             as values. Format is: {<path> : HASHDICT}
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if the materials and products matched by the pattern are not equal in
         terms of paths.
         if any material-product pair has the same hash (was not modified).
@@ -783,12 +783,12 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
   matched_products_only =  matched_products - matched_materials
 
   if len(matched_materials_only):
-    raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
+    raise RuleVerificationError("Rule '{0}' failed, the following paths appear"
         " as materials but not as products:\n\t{1}"
             .format(" ".join(rule), ", ".join(matched_materials_only)))
 
   if len(matched_products_only):
-    raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
+    raise RuleVerificationError("Rule '{0}' failed, the following paths appear"
         " as products but not as materials:\n\t{1}"
             .format(" ".join(rule), ", ".join(matched_products_only)))
 
@@ -798,7 +798,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
     # Is it okay to assume that path returns an artifact? The path
     # should not be in the queues, if it is not in the artifact dictionaries
     if source_materials[path] == source_products[path]:
-      raise RuleVerficationError("Rule '{0}' failed, material and product '{1}'"
+      raise RuleVerificationError("Rule '{0}' failed, material and product '{1}'"
           " have the same hash (were not modified)."
               .format(" ".join(rule), path))
 
@@ -858,7 +858,7 @@ def verify_disallow_rule(rule, source_artifacts_queue):
             A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if path pattern matches artifacts in artifact queue.
 
   <Side Effects>
@@ -874,7 +874,7 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerficationError("Rule '{0}' failed, pattern matched disallowed"
+    raise RuleVerificationError("Rule '{0}' failed, pattern matched disallowed"
         " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
 
 
@@ -923,7 +923,7 @@ def verify_item_rules(source_name, source_type, rules, links):
   <Exceptions>
     FormatError
         if source_type is not "materials" or "products"
-    RuleVerficationError
+    RuleVerificationError
         if the artifacts queue is not empty after all rules were applied
 
   <Side Effects>
