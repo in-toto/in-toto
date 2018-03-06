@@ -553,38 +553,43 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   elif dest_type.lower() == "products": # pragma: no branch
     dest_artifacts = dest_link.signed.products
 
-  # Filter I - take only queued paths with specified prefix and
-  # subtract prefix
-  # We first subtract the prefix and then apply the pattern in Filter II
-  # (instead of applying prefix + pattern) to prevent globbing in the prefix
+  # Filter part 1: Filter paths with source prefix if specified
+  # But substract the prefix before applying the glob pattern (filter part 2)
+  # to prevent globbing in the prefix.
   if rule_data["source_prefix"]:
     filtered_source_paths = []
+    # Add trailing slash to source prefix if it does not exist
+    normalized_source_prefix = os.path.join(rule_data["source_prefix"], "")
     for artifact_path in source_artifacts_queue:
-      if artifact_path.startswith(rule_data["source_prefix"] + os.sep):
+      if artifact_path.startswith(normalized_source_prefix):
         filtered_source_paths.append(
-            artifact_path[len(rule_data["source_prefix"] + os.sep):])
+            artifact_path[len(normalized_source_prefix):])
+
   else:
     filtered_source_paths = source_artifacts_queue
 
-  # Filter II - apply glob pattern on remaining artifact paths
+  # Filter part 2 - apply glob pattern on remaining artifact paths
   filtered_source_paths = fnmatch.filter(
       filtered_source_paths, rule_data["pattern"])
 
-  # Match source artifact with destination artifact
+  # Iterate over filtered source paths and try to match the corresponding
+  # source artifact hash with the corresponding destination artifact hash
   for path in filtered_source_paths:
-
-    # If we subtracted an optional source prefix in Filter I we have to
-    # re-concatenate to find the correct keys in the source artifact dictionary
+    # If a source prefix was specified, we subtracted the prefix above before
+    # globbing. We have to re-prepend the prefix in order to retrieve the
+    # corresponding source artifact below.
     if rule_data["source_prefix"]:
-      full_source_path = rule_data["source_prefix"] + os.sep + path
+      full_source_path = os.path.join(rule_data["source_prefix"], path)
+
     else:
       full_source_path = path
 
-    # We have to concatenate filtered source path (without source prefix)
-    # with an optional destination prefix to find the correct key in the
-    # destination artifact dictionary
+    # If a destination prefix was specified, the destionation artifact should
+    # be queried with the full destionation path, i.e. the prefix joined with
+    # the globbed path.
     if rule_data["dest_prefix"]:
-      full_dest_path = rule_data["dest_prefix"] + os.sep + path
+      full_dest_path = os.path.join(rule_data["dest_prefix"], path)
+
     else:
       full_dest_path = path
 
@@ -592,9 +597,10 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # should not be in the queue, if it is not in the artifact dictionary
     source_artifact = source_artifacts[full_source_path]
 
-    # Extract destination artifact from destination link
+    # Try to extract destination artifact from destination artifacts
     try:
       dest_artifact = dest_artifacts[full_dest_path]
+
     except Exception:
       raise RuleVerficationError("Rule '{rule}' failed, destination artifact"
           " '{path}' not found in {type} of '{name}'"
@@ -608,8 +614,8 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
               .format(rule=" ".join(rule), source=full_source_path,
                   dest=full_dest_path))
 
-    # Matching went well, let's remove the path from the queue. Subsequent rules
-    # won't see this artifact anymore.
+    # Matching went well, let's remove the path from the queue. Subsequent
+    # rules won't see this artifact anymore.
     source_artifacts_queue.remove(full_source_path)
 
   return source_artifacts_queue
