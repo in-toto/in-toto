@@ -87,7 +87,7 @@ def _apply_exclude_patterns(names, exclude_patterns):
   return names
 
 
-def record_artifacts_as_dict(artifacts, follow_links=False):
+def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -130,8 +130,8 @@ def record_artifacts_as_dict(artifacts, follow_links=False):
             A list of file or directory paths used as materials or products for
             the link command.
 
-    follow_links: (optional)
             Follow symbolic links if the linked dir exists (default is False).
+    follow_symlink_dirs: (optional)
             NOTE: This parameter toggles following linked directories only,
             linked files are always recorded, independently of this parameter.
 
@@ -184,7 +184,8 @@ def record_artifacts_as_dict(artifacts, follow_links=False):
       artifacts_dict[artifact] = _hash_artifact(artifact)
 
     elif os.path.isdir(artifact):
-      for root, dirs, files in os.walk(artifact, followlinks=follow_links):
+      for root, dirs, files in os.walk(artifact,
+          followlinks=follow_symlink_dirs):
         # Create a list of normalized dirpaths
         dirpaths = []
         for dirname in dirs:
@@ -403,7 +404,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_links=True)
+  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -413,7 +414,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  products_dict = record_artifacts_as_dict(product_list, follow_links=True)
+  products_dict = record_artifacts_as_dict(product_list, follow_symlink_dirs=True)
 
   log.info("Creating link metadata...")
   link = in_toto.models.link.Link(name=name,
@@ -505,7 +506,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_links=True)
+  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
 
   log.info("Creating preliminary link metadata...")
   link = in_toto.models.link.Link(name=step_name,
@@ -660,7 +661,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
   link_metadata.signed.products = record_artifacts_as_dict(
-      product_list, follow_links=True)
+      product_list, follow_symlink_dirs=True)
 
   link_metadata.signatures = []
   if signing_key:
