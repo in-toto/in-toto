@@ -142,7 +142,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     for setting in ["path/does/not/exist", 12345, True]:
       in_toto.settings.ARTIFACT_BASE_PATH = setting
       with self.assertRaises(in_toto.exceptions.SettingsError):
-        record_artifacts_as_dict(["."] )
+        record_artifacts_as_dict(["."])
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
