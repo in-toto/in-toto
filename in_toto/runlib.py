@@ -130,10 +130,13 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
             A list of file or directory paths used as materials or products for
             the link command.
 
-            Follow symbolic links if the linked dir exists (default is False).
     follow_symlink_dirs: (optional)
+            Follow symlinked dirs if the linked dir exists (default is False).
+            The recorded path contains the symlink name, not the resolved name.
             NOTE: This parameter toggles following linked directories only,
             linked files are always recorded, independently of this parameter.
+            NOTE: Beware of infinite recursions that can occur if a symlink
+            points to a parent directory or itself.
 
   <Exceptions>
     in_toto.exceptions.SettingsError
