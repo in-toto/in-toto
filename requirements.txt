@@ -1,6 +1,5 @@
 securesystemslib==0.10.9
 cryptography
-sphinx
 attrs
 python-dateutil
 iso8601
