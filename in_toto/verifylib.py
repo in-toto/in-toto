@@ -283,9 +283,10 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     link dictionary containing only authorized links whose signatures
     were successfully verified.
 
-    NOTE: Note if the layout's key store (`layout.keys`) lists a key `K`, with
-    a subkey `K'`, then `K'` is authorized implicitly, to sign any link that
-    `K` is authorized to sign. The inverse is not true.
+    NOTE: If the layout's key store (`layout.keys`) lists a (master) key `K`,
+    with a subkey `K'`, then `K'` is authorized implicitly, to sign any link
+    that `K` is authorized to sign. In other words, the trust in a master key
+    extends to the trust in a subkey. The inverse is not true.
 
   <Arguments>
     layout:
