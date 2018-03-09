@@ -87,7 +87,8 @@ def _apply_exclude_patterns(names, exclude_patterns):
   return names
 
 
-def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
+def record_artifacts_as_dict(artifacts, exclude_patterns=None,
+    follow_symlink_dirs=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -99,10 +100,7 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
 
     Paths are normalized for matching and storing by left stripping "./"
 
-    Excludes files that are matched by the file patterns specified in
-    ARTIFACT_EXCLUDE_PATTERNS setting.
-
-    EXCLUDES:
+    NOTE on exclude patterns:
       - Uses Python fnmatch
             *       matches everything
             ?       matches any single character
@@ -130,6 +128,13 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
             A list of file or directory paths used as materials or products for
             the link command.
 
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the result.
+            Exclude patterns can be passed as argument or specified via
+            ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
+            via envvars or rcfiles (see `in_toto.user_settings`).
+            If passed, patterns specified via settings are overriden.
+
     follow_symlink_dirs: (optional)
             Follow symlinked dirs if the linked dir exists (default is False).
             The recorded path contains the symlink name, not the resolved name.
@@ -148,6 +153,7 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
   <Returns>
     A dictionary with file paths as keys and the files' hashes as values.
   """
+
   artifacts_dict = {}
 
   if not artifacts:
@@ -168,20 +174,21 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
   for path in artifacts:
     norm_artifacts.append(os.path.normpath(path))
 
-  # If ARTIFACT_EXCLUDE_PATTERNS is set it must be a list of strings or an empty list
-  # TODO: Change NAMES_SCHEMA to something more semantically accurate
-  if (in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS and not
-      securesystemslib.formats.NAMES_SCHEMA.matches(
-      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)):
-    raise in_toto.exceptions.SettingsError(
-        "Review your ARTIFACT_EXCLUDE_PATTERNS setting '{}'".format(
-        in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS))
+  # Passed exclude patterns take precedence over exclude pattern settings
+  if exclude_patterns:
+    log.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
+        " exclude patterns.")
+  else:
+    # TODO: Do we want to keep the exclude pattern setting?
+    exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
-  # Iterate over remaining normalized artifact paths after
-  # having applied exclusion patterns
-  for artifact in _apply_exclude_patterns(norm_artifacts,
-      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
+  # Apply exclude patterns on the passed artifact paths if available
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
 
+  # Iterate over remaining normalized artifact paths
+  for artifact in norm_artifacts:
     if os.path.isfile(artifact):
       # Path was already normalized above
       artifacts_dict[artifact] = _hash_artifact(artifact)
@@ -195,9 +202,12 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
           norm_dirpath = os.path.normpath(os.path.join(root, dirname))
           dirpaths.append(norm_dirpath)
 
-        # Apply exlcude patterns on normalized dirpaths
-        dirpaths = _apply_exclude_patterns(dirpaths,
-            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)
+        # Applying exclude patterns on the directory paths returned by walk
+        # allows to exclude a subdirectory 'sub' with a pattern 'sub'.
+        # If we only applied the patterns below on the subdirectory's
+        # containing file paths, we'd have to use a wildcard, e.g.: 'sub*'
+        if exclude_patterns:
+          dirpaths = _apply_exclude_patterns(dirpaths, exclude_patterns)
 
         # Reset and refill dirs with remaining names after exclusion
         # Modify (not reassign) dirnames to only recurse into remaining dirs
@@ -221,11 +231,11 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
             log.info("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
 
-        # Apply exclude patterns on normalized filepaths and
-        # store each remaining normalized filepath with it's files hash to
-        # the resulting artifact dict
-        for filepath in _apply_exclude_patterns(filepaths,
-            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
+        # Apply exlcude patterns on the normalized file paths returned by walk
+        if exclude_patterns:
+          filepaths = _apply_exclude_patterns(filepaths, exclude_patterns)
+
+        for filepath in filepaths:
           artifacts_dict[filepath] = _hash_artifact(filepath)
 
     # Path is no file and no directory
