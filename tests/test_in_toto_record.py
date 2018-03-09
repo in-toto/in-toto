@@ -28,6 +28,7 @@ from mock import patch
 
 import in_toto.util
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
+from in_toto.models.metadata import Metablock
 from in_toto.in_toto_record import main as in_toto_record_main
 
 import tests.common
@@ -89,6 +90,13 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
         self.test_artifact1], 0)
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
         self.test_artifact1], 0)
+
+    # Start/stop with excluding one artifact
+    args = ["--step-name", "test2.5", "--key", self.key_path]
+    self.assert_cli_sys_exit(["start"] + args + ["--materials",
+        self.test_artifact1, "--exclude", "test*"], 0)
+    self.assert_cli_sys_exit(["stop"] + args + ["--products",
+        self.test_artifact1, "--exclude", "test*"], 0)
 
     # Start/stop with recording multiple artifacts
     args = ["--step-name", "test3", "--key", self.key_path]

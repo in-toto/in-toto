@@ -87,7 +87,8 @@ def _apply_exclude_patterns(names, exclude_patterns):
   return names
 
 
-def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
+def record_artifacts_as_dict(artifacts, exclude_patterns=None,
+    follow_symlink_dirs=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -99,10 +100,7 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
 
     Paths are normalized for matching and storing by left stripping "./"
 
-    Excludes files that are matched by the file patterns specified in
-    ARTIFACT_EXCLUDE_PATTERNS setting.
-
-    EXCLUDES:
+    NOTE on exclude patterns:
       - Uses Python fnmatch
             *       matches everything
             ?       matches any single character
@@ -130,6 +128,13 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
             A list of file or directory paths used as materials or products for
             the link command.
 
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the result.
+            Exclude patterns can be passed as argument or specified via
+            ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
+            via envvars or rcfiles (see `in_toto.user_settings`).
+            If passed, patterns specified via settings are overriden.
+
     follow_symlink_dirs: (optional)
             Follow symlinked dirs if the linked dir exists (default is False).
             The recorded path contains the symlink name, not the resolved name.
@@ -148,6 +153,7 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
   <Returns>
     A dictionary with file paths as keys and the files' hashes as values.
   """
+
   artifacts_dict = {}
 
   if not artifacts:
@@ -168,20 +174,21 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
   for path in artifacts:
     norm_artifacts.append(os.path.normpath(path))
 
-  # If ARTIFACT_EXCLUDE_PATTERNS is set it must be a list of strings or an empty list
-  # TODO: Change NAMES_SCHEMA to something more semantically accurate
-  if (in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS and not
-      securesystemslib.formats.NAMES_SCHEMA.matches(
-      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)):
-    raise in_toto.exceptions.SettingsError(
-        "Review your ARTIFACT_EXCLUDE_PATTERNS setting '{}'".format(
-        in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS))
+  # Passed exclude patterns take precedence over exclude pattern settings
+  if exclude_patterns:
+    log.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
+        " exclude patterns.")
+  else:
+    # TODO: Do we want to keep the exclude pattern setting?
+    exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
-  # Iterate over remaining normalized artifact paths after
-  # having applied exclusion patterns
-  for artifact in _apply_exclude_patterns(norm_artifacts,
-      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
+  # Apply exclude patterns on the passed artifact paths if available
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
 
+  # Iterate over remaining normalized artifact paths
+  for artifact in norm_artifacts:
     if os.path.isfile(artifact):
       # Path was already normalized above
       artifacts_dict[artifact] = _hash_artifact(artifact)
@@ -195,9 +202,12 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
           norm_dirpath = os.path.normpath(os.path.join(root, dirname))
           dirpaths.append(norm_dirpath)
 
-        # Apply exlcude patterns on normalized dirpaths
-        dirpaths = _apply_exclude_patterns(dirpaths,
-            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS)
+        # Applying exclude patterns on the directory paths returned by walk
+        # allows to exclude a subdirectory 'sub' with a pattern 'sub'.
+        # If we only applied the patterns below on the subdirectory's
+        # containing file paths, we'd have to use a wildcard, e.g.: 'sub*'
+        if exclude_patterns:
+          dirpaths = _apply_exclude_patterns(dirpaths, exclude_patterns)
 
         # Reset and refill dirs with remaining names after exclusion
         # Modify (not reassign) dirnames to only recurse into remaining dirs
@@ -221,11 +231,11 @@ def record_artifacts_as_dict(artifacts, follow_symlink_dirs=False):
             log.info("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
 
-        # Apply exclude patterns on normalized filepaths and
-        # store each remaining normalized filepath with it's files hash to
-        # the resulting artifact dict
-        for filepath in _apply_exclude_patterns(filepaths,
-            in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS):
+        # Apply exlcude patterns on the normalized file paths returned by walk
+        if exclude_patterns:
+          filepaths = _apply_exclude_patterns(filepaths, exclude_patterns)
+
+        for filepath in filepaths:
           artifacts_dict[filepath] = _hash_artifact(filepath)
 
     # Path is no file and no directory
@@ -337,7 +347,7 @@ def _check_match_signing_key(signing_key):
 
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
-    gpg_use_default=False, gpg_home=None):
+    gpg_use_default=False, gpg_home=None, exclude_patterns=None):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -383,11 +393,15 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the materials
+            and products sections in the resulting link.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
 
   <Side Effects>
     If a key parameter is passed for signing, the newly created link metadata
@@ -405,9 +419,14 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
+
+  materials_dict = record_artifacts_as_dict(material_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -417,7 +436,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  products_dict = record_artifacts_as_dict(product_list, follow_symlink_dirs=True)
+
+  products_dict = record_artifacts_as_dict(product_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   log.info("Creating link metadata...")
   link = in_toto.models.link.Link(name=name,
@@ -450,7 +471,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
 
 def in_toto_record_start(step_name, material_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
+    exclude_patterns=None):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -478,13 +500,18 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the materials
+            section in the resulting preliminary link.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-          is passed.
+        is passed.
+
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
 
   <Side Effects>
     Writes newly created link metadata file to disk using the filename scheme
@@ -507,9 +534,14 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
+
+  materials_dict = record_artifacts_as_dict(material_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   log.info("Creating preliminary link metadata...")
   link = in_toto.models.link.Link(name=step_name,
@@ -542,7 +574,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
+    exclude_patterns=None):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -573,13 +606,19 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the products
+            sections in the resulting link.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-      is passed.
+        is passed.
+
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA, or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
+
     LinkNotFoundError if gpg is used for signing and the corresponding
         preliminary link file can not be found in the current working directory
 
@@ -603,6 +642,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     _check_match_signing_key(signing_key)
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
   # Load preliminary link file
   # If we have a signing key we can use the keyid to construct the name
@@ -663,8 +705,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   # Record products if a product path list was passed
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  link_metadata.signed.products = record_artifacts_as_dict(
-      product_list, follow_symlink_dirs=True)
+
+  link_metadata.signed.products = record_artifacts_as_dict(product_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   link_metadata.signatures = []
   if signing_key:

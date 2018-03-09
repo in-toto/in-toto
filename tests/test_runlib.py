@@ -200,7 +200,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     # Record files and linked files
     # follow_symlink_dirs does not make a difference as it only concerns linked dirs
     for follow_symlink_dirs in [True, False]:
-      artifacts_dict = record_artifacts_as_dict(["."], follow_symlink_dirs)
+      artifacts_dict = record_artifacts_as_dict(["."],
+          follow_symlink_dirs=follow_symlink_dirs)
 
       # Test that everything was recorded ...
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
@@ -231,7 +232,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     # Record files without dead links
     # follow_symlink_dirs does not make a difference as it only concerns linked dirs
     for follow_symlink_dirs in [True, False]:
-      artifacts_dict = record_artifacts_as_dict(["."], follow_symlink_dirs)
+      artifacts_dict = record_artifacts_as_dict(["."],
+          follow_symlink_dirs=follow_symlink_dirs)
 
       # Test only the files were recorded ...
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
@@ -283,43 +285,39 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       sorted(["foo", "subdir/foosub1", "subdir/foosub2",
           "subdir/subsubdir/foosubsub"]))
 
-  def test_record_dot_exclude_star_foo_star_from_recording(self):
-    """Traverse dot. Exclude pattern. Record one file. """
-    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*foo*"]
-    artifacts_dict = record_artifacts_as_dict(["."])
 
-    securesystemslib.formats.HASHDICT_SCHEMA.check_match(artifacts_dict["bar"])
-    self.assertListEqual(list(artifacts_dict.keys()), ["bar"])
+  def test_exclude_patterns(self):
+    """Test excluding artifacts using passed pattern or setting. """
+    excludes_and_results = [
+      # Exclude files containing 'foo' everywhere
+      (["*foo*"], ["bar"]),
+      # Exclude subdirectory and all its contents
+      (["subdir"], ["bar", "foo"]),
+      # Exclude files 'subdir/foosub1' and 'subdir/foosub2'
+      (["*foosub?"], ["bar", "foo", "subdir/subsubdir/foosubsub"]),
+      # Exclude subsubdirectory and its contents
+      (["*subsubdir"], ["foo", "bar", "subdir/foosub1", "subdir/foosub2"])
+      ]
 
-  def test_exclude_subdir(self):
-    """Traverse dot. Exclude subdir (and subsubdir). """
-    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subdir"]
-    artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(list(artifacts_dict.keys())), sorted(["bar", "foo"]))
+    for exclude_patterns, expected_results in excludes_and_results:
+      # Exclude via setting
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = exclude_patterns
+      artifacts1 = record_artifacts_as_dict(["."])
 
-  def test_exclude_files_in_subdir(self):
-    """Traverse dot. Exclude files in subdir but not subsubdir. """
-    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*foosub?"]
-    artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(list(artifacts_dict.keys())),
-      sorted(["bar", "foo", "subdir/subsubdir/foosubsub"]))
+      # Exclude via argument
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = None
+      artifacts2 = record_artifacts_as_dict(["."],
+          exclude_patterns=exclude_patterns)
 
-  def test_exclude_subsubdir(self):
-    """Traverse dot. Exclude subsubdir. """
-    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = ["*subsubdir"]
-    artifacts_dict = record_artifacts_as_dict(["."])
+      self.assertTrue(sorted(list(artifacts1)) == sorted(list(artifacts2))
+          == sorted(expected_results))
 
-    for key, val in six.iteritems(artifacts_dict):
-      securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
-
-    self.assertListEqual(sorted(list(artifacts_dict.keys())),
-        sorted(["foo", "bar", "subdir/foosub1", "subdir/foosub2"]))
 
   def test_bad_artifact_exclude_patterns_setting(self):
     """Raise exception with bogus artifact exclude patterns settings. """
     for setting in ["not a list of settings", 12345, True]:
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
-      with self.assertRaises(in_toto.exceptions.SettingsError):
+      with self.assertRaises(securesystemslib.exceptions.FormatError):
         record_artifacts_as_dict(["."])
 
   def test_hash_artifact_passing_algorithm(self):

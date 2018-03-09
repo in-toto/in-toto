@@ -56,6 +56,12 @@ optional arguments:
   --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
                         gpg' option. If '--gpg-home' is not passed, the
                         default GPG keyring is used.
+  --exclude <pattern> [<pattern> ...]
+                        Do not record 'materials/products' that match one of
+                        <pattern>. Passed exclude patterns override previously
+                        set patterns, using e.g.: environment variables or
+                        RCfiles. See ARTIFACT_EXCLUDE_PATTERNS documentation
+                        for additional info.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -101,6 +107,8 @@ import logging
 import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
+
+from in_toto.common_args import EXCLUDE_ARGS, EXCLUDE_KWARGS
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -172,6 +180,8 @@ examples:
       "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
       " '--gpg-home' is not passed, the default GPG keyring is used."))
 
+  parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
+
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", action="store_true")
@@ -232,13 +242,15 @@ examples:
     if args.command == "start":
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
           signing_key=key, gpg_keyid=gpg_keyid,
-          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
+          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
+          exclude_patterns=args.exclude_patterns)
 
     # Mutually exclusiveness is guaranteed by argparser
     else: # args.command == "stop":
       in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
           signing_key=key, gpg_keyid=gpg_keyid,
-          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home)
+          gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
+          exclude_patterns=args.exclude_patterns)
 
   except Exception as e:
     log.error("(in-toto-record {0}) {1}: {2}"
