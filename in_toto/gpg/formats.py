@@ -61,15 +61,18 @@ def _create_pubkey_with_subkey_schema(pubkey_schema):
   """Helper method to extend the passed public key schema with an optional
   dictionary of sub public keys "subkeys" with the same schema."""
   schema = pubkey_schema
-  subkey_schema_tpl =  ("subkeys", ssl_schema.Optional(
+  subkey_schema_tuple =  ("subkeys", ssl_schema.Optional(
         ssl_schema.DictOf(
           key_schema=ssl_formats.KEYID_SCHEMA,
           value_schema=pubkey_schema
           )
         )
       )
-  # TODO: Find a way that does not require to access a proteced member
-  schema._required.append(subkey_schema_tpl) # pylint: disable=protected-access
+  # Any subclass of `securesystemslib.schema.Object` stores the schemas that
+  # define the attributes of the object in its `_required` property, even if
+  # such a schema is of type `Optional`.
+  # TODO: Find a way that does not require to access a protected member
+  schema._required.append(subkey_schema_tuple) # pylint: disable=protected-access
   return schema
 
 
@@ -84,8 +87,9 @@ RSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 )
 
 
-# Internal temporary rsa public key schema, required for self-referential
-# schema extension, for keys with subkeys.
+# We have to define RSA_PUBKEY_SCHEMA in two steps, because it is
+# self-referential. Here we define a shallow _RSA_PUBKEY_SCHEMA, which we use
+# below to create the self-referential RSA_PUBKEY_SCHEMA.
 _RSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "RSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("rsa"),
@@ -110,8 +114,9 @@ DSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 )
 
 
-# Internal temporary dsa public key schema, required for self-referential
-# schema extension, for keys with subkeys.
+# We have to define DSA_PUBKEY_SCHEMA in two steps, because it is
+# self-referential. Here we define a shallow _DSA_PUBKEY_SCHEMA, which we use
+# below to create the self-referential DSA_PUBKEY_SCHEMA.
 _DSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "DSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("dsa"),
