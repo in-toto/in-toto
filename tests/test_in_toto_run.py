@@ -31,6 +31,7 @@ from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
 
 from in_toto.models.link import Link
+from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
@@ -96,12 +97,26 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def test_main_optional_args(self):
     """Test CLI command with optional arguments. """
 
-    args = ["--step-name", self.test_step, "--key",
+    named_args = ["--step-name", self.test_step, "--key",
         self.key_path, "--materials", self.test_artifact, "--products",
-        self.test_artifact, "--record-streams", "--", "echo", "test"]
+        self.test_artifact, "--record-streams"]
+    positional_args =  ["--", "echo", "test"]
 
-    self.assert_cli_sys_exit(args, 0)
-    self.assertTrue(os.path.exists(self.test_link))
+    # Test and assert recorded artifacts
+    args1 = named_args + positional_args
+    self.assert_cli_sys_exit(args1 , 0)
+    link_metadata = Metablock.load(self.test_link)
+    self.assertTrue(self.test_artifact in
+        list(link_metadata.signed.materials.keys()))
+    self.assertTrue(self.test_artifact in
+        list(link_metadata.signed.products.keys()))
+
+    # Test and assert exlcuded artifacts
+    args2 = named_args + ["--exclude", "*test*"] + positional_args
+    self.assert_cli_sys_exit(args2, 0)
+    link_metadata = Metablock.load(self.test_link)
+    self.assertFalse(link_metadata.signed.materials)
+    self.assertFalse(link_metadata.signed.products)
 
 
   def test_main_with_specified_gpg_key(self):

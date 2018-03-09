@@ -52,6 +52,12 @@ optional arguments:
                         link metadata.
   -x, --no-command      Generate link metadata without executing a command,
                         e.g. for a 'signed off by' step.
+  --exclude <pattern> [<pattern> ...]
+                        Do not record 'materials' and 'products' matched by
+                        the passed exclude patterns. Passed exclude patterns
+                        override previously set patterns, using e.g.:
+                        environment variables or RCfiles. See
+                        ARTIFACT_EXCLUDE_PATTERNS documentation for additional
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -177,6 +183,14 @@ examples:
     "Generate link metadata without executing a command, e.g. for a 'signed"
     " off by' step."))
 
+  parser.add_argument("--exclude", dest="exclude_patterns", required=False,
+      metavar="<pattern>", nargs="+", help=(
+      "Do not record 'materials' and 'products' matched by the passed"
+      " exclude patterns. Passed exclude patterns override previously"
+      " set patterns, using e.g.: environment variables or RCfiles. See"
+      " ARTIFACT_EXCLUDE_PATTERNS documentation for additional info."
+      ))
+
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
       help="Verbose execution.", action="store_true")
@@ -231,7 +245,7 @@ examples:
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home)
+        args.gpg_home, args.exclude_patterns)
 
   except Exception as e:
     log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
