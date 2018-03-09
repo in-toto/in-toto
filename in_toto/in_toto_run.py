@@ -39,11 +39,11 @@ optional arguments:
   -m <path> [<path> ...], --materials <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata before the
-                        command is executed.
+                        command is executed. Symlinks are followed.
   -p <path> [<path> ...], --products <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata after the
-                        command is executed.
+                        command is executed. Symlinks are followed.
   --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
                         gpg' option. If '--gpg-home' is not passed, the
                         default GPG keyring is used.
@@ -142,12 +142,14 @@ examples:
   parser.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', metavar="<path>", help=(
       "Paths to files or directories, whose paths and hashes are stored in the"
-      " resulting link metadata before the command is executed."))
+      " resulting link metadata before the command is executed. Symlinks are"
+      " followed."))
 
   parser.add_argument("-p", "--products", type=str, required=False,
       nargs='+', metavar="<path>", help=(
       "Paths to files or directories, whose paths and hashes are stored in the"
-      " resulting link metadata after the command is executed."))
+      " resulting link metadata after the command is executed. Symlinks are"
+      " followed."))
 
   named_args.add_argument("-k", "--key", type=str, metavar="<path>", help=(
       "Path to a PEM formatted private key file used to sign the resulting"

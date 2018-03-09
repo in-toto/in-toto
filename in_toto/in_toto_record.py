@@ -63,13 +63,15 @@ optional arguments (start subcommand only):
   -m <path> [<path> ...], --materials <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata's material
-                        section when running the 'start' subcommand.
+                        section when running the 'start' subcommand. Symlinks
+                        are followed.
 
 optional arguments (stop subcommand only):
   -p <path> [<path> ...], --products <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata's product
-                        section when running the 'stop' subcommand.
+                        section when running the 'stop' subcommand. Symlinks
+                        are followed.
 
 required named arguments:
   -n <name>, --step-name <name>
@@ -196,13 +198,13 @@ examples:
       nargs='+', metavar="<path>", help=(
       "Paths to files or directories, whose paths and hashes are stored in the"
       " resulting link metadata's material section when running the 'start'"
-      " subcommand."))
+      " subcommand. Symlinks are followed."))
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
       nargs='+', metavar="<path>", help=(
       "Paths to files or directories, whose paths and hashes are stored in the"
       " resulting link metadata's product section when running the 'stop'"
-      " subcommand."))
+      " subcommand. Symlinks are followed."))
 
   args = parser.parse_args()
 
