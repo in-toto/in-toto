@@ -57,12 +57,11 @@ optional arguments:
                         gpg' option. If '--gpg-home' is not passed, the
                         default GPG keyring is used.
   --exclude <pattern> [<pattern> ...]
-                        Do not record 'materials/products' matched by the
-                        passed exclude patterns. Passed exclude patterns
-                        override previously set patterns, using e.g.:
-                        environment variables or RCfiles. See
-                        ARTIFACT_EXCLUDE_PATTERNS documentation for additional
-                        info.
+                        Do not record 'materials/products' that match one of
+                        <pattern>. Passed exclude patterns override previously
+                        set patterns, using e.g.: environment variables or
+                        RCfiles. See ARTIFACT_EXCLUDE_PATTERNS documentation
+                        for additional info.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -108,6 +107,8 @@ import logging
 import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
+
+from in_toto.common_args import EXCLUDE_ARGS, EXCLUDE_KWARGS
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -179,13 +180,7 @@ examples:
       "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
       " '--gpg-home' is not passed, the default GPG keyring is used."))
 
-  parent_parser.add_argument("--exclude", dest="exclude_patterns",
-      required=False, metavar="<pattern>", nargs="+", help=(
-      "Do not record 'materials/products' matched by the passed exclude"
-      " patterns. Passed exclude patterns override previously set patterns,"
-      " using e.g.: environment variables or RCfiles. See"
-      " ARTIFACT_EXCLUDE_PATTERNS documentation for additional info."
-      ))
+  parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",

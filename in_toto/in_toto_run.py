@@ -53,11 +53,11 @@ optional arguments:
   -x, --no-command      Generate link metadata without executing a command,
                         e.g. for a 'signed off by' step.
   --exclude <pattern> [<pattern> ...]
-                        Do not record 'materials' and 'products' matched by
-                        the passed exclude patterns. Passed exclude patterns
-                        override previously set patterns, using e.g.:
-                        environment variables or RCfiles. See
-                        ARTIFACT_EXCLUDE_PATTERNS documentation for additional
+                        Do not record 'materials/products' that match one of
+                        <pattern>. Passed exclude patterns override previously
+                        set patterns, using e.g.: environment variables or
+                        RCfiles. See ARTIFACT_EXCLUDE_PATTERNS documentation
+                        for additional info.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -98,6 +98,7 @@ import logging
 import in_toto.user_settings
 from in_toto import (util, runlib)
 
+from in_toto.common_args import EXCLUDE_ARGS, EXCLUDE_KWARGS
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -183,13 +184,7 @@ examples:
     "Generate link metadata without executing a command, e.g. for a 'signed"
     " off by' step."))
 
-  parser.add_argument("--exclude", dest="exclude_patterns", required=False,
-      metavar="<pattern>", nargs="+", help=(
-      "Do not record 'materials' and 'products' matched by the passed"
-      " exclude patterns. Passed exclude patterns override previously"
-      " set patterns, using e.g.: environment variables or RCfiles. See"
-      " ARTIFACT_EXCLUDE_PATTERNS documentation for additional info."
-      ))
+  parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
