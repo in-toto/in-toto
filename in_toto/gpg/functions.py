@@ -108,13 +108,13 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
     short_keyid = signature["short_keyid"]
 
-    # Export public key bundle (main key including with optional subkeys)
+    # Export public key bundle (master key including with optional subkeys)
     public_key_bundle = gpg_export_pubkey(short_keyid, homedir)
 
-    # Test if the short keyid matches the main key ...
-    main_key_full_keyid = public_key_bundle["keyid"]
-    if main_key_full_keyid.endswith(short_keyid.lower()):
-      signature["keyid"] = main_key_full_keyid
+    # Test if the short keyid matches the master key ...
+    master_key_full_keyid = public_key_bundle["keyid"]
+    if master_key_full_keyid.endswith(short_keyid.lower()):
+      signature["keyid"] = master_key_full_keyid
 
     # ... or one of the subkeys and add the full keyid to the signature dict.
     else:
@@ -174,7 +174,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   verification_key = pubkey_info
 
   # If the keyid on the signature matches a subkey of the passed key,
-  # we use that subkey for verification instead of the main key.
+  # we use that subkey for verification instead of the master key.
   if sig_keyid in list(pubkey_info.get("subkeys", {}).keys()):
     verification_key = pubkey_info["subkeys"][sig_keyid]
 
@@ -189,7 +189,7 @@ def gpg_export_pubkey(keyid, homedir=None):
     identified by the passed keyid from the gpg keyring at the passed homedir
     in a format suitable for in-toto.
 
-    Note: The identified key is exported including the corresponding main
+    Note: The identified key is exported including the corresponding master
     key and all subkeys.
 
     The executed base command is defined in
