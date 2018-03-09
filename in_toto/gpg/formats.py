@@ -57,6 +57,24 @@
 import securesystemslib.schema as ssl_schema
 import securesystemslib.formats as ssl_formats
 
+def _create_pubkey_with_subkey_schema(pubkey_schema):
+  """Helper method to extend the passed public key schema with an optional
+  dictionary of sub public keys "subkeys" with the same schema."""
+  schema = pubkey_schema
+  subkey_schema_tuple =  ("subkeys", ssl_schema.Optional(
+        ssl_schema.DictOf(
+          key_schema=ssl_formats.KEYID_SCHEMA,
+          value_schema=pubkey_schema
+          )
+        )
+      )
+  # Any subclass of `securesystemslib.schema.Object` stores the schemas that
+  # define the attributes of the object in its `_required` property, even if
+  # such a schema is of type `Optional`.
+  # TODO: Find a way that does not require to access a protected member
+  schema._required.append(subkey_schema_tuple) # pylint: disable=protected-access
+  return schema
+
 
 GPG_HASH_ALGORITHM_STRING = "pgp+SHA2"
 PGP_RSA_PUBKEY_METHOD_STRING = "pgp+rsa-pkcsv1.5"
@@ -69,7 +87,10 @@ RSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 )
 
 
-RSA_PUBKEY_SCHEMA = ssl_schema.Object(
+# We have to define RSA_PUBKEY_SCHEMA in two steps, because it is
+# self-referential. Here we define a shallow _RSA_PUBKEY_SCHEMA, which we use
+# below to create the self-referential RSA_PUBKEY_SCHEMA.
+_RSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "RSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("rsa"),
   method = ssl_schema.String(PGP_RSA_PUBKEY_METHOD_STRING),
@@ -80,6 +101,8 @@ RSA_PUBKEY_SCHEMA = ssl_schema.Object(
       private = ssl_schema.String("")
     )
 )
+RSA_PUBKEY_SCHEMA = _create_pubkey_with_subkey_schema(
+    _RSA_PUBKEY_SCHEMA)
 
 
 DSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
@@ -91,7 +114,10 @@ DSA_PUBKEYVAL_SCHEMA = ssl_schema.Object(
 )
 
 
-DSA_PUBKEY_SCHEMA = ssl_schema.Object(
+# We have to define DSA_PUBKEY_SCHEMA in two steps, because it is
+# self-referential. Here we define a shallow _DSA_PUBKEY_SCHEMA, which we use
+# below to create the self-referential DSA_PUBKEY_SCHEMA.
+_DSA_PUBKEY_SCHEMA = ssl_schema.Object(
   object_name = "DSA_PUBKEY_SCHEMA",
   type = ssl_schema.String("dsa"),
   method = ssl_schema.String(PGP_DSA_PUBKEY_METHOD_STRING),
@@ -102,6 +128,8 @@ DSA_PUBKEY_SCHEMA = ssl_schema.Object(
       private = ssl_schema.String("")
     )
 )
+DSA_PUBKEY_SCHEMA = _create_pubkey_with_subkey_schema(
+    _DSA_PUBKEY_SCHEMA)
 
 
 PUBKEY_SCHEMA = ssl_schema.OneOf([RSA_PUBKEY_SCHEMA,
@@ -111,6 +139,7 @@ PUBKEY_SCHEMA = ssl_schema.OneOf([RSA_PUBKEY_SCHEMA,
 SIGNATURE_SCHEMA = ssl_schema.Object(
     object_name = "SIGNATURE_SCHEMA",
     keyid = ssl_formats.KEYID_SCHEMA,
+    short_keyid = ssl_schema.Optional(ssl_formats.KEYID_SCHEMA),
     other_headers = ssl_formats.HEX_SCHEMA,
     signature = ssl_formats.HEX_SCHEMA
   )

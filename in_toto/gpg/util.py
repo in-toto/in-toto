@@ -87,25 +87,28 @@ def hash_object(headers, algorithm, content):
   return hasher.finalize()
 
 
-def parse_packet_header(data, expected_type):
+def parse_packet_header(data, expected_type=None):
   """
   <Purpose>
-    Parse an RFC4880 packet header and return its payload
+    Parse an RFC4880 packet header and return its payload, length and type.
 
   <Arguments>
-    data: the packet header buffer
+    data:
+            An RFC4880 packet as described in section 4.2 of the rfc.
 
-    expected_type: The type of packet expected, as described in section 5.2.3.1
-        of RFC4880.
+    expected_type: (optional)
+            Used to error out if the packet does not have the expected
+            type. See in_toto.gpg.constants.PACKET_TYPES for available types.
 
   <Exceptions>
-    None
+    in_toto.gpg.exceptions.PacketParsingError
+            If the expected_type was passed and does not match the packet type
 
   <Side Effects>
-    None
+    None.
 
   <Returns>
-    The RFC4880-compliant hashed buffer
+    The RFC4880-compliant packet payload, its length and its type.
   """
   data = bytearray(data)
   packet_type = (data[0] & 0x3c ) >> 2
@@ -118,11 +121,11 @@ def parse_packet_header(data, expected_type):
     packet_length = data[1]
     ptr = 2
 
-  if packet_type != expected_type: # pragma: no cover
+  if expected_type != None and packet_type != expected_type: # pragma: no cover
     raise in_toto.gpg.exceptions.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
 
-  return data[ptr:ptr+packet_length]
+  return data[ptr:ptr+packet_length], ptr+packet_length, packet_type
 
 
 def compute_keyid(pubkey_packet_data):
@@ -173,23 +176,29 @@ def parse_subpackets(subpacket_octets):
   parsed_subpackets = []
   ptr = 0
 
-  # as per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
+  # As per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
   # can be encoded in 1, 2 or 5 octets. Depending on the values described here
   # we unpack 1, 2 or 5 octets to decode the length.
+  # The subpacket length includes packet type (first octet) and payload, but
+  # not the length of the length.
   while ptr < len(subpacket_octets):
     length = subpacket_octets[ptr]
     ptr += 1
+
     if length > 192 and length < 255 : # pragma: no cover
-      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 102))
+      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 192))
+      ptr += 1
+
     if length == 255: # pragma: no cover
-      length = 0
-      length = struct.unpack(">I", subpacket_octets[ptr: ptr+4])
+      length = struct.unpack(">I", subpacket_octets[ptr:ptr + 4])
       ptr += 4
 
     packet_type = subpacket_octets[ptr]
-    packet_payload = subpacket_octets[ptr:ptr + length]
+    ptr += 1
+
+    packet_payload = subpacket_octets[ptr:ptr + length - 1]
     parsed_subpackets.append((packet_type, packet_payload))
-    ptr += length
+    ptr += length - 1
 
   return parsed_subpackets
 

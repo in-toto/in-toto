@@ -20,3 +20,12 @@
 """
 class PacketParsingError(Exception):
   pass
+
+class KeyNotFoundError(Exception):
+  pass
+
+class PacketVersionNotSupportedError(Exception):
+  pass
+
+class SignatureAlgorithmNotSupportedError(Exception):
+  pass
