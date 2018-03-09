@@ -508,53 +508,61 @@ class TestVerifyMatchRule(unittest.TestCase):
     """["MATCH", "foo", "IN", "dist", "WITH", "MATERIALS", "FROM", "link-1"],
     source artifact dist/foo and destination material foo hashes match, passes. """
 
-    rule = ["MATCH", "foo", "IN", "dist", "WITH", "MATERIALS", "FROM", "link-1"]
-    artifacts = {
-      "dist/foo": {"sha256": self.sha256_foo},
-      "dist/bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["dist/bar"])
+    for slash in ["", "/"]:
+      rule = ["MATCH", "foo", "IN", "dist" + slash, "WITH", "MATERIALS", "FROM",
+        "link-1"]
+      artifacts = {
+        "dist/foo": {"sha256": self.sha256_foo},
+        "dist/bar": {"sha256": self.sha256_bar}
+      }
+      queue = list(artifacts.keys())
+      self.assertListEqual(
+          verify_match_rule(rule, queue, artifacts, self.links), ["dist/bar"])
 
   def test_pass_match_in_source_dir_with_products(self):
     """["MATCH", "bar", "IN", "dist", "WITH", "PRODUCTS", "FROM", "link-1"],
     source artifact dist/bar and destination product bar hashes match, passes. """
 
-    rule = ["MATCH", "bar", "IN", "dist", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "dist/bar": {"sha256": self.sha256_bar},
-      "dist/foo": {"sha256": self.sha256_foo}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["dist/foo"])
+    for slash in ["", "/"]:
+      rule = ["MATCH", "bar", "IN", "dist" + slash, "WITH", "PRODUCTS", "FROM",
+          "link-1"]
+      artifacts = {
+        "dist/bar": {"sha256": self.sha256_bar},
+        "dist/foo": {"sha256": self.sha256_foo}
+      }
+      queue = list(artifacts.keys())
+      self.assertListEqual(
+          verify_match_rule(rule, queue, artifacts, self.links), ["dist/foo"])
 
   def test_pass_match_with_materials_in_destination_dir(self):
     """["MATCH", "foo", "WITH", "MATERIALS", "IN", "dev", "FROM", "link-1"],
     source artifact foo and destination material dev/foo hashes match, passes. """
 
-    rule = ["MATCH", "foo", "WITH", "MATERIALS", "IN", "dev", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
+    for slash in ["", "/"]:
+      rule = ["MATCH", "foo", "WITH", "MATERIALS", "IN", "dev" + slash, "FROM",
+          "link-1"]
+      artifacts = {
+        "foo": {"sha256": self.sha256_foo},
+        "bar": {"sha256": self.sha256_bar}
+      }
+      queue = list(artifacts.keys())
+      self.assertListEqual(
+          verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
 
   def test_pass_match_with_products_in_destination_dir(self):
     """["MATCH", "bar", "WITH", "PRODUCTS", "IN", "dev", "FROM", "link-1"],
     source artifact bar and destination product dev/bar hashes match, passes. """
 
-    rule = ["MATCH", "bar", "WITH", "PRODUCTS", "IN", "dev", "FROM", "link-1"]
-    artifacts = {
-      "bar": {"sha256": self.sha256_bar},
-      "foo": {"sha256": self.sha256_foo}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
+    for slash in ["", "/"]:
+      rule = ["MATCH", "bar", "WITH", "PRODUCTS", "IN", "dev" + slash, "FROM",
+          "link-1"]
+      artifacts = {
+        "bar": {"sha256": self.sha256_bar},
+        "foo": {"sha256": self.sha256_foo}
+      }
+      queue = list(artifacts.keys())
+      self.assertListEqual(
+          verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
 
   def test_pass_match_material_star(self):
     """["MATCH", "foo*", "WITH", "MATERIALS", "FROM", "link-1"]],
