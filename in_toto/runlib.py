@@ -347,7 +347,7 @@ def _check_match_signing_key(signing_key):
 
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
-    gpg_use_default=False, gpg_home=None):
+    gpg_use_default=False, gpg_home=None, exclude_patterns=None):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -393,11 +393,15 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the materials
+            and products sections in the resulting link.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
 
   <Side Effects>
     If a key parameter is passed for signing, the newly created link metadata
@@ -415,9 +419,14 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
+
+  materials_dict = record_artifacts_as_dict(material_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -427,7 +436,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  products_dict = record_artifacts_as_dict(product_list, follow_symlink_dirs=True)
+
+  products_dict = record_artifacts_as_dict(product_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   log.info("Creating link metadata...")
   link = in_toto.models.link.Link(name=name,
@@ -460,7 +471,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
 
 def in_toto_record_start(step_name, material_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
+    exclude_patterns=None):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -488,13 +500,18 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the materials
+            section in the resulting preliminary link.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-          is passed.
+        is passed.
+
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
 
   <Side Effects>
     Writes newly created link metadata file to disk using the filename scheme
@@ -517,9 +534,14 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+
   if material_list:
     log.info("Recording materials '{}'...".format(", ".join(material_list)))
-  materials_dict = record_artifacts_as_dict(material_list, follow_symlink_dirs=True)
+
+  materials_dict = record_artifacts_as_dict(material_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   log.info("Creating preliminary link metadata...")
   link = in_toto.models.link.Link(name=step_name,
@@ -552,7 +574,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None):
+    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
+    exclude_patterns=None):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -583,13 +606,19 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
             Path to GPG keyring (if not set the default keyring is used).
+    exclude_patterns: (optional)
+            Artifacts matched by the pattern are excluded from the products
+            sections in the resulting link.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-      is passed.
+        is passed.
+
     securesystemslib.FormatError if a signing_key is passed and does not match
         securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.foramts.KEYID_SCHEMA
+        not match securesystemslib.formats.KEYID_SCHEMA, or exclude_patterns
+        are passed and don't match securesystemslib.formats.NAMES_SCHEMA.
+
     LinkNotFoundError if gpg is used for signing and the corresponding
         preliminary link file can not be found in the current working directory
 
@@ -613,6 +642,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     _check_match_signing_key(signing_key)
   if gpg_keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+
+  if exclude_patterns:
+    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
   # Load preliminary link file
   # If we have a signing key we can use the keyid to construct the name
@@ -673,8 +705,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   # Record products if a product path list was passed
   if product_list:
     log.info("Recording products '{}'...".format(", ".join(product_list)))
-  link_metadata.signed.products = record_artifacts_as_dict(
-      product_list, follow_symlink_dirs=True)
+
+  link_metadata.signed.products = record_artifacts_as_dict(product_list,
+      exclude_patterns=exclude_patterns, follow_symlink_dirs=True)
 
   link_metadata.signatures = []
   if signing_key:
