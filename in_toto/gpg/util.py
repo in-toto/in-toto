@@ -96,6 +96,10 @@ def parse_packet_header(data, expected_type=None):
     data:
             An RFC4880 packet as described in section 4.2 of the rfc.
 
+    expected_type: (optional)
+            Used to error out if the packet does not have the expected
+            type. See in_toto.gpg.constants.PACKET_TYPES for available types.
+
   <Exceptions>
     in_toto.gpg.exceptions.PacketParsingError
             If the expected_type was passed and does not match the packet type
