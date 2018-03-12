@@ -58,6 +58,8 @@ optional arguments:
                         set patterns, using e.g.: environment variables or
                         RCfiles. See ARTIFACT_EXCLUDE_PATTERNS documentation
                         for additional info.
+  --base-path <path>    Record 'materials/products' relative to <path>. If not
+                        set, current working directory is used as base path.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -98,7 +100,8 @@ import logging
 import in_toto.user_settings
 from in_toto import (util, runlib)
 
-from in_toto.common_args import EXCLUDE_ARGS, EXCLUDE_KWARGS
+from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
+    BASE_PATH_ARGS, BASE_PATH_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -185,6 +188,7 @@ examples:
     " off by' step."))
 
   parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
+  parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -240,7 +244,7 @@ examples:
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home, args.exclude_patterns)
+        args.gpg_home, args.exclude_patterns, args.base_path)
 
   except Exception as e:
     log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))

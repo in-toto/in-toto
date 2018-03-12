@@ -37,3 +37,12 @@ EXCLUDE_KWARGS = {
           " e.g.: environment variables or RCfiles. See"
           " ARTIFACT_EXCLUDE_PATTERNS documentation for additional info.")
   }
+
+BASE_PATH_ARGS = ["--base-path"]
+BASE_PATH_KWARGS = {
+  "dest": "base_path",
+  "required": False,
+  "metavar": "<path>",
+  "help": ("Record 'materials/products' relative to <path>. If not set,"
+          " current working directory is used as base path.")
+  }
