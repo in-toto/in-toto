@@ -139,28 +139,48 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   def test_bad_base_path_setting(self):
     """Raise exception with bogus base path settings. """
-    for setting in ["path/does/not/exist", 12345, True]:
-      in_toto.settings.ARTIFACT_BASE_PATH = setting
-      with self.assertRaises(in_toto.exceptions.SettingsError):
+    for base_path in ["path/does/not/exist", 12345, True]:
+      in_toto.settings.ARTIFACT_BASE_PATH = base_path
+      with self.assertRaises(ValueError):
         record_artifacts_as_dict(["."])
+      in_toto.settings.ARTIFACT_BASE_PATH = None
+
+      with self.assertRaises(ValueError):
+        record_artifacts_as_dict(["."], base_path=base_path)
+
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
-    in_toto.settings.ARTIFACT_BASE_PATH = "subdir"
+    base_path = "subdir"
+    expected_artifacts = sorted(["foosub1", "foosub2", "subsubdir/foosubsub"])
+
+    in_toto.settings.ARTIFACT_BASE_PATH = base_path
     artifacts_dict = record_artifacts_as_dict(["."])
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
-        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
-    self.assertEquals(os.getcwd(), self.test_dir)
+        expected_artifacts)
+    in_toto.settings.ARTIFACT_BASE_PATH = None
+
+    artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+
 
   def test_base_path_is_parent_dir(self):
     """Test path of recorded artifacts and cd back with parent as base. """
-    in_toto.settings.ARTIFACT_BASE_PATH = ".."
+    base_path = ".."
+    expected_artifacts = sorted(["foosub1", "foosub2", "subsubdir/foosubsub"])
     os.chdir("subdir/subsubdir")
+
+    in_toto.settings.ARTIFACT_BASE_PATH = base_path
     artifacts_dict = record_artifacts_as_dict(["."])
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
-        sorted(["foosub1", "foosub2", "subsubdir/foosubsub"]))
-    self.assertEquals(os.getcwd(),
-        os.path.join(self.test_dir, "subdir/subsubdir"))
+        expected_artifacts)
+    in_toto.settings.ARTIFACT_BASE_PATH = None
+
+    artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+
     os.chdir(self.test_dir)
 
   def test_empty_artifacts_list_record_nothing(self):

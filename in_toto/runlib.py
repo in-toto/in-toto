@@ -88,7 +88,7 @@ def _apply_exclude_patterns(names, exclude_patterns):
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    follow_symlink_dirs=False):
+    base_path=None, follow_symlink_dirs=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -135,6 +135,12 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             via envvars or rcfiles (see `in_toto.user_settings`).
             If passed, patterns specified via settings are overriden.
 
+    base_path: (optional)
+            Change to base_path and record artifacts relative from there.
+            If not passed, current working directory is used as base_path.
+            NOTE: The base_path part of the recorded artifact is not included
+            in the returned paths.
+
     follow_symlink_dirs: (optional)
             Follow symlinked dirs if the linked dir exists (default is False).
             The recorded path contains the symlink name, not the resolved name.
@@ -144,8 +150,12 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             points to a parent directory or itself.
 
   <Exceptions>
-    in_toto.exceptions.SettingsError
-        if ARTIFACT_BASE_PATH or ARTIFACT_EXCLUDE_PATTERNS can't be used
+    in_toto.exceptions.ValueError,
+        if we cannot change to base path directory
+
+    in_toto.exceptions.FormatError,
+        if the list of exlcude patterns does not match format
+        securesystemslib.formats.NAMES_SCHEMA
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -159,15 +169,22 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   if not artifacts:
     return artifacts_dict
 
+  if base_path:
+    log.info("Overriding setting ARTIFACT_BASE_PATH with passed"
+        " base path.")
+  else:
+    base_path = in_toto.settings.ARTIFACT_BASE_PATH
+
+
   # Temporarily change into base path dir if set
-  if in_toto.settings.ARTIFACT_BASE_PATH:
+  if base_path:
     original_cwd = os.getcwd()
     try:
-      os.chdir(in_toto.settings.ARTIFACT_BASE_PATH)
+      os.chdir(base_path)
+
     except Exception as e:
-      raise in_toto.exceptions.SettingsError(
-          "Review your ARTIFACT_BASE_PATH setting '{}' - {}".format(
-          in_toto.settings.ARTIFACT_BASE_PATH, e))
+      raise ValueError("Could not use '{}' as base path: '{}'".format(
+          base_path, e))
 
   # Normalize passed paths
   norm_artifacts = []
@@ -244,7 +261,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
 
   # Change back to where original current working dir
-  if in_toto.settings.ARTIFACT_BASE_PATH:
+  if base_path:
     os.chdir(original_cwd)
 
   return artifacts_dict
