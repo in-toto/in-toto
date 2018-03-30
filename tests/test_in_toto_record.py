@@ -98,6 +98,12 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
         self.test_artifact1, "--exclude", "test*"], 0)
 
+    # Start/stop with base-path
+    args = ["--step-name", "test2.6", "--key", self.key_path, "--base-path",
+        self.test_dir]
+    self.assert_cli_sys_exit(["start"] + args, 0)
+    self.assert_cli_sys_exit(["stop"] + args, 0)
+
     # Start/stop with recording multiple artifacts
     args = ["--step-name", "test3", "--key", self.key_path]
     self.assert_cli_sys_exit(["start"] + args + ["--materials",
@@ -115,6 +121,7 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
     args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
     self.assert_cli_sys_exit(["start"] + args, 0)
     self.assert_cli_sys_exit(["stop"] + args, 0)
+
 
 
   def test_glob_no_unfinished_files(self):

@@ -118,6 +118,19 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     self.assertFalse(link_metadata.signed.materials)
     self.assertFalse(link_metadata.signed.products)
 
+    # Test with base path
+    args3 = named_args + ["--base-path", self.test_dir] + positional_args
+    self.assert_cli_sys_exit(args3, 0)
+    link_metadata = Metablock.load(self.test_link)
+    self.assertListEqual(list(link_metadata.signed.materials.keys()),
+        [self.test_artifact])
+    self.assertListEqual(list(link_metadata.signed.products.keys()),
+        [self.test_artifact])
+
+    # Test with bogus base path
+    args4 = named_args + ["--base-path", "bogus/path"] + positional_args
+    self.assert_cli_sys_exit(args4, 1)
+
 
   def test_main_with_specified_gpg_key(self):
     """Test CLI command with specified gpg key. """

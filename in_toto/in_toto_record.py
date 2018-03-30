@@ -62,6 +62,8 @@ optional arguments:
                         set patterns, using e.g.: environment variables or
                         RCfiles. See ARTIFACT_EXCLUDE_PATTERNS documentation
                         for additional info.
+  --base-path <path>    Record 'materials/products' relative to <path>. If not
+                        set, current working directory is used as base path.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -108,7 +110,8 @@ import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
 
-from in_toto.common_args import EXCLUDE_ARGS, EXCLUDE_KWARGS
+from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
+    BASE_PATH_ARGS, BASE_PATH_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -181,6 +184,8 @@ examples:
       " '--gpg-home' is not passed, the default GPG keyring is used."))
 
   parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
+  parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
+
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -243,14 +248,14 @@ examples:
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
 
     # Mutually exclusiveness is guaranteed by argparser
     else: # args.command == "stop":
       in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
 
   except Exception as e:
     log.error("(in-toto-record {0}) {1}: {2}"

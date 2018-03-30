@@ -24,7 +24,3 @@ class BadReturnValueError(Error):
 class LinkNotFoundError(Error):
   """Indicates that a link file was not found. """
   pass
-
-class SettingsError(Error):
-  """Indicates an invalid setting. """
-  pass
