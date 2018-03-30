@@ -129,16 +129,20 @@ def load_links_for_layout(layout, link_dir_path):
     # We try to load a link for every authorized functionary, but don't fail
     # if the file does not exist (authorized != required)
     # FIXME: Should we really pass on IOError, or just skip inexistent links?
-    for keyid in step.pubkeys:
-      filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
-      filepath = os.path.join(link_dir_path, filename)
+    for authorized_keyid in step.pubkeys:
+      # Iterate over the authorized key and if present over subkeys
+      for keyid in [authorized_keyid] + list(layout.keys.get(authorized_keyid,
+          {}).get("subkeys", {}).keys()):
 
-      try:
-        metadata = Metablock.load(filepath)
-        links_per_step[keyid] = metadata
+        filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+        filepath = os.path.join(link_dir_path, filename)
 
-      except IOError:
-        pass
+        try:
+          metadata = Metablock.load(filepath)
+          links_per_step[keyid] = metadata
+
+        except IOError:
+          pass
 
     # Check if the step has been performed by enough number of functionaries
     if len(links_per_step) < step.threshold:
