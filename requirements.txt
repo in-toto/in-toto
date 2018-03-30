@@ -1,4 +1,4 @@
-securesystemslib==0.10.10
+securesystemslib>=0.10.10
 cryptography
 attrs
 python-dateutil
