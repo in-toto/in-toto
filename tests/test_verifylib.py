@@ -239,15 +239,15 @@ class TestVerifyCreateRule(unittest.TestCase):
     materials_queue = ["foo"]
     products_queue = ["foo"]
     rule = ["CREATE", "foo"]
-    with self.assertRaises(RuleVerificationError):
-      verify_create_rule(rule, materials_queue, products_queue)
+    result = verify_create_rule(rule, materials_queue, products_queue)
+    self.assertEqual(['foo'], result)
 
     # Not all (*) products newly created
     materials_queue = ["foo"]
     products_queue = ["foo", "bar"]
     rule = ["CREATE", "*"]
-    with self.assertRaises(RuleVerificationError):
-      verify_create_rule(rule, materials_queue, products_queue)
+    result = verify_create_rule(rule, materials_queue, products_queue)
+    self.assertEqual(['foo'], result)
 
   def test_pass(self):
     """"Different scenarios for passing create rule verification. """
@@ -319,7 +319,7 @@ class TestVerifyModifyRule(unittest.TestCase):
     rule = ["MODIFY", "foo"]
     m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
         self.materials, self.products)
-    self.assertListEqual(m_queue, [])
+    self.assertListEqual(m_queue, ["foo"])
     self.assertListEqual(p_queue, ["bar"])
 
     # Modify all files from queue
@@ -328,7 +328,8 @@ class TestVerifyModifyRule(unittest.TestCase):
     rule = ["MODIFY", "*"]
     m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
         self.materials, self.products)
-    self.assertListEqual(m_queue, p_queue, [])
+    self.assertListEqual(m_queue, ["foo"])
+    self.assertListEqual(p_queue, [])
 
     # Nothing filtered by pattern, still passes (seems strange)
     rule = ["MODIFY", "baz"]
@@ -351,29 +352,29 @@ class TestVerifyModifyRule(unittest.TestCase):
 
     # Single file not modified
     rule = ["MODIFY", "bar"]
-    with self.assertRaises(RuleVerificationError):
-      verify_modify_rule(rule, materials_queue, products_queue,
-          self.materials, self.products)
+    result = verify_modify_rule(rule, materials_queue, products_queue,
+        self.materials, self.products)
+    self.assertEquals((materials_queue, products_queue), result)
 
     # Some files not modified
     rule = ["MODIFY", "*"]
-    with self.assertRaises(RuleVerificationError):
-      verify_modify_rule(rule, materials_queue, products_queue,
+    result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
+    self.assertEquals((materials_queue, ['bar']), result)
 
     # Pattern filters bar as material but not as product
     materials_queue = ["foo", "bar"]
     products_queue = ["foo"]
-    with self.assertRaises(RuleVerificationError):
-      verify_modify_rule(rule, materials_queue, products_queue,
+    result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
+    self.assertEquals((materials_queue, []), result)
 
     # Pattern filters bar as product but not as material
     materials_queue = ["foo"]
     products_queue = ["foo", "bar"]
-    with self.assertRaises(RuleVerificationError):
-      verify_modify_rule(rule, materials_queue, products_queue,
+    result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
+    self.assertEquals((materials_queue, ['bar']), result)
 
 
 class TestVerifyAllowRule(unittest.TestCase):
@@ -668,8 +669,8 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": self.sha256_bar},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerificationError):
-      verify_match_rule(rule, queue, artifacts, self.links)
+    result = verify_match_rule(rule, queue, artifacts, self.links)
+    self.assertEquals(['bar'], result);
 
   def test_fail_path_not_in_destination_products(self):
     """["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "link-1"],
@@ -680,8 +681,8 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerificationError):
-      verify_match_rule(rule, queue, artifacts, self.links)
+    result = verify_match_rule(rule, queue, artifacts, self.links)
+    self.assertEquals(['foo'], result);
 
   def test_fail_hash_not_eual(self):
     """"["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"],
@@ -692,8 +693,8 @@ class TestVerifyMatchRule(unittest.TestCase):
       "bar": {"sha256": "aaaaaaaaaa"},
     }
     queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerificationError):
-      verify_match_rule(rule, queue, artifacts, self.links)
+    result = verify_match_rule(rule, queue, artifacts, self.links)
+    self.assertEquals(['bar'], result);
 
 
 class TestVerifyItemRules(unittest.TestCase):
@@ -937,6 +938,8 @@ class TestInTotoVerify(unittest.TestCase):
     # dump layout with failing step rule
     layout = copy.deepcopy(layout_template)
     layout.signed.steps[0].expected_products.insert(0,
+        ["DISALLOW", "*"])
+    layout.signed.steps[0].expected_products.insert(0,
         ["MODIFY", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_step_rule_path)
@@ -945,6 +948,8 @@ class TestInTotoVerify(unittest.TestCase):
     layout = copy.deepcopy(layout_template)
     layout.signed.inspect[0].expected_materials.insert(0,
         ["MODIFY", "*"])
+    layout.signed.inspect[0].expected_materials.append(
+        ["DISALLOW", "*"])
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_rule_path)
 
@@ -1025,6 +1030,7 @@ class TestInTotoVerify(unittest.TestCase):
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step artifact rule. """
     layout = Metablock.load(self.layout_failing_step_rule_path)
+    #import pdb; pdb.set_trace()
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
@@ -1653,6 +1659,7 @@ class TestGetSummaryLink(unittest.TestCase):
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
+    #import pdb; pdb.set_trace()
     self.demo_layout = Metablock.load("demo.layout.template")
     self.code_link = Metablock.load("package.2f89b927.link")
     self.package_link = Metablock.load("write-code.776a00e2.link")
