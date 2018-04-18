@@ -347,34 +347,38 @@ class TestVerifyModifyRule(unittest.TestCase):
 
   def test_fail(self):
     """Different scenarios for failing create rule verification. """
-    materials_queue = ["foo", "bar"]
-    products_queue = ["foo", "bar"]
+    materials_queue = ["bar", "foo"]
+    products_queue = ["bar", "foo"]
 
     # Single file not modified
     rule = ["MODIFY", "bar"]
     result = verify_modify_rule(rule, materials_queue, products_queue,
         self.materials, self.products)
-    self.assertEquals((materials_queue, products_queue), result)
+    self.assertEquals((materials_queue, products_queue),
+        (sorted(result[0]), sorted(result[1])))
 
     # Some files not modified
     rule = ["MODIFY", "*"]
     result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
-    self.assertEquals((materials_queue, ['bar']), result)
+    self.assertEquals((materials_queue, ['bar']),
+        (sorted(result[0]), sorted(result[1])))
 
     # Pattern filters bar as material but not as product
-    materials_queue = ["foo", "bar"]
+    materials_queue = ["bar", "foo"]
     products_queue = ["foo"]
     result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
-    self.assertEquals((materials_queue, []), result)
+    self.assertEquals((materials_queue, []),
+        (sorted(result[0]), sorted(result[1])))
 
     # Pattern filters bar as product but not as material
     materials_queue = ["foo"]
-    products_queue = ["foo", "bar"]
+    products_queue = ["bar", "foo"]
     result = verify_modify_rule(rule, materials_queue, products_queue,
           self.materials, self.products)
-    self.assertEquals((materials_queue, ['bar']), result)
+    self.assertEquals((materials_queue, ['bar']),
+        (sorted(result[0]), sorted(result[1])))
 
 
 class TestVerifyAllowRule(unittest.TestCase):
@@ -1030,7 +1034,6 @@ class TestInTotoVerify(unittest.TestCase):
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step artifact rule. """
     layout = Metablock.load(self.layout_failing_step_rule_path)
-    #import pdb; pdb.set_trace()
     layout_key_dict = import_rsa_public_keys_from_files_as_dict([self.alice_path])
     with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
@@ -1659,7 +1662,6 @@ class TestGetSummaryLink(unittest.TestCase):
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
-    #import pdb; pdb.set_trace()
     self.demo_layout = Metablock.load("demo.layout.template")
     self.code_link = Metablock.load("package.2f89b927.link")
     self.package_link = Metablock.load("write-code.776a00e2.link")
