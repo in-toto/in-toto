@@ -688,7 +688,7 @@ class TestVerifyMatchRule(unittest.TestCase):
     result = verify_match_rule(rule, queue, artifacts, self.links)
     self.assertEquals(['foo'], result);
 
-  def test_fail_hash_not_eual(self):
+  def test_fail_hash_not_equal(self):
     """"["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"],
     source and destination bar have different hashes, fails. """
 
