@@ -312,7 +312,8 @@ def substitute_parameters(layout, parameter_dictionary):
     step.expected_products = new_product_rules
 
   for inspection in layout.inspect:
-    inspection.run = inspection.run.format(**parameter_dictionary)
+    new_run = [x.format(**parameter_dictionary) for x in inspection.run]
+    inspection.run = new_run
 
 
 def verify_layout_signatures(layout_metablock, keys_dict):
