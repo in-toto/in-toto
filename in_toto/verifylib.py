@@ -28,9 +28,12 @@ import iso8601
 import fnmatch
 import six
 import logging
+import attr
 from dateutil import tz
 
 import securesystemslib.exceptions
+
+import in_toto.dom.util.virtual_namespace as namespace
 
 import in_toto.settings
 import in_toto.util
@@ -1124,7 +1127,7 @@ def verify_item_rules(source_name, source_type, rules, links):
         source_artifacts_queue = source_products_queue
 
 
-def verify_all_item_rules(items, links):
+def verify_all_item_rules(items, links, layout):
   """
   <Purpose>
     Iteratively verifies artifact rules of passed items (Steps or Inspections).
@@ -1149,7 +1152,13 @@ def verify_all_item_rules(items, links):
 
   """
 
+  sandbox_dom = _populate_dom(layout, links, 'wot')
   for item in items:
+  
+    if item.pre_run_hook:
+      log.info("verifying hook for {}".format(item.name))
+      _execute_in_sandbox(sandbox_dom, item.pre_run_hook, item.name)
+
     log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
 
@@ -1540,7 +1549,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
   log.info("Verifying Step rules...")
-  verify_all_item_rules(layout.steps, reduced_chain_link_dict)
+  verify_all_item_rules(layout.steps, reduced_chain_link_dict, layout)
 
   log.info("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
@@ -1550,7 +1559,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # Steps or Inspections, hence the concatenation of both collections of links
   combined_links = reduced_chain_link_dict.copy()
   combined_links.update(inspection_link_dict)
-  verify_all_item_rules(layout.inspect, combined_links)
+  verify_all_item_rules(layout.inspect, combined_links, layout)
 
   # We made it this far without exception that means, verification passed
   log.info("The software product passed all verification.")
@@ -1559,3 +1568,28 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # This is mostly relevant if the currently verified supply chain is embedded
   # in another supply chain
   return get_summary_link(layout, reduced_chain_link_dict)
+
+
+
+def _populate_dom(layout, links, final_product):
+  newcontext = {
+    'document' : {
+      'final-product': final_product,
+      'links': [attr.asdict(links[x]) for x in links],
+      'layout': attr.asdict(layout)
+    }
+  }
+
+  return newcontext
+
+def _execute_in_sandbox(current_dom, hook_info, stepname):
+
+  filename, checksum = hook_info
+  with open(filename) as fp:
+    code = fp.read()
+
+  if checksum != securesystemslib.hash.digest_filename(filename).hexdigest():
+    import pdb; pdb.set_trace()
+
+  new_namespace = namespace.VirtualNamespace(code, str(stepname))
+  new_namespace.evaluate(current_dom)

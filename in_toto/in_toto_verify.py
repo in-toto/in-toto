@@ -224,6 +224,7 @@ examples:
     verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 
   except Exception as e:
+    raise
     log.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 

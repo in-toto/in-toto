@@ -622,6 +622,7 @@ class SupplyChainItem(ValidationMixin):
   name = attr.ib()
   expected_materials = attr.ib()
   expected_products = attr.ib()
+  pre_run_hook = attr.ib()
 
 
   def __init__(self, **kwargs):
@@ -643,6 +644,7 @@ class SupplyChainItem(ValidationMixin):
     self.name = kwargs.get("name")
     self.expected_materials = kwargs.get("expected_materials", [])
     self.expected_products = kwargs.get("expected_products", [])
+    self.pre_run_hook = kwargs.get("pre_run_hook", None)
 
 
   def __repr__(self):
