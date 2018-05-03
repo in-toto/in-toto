@@ -8,6 +8,8 @@ import securesystemslib.hash
 import securesystemslib.keys
 import securesystemslib.exceptions
 
+from securesystemslib.interface import import_ed25519_privatekey_from_file
+
 DEFAULT_RSA_KEY_BITS = 3072
 
 def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
@@ -134,8 +136,36 @@ def prompt_password(prompt="Enter password: "):
   return getpass.getpass(prompt, sys.stderr)
 
 
+def prompt_import_private_key_from_file(filepath):
+  """Trys to load an Ed25519 or RSA key without password. If a CryptoError
+  occurs, prompts the user for a password and trys to load the the key again.
+  """
+  try:
+    key = prompt_import_ed25519_privatekey_from_file(filepath)
+  except securesystemslib.exceptions.CryptoError:
+    try:
+      key = prompt_import_rsa_key_from_file(filepath)
+    except:
+      raise TypeError('Either invalid key type (neither Ed25519 nor RSA), '
+                      'or wrong password.')
+    else:
+      return key
+
+
+def prompt_import_ed25519_privatekey_from_file(filepath):
+  """Trys to load an Ed25519 private key without password. If a CryptoError
+  occurs, prompts the user for a password and trys to load the the key again.
+  """
+  password = None
+  try:
+    import_ed25519_privatekey_from_file(filepath)
+  except securesystemslib.exceptions.CryptoError:
+    password = prompt_password()
+  return import_ed25519_privatekey_from_file(filepath, password)
+
+
 def prompt_import_rsa_key_from_file(filepath):
-  """Trys to load the key without password. If a CryptoError occurs, prompts
+  """Trys to load an RSA key without password. If a CryptoError occurs, prompts
   the user for a password and trys to load the the key again. """
   password = None
   try:
