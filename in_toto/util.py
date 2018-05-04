@@ -159,6 +159,7 @@ def prompt_import_ed25519_privatekey_from_file(filepath):
   """Trys to load an Ed25519 private key without password. If a CryptoError
   occurs, prompts the user for a password and trys to load the the key again.
   """
+  password = None
   try:
     import_ed25519_privatekey_from_file(filepath)
   except securesystemslib.exceptions.CryptoError:
