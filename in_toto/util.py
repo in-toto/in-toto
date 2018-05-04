@@ -140,6 +140,9 @@ def prompt_import_private_key_from_file(filepath):
   """Trys to load an Ed25519 or RSA key without password. If a CryptoError
   occurs, prompts the user for a password and trys to load the the key again.
   """
+  # FIXME: The more secure method is to load the private key using the key type
+  # specified by the user at command-line, rather than to guess the key type,
+  # and possibly (although improbably) use the wrong key type.
   try:
     key = prompt_import_ed25519_privatekey_from_file(filepath)
   except securesystemslib.exceptions.CryptoError:
@@ -148,15 +151,14 @@ def prompt_import_private_key_from_file(filepath):
     except:
       raise TypeError('Either invalid key type (neither Ed25519 nor RSA), '
                       'or wrong password.')
-    else:
-      return key
+
+  return key
 
 
 def prompt_import_ed25519_privatekey_from_file(filepath):
   """Trys to load an Ed25519 private key without password. If a CryptoError
   occurs, prompts the user for a password and trys to load the the key again.
   """
-  password = None
   try:
     import_ed25519_privatekey_from_file(filepath)
   except securesystemslib.exceptions.CryptoError:
