@@ -117,6 +117,19 @@ def import_rsa_public_keys_from_files_as_dict(filepaths):
   return key_dict
 
 
+def import_ed25519_public_keys_from_files_as_dict(filepaths):
+  """Takes a list of filepaths to Ed25519 public keys and returns them as a
+  dictionary conformant with securesystemslib.formats.KEYDICT_SCHEMA."""
+  key_dict = {}
+  for filepath in filepaths:
+    key = securesystemslib.interface.\
+          import_ed25519_publickey_from_file(filepath)
+    securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
+    keyid = key["keyid"]
+    key_dict[keyid] = key
+  return key_dict
+
+
 def import_gpg_public_keys_from_keyring_as_dict(keyids, gpg_home=False):
   """Creates a dictionary of gpg public keys retrieving gpg public keys
   identified by the list of passed `keyids` from the gpg keyring at `gpg_home`.
