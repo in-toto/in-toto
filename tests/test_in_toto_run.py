@@ -25,6 +25,14 @@ import argparse
 import shutil
 import glob
 import tempfile
+
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
+
+else:
+  import mock
+
 from mock import patch
 
 from in_toto.util import (generate_and_write_rsa_keypair,
@@ -37,7 +45,6 @@ from in_toto.models.link import FILENAME_FORMAT
 
 import in_toto.gpg.util
 import tests.common
-
 
 
 class TestInTotoRunTool(tests.common.CliTestCase):
@@ -90,7 +97,10 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     args = ["--step-name", self.test_step, "--key", self.key_path, "--",
         "echo", "test"]
 
-    self.assert_cli_sys_exit(args, 0)
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(args, 0)
+
     self.assertTrue(os.path.exists(self.test_link))
 
 
@@ -102,34 +112,37 @@ class TestInTotoRunTool(tests.common.CliTestCase):
         self.test_artifact, "--record-streams"]
     positional_args =  ["--", "echo", "test"]
 
-    # Test and assert recorded artifacts
-    args1 = named_args + positional_args
-    self.assert_cli_sys_exit(args1 , 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertTrue(self.test_artifact in
-        list(link_metadata.signed.materials.keys()))
-    self.assertTrue(self.test_artifact in
-        list(link_metadata.signed.products.keys()))
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
 
-    # Test and assert exlcuded artifacts
-    args2 = named_args + ["--exclude", "*test*"] + positional_args
-    self.assert_cli_sys_exit(args2, 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertFalse(link_metadata.signed.materials)
-    self.assertFalse(link_metadata.signed.products)
+      # Test and assert recorded artifacts
+      args1 = named_args + positional_args
+      self.assert_cli_sys_exit(args1 , 0)
+      link_metadata = Metablock.load(self.test_link)
+      self.assertTrue(self.test_artifact in
+          list(link_metadata.signed.materials.keys()))
+      self.assertTrue(self.test_artifact in
+          list(link_metadata.signed.products.keys()))
 
-    # Test with base path
-    args3 = named_args + ["--base-path", self.test_dir] + positional_args
-    self.assert_cli_sys_exit(args3, 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertListEqual(list(link_metadata.signed.materials.keys()),
-        [self.test_artifact])
-    self.assertListEqual(list(link_metadata.signed.products.keys()),
-        [self.test_artifact])
+      # Test and assert exlcuded artifacts
+      args2 = named_args + ["--exclude", "*test*"] + positional_args
+      self.assert_cli_sys_exit(args2, 0)
+      link_metadata = Metablock.load(self.test_link)
+      self.assertFalse(link_metadata.signed.materials)
+      self.assertFalse(link_metadata.signed.products)
 
-    # Test with bogus base path
-    args4 = named_args + ["--base-path", "bogus/path"] + positional_args
-    self.assert_cli_sys_exit(args4, 1)
+      # Test with base path
+      args3 = named_args + ["--base-path", self.test_dir] + positional_args
+      self.assert_cli_sys_exit(args3, 0)
+      link_metadata = Metablock.load(self.test_link)
+      self.assertListEqual(list(link_metadata.signed.materials.keys()),
+          [self.test_artifact])
+      self.assertListEqual(list(link_metadata.signed.products.keys()),
+          [self.test_artifact])
+
+      # Test with bogus base path
+      args4 = named_args + ["--base-path", "bogus/path"] + positional_args
+      self.assert_cli_sys_exit(args4, 1)
 
 
   def test_main_with_specified_gpg_key(self):
@@ -164,7 +177,10 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
         self.key_path, "--no-command"]
 
-    self.assert_cli_sys_exit(args, 0)
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(args, 0)
+
     self.assertTrue(os.path.exists(self.test_link))
 
   def test_main_wrong_args(self):

@@ -242,7 +242,7 @@ examples:
     # case the key is encrypted. Something that should not happen in the lib.
     key = None
     if args.key:
-      key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
+      key = in_toto.util.prompt_import_private_key_from_file(args.key)
 
     if args.command == "start":
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,

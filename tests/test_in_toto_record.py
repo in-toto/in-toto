@@ -24,6 +24,15 @@ import unittest
 import argparse
 import shutil
 import tempfile
+
+
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
+
+else:
+  import mock
+
 from mock import patch
 
 import in_toto.util
@@ -79,48 +88,51 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
   def test_start_stop(self):
     """Test CLI command record start/stop with various arguments. """
 
-    # Start/stop recording
-    args = ["--step-name", "test1", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
 
-    # Start/stop with recording one artifact
-    args = ["--step-name", "test2", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact1], 0)
+      # Start/stop recording
+      args = ["--step-name", "test1", "--key", self.key_path]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
-    # Start/stop with excluding one artifact
-    args = ["--step-name", "test2.5", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1, "--exclude", "test*"], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact1, "--exclude", "test*"], 0)
+      # Start/stop with recording one artifact
+      args = ["--step-name", "test2", "--key", self.key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1], 0)
 
-    # Start/stop with base-path
-    args = ["--step-name", "test2.6", "--key", self.key_path, "--base-path",
-        self.test_dir]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop with excluding one artifact
+      args = ["--step-name", "test2.5", "--key", self.key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, "--exclude", "test*"], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1, "--exclude", "test*"], 0)
 
-    # Start/stop with recording multiple artifacts
-    args = ["--step-name", "test3", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1, self.test_artifact2], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact2, self.test_artifact2], 0)
+      # Start/stop with base-path
+      args = ["--step-name", "test2.6", "--key", self.key_path, "--base-path",
+          self.test_dir]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
-    # Start/stop sign with specified gpg keyid
-    args = ["--step-name", "test5", "--gpg", self.gpg_keyid, "--gpg-home",
-        self.gnupg_home]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop with recording multiple artifacts
+      args = ["--step-name", "test3", "--key", self.key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, self.test_artifact2], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact2, self.test_artifact2], 0)
 
-    # Start/stop sign with default gpg keyid
-    args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop sign with specified gpg keyid
+      args = ["--step-name", "test5", "--gpg", self.gpg_keyid, "--gpg-home",
+          self.gnupg_home]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
+
+      # Start/stop sign with default gpg keyid
+      args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
 
 
@@ -156,7 +168,10 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
   def test_missing_unfinished_link(self):
     """Error exit with missing unfinished link file. """
     args = ["--step-name", "no-link", "--key", self.key_path]
-    self.assert_cli_sys_exit(["stop"] + args, 1)
+
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(["stop"] + args, 1)
 
 
 if __name__ == '__main__':

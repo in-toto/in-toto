@@ -240,7 +240,7 @@ examples:
     # case the key is encrypted. Something that should not happen in the lib.
     key = None
     if args.key:
-      key = util.prompt_import_rsa_key_from_file(args.key)
+      key = util.prompt_import_private_key_from_file(args.key)
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,

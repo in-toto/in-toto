@@ -8,6 +8,8 @@ import securesystemslib.hash
 import securesystemslib.keys
 import securesystemslib.exceptions
 
+from securesystemslib.interface import import_ed25519_privatekey_from_file
+
 DEFAULT_RSA_KEY_BITS = 3072
 
 def generate_and_write_rsa_keypair(filepath, bits=DEFAULT_RSA_KEY_BITS,
@@ -115,6 +117,19 @@ def import_rsa_public_keys_from_files_as_dict(filepaths):
   return key_dict
 
 
+def import_ed25519_public_keys_from_files_as_dict(filepaths):
+  """Takes a list of filepaths to Ed25519 public keys and returns them as a
+  dictionary conformant with securesystemslib.formats.KEYDICT_SCHEMA."""
+  key_dict = {}
+  for filepath in filepaths:
+    key = securesystemslib.interface.\
+          import_ed25519_publickey_from_file(filepath)
+    securesystemslib.formats.PUBLIC_KEY_SCHEMA.check_match(key)
+    keyid = key["keyid"]
+    key_dict[keyid] = key
+  return key_dict
+
+
 def import_gpg_public_keys_from_keyring_as_dict(keyids, gpg_home=False):
   """Creates a dictionary of gpg public keys retrieving gpg public keys
   identified by the list of passed `keyids` from the gpg keyring at `gpg_home`.
@@ -134,8 +149,39 @@ def prompt_password(prompt="Enter password: "):
   return getpass.getpass(prompt, sys.stderr)
 
 
+def prompt_import_private_key_from_file(filepath):
+  """Trys to load an Ed25519 or RSA key without password. If a CryptoError
+  occurs, prompts the user for a password and trys to load the the key again.
+  """
+  # FIXME: The more secure method is to load the private key using the key type
+  # specified by the user at command-line, rather than to guess the key type,
+  # and possibly (although improbably) use the wrong key type.
+  try:
+    key = prompt_import_ed25519_privatekey_from_file(filepath)
+  except securesystemslib.exceptions.CryptoError:
+    try:
+      key = prompt_import_rsa_key_from_file(filepath)
+    except:
+      raise TypeError('Either invalid key type (neither Ed25519 nor RSA), '
+                      'or wrong password.')
+
+  return key
+
+
+def prompt_import_ed25519_privatekey_from_file(filepath):
+  """Trys to load an Ed25519 private key without password. If a CryptoError
+  occurs, prompts the user for a password and trys to load the the key again.
+  """
+  password = None
+  try:
+    import_ed25519_privatekey_from_file(filepath)
+  except securesystemslib.exceptions.CryptoError:
+    password = prompt_password()
+  return import_ed25519_privatekey_from_file(filepath, password)
+
+
 def prompt_import_rsa_key_from_file(filepath):
-  """Trys to load the key without password. If a CryptoError occurs, prompts
+  """Trys to load an RSA key without password. If a CryptoError occurs, prompts
   the user for a password and trys to load the the key again. """
   password = None
   try:
