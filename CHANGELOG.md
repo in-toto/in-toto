@@ -3,7 +3,7 @@
 ## in-toto v0.2.2
 
 * Add support for gpg signing subkeys.
-* Drop strict requirement on securesystemslib 0.9.
+* Drop strict requirement on securesystemslib 0.10.
 * Command line tool changes:
     - Add a --base-path parameter to in-toto record and in-toto run
     - in-toto-record now follows symbolic links
@@ -11,6 +11,7 @@
 * Adds support for sublayout namespacing (for in-toto spec 0.9 compliance)
 * Path prefix is normalized during in-toto verification:
     - Paths such as foo//bar match with foo/bar.
+* Dropped obsolete SettingsError
 
 
 ## in-toto v0.2.1

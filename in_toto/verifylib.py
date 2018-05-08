@@ -642,18 +642,15 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     try:
       dest_artifact = dest_artifacts[full_dest_path]
 
-    except Exception:
-      raise RuleVerificationError("Rule '{rule}' failed, destination artifact"
-          " '{path}' not found in {type} of '{name}'"
-              .format(rule=" ".join(rule), path=full_dest_path, name=dest_name,
-                  type=dest_type))
+    # If there is no such key (i.e., target path), we won't mark this file
+    # as matched
+    except KeyError:
+      continue
 
-    # Compare the hashes of source and destination artifacts
+    # finally, if both paths exist, make sure they do in fact have the same
+    # hash
     if source_artifact != dest_artifact:
-      raise RuleVerificationError("Rule '{rule}' failed, source artifact"
-          " '{source}' and destination artifact '{dest}' hashes don't match."
-              .format(rule=" ".join(rule), source=full_source_path,
-                  dest=full_dest_path))
+      continue
 
     # Matching went well, let's remove the path from the queue. Subsequent
     # rules won't see this artifact anymore.
@@ -711,13 +708,14 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
   matched_products = fnmatch.filter(
       source_products_queue, rule_data["pattern"])
 
+  unmatched_materials = set()
+
   for matched_product in matched_products:
     if matched_product in source_materials_queue:
-      raise RuleVerificationError("Rule '{0}' failed, product '{1}' was found"
-          " in materials but should have been newly created."
-              .format(" ".join(rule), matched_product))
+      unmatched_materials.add(matched_product)
 
-  return list(set(source_products_queue) - set(matched_products))
+  matched_products = set(matched_products) - unmatched_materials
+  return list(set(source_products_queue) - matched_products)
 
 
 def verify_delete_rule(rule, source_materials_queue, source_products_queue):
@@ -826,31 +824,20 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
   matched_products = set(fnmatch.filter(
       source_products_queue, rule_data["pattern"]))
 
-  matched_materials_only = matched_materials - matched_products
-  matched_products_only =  matched_products - matched_materials
+  modified_materials = set()
+  for path in matched_products:
 
-  if len(matched_materials_only):
-    raise RuleVerificationError("Rule '{0}' failed, the following paths appear"
-        " as materials but not as products:\n\t{1}"
-            .format(" ".join(rule), ", ".join(matched_materials_only)))
+    if path not in matched_materials:
+      continue
 
-  if len(matched_products_only):
-    raise RuleVerificationError("Rule '{0}' failed, the following paths appear"
-        " as products but not as materials:\n\t{1}"
-            .format(" ".join(rule), ", ".join(matched_products_only)))
-
-  # If we haven't failed yet the two sets are equal and we can test their
-  # hash in-equalities
-  for path in matched_materials:
     # Is it okay to assume that path returns an artifact? The path
     # should not be in the queues, if it is not in the artifact dictionaries
     if source_materials[path] == source_products[path]:
-      raise RuleVerificationError("Rule '{0}' failed, material and product '{1}'"
-          " have the same hash (were not modified)."
-              .format(" ".join(rule), path))
+      continue
 
-  return (list(set(source_materials_queue) - set(matched_materials)),
-      list(set(source_products_queue) - set(matched_products)))
+    modified_materials.add(path)
+
+  return (source_materials_queue, list(set(source_products_queue) - modified_materials))
 
 
 def verify_allow_rule(rule, source_artifacts_queue):
@@ -1045,18 +1032,20 @@ def verify_item_rules(source_name, source_type, rules, links):
     # NOTE: Can't reach `else` branch, if the rule is none of these types
     # an exception would have been raised above in `unpack_rule`
     elif rule_type == "modify": # pragma: no branch
-      source_materials_queue, source_products_queue = verify_modify_rule(
-          rule, source_materials_queue, source_products_queue,
-          source_materials, source_products)
-
       # The modify rule updates materials_queue and products_queue. We have to
       # update the generic artifacts queue accordingly.
       if source_type == "materials":
+        source_materials_queue, source_products_queue = verify_modify_rule(
+            rule, source_artifacts_queue, source_products_queue,
+            source_materials, source_products)
         source_artifacts_queue = source_materials_queue
 
       # NOTE: Can't reach `else` branch, if the source_type is none of these
       # types an exception would have been raised above in `unpack_rule`
       elif source_type == "products": # pragma: no branch
+        source_materials_queue, source_products_queue = verify_modify_rule(
+            rule, source_materials_queue, source_artifacts_queue,
+            source_materials, source_products)
         source_artifacts_queue = source_products_queue
 
 
