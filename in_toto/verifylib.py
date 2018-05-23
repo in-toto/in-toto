@@ -1533,7 +1533,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
 
   # If there are parameters sent to the tanslation layer, substitute them
   if substitution_parameters is not None:
-    log.info('Perorming parameter substitution...')
+    log.info('Performing parameter substitution...')
     substitute_parameters(layout, substitution_parameters)
 
   log.info("Reading link metadata files...")
