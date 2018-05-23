@@ -20,6 +20,22 @@
 
 from unittest import defaultTestLoader, TextTestRunner
 import sys
+import os
+import subprocess
+
+def check_usable_gpg():
+  """ Tries to execute gpg and figure out wether we can run tests that
+      require gpg to be installed
+  """
+  try:
+    subprocess.check_call(['gpg', '--version'])
+  # sadly, this will through either a WindowsError or a FileNotFound error
+  # so we need to catch a generic exception
+  except Exception as e:
+    os.environ["TEST_SKIP_GPG"] = "1"
+
+# set the test prerrequisites (so far, we only check if gpg is installed)
+check_usable_gpg()
 
 suite = defaultTestLoader.discover(start_dir=".")
 result = TextTestRunner(verbosity=2, buffer=True).run(suite)

@@ -38,6 +38,7 @@ from in_toto.gpg.common import parse_pubkey_payload
 import securesystemslib.formats
 import securesystemslib.exceptions
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestUtil(unittest.TestCase):
   """Test util functions. """
   def test_version_utils_return_types(self):
@@ -45,6 +46,7 @@ class TestUtil(unittest.TestCase):
     self.assertTrue(isinstance(get_version(), string_types))
     self.assertTrue(isinstance(is_version_fully_supported(), bool))
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
   def test_parse_empty_pubkey_payload(self):
@@ -53,6 +55,7 @@ class TestCommon(unittest.TestCase):
       parse_pubkey_payload(None)
 
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestGPGRSA(unittest.TestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
@@ -169,6 +172,7 @@ class TestGPGRSA(unittest.TestCase):
       del os.environ["GNUPGHOME"]
 
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestGPGDSA(unittest.TestCase):
   """ Test signature creation, verification and key export from the gpg
   module """
