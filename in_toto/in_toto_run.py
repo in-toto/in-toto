@@ -60,6 +60,10 @@ optional arguments:
                         for additional info.
   --base-path <path>    Record 'materials/products' relative to <path>. If not
                         set, current working directory is used as base path.
+  -t {ed25519,rsa}, --key-type {ed25519,rsa}
+                        Specify the key-type of the key specified by the
+                        '--key' option. If '--key-type' is not passed, default
+                        is "rsa".
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -166,6 +170,11 @@ examples:
       " link metadata."
       " (passing one of '--key' or '--gpg' is required)"))
 
+  parser.add_argument("-t", "--key-type", dest="key_type", type=str,
+      choices=util.SUPPORTED_KEY_TYPES, default=util.KEY_TYPE_RSA, help=(
+      "Specify the key-type of the key specified by the '--key' option. If"
+      " '--key-type' is not passed, default is \"ed25519\"."))
+
   named_args.add_argument("-g", "--gpg", nargs="?", const=True, metavar="<id>",
       help=(
       "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
@@ -240,7 +249,7 @@ examples:
     # case the key is encrypted. Something that should not happen in the lib.
     key = None
     if args.key:
-      key = util.prompt_import_private_key_from_file(args.key)
+      key = util.import_private_key_from_file(args.key, args.key_type)
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,

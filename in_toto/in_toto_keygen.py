@@ -20,16 +20,19 @@
   generated. By default it is set as 3072.
 
   General Usage:
-  in-toto-keygen [-p] <filename> [bits]
+  in-toto-keygen [-p] [-t {ed25519, rsa}] [--bits=<bits>] <filename>
 
   Example Usage:
-  Suppose Bob wants to create the keys of size 2048 bits and dump them with
-  file name "bob_keys". He also wants to encrypt the so created private key
-  with his choice of passphrase. The keys would then be created, the private key
-  would be encrypted and dumped as "bob_keys" and public key would be dumped
-  as "bob_keys.pub". Bob will use the following command:
+  Suppose Bob wants to create the rsa keys of size 2048 bits and dump them with
+  file name "bob_keys" in the current directory. He also wants to encrypt the
+  so created private key with his choice of passphrase. The keys would then be
+  created, the private key would be encrypted and dumped as "./bob_keys" and
+  public key would be dumped as "./bob_keys.pub". Bob will use the following
+  command:
 
-  in-toto-keygen -p bob_keys 2048
+  in-toto-keygen -p -t rsa -b 2048 bob_keys
+
+  in-toto-keygen -p -t ed25519 bob_keys
 
 
 <Return Codes>
@@ -75,11 +78,16 @@ def parse_args():
                             help="Prompts for a password and encrypts the "
                             "private key with the same before storing")
 
+  in_toto_args.add_argument("-t", "--type", type=str,
+                            choices=in_toto.util.SUPPORTED_KEY_TYPES,
+                            default=in_toto.util.KEY_TYPE_RSA,
+                            help="Type of the key to be generated")
+
   in_toto_args.add_argument("name", type=str,
                             help="The filename of the resulting key files",
                             metavar="<filename>")
 
-  in_toto_args.add_argument("bits", nargs= "?", default=3072, type=int,
+  in_toto_args.add_argument("-b", "--bits", default=3072, type=int,
                             help="The key size, or key length, of the RSA "
                             "key.", metavar="<bits>")
 
@@ -99,11 +107,23 @@ def main():
 
   try:
     if args.prompt:
-      in_toto.util.prompt_generate_and_write_rsa_keypair(args.name, args.bits)
+      if args.type == in_toto.util.KEY_TYPE_RSA:
+        in_toto.util.prompt_generate_and_write_rsa_keypair(args.name,
+                                                           args.bits)
+      elif args.type == in_toto.util.KEY_TYPE_ED25519:
+        in_toto.util.prompt_generate_and_write_ed25519_keypair(args.name)
+      else:  # pragma: no cover
+        log.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        sys.exit(1)
       sys.exit(0)
     else:
-      in_toto.util.generate_and_write_rsa_keypair(args.name, args.bits,
-        password=None)
+      if args.type == in_toto.util.KEY_TYPE_RSA:
+        in_toto.util.generate_and_write_rsa_keypair(args.name)
+      elif args.type == in_toto.util.KEY_TYPE_ED25519:
+        in_toto.util.generate_and_write_ed25519_keypair(args.name)
+      else:  # pragma: no cover
+        log.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        sys.exit(1)
       sys.exit(0)
 
   except Exception as e:
