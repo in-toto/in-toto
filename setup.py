@@ -70,10 +70,7 @@ setup(
   ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  # securesystemslib 0.10.9 requires cryptography>=2.1.3, and thereby dictates
-  # the minimum version of cryptography for in-toto. The maximum version
-  # is dictated by what is available.
-  install_requires=["six", "cryptography", "securesystemslib>=0.10.10", "attrs",
+  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.2", "attrs",
                     "python-dateutil", "iso8601"],
   test_suite="tests.runtests",
   entry_points={
