@@ -25,10 +25,19 @@ import argparse
 import shutil
 import glob
 import tempfile
+
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
+
+else:
+  import mock
+
 from mock import patch
 
 from in_toto.util import (generate_and_write_rsa_keypair,
-    prompt_import_rsa_key_from_file)
+    generate_and_write_ed25519_keypair, import_private_key_from_file,
+    KEY_TYPE_RSA, KEY_TYPE_ED25519)
 
 from in_toto.models.link import Link
 from in_toto.models.metadata import Metablock
@@ -37,7 +46,6 @@ from in_toto.models.link import FILENAME_FORMAT
 
 import in_toto.gpg.util
 import tests.common
-
 
 
 class TestInTotoRunTool(tests.common.CliTestCase):
@@ -65,12 +73,19 @@ class TestInTotoRunTool(tests.common.CliTestCase):
 
     os.chdir(self.test_dir)
 
-    self.key_path = "test_key"
-    generate_and_write_rsa_keypair(self.key_path)
-    self.key = prompt_import_rsa_key_from_file(self.key_path)
+    self.rsa_key_path = "test_key_rsa"
+    generate_and_write_rsa_keypair(self.rsa_key_path)
+    self.rsa_key = import_private_key_from_file(self.rsa_key_path,
+        KEY_TYPE_RSA)
+
+    self.ed25519_key_path = "test_key_ed25519"
+    generate_and_write_ed25519_keypair(self.ed25519_key_path)
+    self.ed25519_key = import_private_key_from_file(self.ed25519_key_path,
+        KEY_TYPE_ED25519)
 
     self.test_step = "test_step"
-    self.test_link = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.key["keyid"])
+    self.test_link_rsa = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.rsa_key["keyid"])
+    self.test_link_ed25519 = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.ed25519_key["keyid"])
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 
@@ -87,49 +102,82 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
 
-    args = ["--step-name", self.test_step, "--key", self.key_path, "--",
+    args = ["--step-name", self.test_step, "--key", self.rsa_key_path, "--",
         "echo", "test"]
 
-    self.assert_cli_sys_exit(args, 0)
-    self.assertTrue(os.path.exists(self.test_link))
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(args, 0)
+
+    self.assertTrue(os.path.exists(self.test_link_rsa))
 
 
   def test_main_optional_args(self):
     """Test CLI command with optional arguments. """
 
     named_args = ["--step-name", self.test_step, "--key",
-        self.key_path, "--materials", self.test_artifact, "--products",
+        self.rsa_key_path, "--materials", self.test_artifact, "--products",
         self.test_artifact, "--record-streams"]
     positional_args =  ["--", "echo", "test"]
 
-    # Test and assert recorded artifacts
-    args1 = named_args + positional_args
-    self.assert_cli_sys_exit(args1 , 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertTrue(self.test_artifact in
-        list(link_metadata.signed.materials.keys()))
-    self.assertTrue(self.test_artifact in
-        list(link_metadata.signed.products.keys()))
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
 
-    # Test and assert exlcuded artifacts
-    args2 = named_args + ["--exclude", "*test*"] + positional_args
-    self.assert_cli_sys_exit(args2, 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertFalse(link_metadata.signed.materials)
-    self.assertFalse(link_metadata.signed.products)
+      # Test and assert recorded artifacts
+      args1 = named_args + positional_args
+      self.assert_cli_sys_exit(args1 , 0)
+      link_metadata = Metablock.load(self.test_link_rsa)
+      self.assertTrue(self.test_artifact in
+          list(link_metadata.signed.materials.keys()))
+      self.assertTrue(self.test_artifact in
+          list(link_metadata.signed.products.keys()))
 
-    # Test with base path
-    args3 = named_args + ["--base-path", self.test_dir] + positional_args
-    self.assert_cli_sys_exit(args3, 0)
-    link_metadata = Metablock.load(self.test_link)
-    self.assertListEqual(list(link_metadata.signed.materials.keys()),
-        [self.test_artifact])
-    self.assertListEqual(list(link_metadata.signed.products.keys()),
-        [self.test_artifact])
+      # Test and assert exlcuded artifacts
+      args2 = named_args + ["--exclude", "*test*"] + positional_args
+      self.assert_cli_sys_exit(args2, 0)
+      link_metadata = Metablock.load(self.test_link_rsa)
+      self.assertFalse(link_metadata.signed.materials)
+      self.assertFalse(link_metadata.signed.products)
 
-    # Test with bogus base path
-    args4 = named_args + ["--base-path", "bogus/path"] + positional_args
-    self.assert_cli_sys_exit(args4, 1)
+      # Test with base path
+      args3 = named_args + ["--base-path", self.test_dir] + positional_args
+      self.assert_cli_sys_exit(args3, 0)
+      link_metadata = Metablock.load(self.test_link_rsa)
+      self.assertListEqual(list(link_metadata.signed.materials.keys()),
+          [self.test_artifact])
+      self.assertListEqual(list(link_metadata.signed.products.keys()),
+          [self.test_artifact])
+
+      # Test with bogus base path
+      args4 = named_args + ["--base-path", "bogus/path"] + positional_args
+      self.assert_cli_sys_exit(args4, 1)
+
+
+  def test_main_with_unencrypted_ed25519_key(self):
+    """Test CLI command with ed25519 key. """
+    args = ["-n", self.test_step,
+        "--key", self.ed25519_key_path,
+        "--key-type", "ed25519", "--", "ls"]
+
+    self.assert_cli_sys_exit(args, 0)
+    self.assertTrue(os.path.exists(self.test_link_ed25519))
+
+
+  def test_main_with_encrypted_ed25519_key(self):
+    """Test CLI command with encrypted ed25519 key. """
+    key_path = "test_key_ed25519_enc"
+    password = "123456"
+    generate_and_write_ed25519_keypair(key_path, password)
+    args = ["-n", self.test_step,
+        "--key", key_path,
+        "--key-type", "ed25519", "--", "ls"]
+
+    with mock.patch('in_toto.util.prompt_password', return_value=password):
+      key = import_private_key_from_file(key_path, KEY_TYPE_ED25519)
+      linkpath = FILENAME_FORMAT.format(step_name=self.test_step, keyid=key["keyid"])
+
+      self.assert_cli_sys_exit(args, 0)
+      self.assertTrue(os.path.exists(linkpath))
 
 
   def test_main_with_specified_gpg_key(self):
@@ -162,10 +210,13 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     """Test CLI command with --no-command argument. """
 
     args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
-        self.key_path, "--no-command"]
+        self.rsa_key_path, "--no-command"]
 
-    self.assert_cli_sys_exit(args, 0)
-    self.assertTrue(os.path.exists(self.test_link))
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(args, 0)
+
+    self.assertTrue(os.path.exists(self.test_link_rsa))
 
   def test_main_wrong_args(self):
     """Test CLI command with missing arguments. """
@@ -173,19 +224,19 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     wrong_args_list = [
       [],
       ["--step-name", "some"],
-      ["--key", self.key_path],
+      ["--key", self.rsa_key_path],
       ["--", "echo", "blub"],
-      ["--step-name", "test-step", "--key", self.key_path],
+      ["--step-name", "test-step", "--key", self.rsa_key_path],
       ["--step-name", "--", "echo", "blub"],
-      ["--key", self.key_path, "--", "echo", "blub"],
-      ["--step-name", "test-step", "--key", self.key_path, "--"],
+      ["--key", self.rsa_key_path, "--", "echo", "blub"],
+      ["--step-name", "test-step", "--key", self.rsa_key_path, "--"],
       ["--step-name", "test-step",
-          "--key", self.key_path, "--gpg", "--", "echo", "blub"]
+           "--key", self.rsa_key_path, "--gpg", "--", "echo", "blub"]
     ]
 
     for wrong_args in wrong_args_list:
       self.assert_cli_sys_exit(wrong_args, 2)
-      self.assertFalse(os.path.exists(self.test_link))
+      self.assertFalse(os.path.exists(self.test_link_rsa))
 
   def test_main_wrong_key_exits(self):
     """Test CLI command with wrong key argument, exits and logs error """
@@ -194,7 +245,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
        "non-existing-key", "--", "echo", "test"]
 
     self.assert_cli_sys_exit(args, 1)
-    self.assertFalse(os.path.exists(self.test_link))
+    self.assertFalse(os.path.exists(self.test_link_rsa))
 
 
 if __name__ == "__main__":

@@ -167,6 +167,13 @@ examples:
       " required. For each passed key the layout must carry a valid"
       " signature."))
 
+  parser.add_argument("-t", "--key-types", dest="key_types",
+      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      nargs="+", help=(
+      "Specify the key-type of the keys specified by the '--layout-keys'"
+      " option. If '--key-types' is not passed, default key_type is assumed"
+      " to be \"rsa\"."))
+
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
       help=(
       "GPG keyid, identifying a public key in the GPG keychain, used to verify"
@@ -212,8 +219,8 @@ examples:
     if args.layout_keys != None:
       log.info("Loading layout key(s)...")
       layout_key_dict.update(
-          in_toto.util.import_rsa_public_keys_from_files_as_dict(
-          args.layout_keys))
+          in_toto.util.import_public_keys_from_files_as_dict(
+            args.layout_keys, args.key_types))
 
     if args.gpg != None:
       log.info("Loading layout gpg key(s)...")

@@ -24,3 +24,7 @@ class BadReturnValueError(Error):
 class LinkNotFoundError(Error):
   """Indicates that a link file was not found. """
   pass
+
+class UnsupportedKeyTypeError(Error):
+  """Indicates that the specified key type is not yet supported. """
+  pass

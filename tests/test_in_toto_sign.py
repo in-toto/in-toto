@@ -74,6 +74,8 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     self.bob_pub_path = "bob.pub"
     self.carl_path= "carl"
     self.carl_pub_path = "carl.pub"
+    self.danny_path = "danny"
+    self.danny_pub_path = "danny.pub"
 
   @classmethod
   def tearDownClass(self):
@@ -111,6 +113,24 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     self.assert_cli_sys_exit([
         "-f", "tmp.layout",
         "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
+        "--verify"
+        ], 0)
+
+    # Sign Layout "tmp.layout" with ed25519 key, appending new signature,
+    # write to "tmp.layout"
+    self.assert_cli_sys_exit([
+        "-f", "tmp.layout",
+        "-k", self.danny_path,
+        "-t", "ed25519",
+        "-a"
+        ], 0)
+
+    # Verify "tmp.layout" (has four signatures now)
+    self.assert_cli_sys_exit([
+        "-f", "tmp.layout",
+        "-k", self.alice_pub_path, self.bob_pub_path, self.carl_pub_path,
+        self.danny_pub_path,
+        "-t", "rsa", "rsa", "rsa", "ed25519",
         "--verify"
         ], 0)
 
@@ -244,6 +264,14 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     self.assert_cli_sys_exit([
         "-f", self.link_path,
         "-k", self.alice_path, self.bob_path,
+        ], 2)
+
+    # Wrong number of multiple key types
+    self.assert_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.alice_path, self.bob_path,
+        "-t", "rsa",
+        "-o", "tmp.layout",
         ], 2)
 
     # Wrong multiple gpg keys for Link metadata

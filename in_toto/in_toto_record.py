@@ -48,6 +48,10 @@ optional arguments:
                         Path to a PEM formatted private key file used to sign
                         the resulting link metadata. (passing one of '--key'
                         or '--gpg' is required)
+  -t {ed25519,rsa}, --key-type {ed25519,rsa}
+                        Specify the key-type of the key specified by the
+                        '--key' option. If '--key-type' is not passed, default
+                        is "rsa".
   -g [<id>], --gpg [<id>]
                         GPG keyid used to sign the resulting link metadata.
                         When '--gpg' is passed without keyid, the keyring's
@@ -172,6 +176,12 @@ examples:
       " link metadata."
       " (passing one of '--key' or '--gpg' is required)"))
 
+  parent_parser.add_argument("-t", "--key-type", dest="key_type",
+      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      default=in_toto.util.KEY_TYPE_RSA, help=(
+      "Specify the key-type of the key specified by the '--key' option. If"
+      " '--key-type' is not passed, default is \"rsa\"."))
+
   key_args_group.add_argument("-g", "--gpg", nargs="?", const=True,
       metavar="<id>", help=(
       "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
@@ -242,7 +252,7 @@ examples:
     # case the key is encrypted. Something that should not happen in the lib.
     key = None
     if args.key:
-      key = in_toto.util.prompt_import_rsa_key_from_file(args.key)
+      key = in_toto.util.import_private_key_from_file(args.key, args.key_type)
 
     if args.command == "start":
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,

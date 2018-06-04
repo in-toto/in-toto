@@ -21,8 +21,9 @@ from mock import patch
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_generate_and_write_rsa_keypair, prompt_password,
-    import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
-    prompt_import_rsa_key_from_file)
+    generate_and_write_ed25519_keypair,
+    prompt_generate_and_write_ed25519_keypair,
+    import_rsa_key_from_file, prompt_import_rsa_key_from_file)
 from in_toto import exceptions
 import securesystemslib
 from securesystemslib.keys import generate_rsa_key
@@ -63,7 +64,18 @@ class TestInTotoKeyGenTool(unittest.TestCase):
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
       in_toto_keygen_main()
-    with patch.object(sys, 'argv', args + ["-p", "bob", "3072"]), \
+    with patch.object(sys, 'argv', args + ["-p", "-t", "rsa", "bob"]), \
+      patch("getpass.getpass", return_value=password), self.assertRaises(
+      SystemExit):
+      in_toto_keygen_main()
+    with patch.object(sys, 'argv', args + ["-t", "ed25519", "bob"]), \
+      self.assertRaises(SystemExit):
+      in_toto_keygen_main()
+    with patch.object(sys, 'argv', args + ["-p", "-t", "ed25519", "bob"]), \
+      patch("getpass.getpass", return_value=password), self.assertRaises(
+      SystemExit):
+      in_toto_keygen_main()
+    with patch.object(sys, 'argv', args + ["-p", "-b", "3072", "bob"]), \
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
       in_toto_keygen_main()
@@ -74,7 +86,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     wrong_args_list = [
       ["in_toto_keygen.py"],
       ["in_toto_keygen.py", "-r"],
-      ["in_toto_keygen.py", "-p", "bob", "1024"]]
+      ["in_toto_keygen.py", "-p", "-b", "1024", "bob"]]
     password="123456"
 
     for wrong_args in wrong_args_list:
@@ -94,6 +106,17 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     bits = 3072
     with patch("getpass.getpass", return_value=password):
       prompt_generate_and_write_rsa_keypair(name, bits)
+
+  def test_in_toto_keygen_generate_and_write_ed25519_keypair(self):
+    """in_toto_keygen_generate_and_write_ed25519_keypair run through. """
+    generate_and_write_ed25519_keypair("bob")
+
+  def test_in_toto_keygen_prompt_generate_and_write_ed25519_keypair(self):
+    """in_toto_keygen_prompt_generate_and_write_ed25519_keypair run through. """
+    name = "bob"
+    password = "123456"
+    with patch("getpass.getpass", return_value=password):
+      prompt_generate_and_write_ed25519_keypair(name)
 
   def test_prompt_password(self):
     """Call password prompt. """

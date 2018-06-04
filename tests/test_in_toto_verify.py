@@ -32,6 +32,7 @@ from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
+from securesystemslib.interface import import_ed25519_privatekey_from_file
 
 import tests.common
 
@@ -153,6 +154,70 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
         "--layout-keys", self.alice_path, "--link-dir", "bad-link-dir", "-v"]
     self.assert_cli_sys_exit(args, 1)
 
+
+
+class TestInTotoVerifyToolMixedKeys(tests.common.CliTestCase):
+  """ Tests in-toto-verify like TestInTotoVerifyTool but with
+  both rsa and ed25519 project owner and functionary keys. """
+  cli_main_func = staticmethod(in_toto_verify_main)
+
+
+  @classmethod
+  def setUpClass(self):
+    """Creates and changes into temporary directory.
+    Copies demo files to temp dir...
+      - owner/functionary key pairs
+      - *.link metadata files
+      - layout template (not signed, no expiration date)
+      - final product
+
+    ...and dumps layout for test scenario
+    """
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    # Load layout template
+    layout_template = Metablock.load("demo.layout.template")
+
+    # Store layout paths to be used in tests
+    self.layout_double_signed_path = "double-signed.layout"
+
+    # Import layout signing keys
+    alice = import_rsa_key_from_file("alice")
+    danny = import_ed25519_privatekey_from_file("danny")
+    self.alice_path = "alice.pub"
+    self.danny_path = "danny.pub"
+
+    # dump a double signed layout
+    layout_template.sign(alice)
+    layout_template.sign(danny)
+    layout_template.dump(self.layout_double_signed_path)
+
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp dir. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+  def test_main_multiple_keys(self):
+    """Test in-toto-verify CLI tool with multiple keys. """
+    args = ["--layout", self.layout_double_signed_path,
+       "--layout-keys", self.alice_path, self.danny_path,
+       "--key-types", "rsa", "ed25519"]
+    self.assert_cli_sys_exit(args, 0)
 
 
 class TestInTotoVerifyToolGPG(tests.common.CliTestCase):

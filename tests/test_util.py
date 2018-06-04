@@ -20,19 +20,36 @@
 
 import os
 import shutil
+import sys
 import tempfile
 import unittest
+
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
+
+else:
+  import mock
+
 from mock import patch
 
 import in_toto.formats
-from in_toto.util import (generate_and_write_rsa_keypair,
-    import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict,
-    prompt_password, prompt_generate_and_write_rsa_keypair,
+from in_toto.util import (
+    KEY_TYPE_ED25519, KEY_TYPE_RSA,
+    generate_and_write_rsa_keypair,
+    generate_and_write_ed25519_keypair,
+    import_rsa_key_from_file,
+    import_public_keys_from_files_as_dict,
+    prompt_password,
+    prompt_generate_and_write_rsa_keypair,
+    import_private_key_from_file,
     prompt_import_rsa_key_from_file,
     import_gpg_public_keys_from_keyring_as_dict)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
+from securesystemslib.interface import (import_ed25519_privatekey_from_file,
+    import_ed25519_publickey_from_file)
 
 class TestUtil(unittest.TestCase):
   """Test various util functions. Mostly related to RSA key creation or
@@ -57,6 +74,16 @@ class TestUtil(unittest.TestCase):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
+
+  def test_unrecognized_key_type(self):
+    """Create and read the wrong key type. """
+    wrong_key_type = "wrong_key_type"
+    open(wrong_key_type, "w").write(wrong_key_type)
+
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      with self.assertRaises(TypeError):
+        import_private_key_from_file(wrong_key_type)
 
   def test_create_and_import_rsa(self):
     """Create RS key and import private and public key separately. """
@@ -115,7 +142,7 @@ class TestUtil(unittest.TestCase):
     generate_and_write_rsa_keypair(name2)
 
     # Succefully import public keys as keydictionary
-    key_dict = import_rsa_public_keys_from_files_as_dict([name1 + ".pub",
+    key_dict = import_public_keys_from_files_as_dict([name1 + ".pub",
         name2 + ".pub"])
     securesystemslib.formats.KEYDICT_SCHEMA.check_match(key_dict)
 
@@ -124,11 +151,81 @@ class TestUtil(unittest.TestCase):
     open(not_an_rsa, "w").write(not_an_rsa)
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      import_rsa_public_keys_from_files_as_dict([name1 + ".pub", not_an_rsa])
+      import_public_keys_from_files_as_dict([name1 + ".pub", not_an_rsa])
 
     # Import private key raises an exception
     with self.assertRaises(securesystemslib.exceptions.FormatError):
-      import_rsa_public_keys_from_files_as_dict([name1, name2])
+      import_public_keys_from_files_as_dict([name1, name2])
+
+  def test_create_and_import_ed25519(self):
+    """Create ed25519 key and import private and public key separately. """
+    name = "key6"
+    generate_and_write_ed25519_keypair(name)
+    private_key = import_ed25519_privatekey_from_file(name)
+    public_key = import_ed25519_publickey_from_file(name + ".pub")
+
+    securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
+    self.assertTrue(private_key["keyval"].get("private"))
+    self.assertTrue(
+        securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
+
+  def test_create_and_import_encrypted_ed25519(self):
+    """Create encrypted ed25519 key and import private and public key
+    separately. """
+    name = "key7"
+    password = "123456"
+    generate_and_write_ed25519_keypair(name, password)
+    private_key = import_ed25519_privatekey_from_file(name, password)
+    public_key = import_ed25519_publickey_from_file(name + ".pub")
+
+    securesystemslib.formats.KEY_SCHEMA.check_match(private_key)
+    self.assertTrue(private_key["keyval"].get("private"))
+    self.assertTrue(
+        securesystemslib.formats.PUBLIC_KEY_SCHEMA.matches(public_key))
+
+  def test_create_and_import_encrypted_ed25519_no_password(self):
+    """Try import encrypted ed25519 key without or wrong pw, raises
+    exception. """
+    name = "key8"
+    password = "123456"
+    generate_and_write_ed25519_keypair(name, password)
+    with self.assertRaises(securesystemslib.exceptions.CryptoError):
+      private_key = import_ed25519_privatekey_from_file(name)
+    with self.assertRaises(securesystemslib.exceptions.CryptoError):
+      private_key = import_ed25519_privatekey_from_file(name, "wrong-password")
+
+  def test_import_ed25519_public_keys_from_files_as_dict(self):
+    """Create and import multiple Ed25519 public keys and return KEYDICT. """
+    name1 = "key4"
+    name2 = "key5"
+    generate_and_write_ed25519_keypair(name1, password=name1)
+    generate_and_write_ed25519_keypair(name2, password=name2)
+
+    # Succesfully import public keys as keydictionary
+    key_dict = import_public_keys_from_files_as_dict([name1 + ".pub",
+        name2 + ".pub"],
+        [KEY_TYPE_ED25519] * 2)
+    securesystemslib.formats.KEYDICT_SCHEMA.check_match(key_dict)
+
+    # Import with wrong number of key types raises an exception
+    with self.assertRaises(securesystemslib.exceptions.Error):
+      import_public_keys_from_files_as_dict([name1 + ".pub",
+          name2 + ".pub"],
+          [KEY_TYPE_ED25519])
+
+    # Import wrongly formatted key raises an exception
+    not_an_ed25519 = "not_an_ed25519"
+    open(not_an_ed25519, "w").write(not_an_ed25519)
+
+    with self.assertRaises(securesystemslib.exceptions.Error):
+      import_public_keys_from_files_as_dict([name1 + ".pub",
+          not_an_ed25519],
+          [KEY_TYPE_ED25519] * 2)
+
+    # Import private key raises an exception
+    with self.assertRaises(securesystemslib.exceptions.Error):
+      import_public_keys_from_files_as_dict([name1, name2],
+          [KEY_TYPE_ED25519] * 2)
 
   def test_import_gpg_public_keys_from_keyring_as_dict(self):
     """Import gpg public keys from keyring and return KEYDICT. """

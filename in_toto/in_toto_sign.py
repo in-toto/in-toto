@@ -19,8 +19,8 @@
 
 <Help>
 usage: in-toto-sign [-h] -f <path> [-k <path> [<path> ...]]
-                    [-g [<id> [<id> ...]]] [--gpg-home <path>] [-o <path>]
-                    [-a] [--verify] [-v | -q]
+                    [-t <key_type> [<key_type> ...]] [-g [<id> [<id> ...]]]
+                    [--gpg-home <path>] [-o <path>] [-a] [--verify] [-v | -q]
 
 Provides command line interface to sign in-toto link or layout metadata or
 verify its signatures, with options to:
@@ -43,6 +43,12 @@ optional arguments:
                         Path(s) to PEM formatted key file(s), used to sign the
                         passed link or layout metadata or to verify its
                         signatures.
+  -t <key_type> [<key_type> ...], --key-type <key_type> [<key_type> ...]
+                        Specify the key-type of the keys specified by the
+                        '--key' option. Number of values should be the same as
+                        the number of keys specified by the '--key' option. If
+                        '--key-type' is not passed, default key_type of all
+                        keys is assumed to be \"rsa\".
   -g [<id> [<id> ...]], --gpg [<id> [<id> ...]]
                         GPG keyid used to sign the passed link or layout
                         metadata or to verify its signatures. If passed
@@ -151,8 +157,17 @@ def _sign_and_dump_metadata(metadata, args):
     # Alternatively we iterate over passed private key paths `--key KEYPATH ...`
     # load the corresponding key from disk and sign with it
     elif args.key != None: # pragma: no branch
-      for key_path in args.key:
-        key = util.prompt_import_rsa_key_from_file(key_path)
+
+      if args.key_type is None:
+        args.key_type = [util.KEY_TYPE_RSA] * len(args.key)
+
+      if len(args.key_type) != len(args.key):
+        raise securesystemslib.exceptions.FormatError(
+          "number of key_types should match with the number"
+          " of keys specified")
+
+      for idx, key_path in enumerate(args.key):
+        key = util.import_private_key_from_file(key_path, args.key_type[idx])
         signature = metadata.sign(key)
 
     # If `--output` was specified we store the signed link or layout metadata
@@ -203,7 +218,8 @@ def _verify_metadata(metadata, args):
   try:
     # Load pubkeys from disk ....
     if args.key != None:
-      pub_key_dict = util.import_rsa_public_keys_from_files_as_dict(args.key)
+      pub_key_dict = util.import_public_keys_from_files_as_dict(args.key,
+          args.key_type)
 
     # ... or from gpg keyring
     elif args.gpg != None: # pragma: no branch
@@ -315,6 +331,14 @@ examples:
   parser.add_argument("-k", "--key", nargs="+", metavar="<path>", help=(
       "Path(s) to PEM formatted key file(s), used to sign the passed link or"
       " layout metadata or to verify its signatures."))
+
+  parser.add_argument("-t", "--key-type", dest="key_type",
+      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      nargs="+", help=(
+      "Specify the key-type of the keys specified by the '--key'"
+      " option. Number of values should be the same as the number of keys"
+      " specified by the '--key' option. If '--key-type' is not passed,"
+      " default key_type of all keys is assumed to be \"rsa\"."))
 
   parser.add_argument("-g", "--gpg", nargs="*", metavar="<id>", help=(
       "GPG keyid used to sign the passed link or layout metadata or to verify"

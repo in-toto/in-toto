@@ -24,6 +24,15 @@ import unittest
 import argparse
 import shutil
 import tempfile
+
+
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
+
+else:
+  import mock
+
 from mock import patch
 
 import in_toto.util
@@ -60,8 +69,11 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
     self.gpg_keyid = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
 
-    self.key_path = "test_key"
-    in_toto.util.generate_and_write_rsa_keypair(self.key_path)
+    self.rsa_key_path = "test_key_rsa"
+    in_toto.util.generate_and_write_rsa_keypair(self.rsa_key_path)
+
+    self.ed25519_key_path = "test_key_ed25519"
+    in_toto.util.generate_and_write_ed25519_keypair(self.ed25519_key_path)
 
     self.test_artifact1 = "test_artifact1"
     self.test_artifact2 = "test_artifact2"
@@ -79,48 +91,83 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
   def test_start_stop(self):
     """Test CLI command record start/stop with various arguments. """
 
-    # Start/stop recording
-    args = ["--step-name", "test1", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
 
-    # Start/stop with recording one artifact
-    args = ["--step-name", "test2", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact1], 0)
+      # Start/stop recording using rsa key
+      args = ["--step-name", "test1", "--key", self.rsa_key_path]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
-    # Start/stop with excluding one artifact
-    args = ["--step-name", "test2.5", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1, "--exclude", "test*"], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact1, "--exclude", "test*"], 0)
+      # Start/stop with recording one artifact using rsa key
+      args = ["--step-name", "test2", "--key", self.rsa_key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1], 0)
 
-    # Start/stop with base-path
-    args = ["--step-name", "test2.6", "--key", self.key_path, "--base-path",
-        self.test_dir]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop with excluding one artifact using rsa key
+      args = ["--step-name", "test2.5", "--key", self.rsa_key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, "--exclude", "test*"], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1, "--exclude", "test*"], 0)
 
-    # Start/stop with recording multiple artifacts
-    args = ["--step-name", "test3", "--key", self.key_path]
-    self.assert_cli_sys_exit(["start"] + args + ["--materials",
-        self.test_artifact1, self.test_artifact2], 0)
-    self.assert_cli_sys_exit(["stop"] + args + ["--products",
-        self.test_artifact2, self.test_artifact2], 0)
+      # Start/stop with base-path using rsa key
+      args = ["--step-name", "test2.6", "--key", self.rsa_key_path, "--base-path",
+          self.test_dir]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
-    # Start/stop sign with specified gpg keyid
-    args = ["--step-name", "test5", "--gpg", self.gpg_keyid, "--gpg-home",
-        self.gnupg_home]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop with recording multiple artifacts using rsa key
+      args = ["--step-name", "test3", "--key", self.rsa_key_path]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, self.test_artifact2], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact2, self.test_artifact2], 0)
 
-    # Start/stop sign with default gpg keyid
-    args = ["--step-name", "test6", "--gpg", "--gpg-home", self.gnupg_home]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
+      # Start/stop recording using ed25519 key
+      args = ["--step-name", "test4", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
+
+      # Start/stop with recording one artifact using ed25519 key
+      args = ["--step-name", "test5", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1], 0)
+
+      # Start/stop with excluding one artifact using ed25519 key
+      args = ["--step-name", "test5.5", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, "--exclude", "test*"], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact1, "--exclude", "test*"], 0)
+
+      # Start/stop with base-path using ed25519 key
+      args = ["--step-name", "test5.6", "--key", self.ed25519_key_path,
+          "--key-type", "ed25519", "--base-path", self.test_dir]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
+
+      # Start/stop with recording multiple artifacts using ed25519 key
+      args = ["--step-name", "test6", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
+      self.assert_cli_sys_exit(["start"] + args + ["--materials",
+          self.test_artifact1, self.test_artifact2], 0)
+      self.assert_cli_sys_exit(["stop"] + args + ["--products",
+          self.test_artifact2, self.test_artifact2], 0)
+
+      # Start/stop sign with specified gpg keyid
+      args = ["--step-name", "test7", "--gpg", self.gpg_keyid, "--gpg-home",
+          self.gnupg_home]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
+
+      # Start/stop sign with default gpg keyid
+      args = ["--step-name", "test8", "--gpg", "--gpg-home", self.gnupg_home]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + args, 0)
 
 
 
@@ -155,8 +202,15 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
 
   def test_missing_unfinished_link(self):
     """Error exit with missing unfinished link file. """
-    args = ["--step-name", "no-link", "--key", self.key_path]
-    self.assert_cli_sys_exit(["stop"] + args, 1)
+    args = ["--step-name", "no-link", "--key", self.rsa_key_path]
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(["stop"] + args, 1)
+
+    args = ["--step-name", "no-link", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(["stop"] + args, 1)
 
 
 if __name__ == '__main__':
