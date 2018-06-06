@@ -50,34 +50,6 @@ import in_toto.rulelib
 log = logging.getLogger(__name__)
 
 
-def _sanitize_parameter_dictionary(parameter_dictionary):
-  """
-  <Purpose>
-    Internal dictionary that ensures that the parameter dictionary:
-      - only consists of string-based keys
-      - All values are strings
-      - None of the keys have any characters outside of the allowed character
-        set ([a-zA-Z0-9-_]).
-
-  <Arguments>
-    parameter_dictionary:
-      The dictionary to verify.
-
-  <Exceptions>
-    SchemaMismatchError if the dictionary doesn't comply with the requirements
-    described above.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    None.
-  """
-  for key in parameter_dictionary:
-    in_toto.formats.PARAMETER_DICTIONARY_KEY.check_match(key)
-    in_toto.formats.PARAMETER_DICTIONARY_VALUE.check_match(parameter_dictionary[key])
-
-
 def _raise_on_bad_retval(return_value, command=None):
   """
   <Purpose>
@@ -292,7 +264,7 @@ def substitute_parameters(layout, parameter_dictionary):
     The layout object will have any tags replaced with the corresponding
     values defined in the parameter dictionary.
   """
-  _sanitize_parameter_dictionary(parameter_dictionary)
+  in_toto.formats.PARAMETER_DICTIONARY_SCHEMA.check_match(parameter_dictionary)
 
   for step in layout.steps:
 
