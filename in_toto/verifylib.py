@@ -268,35 +268,51 @@ def substitute_parameters(layout, parameter_dictionary):
 
   for step in layout.steps:
 
-    step.expected_command = [x.format(**parameter_dictionary) for x in step.expected_command]
-
     new_material_rules = []
     for rule in step.expected_materials:
-      new_rule = [x.format(**parameter_dictionary) for x in rule]
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
       new_material_rules.append(new_rule)
 
     new_product_rules = []
     for rule in step.expected_products:
-      new_rule = [x.format(**parameter_dictionary) for x in rule]
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
       new_product_rules.append(new_rule)
 
+    new_expected_command = []
+    for argv in step.expected_command:
+      new_expected_command.append(argv.format(**parameter_dictionary))
+
+    step.expected_command = new_expected_command
     step.expected_materials = new_material_rules
     step.expected_products = new_product_rules
 
   for inspection in layout.inspect:
+    
+    new_material_rules = []
+    for rule in inspection.expected_materials:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_material_rules.append(new_rule)
 
-    inspection.expected_materials = [
-        [ s.format(**parameter_dictionary) for s in m ] \
-        for m in inspection.expected_materials
-    ]
+    new_product_rules = []
+    for rule in inspection.expected_products:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_product_rules.append(new_rule)
 
-    inspection.expected_products = [
-        [ s.format(**parameter_dictionary) for s in p ] \
-        for p in inspection.expected_products
-    ]
+    new_run = []
+    for argv in inspection.run:
+      new_run.append(argv.format(**parameter_dictionary))
 
-    new_run = [x.format(**parameter_dictionary) for x in inspection.run]
     inspection.run = new_run
+    inspection.expected_materials = new_material_rules
+    inspection.expected_products = new_product_rules
 
 
 

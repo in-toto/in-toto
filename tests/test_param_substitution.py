@@ -56,7 +56,16 @@ class Test_SubstituteArtifacts(unittest.TestCase):
   def setUp(self):
     self.layout = Layout.read({
         "_type": "layout",
-        "inspect": [],
+        "inspect": [{
+          "name": "do-the-thing",
+          "expected_materials": [
+            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM", 
+              "{SOURCE_STEP}"]
+          ],
+          "expected_products": [
+            ["CREATE", "{NEW_THING}"]
+          ]
+        }],
         "steps": [{
           "name": "artifacts",
           "expected_command": [],
@@ -77,6 +86,10 @@ class Test_SubstituteArtifacts(unittest.TestCase):
     self.assertEquals(self.layout.steps[0].expected_materials[0][1], "vim")
     self.assertEquals(self.layout.steps[0].expected_materials[0][5], "source_step")
     self.assertEquals(self.layout.steps[0].expected_products[0][1], "new_thing")
+    self.assertEquals(self.layout.inspect[0].expected_materials[0][1], "vim")
+    self.assertEquals(self.layout.inspect[0].expected_materials[0][5], "source_step")
+    self.assertEquals(self.layout.inspect[0].expected_products[0][1], "new_thing")
+
 
 
   def test_substitute_no_var(self):
@@ -127,8 +140,7 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
         "steps": [{
           "name": "run-command",
           "expected_command": ["{EDITOR}"],
-        }]
-      })
+        }]})
 
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""
