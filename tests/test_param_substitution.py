@@ -2,19 +2,21 @@
 
 """
 <Program Name>
-  test_verifylib.py
+  test_param_substitution.py
 
 <Author>
-  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres-Arias <santiago@nyu.edu>
 
 <Started>
-  Nov 07, 2016
+  May 15, 2018
 
 <Copyright>
   See LICENSE for licensing information.
 
 <Purpose>
-  Test verifylib functions.
+  Test the parameter substitution functions within verifylib. These tests were
+  placed in a separate module to ease refactoring in case the substitution
+  layer is to be removed.
 
 """
 
@@ -43,7 +45,7 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
 from in_toto.exceptions import (RuleVerificationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
-from in_toto.util import import_rsa_key_from_file, import_rsa_public_keys_from_files_as_dict
+from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
 import in_toto.gpg.functions
 
 import securesystemslib.exceptions
@@ -187,7 +189,7 @@ class Test_SubstituteOnVerify(unittest.TestCase):
 
     # load alice's key
     self.alice = import_rsa_key_from_file("alice")
-    self.alice_pub_dict = import_rsa_public_keys_from_files_as_dict(
+    self.alice_pub_dict = import_public_keys_from_files_as_dict(
         ["alice.pub"])
 
   @classmethod

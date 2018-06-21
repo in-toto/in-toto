@@ -257,8 +257,12 @@ def substitute_parameters(layout, parameter_dictionary):
             A dictionary containing key-value pairs for substitution.
 
   <Exceptions>
-    securesystemslib.FormatException:
+    securesystemslib.exceptions.FormatError:
       if the parameter dictionary is malformed.
+
+    KeyError:
+      if one of the keys in the parameter dictionary are not present for
+      substitution
 
   <Side Effects>
     The layout object will have any tags replaced with the corresponding
