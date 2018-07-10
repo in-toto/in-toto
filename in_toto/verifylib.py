@@ -4,6 +4,7 @@
 
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres-Arias <santiago@nyu.edu>
 
 <Started>
   June 28, 2016
@@ -47,6 +48,7 @@ import in_toto.rulelib
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
+
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -238,6 +240,84 @@ def verify_layout_expiration(layout):
   expire_datetime = iso8601.parse_date(layout.expires)
   if expire_datetime < datetime.datetime.now(tz.tzutc()):
     raise LayoutExpiredError("Layout expired")
+
+
+def substitute_parameters(layout, parameter_dictionary):
+  """
+  <Purpose>
+    This function is a transitionary measure for parameter substitution (or
+    any other solution defined by the in-toto team). As of now, it acts as 
+    a very simple replacement layer for python-like parameters
+
+  <Arguments>
+    layout:
+            The Layout object to process.
+
+      parameter_dictionary:
+            A dictionary containing key-value pairs for substitution.
+
+  <Exceptions>
+    securesystemslib.exceptions.FormatError:
+      if the parameter dictionary is malformed.
+
+    KeyError:
+      if one of the keys in the parameter dictionary are not present for
+      substitution
+
+  <Side Effects>
+    The layout object will have any tags replaced with the corresponding
+    values defined in the parameter dictionary.
+  """
+  in_toto.formats.PARAMETER_DICTIONARY_SCHEMA.check_match(parameter_dictionary)
+
+  for step in layout.steps:
+
+    new_material_rules = []
+    for rule in step.expected_materials:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_material_rules.append(new_rule)
+
+    new_product_rules = []
+    for rule in step.expected_products:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_product_rules.append(new_rule)
+
+    new_expected_command = []
+    for argv in step.expected_command:
+      new_expected_command.append(argv.format(**parameter_dictionary))
+
+    step.expected_command = new_expected_command
+    step.expected_materials = new_material_rules
+    step.expected_products = new_product_rules
+
+  for inspection in layout.inspect:
+    
+    new_material_rules = []
+    for rule in inspection.expected_materials:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_material_rules.append(new_rule)
+
+    new_product_rules = []
+    for rule in inspection.expected_products:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_product_rules.append(new_rule)
+
+    new_run = []
+    for argv in inspection.run:
+      new_run.append(argv.format(**parameter_dictionary))
+
+    inspection.run = new_run
+    inspection.expected_materials = new_material_rules
+    inspection.expected_products = new_product_rules
+
 
 
 def verify_layout_signatures(layout_metablock, keys_dict):
@@ -1338,7 +1418,8 @@ def get_summary_link(layout, reduced_chain_link_dict):
   return Metablock(signed=summary_link)
 
 
-def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
+def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
+    substitution_parameters=None):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1348,6 +1429,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
             to be passed, and a valid signature for each passed key.
 
         2.  Verify layout expiration
+
 
         3.  Load link metadata for every Step defined in the layout and
             fail if less links than the defined threshold for a step are found.
@@ -1411,6 +1493,14 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
             corresponding to the steps in the passed layout are loaded.
             Default is the current working directory.
 
+    substitution_parameters: (optional)
+            a dictionary containing key-value pairs for substituting in the 
+            following metadata fields:
+
+              - artifact rules in step and inspection definitions in the layout
+              - the run fields in the inspection definitions
+              - the expected command in the step definitions
+
   <Exceptions>
     None.
 
@@ -1432,6 +1522,11 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path="."):
 
   log.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
+
+  # If there are parameters sent to the tanslation layer, substitute them
+  if substitution_parameters is not None:
+    log.info('Performing parameter substitution...')
+    substitute_parameters(layout, substitution_parameters)
 
   log.info("Reading link metadata files...")
   chain_link_dict = load_links_for_layout(layout, link_dir_path)
