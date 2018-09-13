@@ -43,12 +43,12 @@ def gpg_executable():
   else:
     gpg_exec = settings.get_env().get(GPG_EXECUTABLE_KEY)
 
-  # Third, otherwise, fix it to an expected binary.
-  if gpg_exec:
-    log.debug('gpg_executable: ' + gpg_exec)
-  else:
-    gpg_exec = "gpg2"
-    log.debug('gpg_executable: ' + gpg_exec)
+    # Third, otherwise, fix it to an expected binary.
+    if gpg_exec:
+      log.debug('gpg_executable: ' + gpg_exec)
+    else:
+      gpg_exec = "gpg2"
+      log.debug('gpg_executable: ' + gpg_exec)
 
   # Return executable.
   return gpg_exec
