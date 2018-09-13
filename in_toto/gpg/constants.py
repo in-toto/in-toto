@@ -17,10 +17,25 @@
 """
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
+import in_toto.user_settings as settings
 
-GPG_SIGN_COMMAND = "gpg2 --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
-GPG_EXPORT_PUBKEY_COMMAND = "gpg2 {homearg} --export {keyid}"
-GPG_VERSION_COMMAND = "gpg2 --version"
+# The key used to get user-specified GPG executable from the environment.
+GPG_EXECUTABLE_KEY = "GPG_EXECUTABLE"
+
+# First, try getting the GPG executable from the RC file.
+GPG_EXECUTABLE = settings.get_rc().get(GPG_EXECUTABLE_KEY)
+
+# Second, otherwise, try getting it from environment variables.
+if not GPG_EXECUTABLE:
+  GPG_EXECUTABLE = settings.get_env().get(GPG_EXECUTABLE_KEY)
+
+# Third, otherwise, fix it to an expected binary.
+if not GPG_EXECUTABLE:
+  GPG_EXECUTABLE = "gpg2"
+
+GPG_SIGN_COMMAND = GPG_EXECUTABLE + " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
+GPG_EXPORT_PUBKEY_COMMAND = GPG_EXECUTABLE + " {homearg} --export {keyid}"
+GPG_VERSION_COMMAND = GPG_EXECUTABLE + " --version"
 
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
