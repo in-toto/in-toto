@@ -130,17 +130,18 @@ def parse_pubkey_payload(data):
 def parse_pubkey_bundle(data, keyid):
   """
   <Purpose>
-    Parse the public key data received by GPG_EXPORT_PUBKEY_COMMAND and
-    construct a public key dictionary, containing a master key and optional
-    subkeys, where either the master key or the subkeys are identified by
-    the passed keyid.
+    Parse the public key data received by functions.gpg_export_pubkey_command()
+    and construct a public key dictionary, containing a master key and optional
+    subkeys, where either the master key or the subkeys are identified by the
+    passed keyid.
 
     NOTE: If the keyid matches one of the subkeys, a warning is issued to
     notify the user about potential privilege escalation.
 
   <Arguments>
     data:
-          Public key data as written to stdout by GPG_EXPORT_PUBKEY_COMMAND.
+          Public key data as written to stdout by
+          functions.gpg_export_pubkey_command().
 
   <Exceptions>
     ValueError:

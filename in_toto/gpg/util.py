@@ -209,13 +209,13 @@ def get_version():
     Uses `gpg2 --version` to get the version info of the installed gpg2
     and extracts and returns the version number.
 
-    The executed base command is defined in constants.GPG_VERSION_COMMAND.
+    The executed base command is defined in functions.gpg_version_command().
 
   <Returns>
     Version number string, e.g. "2.1.22"
 
   """
-  command = shlex.split(in_toto.gpg.constants.GPG_VERSION_COMMAND)
+  command = shlex.split(in_toto.gpg.functions.gpg_version_command())
   process = subprocess.Popen(command, stdout=subprocess.PIPE,
       universal_newlines=True)
   full_version_info, junk = process.communicate()
