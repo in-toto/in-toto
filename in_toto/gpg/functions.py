@@ -22,8 +22,9 @@ import logging
 import in_toto.gpg.common
 import in_toto.gpg.exceptions
 import in_toto.gpg.formats
-from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
-    SIGNATURE_HANDLERS, FULLY_SUPPORTED_MIN_VERSION)
+from in_toto.gpg.constants import (GPG_EXECUTABLE_KEY, SIGNATURE_HANDLERS,
+                                   FULLY_SUPPORTED_MIN_VERSION)
+import in_toto.user_settings as settings
 
 import securesystemslib.formats
 
@@ -32,13 +33,47 @@ import securesystemslib.formats
 log = logging.getLogger(__name__)
 
 
+def gpg_executable():
+  # First, try getting the GPG executable from the RC file.
+  gpg_exec = settings.get_rc().get(GPG_EXECUTABLE_KEY)
+
+  # Second, otherwise, try getting it from environment variables.
+  if gpg_exec:
+    log.debug('gpg_executable: ' + gpg_exec)
+  else:
+    gpg_exec = settings.get_env().get(GPG_EXECUTABLE_KEY)
+
+    # Third, otherwise, fix it to an expected binary.
+    if gpg_exec:
+      log.debug('gpg_executable: ' + gpg_exec)
+    else:
+      gpg_exec = "gpg2"
+      log.debug('gpg_executable: ' + gpg_exec)
+
+  # Return executable.
+  return gpg_exec
+
+
+def gpg_sign_command():
+  return gpg_executable() + \
+         " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
+
+
+def gpg_export_pubkey_command():
+  return gpg_executable() + " {homearg} --export {keyid}"
+
+
+def gpg_version_command():
+  return gpg_executable() + " --version"
+
+
 def gpg_sign_object(content, keyid=None, homedir=None):
   """
   <Purpose>
     Calls the gpg2 command line utility to sign the passed content with the key
     identified by the passed keyid from the gpg keyring at the passed homedir.
 
-    The executed base command is defined in constants.GPG_SIGN_COMMAND.
+    The executed base command is defined in gpg_sign_command().
 
     NOTE: On not fully supported versions of GPG, i.e. versions below
     in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION the returned signature
@@ -88,7 +123,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   if homedir:
     homearg = "--homedir {}".format(homedir)
 
-  command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
+  command = gpg_sign_command().format(keyarg=keyarg, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
   signature_data, junk = process.communicate(content)
@@ -192,8 +227,7 @@ def gpg_export_pubkey(keyid, homedir=None):
     Note: The identified key is exported including the corresponding master
     key and all subkeys.
 
-    The executed base command is defined in
-    constants.GPG_EXPORT_PUBKEY_COMMAND.
+    The executed base command is defined in gpg_export_pubkey_command().
 
   <Arguments>
     keyid:
@@ -227,7 +261,7 @@ def gpg_export_pubkey(keyid, homedir=None):
   if homedir:
     homearg = "--homedir {}".format(homedir)
 
-  command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
+  command = gpg_export_pubkey_command().format(keyid=keyid, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
   key_packet, junk = process.communicate()
