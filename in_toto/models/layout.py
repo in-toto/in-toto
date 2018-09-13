@@ -112,6 +112,7 @@ class Layout(Signable):
     self.inspect = kwargs.get("inspect", [])
     self.keys = kwargs.get("keys", {})
     self.readme = kwargs.get("readme", "")
+    self.signartures = kwargs.get("siignature",[])
 
     # Assign a default expiration (one month) if not expiration date is passed
     # TODO: Is one month a sensible default? In any case, we need a valid
@@ -178,6 +179,38 @@ class Layout(Signable):
 
     return Layout(**data)
 
+  def check_key_value(self, **kwargs):
+    layout_keys = ["_type", "expires", "keys", "steps", "inspect", "signatures"]
+    layout_steps_keys = ["_name", "threshold", "expected_materials", "expected_products", "pubkeys", "expected_command"]
+    layout_inspect_keys = ["_name", "expected_materials", "expected_products", "run"]
+    layout_signatures_keys = ["keyid", "method", "sig"]
+
+    # All required keys
+    allowed_keys = set(type for type in layout_keys)
+    allowed_steps_keys = set(type for type in layout_steps_keys)
+    allowed_inspect_keys = set(type for type in layout_inspect_keys)
+    allowed_signatures_keys = set(type for type in layout_signatures_keys)
+
+    # Keys gain from the Kwarges
+    provided_keys = set([type for type in kwargs.get("signed", {}).keys()])
+    provided_steps_keys = set([type for type in kwargs.get("steps", {}).keys()])
+    provided_inspect_keys = set([type for type in kwargs.get("inspect", {}).keys()])
+    provided_signatures_keys = set([type for type in kwargs.get("signatures", {}).keys()])
+
+    # Check for extra key features
+    keys_check = provided_keys - allowed_keys
+    steps_check = provided_steps_keys - allowed_steps_keys
+    inspect_check = provided_inspect_keys - allowed_inspect_keys
+    signatures_check = provided_signatures_keys - allowed_signatures_keys
+
+    if keys_check:
+      raise Exception("The following keys were found but they aren't allowed: {}".format(provided_keys - allowed_keys))
+    if steps_check:
+      raise Exception("The following keys were found but they aren't allowed: {}".format(provided_steps_keys - allowed_steps_keys))
+    if inspect_check:
+      raise Exception("The following keys were found but they aren't allowed: {}".format(provided_inspect_keys - allowed_inspect_keys))
+    if signatures_check:
+      raise Exception("The following keys were found but they aren't allowed: {}".format(provided_signatures_keys - allowed_signatures_keys))
 
   def set_relative_expiration(self, days=0, months=0, years=0):
     """
@@ -221,7 +254,8 @@ class Layout(Signable):
     """
     step_names = []
     for step in self.steps:
-      step_names.append(step.name)
+      if step.name:
+        step_names.append(step.name)
 
     return step_names
 
@@ -295,7 +329,8 @@ class Layout(Signable):
     """
     inspection_names = []
     for inspection in self.inspect:
-      inspection_names.append(inspection.name)
+      if inspection.name:
+        inspection_names.append(inspection.name)
 
     return inspection_names
 
@@ -645,6 +680,7 @@ class SupplyChainItem(ValidationMixin):
     self.expected_products = kwargs.get("expected_products", [])
 
 
+
   def __repr__(self):
     """Returns an indented JSON string of the metadata object. """
     return json.dumps(attr.asdict(self),
@@ -707,22 +743,24 @@ class SupplyChainItem(ValidationMixin):
 
   def _validate_expected_materials(self):
     """Private method to check that material rules are correctly formed."""
-    if type(self.expected_materials) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "Material rules should be a list!")
+    if self.expected_materials:
+      if type(self.expected_materials) != list:
+        raise securesystemslib.exceptions.FormatError(
+            "Material rules should be a list!")
 
-    for rule in self.expected_materials:
-      in_toto.rulelib.unpack_rule(rule)
+      for rule in self.expected_materials:
+        in_toto.rulelib.unpack_rule(rule)
 
 
   def _validate_expected_products(self):
     """Private method to check that product rules are correctly formed."""
-    if type(self.expected_products) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "Product rules should be a list!")
+    if self.expected_products:
+      if type(self.expected_products) != list:
+        raise securesystemslib.exceptions.FormatError(
+            "Product rules should be a list!")
 
-    for rule in self.expected_products:
-      in_toto.rulelib.unpack_rule(rule)
+      for rule in self.expected_products:
+        in_toto.rulelib.unpack_rule(rule)
 
 
 
@@ -822,34 +860,38 @@ class Step(SupplyChainItem):
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to step."""
-    if self._type != "step":
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid _type value for step (Should be 'step')")
+    if self._type:
+      if self._type != "step":
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid _type value for step (Should be 'step')")
 
 
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
-    if type(self.threshold) != int:
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid threshold '{}', value must be an int."
-          .format(self.threshold))
+    if self.threshold:
+      if type(self.threshold) != int:
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid threshold '{}', value must be an int."
+            .format(self.threshold))
 
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
-    if type(self.pubkeys) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "The pubkeys field should be a list!")
+    if self.pubkeys:
+      if type(self.pubkeys) != list:
+        raise securesystemslib.exceptions.FormatError(
+            "The pubkeys field should be a list!")
 
-    for keyid in self.pubkeys:
-      securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
+      for keyid in self.pubkeys:
+        securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
 
 
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
-    if type(self.expected_command) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "The expected command field is malformed!")
+    if self.expected_command:
+      if type(self.expected_command) != list:
+        raise securesystemslib.exceptions.FormatError(
+            "The expected command field is malformed!")
 
 
 
@@ -937,13 +979,15 @@ class Inspection(SupplyChainItem):
 
   def _validate_type(self):
     """Private method to ensure that the type field is set to inspection."""
-    if self._type != "inspection":
-      raise securesystemslib.exceptions.FormatError(
-          "The _type field must be set to 'inspection'!")
+    if self._type:
+      if self._type != "inspection":
+        raise securesystemslib.exceptions.FormatError(
+            "The _type field must be set to 'inspection'!")
 
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
-    if type(self.run) != list:
-      raise securesystemslib.exceptions.FormatError(
-          "The run field is malformed!")
+    if self.run:
+      if type(self.run) != list:
+        raise securesystemslib.exceptions.FormatError(
+            "The run field is malformed!")

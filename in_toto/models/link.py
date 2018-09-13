@@ -19,6 +19,7 @@
 """
 
 import attr
+import json
 import securesystemslib.formats
 from in_toto.models.common import Signable
 
@@ -111,56 +112,69 @@ class Link(Signable):
     """Static method to instantiate a new Link from a Python dictionary """
     return Link(**data)
 
+  def compare_with_link_metadata(self,**kwargs):
+    link_keys = ["_type", "_name", "command", "meterials", "products", "byproducts", "environment"]
+    allowed_keys = set(type for type in link_keys)
+    provided_keys = set([type for type in kwargs.keys()])
+    if provided_keys - allowed_keys:
+      raise Exception("The following keys were found but they aren't allowed: {}".format(provided_keys-allowed_keys))
+
 
   def _validate_type(self):
     """Private method to check that `_type` is set to "link"."""
-    if self._type != "link":
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `_type` must be set to 'link', got: {}"
-          .format(self._type))
+    if self._type:
+      if self._type != "link":
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `_type` must be set to 'link', got: {}"
+            .format(self._type))
 
 
   def _validate_materials(self):
     """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
-    if not isinstance(self.materials, dict):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `materials` must be of type dict, got: {}"
-          .format(type(self.materials)))
+    if self.materials:
+      if not isinstance(self.materials, dict):
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `materials` must be of type dict, got: {}"
+            .format(type(self.materials)))
 
-    for material in list(self.materials.values()):
-      securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
+      for material in list(self.materials.values()):
+        securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
 
 
   def _validate_products(self):
     """Private method to check that `products` is a `dict` of `HASHDICTs`."""
-    if not isinstance(self.products, dict):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `products` must be of type dict, got: {}"
-          .format(type(self.products)))
+    if self.products:
+      if not isinstance(self.products, dict):
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `products` must be of type dict, got: {}"
+            .format(type(self.products)))
 
-    for product in list(self.products.values()):
-      securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
+      for product in list(self.products.values()):
+        securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
 
 
   def _validate_byproducts(self):
     """Private method to check that `byproducts` is a `dict`."""
-    if not isinstance(self.byproducts, dict):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `byproducts` must be of type dict, got: {}"
-          .format(type(self.byproducts)))
+    if self.byproducts:
+      if not isinstance(self.byproducts, dict):
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `byproducts` must be of type dict, got: {}"
+            .format(type(self.byproducts)))
 
 
   def _validate_command(self):
     """Private method to check that `command` is a `list`."""
-    if not isinstance(self.command, list):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `command` must be of type list, got: {}"
-          .format(type(self.command)))
+    if self.command:
+      if not isinstance(self.command, list):
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `command` must be of type list, got: {}"
+            .format(type(self.command)))
 
 
   def _validate_environment(self):
     """Private method to check that `environment` is a `dict`. """
-    if not isinstance(self.environment, dict):
-      raise securesystemslib.exceptions.FormatError(
-          "Invalid Link: field `environment` must be of type dict, got: {}"
-          .format(type(self.environment)))
+    if self.environment:
+      if not isinstance(self.environment, dict):
+        raise securesystemslib.exceptions.FormatError(
+            "Invalid Link: field `environment` must be of type dict, got: {}"
+            .format(type(self.environment)))

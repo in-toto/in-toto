@@ -42,14 +42,16 @@ class Metablock(ValidationMixin):
   signatures = attr.ib()
   signed = attr.ib()
 
-
   def __init__(self, **kwargs):
     self.signatures = kwargs.get("signatures", [])
     self.signed = kwargs.get("signed")
     self.compact_json = kwargs.get("compact_json", False)
 
+    # Todo:add some features here to develop
+    self.keyid = self.signatures["keyid"]
+    self.method = self.signatures["method"]
+    self.log = self.signatures["log"]
     self.validate()
-
 
   def __repr__(self):
     """Returns an indented JSON string of the metadata object. """
@@ -58,8 +60,13 @@ class Metablock(ValidationMixin):
 
     return json.dumps(
         {
-          "signatures": self.signatures,
-          "signed": attr.asdict(self.signed)
+         "signatures": self.signatures,
+          "signed": attr.asdict(self.signed),
+          #Todo:add some features to develop
+          "signatures_keyid": self.keyid,
+          "signatures_method": self.method,
+          "signatures_log": self.log
+
         },
         indent=indent,
         separators=separators,
@@ -86,7 +93,6 @@ class Metablock(ValidationMixin):
     """
     with open(filename, "wb") as fp:
       fp.write("{}".format(self).encode("utf-8"))
-
 
   @staticmethod
   def load(path):
@@ -119,14 +125,18 @@ class Metablock(ValidationMixin):
     if signed_type == "link":
       signed = Link.read(signed_data)
 
-    elif signed_type == "layout":
-      signed = Layout.read(signed_data)
+    #Check the signed_type is actually exist:
+    if signed_type:
+      if signed_type == "link":
+        signed = Link.read(signed_data)
+      elif signed_type == "layout":
+        signed = Layout.read(signed_data)
 
+    # Check the signed_type is actually exist:
     else:
       raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
 
     return Metablock(signatures=signatures, signed=signed)
-
 
   @property
   def type_(self):
@@ -134,7 +144,6 @@ class Metablock(ValidationMixin):
     should be one of "link" or "layout". Trailing underscore used by
     convention (pep8) to avoid conflict with Python's type keyword. """
     return self.signed.type_
-
 
   def sign(self, key):
     """
@@ -185,11 +194,19 @@ class Metablock(ValidationMixin):
     """
     signature = in_toto.gpg.functions.gpg_sign_object(
         self.signed.signable_bytes, gpg_keyid, gpg_home)
-
     self.signatures.append(signature)
-
     return signature
 
+  def verify_signature_before_use(self,verification_key):
+    in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
+    Flag = True
+    if not verification_key["keyid"]:
+      Flag = False
+    if not verification_key["method"]:
+      Falg = False
+    if not verification_key["sig"]:
+      Flag = False
+    return Flag
 
   def verify_signature(self, verification_key):
     """
@@ -237,47 +254,47 @@ class Metablock(ValidationMixin):
     """
     in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
     verification_keyid = verification_key["keyid"]
-
+    if self.verify_signature_before_use(verification_key):
     # Find a signature that corresponds to the keyid of the passed
     # verification key or one of its subkeys
-    signature = None
-    for signature in self.signatures:
-      if signature["keyid"] == verification_keyid:
-        break
+      signature = None
+      for signature in self.signatures:
+        if signature["keyid"] == verification_keyid:
+          break
 
-      elif signature["keyid"] in list(
-          verification_key.get("subkeys", {}).keys()):
-        break
+        elif signature["keyid"] in list(
+            verification_key.get("subkeys", {}).keys()):
+          break
 
-    else:
-      raise SignatureVerificationError("No signature found for key '{}'"
-          .format(verification_keyid))
+      else:
+        raise SignatureVerificationError("No signature found for key '{}'"
+            .format(verification_keyid))
 
-    if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
-      valid = in_toto.gpg.functions.gpg_verify_signature(signature,
-          verification_key, self.signed.signable_bytes)
+      if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
+        valid = in_toto.gpg.functions.gpg_verify_signature(signature,
+            verification_key, self.signed.signable_bytes)
 
-    elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
-      valid = securesystemslib.keys.verify_signature(
-          verification_key, signature, self.signed.signable_dict)
+      elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
+        valid = securesystemslib.keys.verify_signature(
+            verification_key, signature, self.signed.signable_dict)
 
-    else:
-      valid = False
+      else:
+        valid = False
 
-    if not valid:
-      raise SignatureVerificationError("Invalid signature for keyid '{}'"
-          .format(verification_keyid))
+      if not valid:
+        raise SignatureVerificationError("Invalid signature for keyid '{}'".format(verification_keyid))
+
+
 
 
   def _validate_signed(self):
     """Private method to check if the 'signed' attribute contains a valid
     Layout or Link object. """
-
     if not (isinstance(self.signed, Layout) or isinstance(self.signed, Link)):
       raise securesystemslib.exceptions.FormatError("The Metblock's 'signed'"
         " property has has to be of type 'Link' or 'Layout'.")
 
-    # If the signed object is a Link or Layout object validate it.
+      # If the signed object is a Link or Layout object validate it.
     self.signed.validate()
 
 
