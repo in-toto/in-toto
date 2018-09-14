@@ -21,7 +21,6 @@ import subprocess
 
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
-import in_toto.user_settings as settings
 
 # By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
 # exists.
