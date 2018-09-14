@@ -205,13 +205,13 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     # TODO: Do we want to keep the exclude pattern setting?
     exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
-  # Compile the gitignore-style patterns
-  exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
-
   # Apply exclude patterns on the passed artifact paths if available
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
-    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_filter)
+    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
+
+  # Compile the gitignore-style patterns
+  exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
 
   # Iterate over remaining normalized artifact paths
   for artifact in norm_artifacts:
