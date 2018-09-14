@@ -30,6 +30,8 @@ import fnmatch
 import glob
 import logging
 
+from pathspec import PathSpec
+
 import in_toto.settings
 import in_toto.exceptions
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
@@ -78,13 +80,18 @@ def _hash_artifact(filepath, hash_algorithms=None):
   return hash_dict
 
 
-def _apply_exclude_patterns(names, exclude_patterns):
-  """Exclude matched patterns from passed names. """
+def _apply_exclude_patterns(names, exclude_filter):
+  """Exclude matched patterns from passed names."""
+  included = set(names)
 
-  for exclude_pattern in exclude_patterns:
-    excludes = fnmatch.filter(names, exclude_pattern)
-    names = list(set(names) - set(excludes))
-  return names
+  # Assume old way for easier testing
+  if hasattr(exclude_filter, '__iter__'):
+    exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_filter)
+
+  for excluded in exclude_filter.match_files(names):
+    included.discard(excluded)
+
+  return sorted(included)
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
@@ -199,10 +206,13 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     # TODO: Do we want to keep the exclude pattern setting?
     exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
+  # Compile the gitignore-style patterns
+  exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
+
   # Apply exclude patterns on the passed artifact paths if available
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
-    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
+    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_filter)
 
   # Iterate over remaining normalized artifact paths
   for artifact in norm_artifacts:
@@ -224,7 +234,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # If we only applied the patterns below on the subdirectory's
         # containing file paths, we'd have to use a wildcard, e.g.: 'sub*'
         if exclude_patterns:
-          dirpaths = _apply_exclude_patterns(dirpaths, exclude_patterns)
+          dirpaths = _apply_exclude_patterns(dirpaths, exclude_filter)
 
         # Reset and refill dirs with remaining names after exclusion
         # Modify (not reassign) dirnames to only recurse into remaining dirs
@@ -250,7 +260,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
         # Apply exlcude patterns on the normalized file paths returned by walk
         if exclude_patterns:
-          filepaths = _apply_exclude_patterns(filepaths, exclude_patterns)
+          filepaths = _apply_exclude_patterns(filepaths, exclude_filter)
 
         for filepath in filepaths:
           artifacts_dict[filepath] = _hash_artifact(filepath)
