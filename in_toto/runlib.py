@@ -26,7 +26,6 @@
 """
 import sys
 import os
-import fnmatch
 import glob
 import logging
 
