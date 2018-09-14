@@ -3,3 +3,4 @@ attrs
 python-dateutil
 iso8601
 six
+pathspec
