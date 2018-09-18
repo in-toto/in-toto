@@ -473,6 +473,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     byproducts = {}
 
   if product_list:
+    securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
     log.info("Recording products '{}'...".format(", ".join(product_list)))
 
   products_dict = record_artifacts_as_dict(product_list,
