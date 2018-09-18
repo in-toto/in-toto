@@ -112,7 +112,7 @@ class Link(Signable):
     """Static method to instantiate a new Link from a Python dictionary """
     return Link(**data)
 
-  def compare_with_link_metadata(self,**kwargs):
+  def check_link_key_value(self,**kwargs):
     link_keys = ["_type", "_name", "command", "meterials", "products", "byproducts", "environment"]
     allowed_keys = set(type for type in link_keys)
     provided_keys = set([type for type in kwargs.keys()])

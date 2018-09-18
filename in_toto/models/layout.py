@@ -179,7 +179,7 @@ class Layout(Signable):
 
     return Layout(**data)
 
-  def check_key_value(self, **kwargs):
+  def check_layout_key_value(self, **kwargs):
     layout_keys = ["_type", "expires", "keys", "steps", "inspect", "signatures"]
     layout_steps_keys = ["_name", "threshold", "expected_materials", "expected_products", "pubkeys", "expected_command"]
     layout_inspect_keys = ["_name", "expected_materials", "expected_products", "run"]
