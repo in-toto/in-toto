@@ -15,14 +15,28 @@
   aggregates all the constant definitions and lookup structures for signature
   handling
 """
+
+import shlex
+import subprocess
+
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
 
-GPG_SIGN_COMMAND = "gpg2 --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
-GPG_EXPORT_PUBKEY_COMMAND = "gpg2 {homearg} --export {keyid}"
-GPG_VERSION_COMMAND = "gpg2 --version"
-
+# By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
+# exists.
+GPG_COMMAND = "gpg2"
+GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
+
+try:
+  subprocess.check_call(shlex.split(GPG_VERSION_COMMAND))
+except OSError: # pragma: no cover
+  GPG_COMMAND = "gpg"
+  GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
+
+GPG_SIGN_COMMAND = GPG_COMMAND + \
+                   " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
+GPG_EXPORT_PUBKEY_COMMAND = GPG_COMMAND + " {homearg} --export {keyid}"
 
 # The packet header is described in RFC4880 section 4.2, and the respective
 # packet types can be found in sections 5.2 (signature packet), 5.5.1.1
