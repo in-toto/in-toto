@@ -186,16 +186,16 @@ class Layout(Signable):
     layout_signatures_keys = ["keyid", "method", "sig"]
 
     # All required keys
-    allowed_keys = set(type for type in layout_keys)
-    allowed_steps_keys = set(type for type in layout_steps_keys)
-    allowed_inspect_keys = set(type for type in layout_inspect_keys)
-    allowed_signatures_keys = set(type for type in layout_signatures_keys)
+    allowed_keys = set(type_keys for type_keys in layout_keys)
+    allowed_steps_keys = set(type_steps_keys for type_steps_keys in layout_steps_keys)
+    allowed_inspect_keys = set(type_inspect_keys for type_inspect_keys in layout_inspect_keys)
+    allowed_signatures_keys = set(type_signatures_keys for type_signatures_keys in layout_signatures_keys)
 
     # Keys gain from the Kwarges
-    provided_keys = set([type for type in kwargs.get("signed", {}).keys()])
-    provided_steps_keys = set([type for type in kwargs.get("steps", {}).keys()])
-    provided_inspect_keys = set([type for type in kwargs.get("inspect", {}).keys()])
-    provided_signatures_keys = set([type for type in kwargs.get("signatures", {}).keys()])
+    provided_keys = set([type_keys for type_keys in kwargs.get("signed", {}).keys()])
+    provided_steps_keys = set([type_steps_keys for type_steps_keys in kwargs.get("steps", {}).keys()])
+    provided_inspect_keys = set([type_inspect_keys for type_inspect_keys in kwargs.get("inspect", {}).keys()])
+    provided_signatures_keys = set([type_signatures_keys for type_signatures_keys in kwargs.get("signatures", {}).keys()])
 
     # Check for extra key features
     keys_check = provided_keys - allowed_keys

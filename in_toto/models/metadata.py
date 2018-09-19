@@ -62,7 +62,6 @@ class Metablock(ValidationMixin):
         {
          "signatures": self.signatures,
           "signed": attr.asdict(self.signed),
-          #Todo:add some features to develop
           "signatures_keyid": self.keyid,
           "signatures_method": self.method,
           "signatures_log": self.log
@@ -203,7 +202,7 @@ class Metablock(ValidationMixin):
     if not verification_key["keyid"]:
       Flag = False
     if not verification_key["method"]:
-      Falg = False
+      Flag = False
     if not verification_key["sig"]:
       Flag = False
     return Flag

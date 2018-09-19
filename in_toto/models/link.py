@@ -114,8 +114,8 @@ class Link(Signable):
 
   def check_link_key_value(self,**kwargs):
     link_keys = ["_type", "_name", "command", "meterials", "products", "byproducts", "environment"]
-    allowed_keys = set(type for type in link_keys)
-    provided_keys = set([type for type in kwargs.keys()])
+    allowed_keys = set(type_link_keys for type_link_keys in link_keys)
+    provided_keys = set([type_link_keys for type_link_keys in kwargs.keys()])
     if provided_keys - allowed_keys:
       raise Exception("The following keys were found but they aren't allowed: {}".format(provided_keys-allowed_keys))
 
