@@ -72,6 +72,10 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
+    # find where the scripts directory is located.
+    scripts_directory = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "scripts")
+
 
     # Create and change into temporary directory
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
@@ -80,6 +84,7 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
     # Copy demo files to temp dir
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
     layout_template = Metablock.load("demo.layout.template")
@@ -247,11 +252,18 @@ class TestInTotoVerifyToolGPG(tests.common.CliTestCase):
     # Copy gpg demo metadata files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files_gpg")
+
+    # find where the scripts directory is located.
+    scripts_directory = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "scripts")
+
+
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # Change into test dir
     os.chdir(self.test_dir)
+    shutil.copytree(scripts_directory, 'scripts')
 
     # Sign layout template with gpg key
     layout_template = Metablock.load("demo.layout.template")

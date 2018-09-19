@@ -67,7 +67,7 @@ class TestInTotoMockTool(tests.common.CliTestCase):
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
 
-    args = ["--name", self.test_step, "--", "echo", "test"]
+    args = ["--name", self.test_step, "--", "python", "--version"]
     self.assert_cli_sys_exit(args, 0)
 
     self.assertTrue(os.path.exists(self.test_link))

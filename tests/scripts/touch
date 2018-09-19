@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+"""
+  <description>
+    this is a mock touch command written to provide portability
+    to non-unix platforms that don't have the touch command. It
+    uses touchfile to replace the very baseline functionality used
+    within the in-toto test suite.
+
+  <Usage>
+    You will probably find a couple of tests decorated as follows:
+
+    @mock.patch.dict(os.environ, $PATH_TO_THIS FOLDER)
+    def test_that_requires_to_execute_touch(...)
+        ...
+
+    This will automatically make it so that in-toto popens this touch executable
+    instead of the system's touch.
+
+    This script is *not* meant to do thorough checking of its inputs, so use
+    it with care.
+
+  <Author>
+    Santiago Torres-Arias <santiago@nyu.edu>
+
+  <Date>
+    1527623020
+"""
+import sys
+
+open(sys.argv[1], "a+").close()
+sys.exit(0)

@@ -86,7 +86,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
   homearg = ""
   if homedir:
-    homearg = "--homedir {}".format(homedir)
+    homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
@@ -225,12 +225,12 @@ def gpg_export_pubkey(keyid, homedir=None):
 
   homearg = ""
   if homedir:
-    homearg = "--homedir {}".format(homedir)
+    homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-  key_packet, junk = process.communicate()
+  key_packet, errors = process.communicate()
 
   key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
 
