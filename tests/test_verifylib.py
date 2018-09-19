@@ -1298,8 +1298,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 
-
-
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
   """
   Test the following 8 scenarios for combinations of link authorization,
