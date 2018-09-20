@@ -442,7 +442,8 @@ class TestInTotoRun(unittest.TestCase):
 
   def test_in_toto_run_verify_workdir(self):
     """Successfully run, verify cwd. """
-    link = in_toto_run(self.step_name, [], [], ["python", "--version"])
+    link = in_toto_run(self.step_name, [], [], ["python", "--version"],
+        record_environment=True)
     self.assertEquals(link.signed.environment["workdir"], os.getcwd())
 
   def test_in_toto_bad_signing_key_format(self):
@@ -556,7 +557,7 @@ class TestInTotoRecordStop(unittest.TestCase):
 
   def test_create_metadata_with_expected_cwd(self):
     """Test record start/stop run, verify cwd. """
-    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_start(self.step_name, [], self.key, record_environment=True)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
     self.assertEquals(link.signed.environment["workdir"], os.getcwd())
