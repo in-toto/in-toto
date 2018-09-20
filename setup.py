@@ -33,7 +33,7 @@
 """
 from setuptools import setup, find_packages
 
-version = "0.2.3.dev2"
+version = "0.2.3.dev3"
 
 setup(
   name="in-toto",
