@@ -8,6 +8,7 @@
 * Smartly figure out which version of gpg to run
 * Add a substitution layer to support parameter substitution upon verficiation.
 * Fix the firewall rules to better fully with the specification.
+* Add a flag to make workdir recording optional and disabled by default
 
 ## in-toto v0.2.2
 
