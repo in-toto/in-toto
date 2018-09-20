@@ -374,7 +374,7 @@ def _check_match_signing_key(signing_key):
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
-    base_path=None):
+    base_path=None, compact_json=False):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -428,6 +428,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             current working directory.
             NOTE: The base_path part of the recorded material is not included
             in the resulting preliminary link's material/product sections.
+    compact_json: (optional)
+            Whether or not to use the most compact json representation.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -485,7 +487,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
       byproducts=byproducts, environment={"workdir": os.getcwd()})
 
-  link_metadata = Metablock(signed=link)
+  link_metadata = Metablock(signed=link, compact_json=compact_json)
 
   signature = None
   if signing_key:
