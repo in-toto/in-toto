@@ -262,7 +262,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           filepaths = _apply_exclude_patterns(filepaths, exclude_filter)
 
         for filepath in filepaths:
-          artifacts_dict[filepath] = _hash_artifact(filepath)
+          # FIXME: this is necessary to provide consisency between windows filepaths and
+          # *nix filepaths. A better solution may be in order though...
+          normalized_filepath = filepath.replace("\\", "/")
+          artifacts_dict[normalized_filepath] = _hash_artifact(filepath)
 
     # Path is no file and no directory
     else:

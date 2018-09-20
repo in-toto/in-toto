@@ -26,6 +26,7 @@ import in_toto.gpg.dsa as dsa
 # exists.
 GPG_COMMAND = "gpg2"
 GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
+
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
 try:

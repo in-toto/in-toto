@@ -83,13 +83,17 @@ class TestRunAllInspections(unittest.TestCase):
     Create layout with dummy inpsection.
     Create and change into temp test directory with dummy artifact."""
 
+    # find where the scripts directory is located.
+    scripts_directory = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "scripts")
+
     # Create layout with one inspection
     self.layout = Layout.read({
         "_type": "layout",
         "steps": [],
         "inspect": [{
           "name": "touch-bar",
-          "run": ["touch", "bar"],
+          "run": ["python", os.path.join(scripts_directory, "touch"), "bar"],
         }]
       })
 
@@ -127,7 +131,7 @@ class TestRunAllInspections(unittest.TestCase):
         "steps": [],
         "inspect": [{
           "name": "non-zero-inspection",
-          "run": ["expr", "1", "/", "0"],
+          "run": ["python", "./scripts/expr", "1", "/", "0"],
         }]
     })
     with self.assertRaises(BadReturnValueError):
@@ -887,6 +891,10 @@ class TestInTotoVerify(unittest.TestCase):
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
+    # find where the scripts directory is located.
+    scripts_directory = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "scripts")
+
     # Create and change into temporary directory
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
@@ -894,6 +902,9 @@ class TestInTotoVerify(unittest.TestCase):
     # Copy demo files to temp dir
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    # copy scripts over
+    shutil.copytree(scripts_directory, "scripts")
 
     # Load layout template
     layout_template = Metablock.load("demo.layout.template")
@@ -959,7 +970,7 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
-    layout.signed.inspect[0].run = ["expr",  "1", "/", "0"]
+    layout.signed.inspect[0].run = ["python", "./scripts/expr",  "1", "/", "0"]
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
@@ -1399,6 +1410,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     layout, chain_link_dict = self._verify_link_signature_tresholds(
         self.master2, self.master2, self.master2)
 
+    #print("path: {}".format(os.environ['PATH']))
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
@@ -1445,8 +1457,6 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
 
 
 
-
-
 class TestVerifySublayouts(unittest.TestCase):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
   Call with one-step super layout that has a sublayout (demo layout). """
@@ -1464,6 +1474,10 @@ class TestVerifySublayouts(unittest.TestCase):
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
+    # find where the scripts directory is located.
+    scripts_directory = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "scripts")
+
     # Create and change into temporary directory
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
@@ -1471,6 +1485,9 @@ class TestVerifySublayouts(unittest.TestCase):
     # Copy demo files to temp dir
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    # copy portable scripts over
+    shutil.copytree(scripts_directory, 'scripts')
 
     # Import sub layout signing (private) and verifying (public) keys
     alice = import_rsa_key_from_file("alice")

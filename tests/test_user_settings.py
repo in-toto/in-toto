@@ -43,7 +43,7 @@ class TestUserSettings(unittest.TestCase):
 
     os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"] = "e:n:v"
     os.environ["IN_TOTO_ARTIFACT_BASE_PATH"] = "e/n/v"
-    os.environ["IN_TOTO_not_whitelisted"] = "parsed"
+    os.environ["IN_TOTO_NOT_WHITELISTED"] = "parsed"
     os.environ["NOT_PARSED"] = "ignored"
 
 
@@ -59,7 +59,7 @@ class TestUserSettings(unittest.TestCase):
     # ... and delete test environment variables
     del os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"]
     del os.environ["IN_TOTO_ARTIFACT_BASE_PATH"]
-    del os.environ["IN_TOTO_not_whitelisted"]
+    del os.environ["IN_TOTO_NOT_WHITELISTED"]
     del os.environ["NOT_PARSED"]
 
 
@@ -87,7 +87,7 @@ class TestUserSettings(unittest.TestCase):
         ["e", "n", "v"])
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
-    self.assertEquals(env_dict["not_whitelisted"], "parsed")
+    self.assertEquals(env_dict["NOT_WHITELISTED"], "parsed")
 
     # Not parsed because of missing prefix
     self.assertFalse("NOT_PARSED" in env_dict)
@@ -110,9 +110,9 @@ class TestUserSettings(unittest.TestCase):
         "NEW_RC_SETTING")
 
     # Not whitelisted envvars are ignored by `set_settings`
-    self.assertTrue("not_whitelisted" in in_toto.user_settings.get_env())
+    self.assertTrue("NOT_WHITELISTED" in in_toto.user_settings.get_env())
     self.assertRaises(AttributeError, getattr, in_toto.settings,
-        "not_whitelisted")
+        "NOT_WHITELISTED")
 
 if __name__ == "__main__":
   unittest.main()
