@@ -230,7 +230,7 @@ def gpg_export_pubkey(keyid, homedir=None):
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
       stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-  key_packet, errors = process.communicate()
+  key_packet, _ = process.communicate()
 
   key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
 
