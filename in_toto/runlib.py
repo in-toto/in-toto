@@ -216,6 +216,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Iterate over remaining normalized artifact paths
   for artifact in norm_artifacts:
     if os.path.isfile(artifact):
+      # FIXME: this is necessary to provide consisency between windows filepaths and
+      # *nix filepaths. A better solution may be in order though...
+      artifact = artifact.replace('\\', '/')
+
       # Path was already normalized above
       artifacts_dict[artifact] = _hash_artifact(artifact)
 
