@@ -2,6 +2,9 @@
 
 ## in-toto v0.2.3
 
+* Add windows support
+* Add a flag to serialize compact/minified metadata
+* Support .gitignore-like patterns
 * Smartly figure out which version of gpg to run
 * Add a substitution layer to support parameter substitution upon verficiation.
 * Fix the firewall rules to better fully with the specification.
