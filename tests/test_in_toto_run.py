@@ -102,7 +102,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def test_main_required_args(self):
     """Test CLI command with required arguments. """
 
-    args = ["--step-name", self.test_step, "--key", self.key_path, "--",
+    args = ["--step-name", self.test_step, "--key", self.rsa_key_path, "--",
         "python", "--version"]
 
     # Give wrong password whenever prompted.

@@ -185,6 +185,9 @@ class TestInTotoVerifyToolMixedKeys(tests.common.CliTestCase):
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
+    scripts_directory = os.path.join(
+      os.path.dirname(os.path.realpath(__file__)), "scripts")
+
     # Create and change into temporary directory
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
@@ -192,6 +195,8 @@ class TestInTotoVerifyToolMixedKeys(tests.common.CliTestCase):
     # Copy demo files to temp dir
     for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+    shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
     layout_template = Metablock.load("demo.layout.template")
