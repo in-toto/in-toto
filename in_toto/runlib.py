@@ -377,7 +377,7 @@ def _check_match_signing_key(signing_key):
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
-    base_path=None, compact_json=False):
+    base_path=None, compact_json=False, record_environment=False):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -433,6 +433,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             in the resulting preliminary link's material/product sections.
     compact_json: (optional)
             Whether or not to use the most compact json representation.
+    record_environment: (optional)
+            if values such as workdir should be recorded  on the environment
+            dictionary (false by default)
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -486,9 +489,13 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       follow_symlink_dirs=True)
 
   log.info("Creating link metadata...")
+  environment = {}
+  if record_environment:
+    environment['workdir'] = os.getcwd()
+
   link = in_toto.models.link.Link(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
-      byproducts=byproducts, environment={"workdir": os.getcwd()})
+      byproducts=byproducts, environment=environment)
 
   link_metadata = Metablock(signed=link, compact_json=compact_json)
 
@@ -517,7 +524,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
 def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None):
+    exclude_patterns=None, base_path=None, record_environment=False):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -553,6 +560,9 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
             current working directory.
             NOTE: The base_path part of the recorded materials is not included
             in the resulting preliminary link's material section.
+    record_environment: (optional)
+            if values such as workdir should be recorded  on the environment
+            dictionary (false by default)
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -600,9 +610,13 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
       follow_symlink_dirs=True)
 
   log.info("Creating preliminary link metadata...")
+  environment = {}
+  if record_environment:
+    environment['workdir'] = os.getcwd()
+
   link = in_toto.models.link.Link(name=step_name,
           materials=materials_dict, products={}, command=[], byproducts={},
-          environment={"workdir": os.getcwd()})
+          environment=environment)
 
   link_metadata = Metablock(signed=link)
 
