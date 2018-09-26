@@ -40,3 +40,7 @@ ARTIFACT_EXCLUDE_PATTERNS = ["*.link*", ".git", "*.pyc", "*~"]
 # If not set the current working directory is used as base path
 # FIXME: Do we want different base paths for materials and products?
 ARTIFACT_BASE_PATH = None
+
+# If the process does not terminate after timeout seconds, a
+# subprocess.TimeoutExpired exception will be raised.
+SUBPROCESS_TIMEOUT = 5

@@ -16,11 +16,10 @@
   handling
 """
 
-import shlex
-import subprocess
-
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
+
+import in_toto.process as process
 
 # By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
 # exists.
@@ -30,7 +29,7 @@ GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
 try:
-  subprocess.check_call(shlex.split(GPG_VERSION_COMMAND))
+  process.check_call_no_stdout_no_stderr(GPG_VERSION_COMMAND)
 except OSError: # pragma: no cover
   GPG_COMMAND = "gpg"
   GPG_VERSION_COMMAND = GPG_COMMAND + " --version"

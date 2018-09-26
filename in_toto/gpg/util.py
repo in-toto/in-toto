@@ -16,8 +16,6 @@
 """
 import struct
 import binascii
-import subprocess
-import shlex
 import re
 
 from distutils.version import StrictVersion # pylint: disable=no-name-in-module,import-error
@@ -26,7 +24,7 @@ import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
 
 import in_toto.gpg.exceptions
-
+import in_toto.process
 
 def get_mpi_length(data):
   """
@@ -215,10 +213,9 @@ def get_version():
     Version number string, e.g. "2.1.22"
 
   """
-  command = shlex.split(in_toto.gpg.constants.GPG_VERSION_COMMAND)
-  process = subprocess.Popen(command, stdout=subprocess.PIPE,
-      universal_newlines=True)
-  full_version_info, junk = process.communicate()
+  command = in_toto.gpg.constants.GPG_VERSION_COMMAND
+  full_version_info = in_toto.process.check_output_no_stdin_no_stderr(command,
+                        universal_newlines=True)
 
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
 
