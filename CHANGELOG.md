@@ -1,5 +1,16 @@
 # Changelog
 
+## in-toto v0.2.3 
+
+* Smartly figure out which version of gpg to run
+* Add a substitution layer to support parameter substitution upon verficiation.
+* Fix the firewall rules to better fully with the specification.
+* Add a flag to make workdir recording optional and disabled by default
+* add windows support:
+    - support path separators under windows
+    - add newline normalization under windows
+
+
 ## in-toto v0.2.2
 
 * Add support for gpg signing subkeys.
