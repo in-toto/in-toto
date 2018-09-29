@@ -70,7 +70,7 @@ setup(
   ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.2", "attrs",
+  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
                     "python-dateutil", "iso8601", "pathspec", "subprocess32"],
   test_suite="tests.runtests",
   entry_points={

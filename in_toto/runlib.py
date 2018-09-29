@@ -58,7 +58,7 @@ def _hash_artifact(filepath, hash_algorithms=None):
   hash_dict = {}
 
   for algorithm in hash_algorithms:
-    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm)
+    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm, normalize_line_endings=True)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
   securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
