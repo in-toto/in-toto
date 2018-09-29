@@ -43,4 +43,4 @@ ARTIFACT_BASE_PATH = None
 
 # If the process does not terminate after timeout seconds, a
 # subprocess.TimeoutExpired exception will be raised.
-SUBPROCESS_TIMEOUT = 5
+SUBPROCESS_TIMEOUT = 3

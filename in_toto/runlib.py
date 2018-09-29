@@ -300,11 +300,14 @@ def execute_link(link_cmd_args, record_streams):
     - The return value of the executed command.
   """
   if record_streams:
-    process = in_toto.process.run_pipe_stdout_pipe_stderr(link_cmd_args)
+    process = in_toto.process.run(link_cmd_args, check=False,
+      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE,
+      universal_newlines=True)
     stdout_str, stderr_str = process.stdout, process.stderr
 
   else:
-    process = in_toto.process.run_no_stdout_no_stderr(link_cmd_args)
+    process = in_toto.process.run(link_cmd_args, check=False,
+      stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
     stdout_str = stderr_str = ""
 
   return {

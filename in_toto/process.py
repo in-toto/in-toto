@@ -12,44 +12,20 @@ else: # pragma: no cover
 
 import in_toto.formats as formats
 
+
+# Constants.
 from in_toto.settings import SUBPROCESS_TIMEOUT
+DEVNULL = subprocess.DEVNULL
+PIPE = subprocess.PIPE
 
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
 
-def shlex_split(cmd):
-  """
-  <Purpose>
-    Splits a string specifying a command and its argument into a list of
-    substrings, if necessary.
-
-  <Arguments>
-    cmd:
-            The command and its arguments. (str | list)
-
-  <Exceptions>
-    securesystemslib.exceptions.FormatError:
-            If the cmd as list does not match
-            in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    A list of strings matching in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.
-
-  """
-  if isinstance(cmd, six.string_types):
-    cmd = shlex.split(cmd)
-  else:
-    formats.LIST_OF_ANY_STRING_SCHEMA.check_match(cmd)
-  return cmd
-
-
 # TODO: Properly duplicate standard streams (issue #11)
-def run_pipe_stdout_pipe_stderr(cmd):
+def run(cmd, check=True, _input=None, stdin=None, stdout=None, stderr=None,
+        timeout=SUBPROCESS_TIMEOUT, universal_newlines=False):
   """
   <Purpose>
     Run the specified command, WITHOUT writing to standard input, and WITHOUT
@@ -58,107 +34,61 @@ def run_pipe_stdout_pipe_stderr(cmd):
 
   <Arguments>
     cmd:
-            The command and its arguments. (list of str)
+            The command and its arguments. (list of str, or str)
+            Splits a string specifying a command and its argument into a list
+            of substrings, if necessary.
 
-  <Exceptions>
-    OSError:
-            If the given command is not present or non-executable.
+    check:
+            "If check is true, and the process exits with a non-zero exit code,
+            a CalledProcessError exception will be raised. Attributes of that
+            exception hold the arguments, the exit code, and stdout and stderr
+            if they were captured."
 
-    subprocess.TimeoutExpired:
-            If the process does not terminate after timeout seconds.
+    _input:
+            "The input argument is passed to Popen.communicate() and thus to
+            the subprocess's stdin. If used it must be a byte sequence, or a
+            string if universal_newlines=True. When used, the internal Popen
+            object is automatically created with stdin=PIPE, and the stdin
+            argument may not be used as well."
 
-  <Side Effects>
-    The side effects of executing the given command in this environment.
+    stdin, stdout, stderr:
+            "stdin, stdout and stderr specify the executed program's standard
+            input, standard output and standard error file handles,
+            respectively. Valid values are PIPE, DEVNULL, an existing file
+            descriptor (a positive integer), an existing file object, and None.
+            PIPE indicates that a new pipe to the child should be created.
+            DEVNULL indicates that the special file os.devnull will be used.
+            With the default settings of None, no redirection will occur; the
+            child's file handles will be inherited from the parent.
+            Additionally, stderr can be STDOUT, which indicates that the stderr
+            data from the applications should be captured into the same file
+            handle as for stdout."
 
-  <Returns>
-    A subprocess.CompletedProcess instance.
-
-  """
-  cmd = shlex_split(cmd)
-  return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    universal_newlines=True, timeout=SUBPROCESS_TIMEOUT)
-
-
-def run_no_stdout_no_stderr(cmd):
-  """
-  <Purpose>
-    Run the specified command, WITHOUT writing to standard input, output, and
-    error.  Note that we do NOT check whether the command returned a non-zero
-    code.
-
-  <Arguments>
-    cmd:
-            The command and its arguments. (list of str)
-
-  <Exceptions>
-    OSError:
-            If the given command is not present or non-executable.
-
-    subprocess.TimeoutExpired:
-            If the process does not terminate after timeout seconds.
-
-  <Side Effects>
-    The side effects of executing the given command in this environment.
-
-  <Returns>
-    A subprocess.CompletedProcess instance.
-
-  """
-  cmd = shlex_split(cmd)
-  return subprocess.run(cmd, stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL, timeout=SUBPROCESS_TIMEOUT)
-
-
-def check_call_no_stdout_no_stderr(cmd):
-  """
-  <Purpose>
-    Run the specified command, WITHOUT writing to standard input, output, and
-    error.  However, note that we DO check whether the command returned a
-    non-zero code.
-
-  <Arguments>
-    cmd:
-            The command and its arguments. (list of str)
-
-  <Exceptions>
-    OSError:
-            If the given command is not present or non-executable.
-
-    subprocess.TimeoutExpired:
-            If the process does not terminate after timeout seconds.
-
-  <Side Effects>
-    The side effects of executing the given command in this environment.
-
-  <Returns>
-    A subprocess.CompletedProcess instance.
-
-  """
-  cmd = shlex_split(cmd)
-  return subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL, timeout=SUBPROCESS_TIMEOUT)
-
-
-def check_call_write_stdin_pipe_stdout(cmd, content, universal_newlines=False):
-  """
-  <Purpose>
-    Run the specified command, WITH writing the given input to standard input,
-    WITH writing to standard output, and WITHOUT writing to standard error.
-    Note that we DO check whether the command returned a non-zero code.
-
-  <Arguments>
-    cmd:
-            The command and its arguments. (list of str)
-
-    content:
-            The content to write to the process stdin. (bytes if
-            universal_newlines=False, otherwise str)
+    timeout:
+            "The timeout argument is passed to Popen.communicate(). If the
+            timeout expires, the child process will be killed and waited for.
+            The TimeoutExpired exception will be re-raised after the child
+            process has terminated."
 
     universal_newlines:
-            If False, then the given input must be encoded as bytes; otherwise,
-            as a string.
+            "If universal_newlines is False the file objects stdin, stdout and
+            stderr will be opened as binary streams, and no line ending
+            conversion is done."
+
+            "If universal_newlines is True, these file objects will be opened
+            as text streams in universal newlines mode using the encoding
+            returned by locale.getpreferredencoding(False). For stdin, line
+            ending characters '\n' in the input will be converted to the
+            default line separator os.linesep. For stdout and stderr, all line
+            endings in the output will be converted to '\n'. For more
+            information see the documentation of the io.TextIOWrapper class
+            when the newline argument to its constructor is None."
 
   <Exceptions>
+    securesystemslib.exceptions.FormatError:
+            If the cmd as list does not match
+            in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.
+
     OSError:
             If the given command is not present or non-executable.
 
@@ -172,43 +102,23 @@ def check_call_write_stdin_pipe_stdout(cmd, content, universal_newlines=False):
     A subprocess.CompletedProcess instance.
 
   """
-  cmd = shlex_split(cmd)
-  return subprocess.run(cmd, input=content, stdout=subprocess.PIPE,
-      stderr=subprocess.DEVNULL, timeout=SUBPROCESS_TIMEOUT,
-      universal_newlines=universal_newlines, check=True)
+  if isinstance(cmd, six.string_types):
+    cmd = shlex.split(cmd)
+  else:
+    formats.LIST_OF_ANY_STRING_SCHEMA.check_match(cmd)
 
-
-def check_output_no_stdin_no_stderr(cmd, universal_newlines=False):
-  """
-  <Purpose>
-    Run the specified command, WITHOUT writing to standard input, output, and
-    error. However, we DO extract the output of the command. Also, note that we
-    DO check whether the command returned a non-zero code.
-
-  <Arguments>
-    cmd:
-            The command and its arguments. (list of str)
-
-    universal_newlines:
-            If False, then the output is encoded as bytes; otherwise, as a
-            string.
-
-  <Exceptions>
-    OSError:
-            If the given command is not present or non-executable.
-
-    subprocess.TimeoutExpired:
-            If the process does not terminate after timeout seconds.
-
-  <Side Effects>
-    The side effects of executing the given command in this environment.
-
-  <Returns>
-    A subprocess.CompletedProcess instance.
-
-  """
-  cmd = shlex_split(cmd)
-  return subprocess.check_output(cmd, stderr=subprocess.DEVNULL,
-    timeout=SUBPROCESS_TIMEOUT, universal_newlines=universal_newlines)
+  # The reason why we are not allowed to even specify stdin=None when input
+  # is specified is due to this overly stringent code in subprocess:
+  # https://github.com/google/python-subprocess32/blob/560f1a92db18c2d2bebe4049756528ce827aa366/subprocess32.py#L402
+  if _input:
+    log.debug('Ignoring stdin: '+str(stdin))
+    return subprocess.run(cmd, check=check, input=_input,
+      stdout=stdout, stderr=stderr, timeout=timeout,
+      universal_newlines=universal_newlines)
+  else:
+    log.debug('Ignoring input: '+str(input))
+    return subprocess.run(cmd, check=check, stdin=stdin,
+      stdout=stdout, stderr=stderr, timeout=timeout,
+      universal_newlines=universal_newlines)
 
 

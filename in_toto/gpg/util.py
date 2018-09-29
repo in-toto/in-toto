@@ -214,9 +214,9 @@ def get_version():
 
   """
   command = in_toto.gpg.constants.GPG_VERSION_COMMAND
-  full_version_info = in_toto.process.check_output_no_stdin_no_stderr(command,
-                        universal_newlines=True)
-
+  process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
+    stderr=in_toto.process.DEVNULL, universal_newlines=True)
+  full_version_info = process.stdout
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
 
   return version_string

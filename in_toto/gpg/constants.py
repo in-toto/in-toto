@@ -29,7 +29,8 @@ GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
 try:
-  process.check_call_no_stdout_no_stderr(GPG_VERSION_COMMAND)
+  process.run(GPG_VERSION_COMMAND, stdout=process.DEVNULL,
+    stderr=process.DEVNULL)
 except OSError: # pragma: no cover
   GPG_COMMAND = "gpg"
   GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
