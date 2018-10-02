@@ -15,6 +15,9 @@ matrix:
           env: TOXENV=py36
         - python: "3.7"
           env: TOXENV=py37
+          # NOTE: temporary workaround; see https://github.com/travis-ci/travis-ci/issues/9815#issue-336465122
+          dist: xenial
+          sudo: true
 
 install:
     - pip install -U tox
