@@ -5,7 +5,7 @@ import sys
 
 import six
 
-if os.name == 'posix' and sys.version_info[0] < 3:
+if sys.version_info[0] < 3:
   import subprocess32 as subprocess # pragma: no cover
 else: # pragma: no cover
   import subprocess
