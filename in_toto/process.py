@@ -1,11 +1,9 @@
-import os
 import logging
 import shlex
-import sys
 
 import six
 
-if sys.version_info[0] < 3:
+if six.PY2:
   import subprocess32 as subprocess # pragma: no cover
 else: # pragma: no cover
   import subprocess
