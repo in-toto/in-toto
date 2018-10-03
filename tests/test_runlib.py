@@ -466,9 +466,8 @@ class TestInTotoRun(unittest.TestCase):
 
       # Check that all three hashes in materials and products are equal
       for artifact_dict in [link.materials, link.products]:
-        self.assertTrue(artifact_dict[paths[0]] ==
-            artifact_dict[paths[1]] ==
-            artifact_dict[paths[2]])
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
 
     # Clean up
     finally:
@@ -662,9 +661,8 @@ class TestInTotoRecordStop(unittest.TestCase):
 
       # Check that all three hashes in materials and products are equal
       for artifact_dict in [link.materials, link.products]:
-        self.assertTrue(artifact_dict[paths[0]] ==
-            artifact_dict[paths[1]] ==
-            artifact_dict[paths[2]])
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
 
     # Clean up
     finally:
