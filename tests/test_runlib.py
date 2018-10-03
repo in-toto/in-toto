@@ -33,7 +33,8 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     _hash_artifact)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -447,6 +448,33 @@ class TestInTotoRun(unittest.TestCase):
     self.assertEquals(link.signed.environment["workdir"], 
         os.getcwd().replace("\\", "/"))
 
+  def test_normalize_line_endings(self):
+    """Test cross-platform line ending normalization. """
+    paths = []
+    try:
+      # Create three artifacts with same content but different line endings
+      for line_ending in [b"\n", b"\r", b"\r\n"]:
+        fd, path = tempfile.mkstemp()
+        paths.append(path)
+        os.write(fd, b"hello" + line_ending + b"toto")
+        os.close(fd)
+
+      # Call in_toto_run and record artifacts as materials and products
+      # with line ending normalization on
+      link = in_toto_run(self.step_name, paths, paths, ["python", "--version"],
+          normalize_line_endings=True).signed
+
+      # Check that all three hashes in materials and products are equal
+      for artifact_dict in [link.materials, link.products]:
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
+
+    # Clean up
+    finally:
+      for path in paths:
+        os.remove(path)
+
+
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
@@ -458,6 +486,7 @@ class TestInTotoRun(unittest.TestCase):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
           ["python", "--version"], True, self.key_pub)
+
 
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
@@ -610,6 +639,36 @@ class TestInTotoRecordStop(unittest.TestCase):
       in_toto_record_stop(
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
+
+  def test_normalize_line_endings(self):
+    """Test cross-platform line ending normalization. """
+    paths = []
+    try:
+      # Create three artifacts with same content but different line endings
+      for line_ending in [b"\n", b"\r", b"\r\n"]:
+        fd, path = tempfile.mkstemp()
+        paths.append(path)
+        os.write(fd, b"hello" + line_ending + b"toto")
+        os.close(fd)
+
+      # Call in_toto_record start and stop and record artifacts as
+      # materials and products with line ending normalization on
+      in_toto_record_start(self.step_name, paths, self.key,
+          normalize_line_endings=True)
+      in_toto_record_stop(self.step_name, paths, self.key,
+          normalize_line_endings=True)
+      link = Metablock.load(self.link_name).signed
+
+      # Check that all three hashes in materials and products are equal
+      for artifact_dict in [link.materials, link.products]:
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
+
+    # Clean up
+    finally:
+      for path in paths:
+        os.remove(path)
+
 
 if __name__ == "__main__":
   unittest.main()
