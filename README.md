@@ -1,4 +1,6 @@
-# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1523/badge)](https://bestpractices.coreinfrastructure.org/projects/1523)
+# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1523/badge)](https://bestpractices.coreinfrastructure.org/projects/1523) [![Build status](https://ci.appveyor.com/api/projects/status/taxlhrrlf3co07e1/branch/develop?svg=true)](https://ci.appveyor.com/project/in-toto/in-toto/branch/develop)
+
+
 
 in-toto provides a framework to protect the integrity of the software supply chain. It does so by verifying that each task in the chain is carried out as planned, by authorized personnel only, and that the product is not tampered with in transit.
 
