@@ -71,7 +71,8 @@ setup(
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
   install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
-                    "python-dateutil", "iso8601", "pathspec", "subprocess32"],
+                    "python-dateutil", "iso8601", "pathspec",
+                    "subprocess32; python_version < '3'"],
   test_suite="tests.runtests",
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",

@@ -27,7 +27,7 @@ import shlex
 import six
 
 if six.PY2:
-  import subprocess32 as subprocess # pragma: no cover
+  import subprocess32 as subprocess # pragma: no cover pylint: disable=import-error
 else: # pragma: no cover
   import subprocess
 
