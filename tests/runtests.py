@@ -32,10 +32,10 @@ def check_usable_gpg():
     # good idea to import anything from the module to be tested here, as
     # it messes up the module cache when running the tests, eventually leading
     # to unexpected code coverage results
-    subprocess.check_call(['gpg', '--version'], stdout=subprocess.DEVNULL)
-  # sadly, this will through either a WindowsError or a FileNotFound error
-  # so we need to catch a generic exception
-  except Exception as e:
+    with open(os.devnull, "w") as dev_null_fp:
+      subprocess.check_call(['gpg', '--version'], stdout=dev_null_fp)
+
+  except (WindowsError, FileNotFound) as e:
     os.environ["TEST_SKIP_GPG"] = "1"
 
 # set the test prerrequisites (so far, we only check if gpg is installed)
