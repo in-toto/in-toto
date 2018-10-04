@@ -88,7 +88,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
-  process = in_toto.process.run(command, _input=content,
+  process = in_toto.process.run(command, input=content,
     stdout=in_toto.process.PIPE, stderr=in_toto.process.DEVNULL)
   signature_data = process.stdout
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)

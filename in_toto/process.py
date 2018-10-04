@@ -45,13 +45,20 @@ log = logging.getLogger(__name__)
 
 
 # TODO: Properly duplicate standard streams (issue #11)
-def run(cmd, check=True, _input=None, stdin=None, stdout=None, stderr=None,
-        timeout=SUBPROCESS_TIMEOUT, universal_newlines=False):
+def run(cmd, check=True, timeout=SUBPROCESS_TIMEOUT, **kwargs):
   """
   <Purpose>
-    Run the specified command, WITHOUT writing to standard input, and WITHOUT
-    writing to standard output and error.  Note that we do NOT check whether
-    the command returned a non-zero code.
+    Provide wrapper for `subprocess.run` (see
+    https://github.com/python/cpython/blob/3.5/Lib/subprocess.py#L352-L399)
+    where:
+
+    * `timeout` has a default (see in_toto.settings.SUBPROCESS_TIMEOUT),
+    * `check` is `True` by default,
+    * there is only one positional argument, i.e. `cmd` that can be either
+      a str (will be split with shlex) or a list of str and
+    * instead of raising a ValueError if both `input` and `stdin` are passed,
+      `stdin` is ignored.
+
 
   <Arguments>
     cmd:
@@ -59,62 +66,35 @@ def run(cmd, check=True, _input=None, stdin=None, stdout=None, stderr=None,
             Splits a string specifying a command and its argument into a list
             of substrings, if necessary.
 
-    check:
+    check: (default True)
             "If check is true, and the process exits with a non-zero exit code,
             a CalledProcessError exception will be raised. Attributes of that
             exception hold the arguments, the exit code, and stdout and stderr
             if they were captured."
 
-    _input:
-            "The input argument is passed to Popen.communicate() and thus to
-            the subprocess's stdin. If used it must be a byte sequence, or a
-            string if universal_newlines=True. When used, the internal Popen
-            object is automatically created with stdin=PIPE, and the stdin
-            argument may not be used as well."
-
-    stdin, stdout, stderr:
-            "stdin, stdout and stderr specify the executed program's standard
-            input, standard output and standard error file handles,
-            respectively. Valid values are PIPE, DEVNULL, an existing file
-            descriptor (a positive integer), an existing file object, and None.
-            PIPE indicates that a new pipe to the child should be created.
-            DEVNULL indicates that the special file os.devnull will be used.
-            With the default settings of None, no redirection will occur; the
-            child's file handles will be inherited from the parent.
-            Additionally, stderr can be STDOUT, which indicates that the stderr
-            data from the applications should be captured into the same file
-            handle as for stdout."
-
-    timeout:
+    timeout: (default see settings.SUBPROCESS_TIMEOUT)
             "The timeout argument is passed to Popen.communicate(). If the
             timeout expires, the child process will be killed and waited for.
             The TimeoutExpired exception will be re-raised after the child
             process has terminated."
 
-    universal_newlines:
-            "If universal_newlines is False the file objects stdin, stdout and
-            stderr will be opened as binary streams, and no line ending
-            conversion is done."
-
-            "If universal_newlines is True, these file objects will be opened
-            as text streams in universal newlines mode using the encoding
-            returned by locale.getpreferredencoding(False). For stdin, line
-            ending characters '\n' in the input will be converted to the
-            default line separator os.linesep. For stdout and stderr, all line
-            endings in the output will be converted to '\n'. For more
-            information see the documentation of the io.TextIOWrapper class
-            when the newline argument to its constructor is None."
+    **kwargs:
+            See subprocess.run and Frequently Used Arguments to Popen
+            constructor for available kwargs.
+            https://docs.python.org/3.5/library/subprocess.html#subprocess.run
+            https://docs.python.org/3.5/library/subprocess.html#frequently-used-arguments
 
   <Exceptions>
     securesystemslib.exceptions.FormatError:
-            If the cmd as list does not match
+            If the `cmd` is a list and does not match
             in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.
 
     OSError:
             If the given command is not present or non-executable.
 
     subprocess.TimeoutExpired:
-            If the process does not terminate after timeout seconds.
+            If the process does not terminate after timeout seconds. Default
+            is `settings.SUBPROCESS_TIMEOUT`
 
   <Side Effects>
     The side effects of executing the given command in this environment.
@@ -123,23 +103,18 @@ def run(cmd, check=True, _input=None, stdin=None, stdout=None, stderr=None,
     A subprocess.CompletedProcess instance.
 
   """
+  # Make list of command passed as string for convenience
   if isinstance(cmd, six.string_types):
     cmd = shlex.split(cmd)
   else:
     formats.LIST_OF_ANY_STRING_SCHEMA.check_match(cmd)
 
-  # The reason why we are not allowed to even specify stdin=None when input
-  # is specified is due to this overly stringent code in subprocess:
-  # https://github.com/google/python-subprocess32/blob/560f1a92db18c2d2bebe4049756528ce827aa366/subprocess32.py#L402
-  if _input:
-    log.debug('Ignoring stdin: '+str(stdin))
-    return subprocess.run(cmd, check=check, input=_input,
-      stdout=stdout, stderr=stderr, timeout=timeout,
-      universal_newlines=universal_newlines)
-  else:
-    log.debug('Ignoring input: '+str(input))
-    return subprocess.run(cmd, check=check, stdin=stdin,
-      stdout=stdout, stderr=stderr, timeout=timeout,
-      universal_newlines=universal_newlines)
+  # NOTE: The CPython implementation would raise a ValueError here, we just
+  # don't pass on `stdin` if the user passes `input` and `stdin`
+  # https://github.com/python/cpython/blob/3.5/Lib/subprocess.py#L378-L381
+  if kwargs.get("input") is not None and "stdin" in kwargs:
+    log.debug("stdin and input arguments may not both be used. "
+        "Ignoring passed stdin: " + str(kwargs["stdin"]))
+    del kwargs["stdin"]
 
-
+  return subprocess.run(cmd, check=check, timeout=timeout, **kwargs)
