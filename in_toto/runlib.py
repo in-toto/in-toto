@@ -47,7 +47,11 @@ from in_toto.models.metadata import Metablock
 log = logging.getLogger(__name__)
 
 
-def _hash_artifact(filepath, hash_algorithms=None):
+
+
+
+def _hash_artifact(filepath, hash_algorithms=None,
+      normalize_line_endings=False):
   """Internal helper that takes a filename and hashes the respective file's
   contents using the passed hash_algorithms and returns a hashdict conformant
   with securesystemslib.formats.HASHDICT_SCHEMA. """
@@ -58,7 +62,8 @@ def _hash_artifact(filepath, hash_algorithms=None):
   hash_dict = {}
 
   for algorithm in hash_algorithms:
-    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm, normalize_line_endings=True)
+    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm,
+        normalize_line_endings=normalize_line_endings)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
   securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
@@ -81,7 +86,7 @@ def _apply_exclude_patterns(names, exclude_filter):
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False):
+    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -141,6 +146,11 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             linked files are always recorded, independently of this parameter.
             NOTE: Beware of infinite recursions that can occur if a symlink
             points to a parent directory or itself.
+
+    normalize_line_endings: (optional)
+            If True, replaces windows and mac line endings with unix line
+            endings before hashing the content of the passed files, for
+            cross-platform support.
 
   <Exceptions>
     in_toto.exceptions.ValueError,
@@ -208,7 +218,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       artifact = artifact.replace('\\', '/')
 
       # Path was already normalized above
-      artifacts_dict[artifact] = _hash_artifact(artifact)
+      artifacts_dict[artifact] = _hash_artifact(artifact,
+          normalize_line_endings=normalize_line_endings)
 
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact,
@@ -256,7 +267,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # FIXME: this is necessary to provide consisency between windows filepaths and
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
-          artifacts_dict[normalized_filepath] = _hash_artifact(filepath)
+          artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
+              normalize_line_endings=normalize_line_endings)
 
     # Path is no file and no directory
     else:
@@ -367,7 +379,8 @@ def _check_match_signing_key(signing_key):
 def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
-    base_path=None, compact_json=False, record_environment=False):
+    base_path=None, compact_json=False, record_environment=False,
+    normalize_line_endings=False):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -426,6 +439,10 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_environment: (optional)
             if values such as workdir should be recorded  on the environment
             dictionary (false by default)
+    normalize_line_endings: (optional)
+            If True, replaces windows and mac line endings with unix line
+            endings before hashing materials and products, for cross-platform
+            support.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -462,7 +479,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -476,7 +493,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   products_dict = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
 
   log.info("Creating link metadata...")
   environment = {}
@@ -514,7 +531,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
 def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None, record_environment=False):
+    exclude_patterns=None, base_path=None, record_environment=False,
+    normalize_line_endings=False):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -553,6 +571,9 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     record_environment: (optional)
             if values such as workdir should be recorded  on the environment
             dictionary (false by default)
+    normalize_line_endings: (optional)
+            If True, replaces windows and mac line endings with unix line
+            endings before hashing materials, for cross-platform support.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -597,7 +618,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
 
   log.info("Creating preliminary link metadata...")
   environment = {}
@@ -635,7 +656,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None):
+    exclude_patterns=None, base_path=None, normalize_line_endings=False):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -674,6 +695,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
             current working directory.
             NOTE: The base_path part of the recorded products is not included
             in the resulting preliminary link's product section.
+    normalize_line_endings: (optional)
+            If True, replaces windows and mac line endings with unix line
+            endings before hashing products, for cross-platform support.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -778,7 +802,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   link_metadata.signed.products = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
 
   link_metadata.signatures = []
   if signing_key:
