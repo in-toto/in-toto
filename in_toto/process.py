@@ -1,3 +1,26 @@
+#!/usr/bin/env python
+"""
+<Program Name>
+  process.py
+
+<Author>
+  Trishank Karthik Kuppusamy <trishank.kuppusamy@datadoghq.com>
+  Lukas Puehringer <lukas.puehringer@nyu.edu>
+
+<Started>
+  September 25, 2018
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Provide a common interface for Python's subprocess module to:
+
+  - require the Py3 subprocess backport `subprocess32` on Python2,
+  - in-toto namespace subprocess constants (DEVNULL, PIPE) and
+  - provide a custom `subprocess.run` wrapper
+
+"""
 import logging
 import shlex
 
