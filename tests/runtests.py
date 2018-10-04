@@ -28,7 +28,11 @@ def check_usable_gpg():
       require gpg to be installed
   """
   try:
-    subprocess.check_call(['gpg', '--version'])
+    # NOTE: We do have a custom in-toto process module but IIRC it is not a
+    # good idea to import anything from the module to be tested here, as
+    # it messes up the module cache when running the tests, eventually leading
+    # to unexpected code coverage results
+    subprocess.check_call(['gpg', '--version'], stdout=subprocess.DEVNULL)
   # sadly, this will through either a WindowsError or a FileNotFound error
   # so we need to catch a generic exception
   except Exception as e:
