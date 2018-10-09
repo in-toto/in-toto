@@ -24,15 +24,15 @@
     - Return Metablock containing a Link object which can be can be signed
       and stored to disk
 """
-import sys
-import os
 import glob
 import logging
+import os
 
 from pathspec import PathSpec
 
 import in_toto.settings
 import in_toto.exceptions
+import in_toto.process
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 
@@ -47,17 +47,7 @@ from in_toto.models.metadata import Metablock
 log = logging.getLogger(__name__)
 
 
-# POSIX users (Linux, BSD, etc.) are strongly encouraged to
-# install and use the much more recent subprocess32
-if os.name == 'posix' and sys.version_info[0] < 3: # pragma: no cover
-  try:
-    import subprocess32 as subprocess
-  except ImportError:
-    log.warning("POSIX users (Linux, BSD, etc.) are strongly encouraged to"
-        " install and use the much more recent subprocess32")
-    import subprocess
-else: # pragma: no cover
-  import subprocess
+
 
 
 def _hash_artifact(filepath, hash_algorithms=None,
@@ -321,22 +311,21 @@ def execute_link(link_cmd_args, record_streams):
       Note: If record_streams is False, the dict values are empty strings.
     - The return value of the executed command.
   """
-  # TODO: Properly duplicate standard streams (issue #11)
   if record_streams:
-    process = subprocess.Popen(link_cmd_args, stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, universal_newlines=True)
-
-    stdout_str, stderr_str = process.communicate()
-    return_value = process.returncode
+    process = in_toto.process.run(link_cmd_args, check=False,
+      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE,
+      universal_newlines=True)
+    stdout_str, stderr_str = process.stdout, process.stderr
 
   else:
-    return_value = subprocess.call(link_cmd_args)
+    process = in_toto.process.run(link_cmd_args, check=False,
+      stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
     stdout_str = stderr_str = ""
 
   return {
       "stdout": stdout_str,
       "stderr": stderr_str,
-      "return-value": return_value
+      "return-value": process.returncode
     }
 
 
