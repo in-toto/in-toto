@@ -1,5 +1,22 @@
 # Changelog
 
+## in-toto v0.2.3
+
+* Add common interface for Python's subprocess module
+* Add Python 3.7 support
+* Drop Python 3.3 support
+* Add windows support
+* Add AppVeyor testing (windows)
+* Add optional line ending normalization when hashing artifacts (windows)
+* Add optional compact json representation for metadata
+* Make exclude filter behavior match gitignore when recording artifacts
+* Make cwd recording optional when creating link metadata
+* Add a substitution layer to support parameter substitution upon verification
+* Improve gpg support
+* Add full support for ed25519 keys and add optional key type parameter
+* Fix bug in rule verification (https://github.com/in-toto/in-toto/pull/204)
+
+
 ## in-toto v0.2.2
 
 * Add support for gpg signing subkeys.
