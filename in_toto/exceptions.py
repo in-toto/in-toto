@@ -8,7 +8,7 @@ class LayoutExpiredError(Error):
   """Indicates that the layout expired. """
   pass
 
-class RuleVerficationError(Error):
+class RuleVerificationError(Error):
   """Indicates that artifact rule verification failed. """
   pass
 
@@ -25,10 +25,6 @@ class LinkNotFoundError(Error):
   """Indicates that a link file was not found. """
   pass
 
-class AuthorizationError(Error):
-  """Indicates that the link was signed by a non-authorized functionary. """
-  pass
-
-class SettingsError(Error):
-  """Indicates an invalid setting. """
+class UnsupportedKeyTypeError(Error):
+  """Indicates that the specified key type is not yet supported. """
   pass

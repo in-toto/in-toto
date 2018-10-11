@@ -21,10 +21,17 @@
 
 """
 import os
-import log
-import ConfigParser
+import six
+import logging
 import in_toto.settings
 
+try:
+  import configparser
+except ImportError: # pragma: no cover
+  import ConfigParser as configparser
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
 
 
 USER_PATH = os.path.expanduser("~")
@@ -104,7 +111,7 @@ def get_env():
   """
   env_dict = {}
 
-  for name, value in os.environ.iteritems():
+  for name, value in six.iteritems(os.environ):
     if (name.startswith(ENV_PREFIX) and
         len(name) > len(ENV_PREFIX)):
       stripped_name = name[len(ENV_PREFIX):]
@@ -162,7 +169,7 @@ def get_rc():
   """
   rc_dict = {}
 
-  config = ConfigParser.ConfigParser()
+  config = configparser.ConfigParser()
   # Reset `optionxform`'s default case conversion to enable case-sensitivity
   config.optionxform = str
   config.read(RC_PATHS)

@@ -33,7 +33,7 @@
 """
 from setuptools import setup, find_packages
 
-version = "0.1.1"
+version = "0.2.3"
 
 setup(
   name="in-toto",
@@ -60,14 +60,20 @@ setup(
     'Programming Language :: Python',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: Implementation :: CPython',
     'Topic :: Security',
     'Topic :: Software Development'
   ],
-  packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
-  install_requires=["six", "securesystemslib==0.10.8", "attrs", "canonicaljson",
-                    "python-dateutil", "iso8601"],
-  test_suite="test.runtests",
+  packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
+      "debian"]),
+  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
+                    "python-dateutil", "iso8601", "pathspec",
+                    "subprocess32; python_version < '3'"],
+  test_suite="tests.runtests",
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-mock = in_toto.in_toto_mock:main",

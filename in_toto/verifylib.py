@@ -4,6 +4,7 @@
 
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Santiago Torres-Arias <santiago@nyu.edu>
 
 <Started>
   June 28, 2016
@@ -13,7 +14,7 @@
 
 <Purpose>
 
-  Provides a library to verify a in_toto final product containing
+  Provides a library to verify an in-toto final product containing
   a software supply chain layout.
 
   Take a look at `in_toto_verify`'s docstring for more details about the
@@ -26,6 +27,7 @@ import datetime
 import iso8601
 import fnmatch
 import six
+import logging
 from dateutil import tz
 
 import securesystemslib.exceptions
@@ -35,13 +37,18 @@ import in_toto.util
 import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
+import in_toto.formats
 from in_toto.models.metadata import Metablock
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
-from in_toto.exceptions import (RuleVerficationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError)
-import in_toto.artifact_rules
-import in_toto.log as log
+from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
+from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
+from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
+    ThresholdVerificationError, BadReturnValueError,
+    SignatureVerificationError)
+import in_toto.rulelib
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
+
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -82,7 +89,7 @@ def _raise_on_bad_retval(return_value, command=None):
     raise BadReturnValueError(msg.format(what="zero"))
 
 
-def load_links_for_layout(layout):
+def load_links_for_layout(layout, link_dir_path):
   """
   <Purpose>
     Try to load all existing metadata files for each Step of the Layout
@@ -94,6 +101,10 @@ def load_links_for_layout(layout):
   <Arguments>
     layout:
           Layout object
+
+    link_dir_path:
+          A path to directory where links are loaded from
+
 
   <Side Effects>
     Calls function to read files from disk
@@ -119,16 +130,21 @@ def load_links_for_layout(layout):
 
     # We try to load a link for every authorized functionary, but don't fail
     # if the file does not exist (authorized != required)
-    # FIXME: Should we really pass on IOError, or just skip inexistent links
-    for keyid in step.pubkeys:
-      filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+    # FIXME: Should we really pass on IOError, or just skip inexistent links?
+    for authorized_keyid in step.pubkeys:
+      # Iterate over the authorized key and if present over subkeys
+      for keyid in [authorized_keyid] + list(layout.keys.get(authorized_keyid,
+          {}).get("subkeys", {}).keys()):
 
-      try:
-        metadata = Metablock.load(filename)
-        links_per_step[keyid] = metadata
+        filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+        filepath = os.path.join(link_dir_path, filename)
 
-      except IOError as e:
-        pass
+        try:
+          metadata = Metablock.load(filepath)
+          links_per_step[keyid] = metadata
+
+        except IOError:
+          pass
 
     # Check if the step has been performed by enough number of functionaries
     if len(links_per_step) < step.threshold:
@@ -226,64 +242,135 @@ def verify_layout_expiration(layout):
     raise LayoutExpiredError("Layout expired")
 
 
-def verify_layout_signatures(layout, keys_dict):
+def substitute_parameters(layout, parameter_dictionary):
   """
   <Purpose>
-    Iteratively verifies all signatures of a Layout object using the passed
-    keys.
+    This function is a transitionary measure for parameter substitution (or
+    any other solution defined by the in-toto team). As of now, it acts as 
+    a very simple replacement layer for python-like parameters
 
   <Arguments>
     layout:
-            A Layout object whose signatures are verified.
+            The Layout object to process.
 
-    keys_dict:
-            A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA.
+      parameter_dictionary:
+            A dictionary containing key-value pairs for substitution.
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    securesystemslib.exceptions.FormatError:
+      if the parameter dictionary is malformed.
+
+    KeyError:
+      if one of the keys in the parameter dictionary are not present for
+      substitution
 
   <Side Effects>
-    Verifies cryptographic Layout signatures.
-
+    The layout object will have any tags replaced with the corresponding
+    values defined in the parameter dictionary.
   """
-  layout.verify_signatures(keys_dict)
+  in_toto.formats.PARAMETER_DICTIONARY_SCHEMA.check_match(parameter_dictionary)
+
+  for step in layout.steps:
+
+    new_material_rules = []
+    for rule in step.expected_materials:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_material_rules.append(new_rule)
+
+    new_product_rules = []
+    for rule in step.expected_products:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_product_rules.append(new_rule)
+
+    new_expected_command = []
+    for argv in step.expected_command:
+      new_expected_command.append(argv.format(**parameter_dictionary))
+
+    step.expected_command = new_expected_command
+    step.expected_materials = new_material_rules
+    step.expected_products = new_product_rules
+
+  for inspection in layout.inspect:
+    
+    new_material_rules = []
+    for rule in inspection.expected_materials:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_material_rules.append(new_rule)
+
+    new_product_rules = []
+    for rule in inspection.expected_products:
+      new_rule = []
+      for stanza in rule:
+        new_rule.append(stanza.format(**parameter_dictionary))
+      new_product_rules.append(new_rule)
+
+    new_run = []
+    for argv in inspection.run:
+      new_run.append(argv.format(**parameter_dictionary))
+
+    inspection.run = new_run
+    inspection.expected_materials = new_material_rules
+    inspection.expected_products = new_product_rules
 
 
-def verify_link_signatures(link, keys_dict):
+
+def verify_layout_signatures(layout_metablock, keys_dict):
   """
   <Purpose>
-    Iteratively verifies all signatures of a Link object using the passed
-    keys.
+    Iteratively verifies the signatures of a Metablock object containing
+    a Layout object for every verification key in the passed keys dictionary.
+
+    Requires at least one key to be passed and requires every passed key to
+    find a valid signature.
 
   <Arguments>
-    link:
-            Metablock object (containing a Link) whose signatures are verified.
+    layout_metablock:
+            A Metablock object containing a Layout whose signatures are
+            verified.
 
     keys_dict:
             A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA.
+            securesystemslib.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    securesystemslib.exceptions.FormatError
+      if the passed key dict does not match ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
-  <Side Effects>
-    Verifies cryptographic Link signatures.
+    SignatureVerificationError
+      if the any empty verification key dictionary was passed, or
+      if any of the passed verification keys fails to verify a signature.
 
   """
-  link.verify_signatures(keys_dict)
+  in_toto.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
+
+  # Fail if an empty verification key dictionary was passed
+  if len(keys_dict) < 1:
+    raise SignatureVerificationError("Layout signature verification"
+        " requires at least one key.")
+
+  # Fail if any of the passed keys can't verify a signature on the Layout
+  for junk, verify_key in six.iteritems(keys_dict):
+    layout_metablock.verify_signature(verify_key)
 
 
-def verify_all_steps_signatures(layout, chain_link_dict):
+def verify_link_signature_thresholds(layout, chain_link_dict):
   """
   <Purpose>
-    Extracts the Steps of a passed Layout and iteratively verifies the
-    the signatures of the Link object(s) related to each Step by the name field.
-    The public keys used for verification are also extracted from the Layout.
+    Verify that for each step of the layout there are at least `threshold`
+    links, signed by different authorized functionaries and return the chain
+    link dictionary containing only authorized links whose signatures
+    were successfully verified.
+
+    NOTE: If the layout's key store (`layout.keys`) lists a (master) key `K`,
+    with a subkey `K'`, then `K'` is authorized implicitly, to sign any link
+    that `K` is authorized to sign. In other words, the trust in a master key
+    extends to the trust in a subkey. The inverse is not true.
 
   <Arguments>
     layout:
@@ -301,34 +388,99 @@ def verify_all_steps_signatures(layout, chain_link_dict):
             }
 
   <Exceptions>
-    Raises an exception if a needed key can not be found in the passed
-    keys_dict or if a verification fails.
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    ThresholdVerificationError
+            If any of the steps of the passed layout does not have enough
+            (`step.threshold`) links signed by different authorized
+            functionaries.
+
+  <Returns>
+    A chain_link_dict containing only links with valid signatures created by
+    authorized functionaries.
 
   """
+  # Create an inverse keys-subkeys dictionary, with subkey keyids as
+  # dictionary keys and main keys as dictionary values.
+  # NOTE: We assume that a given subkey can only belong to one master key
+  # TODO: Is this a safe assumption? Should we assert for it?
+  main_keys_for_subkeys = {}
+  for main_key in list(layout.keys.values()):
+    for sub_keyid in main_key.get("subkeys", []):
+      main_keys_for_subkeys[sub_keyid] = main_key
+
+  verfied_chain_link_dict = {}
+  # Check signatures on passed links, if they are valid and authorized, but
+  # don't fail yet, instead add authorized links with passing signatures
+  # to a `verfied_chain_link_dict` and check later if the threshold
+  # requirements are fulfilled. That is, we don't care if there are a few
+  # bad links, as long as we have enough good links. Only the good links will
+  # be considered for further final product verification.
   for step in layout.steps:
-    # Find the according link for this step
-    key_link_dict = chain_link_dict[step.name]
+    # Will contain all links corresponding to a step with successfully
+    # verified signatures, authorized to perform the step
+    verified_key_link_dict = {}
 
-    for keyid, link in six.iteritems(key_link_dict):
-      keys_dict = {}
+    # Iterate over links corresponding to a step
+    for link_keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
+      # Check if the link's keyid is authorized to provide a link for the step.
+      # Iterate over authorized keyids to find a key or subkey corresponding
+      # to the given link. Subkeys of authorized main keys are authorized
+      # implicitly.
+      for authorized_keyid in step.pubkeys:
 
-      # Create the dictionary of keys for this step
-      # Only one key with the matching keyid in the
-      # filename is added to the dictionary which ensures
-      # that the link has been signed by that key
-      if keyid in step.pubkeys:
-        keys_dict[keyid] = layout.keys[keyid]
+        authorized_key = layout.keys.get(authorized_keyid)
+        main_key_for_subkey = main_keys_for_subkeys.get(authorized_keyid)
+
+        # The signing key is authorized
+        if authorized_key and link_keyid == authorized_keyid:
+          verification_key = authorized_key
+          break
+
+        # The signing key is an authorized subkey
+        elif main_key_for_subkey and link_keyid == authorized_keyid:
+          verification_key = main_key_for_subkey
+          break
+
+        # The signing key is a subkey belonging to an authorized key
+        elif (authorized_key and
+            link_keyid in authorized_key.get("subkeys", {}).keys()):
+          verification_key = authorized_key
+          break
+
       else:
-        raise AuthorizationError("Unauthorized Key! '{0}'".format(keyid))
+        log.info("Skipping link. Keyid '{0}' is not authorized to sign links"
+            " for step '{1}'".format(link_keyid, step.name))
+        continue
 
-      log.info("Verifying signature(s) for '{0}'...".format(
-          in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
-              keyid=keyid)))
+      # Verify signature and skip invalidly signed links
+      try:
+        link.verify_signature(verification_key)
 
-      # Verify link metadata file's signatures
-      verify_link_signatures(link, keys_dict)
+      except SignatureVerificationError:
+        log.info("Skipping link. Broken link signature with keyid '{0}'"
+            " for step '{1}'".format(link_keyid, step.name))
 
+      else:
+        # Good link: The signature is valid and the signer was authorized
+        verified_key_link_dict[link_keyid] = link
+
+
+    # Add all good links for a step to the dictionary of links for all steps
+    verfied_chain_link_dict[step.name] = verified_key_link_dict
+
+  # For each step, verify that we have enough validly signed links signed by
+  # different authorized functionaries.
+  # TODO: To guarantee that links are signed by different functionaries
+  # we rely on the layout to not carry duplicate verification keys under
+  # different dictionary keys, e.g. {keyid1: KEY1, keyid2: KEY1}
+  # Maybe we should add such a check to the layout validation? Or here?
+  for step in layout.steps:
+    valid_authorized_links_cnt = len(verfied_chain_link_dict[step.name])
+    if valid_authorized_links_cnt < step.threshold:
+      raise ThresholdVerificationError("Step requires at least '{}' links"
+          " validly signed by different authorized functionaries. Only"
+          " found '{}'".format(step.threshold, valid_authorized_links_cnt))
+
+  return verfied_chain_link_dict
 
 def verify_command_alignment(command, expected_command):
   """
@@ -360,7 +512,7 @@ def verify_command_alignment(command, expected_command):
   # https://github.com/in-toto/in-toto/pull/47
   # We chose the simplest solution for now, i.e. Warn if they do not align.
   if command != expected_command:
-    log.warn("Run command '{0}' differs from expected command '{1}'"
+    log.warning("Run command '{0}' differs from expected command '{1}'"
         .format(command, expected_command))
 
 
@@ -487,7 +639,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     FormatError
         if the rule does not conform with the rule format.
 
-    RuleVerficationError
+    RuleVerificationError
         if the destination link is not found in the passed link dictionary.
         if the corresponding destination artifact of a filtered source artifact
         is not found.
@@ -501,56 +653,64 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     A list of artifacts that were matched by the rule.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
   dest_name = rule_data["dest_name"]
   dest_type = rule_data["dest_type"]
 
   # Extract destination link
   try:
     dest_link = links[dest_name]
-  except Exception as e:
-    raise RuleVerficationError("Rule '{rule}' failed, destination link"
+  except KeyError:
+    raise RuleVerificationError("Rule '{rule}' failed, destination link"
         " '{dest_link}' not found in link dictionary".format(
             rule=" ".join(rule), dest_link=dest_name))
 
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
     dest_artifacts = dest_link.signed.materials
-  elif dest_type.lower() == "products":
+
+  # NOTE: Can't reach `else` branch, if the source_type is none of these
+  # types an exception would have been raised above in `unpack_rule`
+  elif dest_type.lower() == "products": # pragma: no branch
     dest_artifacts = dest_link.signed.products
 
-  # Filter I - take only queued paths with specified prefix and
-  # subtract prefix
-  # We first subtract the prefix and then apply the pattern in Filter II
-  # (instead of applying prefix + pattern) to prevent globbing in the prefix
+  # Filter part 1: Filter paths with source prefix if specified
+  # But substract the prefix before applying the glob pattern (filter part 2)
+  # to prevent globbing in the prefix.
   if rule_data["source_prefix"]:
     filtered_source_paths = []
+    # Add trailing slash to source prefix if it does not exist
+    normalized_source_prefix = os.path.join(rule_data["source_prefix"], "").replace("\\", "/")
     for artifact_path in source_artifacts_queue:
-      if artifact_path.startswith(rule_data["source_prefix"] + os.sep):
+      if artifact_path.startswith(normalized_source_prefix):
         filtered_source_paths.append(
-            artifact_path[len(rule_data["source_prefix"] + os.sep):])
+            artifact_path[len(normalized_source_prefix):])
+
   else:
     filtered_source_paths = source_artifacts_queue
 
-  # Filter II - apply glob pattern on remaining artifact paths
+  # Filter part 2 - apply glob pattern on remaining artifact paths
   filtered_source_paths = fnmatch.filter(
       filtered_source_paths, rule_data["pattern"])
 
-  # Match source artifact with destination artifact
+  # Iterate over filtered source paths and try to match the corresponding
+  # source artifact hash with the corresponding destination artifact hash
   for path in filtered_source_paths:
-
-    # If we subtracted an optional source prefix in Filter I we have to
-    # re-concatenate to find the correct keys in the source artifact dictionary
+    # If a source prefix was specified, we subtracted the prefix above before
+    # globbing. We have to re-prepend the prefix in order to retrieve the
+    # corresponding source artifact below.
     if rule_data["source_prefix"]:
-      full_source_path = rule_data["source_prefix"] + os.sep + path
+      full_source_path = os.path.join(rule_data["source_prefix"], path).replace("\\", "/")
+
     else:
       full_source_path = path
 
-    # We have to concatenate filtered source path (without source prefix)
-    # with an optional destination prefix to find the correct key in the
-    # destination artifact dictionary
+    # If a destination prefix was specified, the destionation artifact should
+    # be queried with the full destionation path, i.e. the prefix joined with
+    # the globbed path.
     if rule_data["dest_prefix"]:
-      full_dest_path = rule_data["dest_prefix"] + os.sep + path
+      full_dest_path = os.path.join(rule_data["dest_prefix"], path).replace("\\", "/")
+
     else:
       full_dest_path = path
 
@@ -558,24 +718,22 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # should not be in the queue, if it is not in the artifact dictionary
     source_artifact = source_artifacts[full_source_path]
 
-    # Extract destination artifact from destination link
+    # Try to extract destination artifact from destination artifacts
     try:
       dest_artifact = dest_artifacts[full_dest_path]
-    except Exception:
-      raise RuleVerficationError("Rule '{rule}' failed, destination artifact"
-          " '{path}' not found in {type} of '{name}'"
-              .format(rule=" ".join(rule), path=full_dest_path, name=dest_name,
-                  type=dest_type))
 
-    # Compare the hashes of source and destination artifacts
+    # If there is no such key (i.e., target path), we won't mark this file
+    # as matched
+    except KeyError:
+      continue
+
+    # finally, if both paths exist, make sure they do in fact have the same
+    # hash
     if source_artifact != dest_artifact:
-      raise RuleVerficationError("Rule '{rule}' failed, source artifact"
-          " '{source}' and destination artifact '{dest}' hashes don't match."
-              .format(rule=" ".join(rule), source=full_source_path,
-                  dest=full_dest_path))
+      continue
 
-    # Matching went well, let's remove the path from the queue. Subsequent rules
-    # won't see this artifact anymore.
+    # Matching went well, let's remove the path from the queue. Subsequent
+    # rules won't see this artifact anymore.
     source_artifacts_queue.remove(full_source_path)
 
   return source_artifacts_queue
@@ -613,7 +771,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if a product filtered by the pattern also appears in the materials
         queue.
 
@@ -624,19 +782,20 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
     The updated products queue (minus newly created artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
 
   matched_products = fnmatch.filter(
       source_products_queue, rule_data["pattern"])
 
+  unmatched_materials = set()
+
   for matched_product in matched_products:
     if matched_product in source_materials_queue:
-      raise RuleVerficationError("Rule '{0}' failed, product '{1}' was found"
-          " in materials but should have been newly created."
-              .format(" ".join(rule), matched_product))
+      unmatched_materials.add(matched_product)
 
-  return list(set(source_products_queue) - set(matched_products))
+  matched_products = set(matched_products) - unmatched_materials
+  return list(set(source_products_queue) - matched_products)
 
 
 def verify_delete_rule(rule, source_materials_queue, source_products_queue):
@@ -671,7 +830,7 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if a material filtered by the pattern also appears in the products
         queue.
 
@@ -682,14 +841,14 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
     The updated materials queue (minus deleted artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_materials = fnmatch.filter(
       source_materials_queue, rule_data["pattern"])
 
   for matched_material in matched_materials:
     if matched_material in source_products_queue:
-      raise RuleVerficationError("Rule '{0}' failed, material '{1}' was found"
+      raise RuleVerificationError("Rule '{0}' failed, material '{1}' was found"
           " in products but should have been deleted."
               .format(" ".join(rule), matched_material))
 
@@ -724,7 +883,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
             as values. Format is: {<path> : HASHDICT}
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if the materials and products matched by the pattern are not equal in
         terms of paths.
         if any material-product pair has the same hash (was not modified).
@@ -736,7 +895,7 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
     The updated materials and products queues (minus modified artifacts).
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   # Filter materials and products using the pattern and create sets to
   # take advantage of Python set operations
@@ -745,31 +904,20 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
   matched_products = set(fnmatch.filter(
       source_products_queue, rule_data["pattern"]))
 
-  matched_materials_only = matched_materials - matched_products
-  matched_products_only =  matched_products - matched_materials
+  modified_materials = set()
+  for path in matched_products:
 
-  if len(matched_materials_only):
-    raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
-        " as materials but not as products:\n\t{1}"
-            .format(" ".join(rule), ", ".join(matched_materials_only)))
+    if path not in matched_materials:
+      continue
 
-  if len(matched_products_only):
-    raise RuleVerficationError("Rule '{0}' failed, the following paths appear"
-        " as products but not as materials:\n\t{1}"
-            .format(" ".join(rule), ", ".join(matched_products_only)))
-
-  # If we haven't failed yet the two sets are equal and we can test their
-  # hash in-equalities
-  for path in matched_materials:
     # Is it okay to assume that path returns an artifact? The path
     # should not be in the queues, if it is not in the artifact dictionaries
     if source_materials[path] == source_products[path]:
-      raise RuleVerficationError("Rule '{0}' failed, material and product '{1}'"
-          " have the same hash (were not modified)."
-              .format(" ".join(rule), path))
+      continue
 
-  return (list(set(source_materials_queue) - set(matched_materials)),
-      list(set(source_products_queue) - set(matched_products)))
+    modified_materials.add(path)
+
+  return (source_materials_queue, list(set(source_products_queue) - modified_materials))
 
 
 def verify_allow_rule(rule, source_artifacts_queue):
@@ -801,7 +949,7 @@ def verify_allow_rule(rule, source_artifacts_queue):
     The source artifact queue minus the files that were matched by the rule.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_artifacts = fnmatch.filter(
       source_artifacts_queue, rule_data["pattern"])
@@ -824,7 +972,7 @@ def verify_disallow_rule(rule, source_artifacts_queue):
             A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerficationError
+    RuleVerificationError
         if path pattern matches artifacts in artifact queue.
 
   <Side Effects>
@@ -834,32 +982,36 @@ def verify_disallow_rule(rule, source_artifacts_queue):
     None.
 
   """
-  rule_data = in_toto.artifact_rules.unpack_rule(rule)
+  rule_data = in_toto.rulelib.unpack_rule(rule)
 
   matched_artifacts = fnmatch.filter(
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerficationError("Rule '{0}' failed, pattern matched disallowed"
+    raise RuleVerificationError("Rule '{0}' failed, pattern matched disallowed"
         " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
   """
   <Purpose>
-    Iteratively apply passed material or product rules to enforce and authorize
-    artifacts reported by a link and/or to guarantee that artifacts are linked
-    together across links.
+    Iteratively apply all passed material or product rules of one item (step or
+    inspection) to enforce and authorize artifacts reported by the
+    corresponding link and/or to guarantee that artifacts are linked together
+    across links.
+    In the beginning all artifacts are placed in a queue according to their
+    type. If an artifact gets consumed by a rule it is removed from the queue,
+    hence an artifact can only be consumed once.
+
 
   <Algorithm>
       1.  Create materials queue and products queue, and a generic artifacts
           queue based on the source_type (materials or products)
-      2.  For each rule:
-          1.  Apply rule on queues
-          2.  If rule verification passes, update queues and continue
 
-      3.  After applying all rules the artifact queue must be empty. Raise
-          and exception otherwise.
+      2.  For each rule:
+          1.  Apply rule on corresponding queue(s)
+          2.  If rule verification passes, remove consumed items from the
+              corresponding queue(s) and continue with next rule
 
   <Arguments>
     source_name:
@@ -885,7 +1037,7 @@ def verify_item_rules(source_name, source_type, rules, links):
   <Exceptions>
     FormatError
         if source_type is not "materials" or "products"
-    RuleVerficationError
+    RuleVerificationError
         if the artifacts queue is not empty after all rules were applied
 
   <Side Effects>
@@ -896,8 +1048,8 @@ def verify_item_rules(source_name, source_type, rules, links):
   source_materials = links[source_name].signed.materials
   source_products = links[source_name].signed.products
 
-  source_materials_queue = source_materials.keys()
-  source_products_queue = source_products.keys()
+  source_materials_queue = list(source_materials.keys())
+  source_products_queue = list(source_products.keys())
 
   # Create generic source artifacts list and queue depending on the source type
   if source_type == "materials":
@@ -921,8 +1073,8 @@ def verify_item_rules(source_name, source_type, rules, links):
     log.info("Verifying '{}'...".format(" ".join(rule)))
 
     # Unpack rules for dispatching and rule format verification
-    rule_data = in_toto.artifact_rules.unpack_rule(rule)
-    rule_type = rule_data["type"]
+    rule_data = in_toto.rulelib.unpack_rule(rule)
+    rule_type = rule_data["rule_type"]
 
     # MATCH, ALLOW, DISALLOW operate equally on either products or materials
     # depending on the source_type
@@ -957,16 +1109,23 @@ def verify_item_rules(source_name, source_type, rules, links):
       if source_type == "materials":
         source_artifacts_queue = source_materials_queue
 
-    elif rule_type == "modify":
-      source_materials_queue, source_products_queue = verify_modify_rule(
-          rule, source_materials_queue, source_products_queue,
-          source_materials, source_products)
-
+    # NOTE: Can't reach `else` branch, if the rule is none of these types
+    # an exception would have been raised above in `unpack_rule`
+    elif rule_type == "modify": # pragma: no branch
       # The modify rule updates materials_queue and products_queue. We have to
       # update the generic artifacts queue accordingly.
       if source_type == "materials":
+        source_materials_queue, source_products_queue = verify_modify_rule(
+            rule, source_artifacts_queue, source_products_queue,
+            source_materials, source_products)
         source_artifacts_queue = source_materials_queue
-      elif source_type == "products":
+
+      # NOTE: Can't reach `else` branch, if the source_type is none of these
+      # types an exception would have been raised above in `unpack_rule`
+      elif source_type == "products": # pragma: no branch
+        source_materials_queue, source_products_queue = verify_modify_rule(
+            rule, source_materials_queue, source_artifacts_queue,
+            source_materials, source_products)
         source_artifacts_queue = source_products_queue
 
 
@@ -996,8 +1155,6 @@ def verify_all_item_rules(items, links):
   """
 
   for item in items:
-
-    link = links[item.name]
     log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
 
@@ -1008,12 +1165,13 @@ def verify_all_item_rules(items, links):
 def verify_threshold_constraints(layout, chain_link_dict):
   """
   <Purpose>
-    Verifies that each step of a layout meets its signature threshold, i.e.:
-    For each step there are at least `step.threshold` corresponding links,
-    signed by different functionaries.
+    Verifies that all links corresponding to a given step report the same
+    materials and products.
 
-    Furthermore, verifies that all links corresponding to a given step report
-    the same materials and products.
+    NOTE: This function does not verify if the signatures of each link
+    corresponding to a step are valid or created by a different authorized
+    functionary. This should be done earlier, using the function
+    `verify_link_signature_thresholds`.
 
   <Arguments>
     layout:
@@ -1030,10 +1188,11 @@ def verify_threshold_constraints(layout, chain_link_dict):
             }
 
   <Exceptions>
-    raises an Exception if threshold is not verified.
-    ThresholdVerificationError if the step is not performed by enough
-    functionaries or if the materials and products for a step are not same
-    for all functionaries.
+    ThresholdVerificationError
+        If there are not enough (threshold) links for a steps
+
+        If the artifacts for all links of a step are not equal
+
 
   <Side Effects>
     None.
@@ -1055,18 +1214,20 @@ def verify_threshold_constraints(layout, chain_link_dict):
     key_link_dict = chain_link_dict[step.name]
 
     # Check if we have at least <threshold> links for this step
+    # NOTE: This is already done in `verify_link_signature_thresholds`,
+    # Should we remove the check?
     if len(key_link_dict) < step.threshold:
       raise ThresholdVerificationError("Step '{0}' not performed"
           " by enough functionaries!".format(step.name))
 
     # Take a reference link (e.g. the first in the step_link_dict)
-    reference_keyid = key_link_dict.keys()[0]
-    reference_link = key_link_dict[reference_key]
+    reference_keyid = list(key_link_dict.keys())[0]
+    reference_link = key_link_dict[reference_keyid]
 
     # Iterate over all links to compare their properties with a reference_link
     for keyid, link in six.iteritems(key_link_dict):
-
-      # compare their properties
+      # TODO: Do we only care for artifacts, or do we want to
+      # assert equality of other properties as well?
       if (reference_link.signed.materials != link.signed.materials or
           reference_link.signed.products != link.signed.products):
         raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
@@ -1118,11 +1279,12 @@ def reduce_chain_links(chain_link_dict):
     # Extract the key_link_dict for this step from the passed chain_link_dict
     # take one exemplary link (e.g. the first in the step_link_dict)
     # form the reduced_chain_link_dict to return
-    reduced_chain_link_dict[step_name] = key_link_dict.values()[0]
+    reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
 
   return reduced_chain_link_dict
 
-def verify_sublayouts(layout, chain_link_dict):
+
+def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
   """
   <Purpose>
     Checks if any step has been delegated by the functionary, recurses into
@@ -1144,6 +1306,12 @@ def verify_sublayouts(layout, chain_link_dict):
               }, ...
             }
 
+    superlayout_link_dir_path:
+            A path to a directory, where links of the superlayout are loaded
+            from. Links of the sublayout are expected to be in a subdirectory
+            relative to this path, with a name in the format
+            in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+
   <Exceptions>
     raises an Exception if verification of the delegated step fails.
 
@@ -1162,12 +1330,11 @@ def verify_sublayouts(layout, chain_link_dict):
     }
 
   """
-
   for step_name, key_link_dict in six.iteritems(chain_link_dict):
 
     for keyid, link in six.iteritems(key_link_dict):
 
-      if link._type == "layout":
+      if link.type_ == "layout":
         log.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
@@ -1175,15 +1342,27 @@ def verify_sublayouts(layout, chain_link_dict):
         # corresponding to the link
         layout_key_dict = {keyid: layout.keys.get(keyid)}
 
+        # Sublayout links are expected to be in a directory with the following
+        # name relative the the current link directory path, i.e. if there
+        # are multiple levels of sublayout nesting, the links are expected to
+        # be nested accordingly
+        sublayout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
+            name=step_name, keyid=keyid)
+
+        sublayout_link_dir_path = os.path.join(
+            superlayout_link_dir_path, sublayout_link_dir)
+
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict)
+        summary_link = in_toto_verify(link, layout_key_dict,
+            link_dir_path=sublayout_link_dir_path)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
         key_link_dict[keyid] = summary_link
 
   return chain_link_dict
+
 
 def get_summary_link(layout, reduced_chain_link_dict):
   """
@@ -1220,52 +1399,69 @@ def get_summary_link(layout, reduced_chain_link_dict):
     products of the overall software supply chain.
 
   """
-
   # Create empty link object
   summary_link = in_toto.models.link.Link()
 
   # Take first and last link in the order the corresponding
-  # steps appear in the layout
-  first_step_link = reduced_chain_link_dict[layout.steps[0].name]
-  last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
+  # steps appear in the layout, if there are any.
+  if len(layout.steps) > 0:
+    first_step_link = reduced_chain_link_dict[layout.steps[0].name]
+    last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-  summary_link.materials = first_step_link.signed.materials
-  summary_link._type = first_step_link.signed._type
-  summary_link.name = first_step_link.signed.name
+    summary_link.materials = first_step_link.signed.materials
+    summary_link.name = first_step_link.signed.name
 
-  summary_link.products = last_step_link.signed.products
-  summary_link.byproducts = last_step_link.signed.byproducts
-  summary_link.command = last_step_link.signed.command
+    summary_link.products = last_step_link.signed.products
+    summary_link.byproducts = last_step_link.signed.byproducts
+    summary_link.command = last_step_link.signed.command
 
   return Metablock(signed=summary_link)
 
-def in_toto_verify(layout, layout_key_dict):
+
+def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
+    substitution_parameters=None):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
     by performing the following actions:
 
-        1.  Verify layout signature(s)
+        1.  Verify layout signature(s), requires at least one verification key
+            to be passed, and a valid signature for each passed key.
 
         2.  Verify layout expiration
 
-        3.  Load link metadata for every Step defined in the layout
-            NOTE: link files are expected to have the corresponding step
+
+        3.  Load link metadata for every Step defined in the layout and
+            fail if less links than the defined threshold for a step are found.
+            NOTE: Link files are expected to have the corresponding step
             and the functionary, who carried out the step, encoded in their
             filename.
 
-        4.  Verify functionary signature for every Link
+        4.  Verify functionary signature for every loaded Link, skipping links
+            with failing signatures or signed by unauthorized functionaries,
+            and fail if less than `threshold` links validly signed by different
+            authorized functionaries can be found.
+            The routine returns a dictionary containing only links with valid
+            signatures by authorized functionaries.
 
         5.  Verify sublayouts
-            NOTE: Replaces the layout object in the chain_link_dict with an
-            unsigned summary link (the actual links of the sublayouts are
-            verified). The summary link is used just like a regular link
-            to verify command alignments, thresholds and inspections below.
+            Recurses into layout verification for each link of the
+            superlayout that is a layout itself (i.e. sublayout).
+            Links for the sublayout are expected to be in a subdirectory
+            relative to the superlayout's link_dir_path, with a name in the
+            format: in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+
+            The successfully verified sublayout is replaced with an unsigned
+            summary link in the chain_link_dict of the superlayout.
+            The summary link is then used just like a regular link
+            to verify command alignments, thresholds and inspections according
+            to the superlayout.
 
         6.  Verify alignment of defined (Step) and reported (Link) commands
             NOTE: Won't raise exception on mismatch
 
-        7.  Verify threshold constraints
+        7.  Verify threshold constraints, i.e. if all links corresponding to
+            one step have recorded the same artifacts (materials and products).
 
         8.  Verify rules defined in each Step's expected_materials and
             expected_products field
@@ -1292,6 +1488,19 @@ def in_toto_verify(layout, layout_key_dict):
             Dictionary of project owner public keys, used to verify the
             layout's signature.
 
+    link_dir_path: (optional)
+            A path to the directory from which link metadata files
+            corresponding to the steps in the passed layout are loaded.
+            Default is the current working directory.
+
+    substitution_parameters: (optional)
+            a dictionary containing key-value pairs for substituting in the 
+            following metadata fields:
+
+              - artifact rules in step and inspection definitions in the layout
+              - the run fields in the inspection definitions
+              - the expected command in the step definitions
+
   <Exceptions>
     None.
 
@@ -1301,8 +1510,8 @@ def in_toto_verify(layout, layout_key_dict):
   <Returns>
     A link which summarizes the materials and products of the overall
     software supply chain (used by super-layout verification if any)
-  """
 
+  """
   log.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
@@ -1314,14 +1523,19 @@ def in_toto_verify(layout, layout_key_dict):
   log.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
 
+  # If there are parameters sent to the tanslation layer, substitute them
+  if substitution_parameters is not None:
+    log.info('Performing parameter substitution...')
+    substitute_parameters(layout, substitution_parameters)
+
   log.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout)
+  chain_link_dict = load_links_for_layout(layout, link_dir_path)
 
   log.info("Verifying link metadata signatures...")
-  verify_all_steps_signatures(layout, chain_link_dict)
+  chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 
   log.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict)
+  chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
 
   log.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
@@ -1344,7 +1558,7 @@ def in_toto_verify(layout, layout_key_dict):
   verify_all_item_rules(layout.inspect, combined_links)
 
   # We made it this far without exception that means, verification passed
-  log.pass_verification("The software product passed all verification.")
+  log.info("The software product passed all verification.")
 
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded

@@ -19,7 +19,6 @@
 """
 
 import attr
-import json
 import securesystemslib.formats
 from in_toto.models.common import Signable
 
@@ -27,6 +26,7 @@ from in_toto.models.common import Signable
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 FILENAME_FORMAT_SHORT = "{step_name}.link"
 UNFINISHED_FILENAME_FORMAT = ".{step_name}.{keyid:.8}.link-unfinished"
+UNFINISHED_FILENAME_FORMAT_GLOB = ".{step_name}.{pattern}.link-unfinished"
 
 
 @attr.s(repr=False, init=False)
@@ -100,6 +100,11 @@ class Link(Signable):
 
     self.validate()
 
+  @property
+  def type_(self):
+    """Getter for protected _type attribute. Trailing underscore used by
+    convention (pep8) to avoid conflict with Python's type keyword. """
+    return self._type
 
   @staticmethod
   def read(data):
@@ -122,7 +127,7 @@ class Link(Signable):
           "Invalid Link: field `materials` must be of type dict, got: {}"
           .format(type(self.materials)))
 
-    for material in self.materials.values():
+    for material in list(self.materials.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
 
 
@@ -133,7 +138,7 @@ class Link(Signable):
           "Invalid Link: field `products` must be of type dict, got: {}"
           .format(type(self.products)))
 
-    for product in self.products.values():
+    for product in list(self.products.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
 
 

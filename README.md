@@ -1,4 +1,6 @@
-# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop)
+# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1523/badge)](https://bestpractices.coreinfrastructure.org/projects/1523) [![Build status](https://ci.appveyor.com/api/projects/status/taxlhrrlf3co07e1/branch/develop?svg=true)](https://ci.appveyor.com/project/in-toto/in-toto/branch/develop)
+
+
 
 in-toto provides a framework to protect the integrity of the software supply chain. It does so by verifying that each task in the chain is carried out as planned, by authorized personnel only, and that the product is not tampered with in transit.
 
@@ -35,8 +37,11 @@ The in-toto software supply chain layout consists of the following parts:
    correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools. Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
-*Hint: Take a look at [`create_layout.py`](https://github.com/in-toto/demo/blob/master/owner_alice/create_layout.py),
-a script that creates the in-toto demo layout.*
+Take a look at the [demo layout creation example](layout-creation.md)
+for further information on how to create an in-toto layout. Or try our
+experimental [layout creation web tool](https://in-toto.engineering.nyu.edu/).
+
+
 
 #### Artifact Rules
 A software supply chain usually operates on a set of files, such as source code, executables, packages, or the like. in-toto calls these files artifacts. A material is an artifact that will be used when a step or inspection is carried out. Likewise, a product is an artifact that results from carrying out a step.
@@ -51,7 +56,6 @@ Note that it is up to you to properly secure your supply chain, by authorizing, 
 - `DELETE <pattern>`
 - `MODIFY <pattern>`
 - `ALLOW <pattern>`
-- `REQUIRE <pattern>`
 - `DISALLOW <pattern>`
 - `MATCH <pattern> [IN <source-path-prefix>] WITH (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>`
 
@@ -66,24 +70,35 @@ To learn more about the different rule types, their guarantees and how they are 
 
 ```shell
 in-toto-run  --step-name <unique step name>
-             --key <functionary private key path>
+            {--key <functionary signing key path>,  --gpg [<functionary gpg signing key id>]}
+            [--gpg-home <path to gpg keyring>]
             [--materials <filepath>[ <filepath> ...]]
             [--products <filepath>[ <filepath> ...]]
             [--record-streams]
+            [--no-command]
             [--verbose] -- <cmd> [args]
 ```
 
 
 ##### in-toto-record
-`in-toto-record` works similar to `in-toto-run` but can be used for multi-part software supply chain steps, i.e. steps that are not carried out by a single command. Use `in-toto-record ... start ...` to create a preliminary link file that only records the *materials*, then run the commands of that step, and finally use `in-toto-record ... stop ...` to record the *products* and generate the actual link metadata file.
+`in-toto-record` works similar to `in-toto-run` but can be used for
+multi-part software supply chain steps, i.e. steps that are not carried out
+by a single command. Use `in-toto-record start ...` to create a
+preliminary link file that only records the *materials*, then run the
+commands of that step or edit files manually and finally use
+`in-toto-record stop ...` to record the *products* and generate the actual
+link metadata file.
 
 ```shell
-in-toto-record  --step-name <unique step name>
-                --key <functionary private key path>
-               [--verbose]
-Commands:
-               start [--materials <filepath>[ <filepath> ...]]
-               stop  [--products <filepath>[ <filepath> ...]]
+usage: in-toto-record start --step-name <unique step name>
+                            (--key <signing key path> | --gpg [<gpg keyid>])
+                            [--gpg-home <gpg keyring path>] [-v]
+                            [--materials <material path> [<material path> ...]]
+
+usage: in-toto-record stop -step-name <unique step name>
+                           (--key <signing key path> | --gpg [<gpg keyid>])
+                           [--gpg-home <gpg keyring path>] [-v]
+                           [--products <product path> [<product path> ...]]
 ```
 
 #### Release final product
@@ -102,7 +117,9 @@ Use `in-toto-verify` on the final product to verify that
 
 ```shell
 in-toto-verify --layout <layout path>
-               --layout-keys (<layout pubkey path>,...)
+               {--layout-keys <filepath>[ <filepath> ...],  --gpg <keyid> [ <keyid> ...]}
+               [--gpg-home <path to gpg keyring>]
+               [--verbose]
 ```
 
 #### Signatures
@@ -163,7 +180,39 @@ The demo basically outlines three users viz., Alice (project owner), Bob (functi
 ## Specification
 You can read more about how in-toto works by taking a look at the [specification](https://github.com/in-toto/docs/raw/master/in-toto-spec.pdf).
 
+
+## Security Issues and Bugs
+Security issues can be reported by emailing justincappos@gmail.com.
+
+At a minimum, the report must contain the following:
+* Description of the vulnerability.
+* Steps to reproduce the issue.
+
+Optionally, reports that are emailed can be encrypted with PGP. You should use
+PGP key fingerprint E9C0 59EC 0D32 64FA B35F 94AD 465B F9F6 F8EB 475A.
+
+Please do not use the GitHub issue tracker to submit vulnerability reports. The
+issue tracker is intended for bug reports and to make feature requests.
+
+## Instructions for Contributors
+Note: Development of in-toto occurs on the "develop" branch of this repository.
+
+Contributions can be made by submitting GitHub pull requests. Take a look at
+our [development
+guidelines](https://github.com/secure-systems-lab/lab-guidelines/blob/master/dev-workflow.md)
+for detailed instructions. Submitted code should follow our [code style
+guidelines](https://github.com/secure-systems-lab/code-style-guidelines),
+which provide examples of what to do (or not to do) when writing Python code.
+
+
 ## Acknowledgments
 This project is managed by Prof. Justin Cappos and other members of the
 [Secure Systems Lab](https://ssl.engineering.nyu.edu/) at NYU and the
 [NJIT Cybersecurity Research Center](https://centers.njit.edu/cybersecurity).
+
+This research was supported by the Defense Advanced Research Projects Agency
+(DARPA) and the Air Force Research Laboratory (AFRL). Any opinions, findings,
+and conclusions or recommendations expressed in this material are those of the
+authors and do not necessarily reflect the views of DARPA and AFRL. The United
+States Government is authorized to reproduce and distribute reprints
+notwithstanding any copyright notice herein.

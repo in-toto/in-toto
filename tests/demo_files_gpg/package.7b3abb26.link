@@ -1,0 +1,35 @@
+{
+ "signatures": [
+  {
+   "keyid": "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
+   "other_headers": "04000108001d1621047b3abb26b97b655ab9296bd15b0bd02e1c768c4305025a25a328",
+   "signature": "e29c54033e60a883c326cc8f1ecaecc3c61cbddfd67c91e223235ad19075e360609de01121140210c0be7d296726df82f6b61611aafce46e94b4ae5a596e938b0ac6cc141397965b8b3f7fc695bd8b8361186678e1dbc765f0b4e690f22b7a5f3e72b7221088fb519fd619b3f227055643cd09094a3991b4765d4a1b0c2d988d360c633d5e508f8ad6fe87a07f5f0047f44ab35e53cb8b55c6f06c43b5aa512f946a9d8ff711bc7ea4aac6d0306ce94bb8cb9fe03b0493c6afbf2d7255e1937491d4f43d09ee603682823a530c16e2cc0f16227f9ba5d6f6926631fc170a30a59590cee2a0695b692aba0252c7b5d983bf3ebf822f992a877a1382478a557b11"
+  }
+ ],
+ "signed": {
+  "_type": "link",
+  "byproducts": {
+   "return-value": 0,
+   "stderr": "a foo.py\n",
+   "stdout": ""
+  },
+  "command": [
+   "tar",
+   "zcvf",
+   "foo.tar.gz",
+   "foo.py"
+  ],
+  "environment": {},
+  "materials": {
+   "foo.py": {
+    "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+   }
+  },
+  "name": "package",
+  "products": {
+   "foo.tar.gz": {
+    "sha256": "52947cb78b91ad01fe81cd6aef42d1f6817e92b9e6936c1e5aabb7c98514f355"
+   }
+  }
+ }
+}

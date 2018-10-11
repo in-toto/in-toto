@@ -1,0 +1,119 @@
+{"signed": {
+    "_type": "layout",
+    "inspect": [
+        {
+            "_type": "inspection",
+            "expected_materials": [
+                [
+                    "MATCH",
+                    "foo.tar.gz",
+                    "WITH",
+                    "PRODUCTS",
+                    "FROM",
+                    "package"
+                ]
+            ],
+            "expected_products": [
+                [
+                    "MATCH",
+                    "foo.py",
+                    "WITH",
+                    "PRODUCTS",
+                    "FROM",
+                    "write-code"
+                ]
+            ],
+            "name": "untar",
+            "run": [
+                "tar",
+                "xfz",
+                "foo.tar.gz"
+            ]
+        }
+    ],
+    "keys": {
+        "7b3abb26b97b655ab9296bd15b0bd02e1c768c43": {
+            "hashes": [
+                "pgp+SHA2"
+            ],
+            "keyid": "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
+            "keyval": {
+                "private": "",
+                "public": {
+                    "e": "010001",
+                    "n": "e9ad391502ae32bd4fcc41a0f9970f8901ed6ad1c5c128c02add22721cdc22318b64bec9f9467b6949b19fc2e98ce41906125ad45d0b138f1ad6c5da7bde38092d9e3e697ce8b8373b150b57342dd921d634b873f258f5c15559b52921fa4bb7f482ec43a1c85c3385bd520cedbdc16b2524a64aecf32ac5690e6dd4ee0210a975e1b6c5af164ea69ca64533422432070511068730594793885567bb8f7cffacf6eb5ffdc640e898e599579b21b15e497f5c052112c5fdf7974e7056cd1564fe84f207cb946d1efc521e5031299e6275936e6f9464a735bd4edc8e0cde3fe5b1bf6d3bc1ed12993b865d8fcb9d9a2b2ef2df30cb7f0ab4c0dea819ea017ff195"
+                }
+            },
+            "method": "pgp+rsa-pkcsv1.5",
+            "type": "rsa"
+        },
+        "8288ef560ed3795f9df2c0db56193089b285da58": {
+            "hashes": [
+                "pgp+SHA2"
+            ],
+            "keyid": "8288ef560ed3795f9df2c0db56193089b285da58",
+            "keyval": {
+                "private": "",
+                "public": {
+                    "e": "010001",
+                    "n": "c945b94bbc504a61769bb992e2b91a247f8d32c9188cb4918396dadf31ad189928eb21e52ba117e2d4f22737b1ec1b03e36d34386335e00696005515cc3b0c948743f6a6a9988bbdef9047804c0e0eeae43e16b1e8f1a1c5589567b8802c9f33c02e38133a6027958da5ae07c050722cc7261c49fed09a9ce65ff503f973a61ba23ccdbe4204ed7efac13df77274c7be3750b7234087e9d475d7bd93b20d004f5cab5864bdf94c417e7d3d9a094890aa81a8a7caacf4ac7afe3431aa4e01fd01da430c6a6a5ee08fe6e8528f5257b7576f0439467fb0d32a61501809a0ecf4974451866f97d72c617cb12897bd16d4719eb48aefdb5f4fab09bd33b03ebbbcdd"
+                }
+            },
+            "method": "pgp+rsa-pkcsv1.5",
+            "type": "rsa"
+        }
+    },
+    "readme": "",
+    "steps": [
+        {
+            "_type": "step",
+            "expected_command": [],
+            "expected_materials": [],
+            "expected_products": [
+                [
+                    "CREATE",
+                    "foo.py"
+                ]
+            ],
+            "name": "write-code",
+            "pubkeys": [
+                "8288ef560ed3795f9df2c0db56193089b285da58"
+            ],
+            "threshold": 1
+        },
+        {
+            "_type": "step",
+            "expected_command": [
+                "tar",
+                "zcvf",
+                "foo.tar.gz",
+                "foo.py"
+            ],
+            "expected_materials": [
+                [
+                    "MATCH",
+                    "foo.py",
+                    "WITH",
+                    "PRODUCTS",
+                    "FROM",
+                    "write-code"
+                ]
+            ],
+            "expected_products": [
+                [
+                    "CREATE",
+                    "foo.tar.gz"
+                ],
+                [
+                    "ALLOW",
+                    "foo.py"
+                ]
+            ],
+            "name": "package",
+            "pubkeys": [
+                "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
+            ],
+            "threshold": 1
+        }
+    ]
+}, "signatures": []}

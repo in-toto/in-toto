@@ -21,18 +21,21 @@
 
 import attr
 import json
-import canonicaljson
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 
+import in_toto.formats
+import in_toto.gpg.functions
+
+from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False, init=False)
-class Metablock(object):
+class Metablock(ValidationMixin):
   """ This object holds the in-toto metablock data structure. This includes
   the fields "signed" and "signatures", i.e., what was signed and the
   signatures. """
@@ -43,20 +46,25 @@ class Metablock(object):
   def __init__(self, **kwargs):
     self.signatures = kwargs.get("signatures", [])
     self.signed = kwargs.get("signed")
+    self.compact_json = kwargs.get("compact_json", False)
+
+    self.validate()
 
 
   def __repr__(self):
-    """Returns a JSON string representation of the object."""
-    # the double {{'s is the escape sequence for an individual {. We wrap this
-    # under a format string to avoid encoding to json twice (which turns a json
-    # string into a string and so on...
-    # FIXME:
-    # We are mixing 3 JSON string formats here: The value of "signed" is
-    # "pretty printed canonical json", the value of "signatures" is
-    # "canonical json" and the container is just "json".
-    # Is this really what we want?
-    return '{{"signed": {}, "signatures": {}}}'.format(self.signed,
-        canonicaljson.encode_canonical_json(self.signatures))
+    """Returns an indented JSON string of the metadata object. """
+    indent = None if self.compact_json else 1
+    separators = (',', ':') if self.compact_json else (',', ': ')
+
+    return json.dumps(
+        {
+          "signatures": self.signatures,
+          "signed": attr.asdict(self.signed)
+        },
+        indent=indent,
+        separators=separators,
+        sort_keys=True
+      )
 
 
   def dump(self, filename):
@@ -76,8 +84,8 @@ class Metablock(object):
       None.
 
     """
-    with open(filename, "wt") as fp:
-      fp.write("{}".format(self))
+    with open(filename, "wb") as fp:
+      fp.write("{}".format(self).encode("utf-8"))
 
 
   @staticmethod
@@ -101,7 +109,6 @@ class Metablock(object):
       None.
 
     """
-
     with open(path, "r") as fp:
       data = json.load(fp)
 
@@ -122,86 +129,165 @@ class Metablock(object):
 
 
   @property
-  def _type(self):
-    """ Shortcut to the _type property of the contained Link or Layout object,
-    should be one of "link" or "layout". """
-    return self.signed._type
+  def type_(self):
+    """Shortcut to the _type property of the contained Link or Layout object,
+    should be one of "link" or "layout". Trailing underscore used by
+    convention (pep8) to avoid conflict with Python's type keyword. """
+    return self.signed.type_
 
 
   def sign(self, key):
     """
     <Purpose>
-      Signs the pretty printed canonical JSON representation
-      (see models.common.Signable.__repr__) of the Link or Layout object
-      contained in the `signed` property with the passed key and appends the
-      created signature to `signatures`.
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` with the passed key and appends the created
+      signature to `self.signatures`.
+
+      Note: We actually pass the dictionary representation of the data to be
+      signed and `securesystemslib.keys.create_signature` converts it to
+      canonical JSON utf-8 encoded bytes before creating the signature.
 
     <Arguments>
       key:
               A signing key in the format securesystemslib.formats.KEY_SCHEMA
 
     <Returns>
-      None.
+      The dictionary representation of the newly created signature.
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
-    signature = securesystemslib.keys.create_signature(key, repr(self.signed))
+    signature = securesystemslib.keys.create_signature(key,
+        self.signed.signable_dict)
+
     self.signatures.append(signature)
 
+    return signature
 
-  def verify_signatures(self, keys_dict):
+  def sign_gpg(self, gpg_keyid=None, gpg_home=None):
     """
     <Purpose>
-      Verifies all signatures found in the `signatures` property using the keys
-      from the passed dictionary of keys and the pretty printed canonical JSON
-      representation (see models.common.Signable.__repr__) of the Link or
-      Layout object contained in `signed`.
-
-      Verification fails if,
-        - the passed keys don't have the right format,
-        - the object is not signed,
-        - there is a signature for which no key was passed,
-        - if any of the signatures is actually broken.
-
-      Note:
-      This will be revised with in-toto/in-toto#135
+      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
+      contained in `self.signed` using `gpg.functions.gpg_sign_object` and
+      appends the created signature to `self.signatures`.
 
     <Arguments>
-      keys_dict:
-              Verifying keys in the format:
-              securesystemslib.formats.KEYDICT_SCHEMA
+      gpg_keyid: (optional)
+              A gpg keyid, if omitted the default signing key is used
+
+      gpg_home: (optional)
+              The path to the gpg keyring, if omitted the default gpg keyring
+              is used
+
+    <Returns>
+      The dictionary representation of the newly created signature.
+
+    """
+    signature = in_toto.gpg.functions.gpg_sign_object(
+        self.signed.signable_bytes, gpg_keyid, gpg_home)
+
+    self.signatures.append(signature)
+
+    return signature
+
+
+  def verify_signature(self, verification_key):
+    """
+    <Purpose>
+      Verifies the signature, found in `self.signatures`, corresponding to the
+      passed verification key, or in case of GPG one of its subkeys, identified
+      by the key's keyid, using the passed verification key and the utf-8
+      encoded canonical JSON bytes of the Link or Layout object, contained in
+      `self.signed`.
+
+      If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
+      `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
+      if the signature matches `securesystemslib.formats.SIGNATURE_SCHEMA`
+      `securesystemslib.keys.verify_signature` is used.
+
+      Note: In case of securesystemslib we actually pass the dictionary
+      representation of the data to be verified and
+      `securesystemslib.keys.verify_signature` converts it to
+      canonical JSON utf-8 encoded bytes before verifying the signature.
+
+    <Arguments>
+      verification_key:
+              Verifying key in the format:
+              in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA
 
     <Exceptions>
       FormatError
-            if the passed key dictionary is not conformant with
-            securesystemslib.formats.KEYDICT_SCHEMA
+            If the passed key is not conformant with
+            `in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA`
 
       SignatureVerificationError
-            if the Metablock is not signed
+            If the Metablock does not carry a signature signed with the
+            private key corresponding to the passed verification key or one
+            of its subkeys
 
-            if the Metablock carries a signature for which no key is found in
-            the passed key dictionary, which means that multiple signatures
-            have to be verified at once
+            If the signature corresponding to the passed verification key or
+            one of its subkeys does not match securesystemslib's or
+            in_toto.gpg's signature schema.
 
-            if any of the verified signatures is actually broken
+            If the signature to be verified is malformed or invalid.
 
     <Returns>
       None.
 
     """
-    securesystemslib.formats.KEYDICT_SCHEMA.check_match(keys_dict)
+    in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
+    verification_keyid = verification_key["keyid"]
 
-    if not self.signatures or len(self.signatures) <= 0:
-      raise SignatureVerificationError("No signatures found")
+    # Find a signature that corresponds to the keyid of the passed
+    # verification key or one of its subkeys
+    signature = None
+    for signature in self.signatures:
+      if signature["keyid"] == verification_keyid:
+        break
+
+      elif signature["keyid"] in list(
+          verification_key.get("subkeys", {}).keys()):
+        break
+
+    else:
+      raise SignatureVerificationError("No signature found for key '{}'"
+          .format(verification_keyid))
+
+    if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
+      valid = in_toto.gpg.functions.gpg_verify_signature(signature,
+          verification_key, self.signed.signable_bytes)
+
+    elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
+      valid = securesystemslib.keys.verify_signature(
+          verification_key, signature, self.signed.signable_dict)
+
+    else:
+      valid = False
+
+    if not valid:
+      raise SignatureVerificationError("Invalid signature for keyid '{}'"
+          .format(verification_keyid))
+
+
+  def _validate_signed(self):
+    """Private method to check if the 'signed' attribute contains a valid
+    Layout or Link object. """
+
+    if not (isinstance(self.signed, Layout) or isinstance(self.signed, Link)):
+      raise securesystemslib.exceptions.FormatError("The Metblock's 'signed'"
+        " property has has to be of type 'Link' or 'Layout'.")
+
+    # If the signed object is a Link or Layout object validate it.
+    self.signed.validate()
+
+
+  def _validate_signatures(self):
+    """Private method to check that the 'signatures' attribute is a list of
+    signatures in the format 'in_toto.formats.ANY_SIGNATURE_SCHEMA'. """
+
+    if not isinstance(self.signatures, list):
+      raise securesystemslib.exceptions.FormatError("The Metablock's"
+        " 'signatures' property has to be of type 'list'.")
 
     for signature in self.signatures:
-      keyid = signature["keyid"]
-      try:
-        key = keys_dict[keyid]
-      except KeyError:
-        raise SignatureVerificationError(
-            "Signature key not found, key id is '{0}'".format(keyid))
-      if not securesystemslib.keys.verify_signature(
-          key, signature, repr(self.signed)):
-        raise SignatureVerificationError("Invalid signature")
+      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
