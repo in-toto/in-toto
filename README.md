@@ -62,7 +62,7 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` generates link metadata for the given command-line option. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain).
+`in-toto-run` generates link metadata for the given command-line option and runs it as its own command. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain).
 
 ```shell
 in-toto-run  --step-name <unique step name>
