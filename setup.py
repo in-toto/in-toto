@@ -47,12 +47,12 @@ setup(
     "`repository on GitHub "
     "<https://github.com/in-toto/in-toto/tree/{version}>`__."
     .format(version=version)),
-  license="MIT",
+  license="Apache-2.0",
   keywords="software supply chain security",
   classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
+    'License :: OSI Approved :: Apache Software License',
     'Natural Language :: English',
     'Operating System :: POSIX',
     'Operating System :: POSIX :: Linux',
