@@ -22,12 +22,15 @@ import unittest
 import argparse
 import shutil
 import tempfile
+import logging
 from mock import patch
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
 
 import tests.common
 
+# Required to cache and restore default log level
+logger = logging.getLogger("in_toto")
 
 
 class TestInTotoMockTool(tests.common.CliTestCase):
@@ -39,6 +42,11 @@ class TestInTotoMockTool(tests.common.CliTestCase):
   def setUpClass(self):
     """Create and change into temporary directory,
     dummy artifact and base arguments. """
+
+    # Below tests override the base logger ('in_toto') log level to
+    # `logging.INFO`. We cache the original log level before running the tests
+    # to restore it afterwards.
+    self._base_log_level = logger.level
 
     self.working_dir = os.getcwd()
 
@@ -56,6 +64,9 @@ class TestInTotoMockTool(tests.common.CliTestCase):
     """Change back to initial working dir and remove temp test directory. """
     os.chdir(self.working_dir)
     shutil.rmtree(self.test_dir)
+
+    # Restore log level to what it was before running in-toto-mock
+    logger.setLevel(self._base_log_level)
 
   def tearDown(self):
     try:
