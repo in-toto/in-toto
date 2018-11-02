@@ -156,7 +156,7 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
 
     # Fail with an explicit link directory, where no links are found
     args = ["--layout", self.layout_single_signed_path,
-        "--layout-keys", self.alice_path, "--link-dir", "bad-link-dir", "-v"]
+        "--layout-keys", self.alice_path, "--link-dir", "bad-link-dir"]
     self.assert_cli_sys_exit(args, 1)
 
 
