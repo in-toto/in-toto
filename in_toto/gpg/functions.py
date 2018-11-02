@@ -89,7 +89,12 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
   process = in_toto.process.run(command, input=content,
-    stdout=in_toto.process.PIPE, stderr=in_toto.process.DEVNULL)
+    stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
+
+  # TODO: Remove debug statements after fixing in-toto/in-toto#171
+  log.debug("{0} (stdout):{1}".format(command, process.stdout))
+  log.debug("{0} (stderr):{1}".format(command, process.stderr))
+
   signature_data = process.stdout
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
@@ -227,7 +232,12 @@ def gpg_export_pubkey(keyid, homedir=None):
 
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
-    stderr=in_toto.process.DEVNULL)
+    stderr=in_toto.process.PIPE)
+
+  # TODO: Remove debug statements after fixing in-toto/in-toto#171
+  log.debug("{0} (stdout):{1}".format(command, process.stdout))
+  log.debug("{0} (stderr):{1}".format(command, process.stderr))
+
   key_packet = process.stdout
   key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
 
