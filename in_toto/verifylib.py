@@ -563,11 +563,15 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
 def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   """
   <Purpose>
-    Verifies that for each queued source artifact filtered by the specified
-    source pattern there is a destination artifact filtered by the specified
-    destination pattern and they are equal in terms of path and file hash.
+    Verifies that for each queued source artifact, filtered by the specified
+    source pattern, there is a destination artifact, filtered by the specified
+    destination pattern, and they are equal in terms of path and file hash.
 
     This guarantees that artifacts were not modified between steps/inspections.
+
+    The rule only modifies the source artifacts queue, by removing artifacts
+    that were successfully consumed by the rule, i.e. if there was a match with
+    a target artifact.
 
   <Terms>
     queued source artifacts:
@@ -639,18 +643,11 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     FormatError
         if the rule does not conform with the rule format.
 
-    RuleVerificationError
-        if the destination link is not found in the passed link dictionary.
-        if the corresponding destination artifact of a filtered source artifact
-        is not found.
-        if a hash of a source artifact and the hash of a corresponding target
-        artifact are not equal.
-
   <Side Effects>
     None.
 
   <Returns>
-    A list of artifacts that were matched by the rule.
+    A list of source artifacts that were not consumed by the rule.
 
   """
   rule_data = in_toto.rulelib.unpack_rule(rule)
@@ -661,9 +658,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   try:
     dest_link = links[dest_name]
   except KeyError:
-    raise RuleVerificationError("Rule '{rule}' failed, destination link"
-        " '{dest_link}' not found in link dictionary".format(
-            rule=" ".join(rule), dest_link=dest_name))
+    return source_artifacts_queue
 
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
@@ -705,8 +700,8 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     else:
       full_source_path = path
 
-    # If a destination prefix was specified, the destionation artifact should
-    # be queried with the full destionation path, i.e. the prefix joined with
+    # If a destination prefix was specified, the destination artifact should
+    # be queried with the full destination path, i.e. the prefix joined with
     # the globbed path.
     if rule_data["dest_prefix"]:
       full_dest_path = os.path.join(rule_data["dest_prefix"], path)
@@ -722,18 +717,20 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     try:
       dest_artifact = dest_artifacts[full_dest_path]
 
-    # If there is no such key (i.e., target path), we won't mark this file
-    # as matched
+    # If there is no destination artifact with the same path as the source
+    # artifact, we won't mark this artifact as matched, i.e. we leave it in the
+    # queue
     except KeyError:
       continue
 
-    # finally, if both paths exist, make sure they do in fact have the same
-    # hash
+    # Finally, if source and destination artifact exist, make sure they do in
+    # fact have the same hash. If not, we won't mark it as matched, i.e. we
+    # leave it in the queue
     if source_artifact != dest_artifact:
       continue
 
-    # Matching went well, let's remove the path from the queue. Subsequent
-    # rules won't see this artifact anymore.
+    # Only if matching went well, do we remove it from the queue. Subsequent
+    # rules (e.g. DISALLOW) won't see this artifact anymore.
     source_artifacts_queue.remove(full_source_path)
 
   return source_artifacts_queue
@@ -742,8 +739,10 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
 def verify_create_rule(rule, source_materials_queue, source_products_queue):
   """
   <Purpose>
-    The create rule guarantees that no product filtered by the pattern, already
-    appears in the materials queue, i.e. that it was created in that step.
+    Verifies that no products matched by applying the rule pattern on the
+    product queue, are already in the material queue, i.e. that all matched
+    products were created in that step. If the rule finds an artifact to be
+    indeed created, it is taken from the products queue.
 
   <Notes>
     The create rule always passes if the pattern does not match any products:
@@ -771,9 +770,8 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerificationError
-        if a product filtered by the pattern also appears in the materials
-        queue.
+    FormatError
+        if the rule does not conform with the rule format.
 
   <Side Effects>
     None.
@@ -783,8 +781,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
 
   """
   rule_data = in_toto.rulelib.unpack_rule(rule)
-
-
+  
   matched_products = fnmatch.filter(
       source_products_queue, rule_data["pattern"])
 
@@ -801,8 +798,11 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
 def verify_delete_rule(rule, source_materials_queue, source_products_queue):
   """
   <Purpose>
-    The delete rule guarantees that no material filtered by the pattern also
-    appears in the products queue, i.e. that it was deleted in that step.
+    Verifies that no materials matched by applying the rule pattern on the
+    material queue, are still in the product queue, i.e. that all matched
+    materials were deleted in that step. If the rule finds an artifact to be
+    indeed deleted, it is taken from the products queue, otherwise a
+    RuleVerificationError is raised.
 
   <Notes>
     The delete rule always passes if the pattern does not match any materials:
@@ -830,9 +830,8 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
             A list of product paths that were not matched by a previous rule.
 
   <Exceptions>
-    RuleVerificationError
-        if a material filtered by the pattern also appears in the products
-        queue.
+    FormatError
+        if the rule does not conform with the rule format.
 
   <Side Effects>
     None.
@@ -846,22 +845,28 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
   matched_materials = fnmatch.filter(
       source_materials_queue, rule_data["pattern"])
 
+  unmatched_products = set()
+
   for matched_material in matched_materials:
     if matched_material in source_products_queue:
-      raise RuleVerificationError("Rule '{0}' failed, material '{1}' was found"
-          " in products but should have been deleted."
-              .format(" ".join(rule), matched_material))
+      unmatched_products.add(matched_material)
 
-  return list(set(source_materials_queue) - set(matched_materials))
+  matched_materials = set(matched_materials) - unmatched_products
+  return list(set(source_materials_queue) - matched_materials)
 
 
 def verify_modify_rule(rule, source_materials_queue, source_products_queue,
       source_materials, source_products):
   """
   <Purpose>
-    The modify rule guarantees that for each material filtered by the pattern
-    there is a product filtered by the pattern (and vice versa) and that their
-    hashes are not equal, i.e. the artifact was modified.
+    Verifies that artifacts matched by applying the rule pattern on the
+    product queue are already in the material queue and have different
+    hashes, i.e. were modified in that step. If the rule finds an artifact to
+    be indeed modified, it is taken from the products queue.
+
+    TODO:
+    Rethink rule, it is unclear why it only modifies the products queue.
+
 
   <Arguments>
     rule:
@@ -883,16 +888,15 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
             as values. Format is: {<path> : HASHDICT}
 
   <Exceptions>
-    RuleVerificationError
-        if the materials and products matched by the pattern are not equal in
-        terms of paths.
-        if any material-product pair has the same hash (was not modified).
+    FormatError
+        if the rule does not conform with the rule format.
 
   <Side Effects>
     None.
 
   <Returns>
-    The updated materials and products queues (minus modified artifacts).
+    The updated materials and products queues (the latter minus modified
+    artifacts).
 
   """
   rule_data = in_toto.rulelib.unpack_rule(rule)
@@ -923,12 +927,8 @@ def verify_modify_rule(rule, source_materials_queue, source_products_queue,
 def verify_allow_rule(rule, source_artifacts_queue):
   """
   <Purpose>
-    Authorizes the materials or products reported by a link metadata file
-    and filtered by the specified pattern.
-
-    The allow rule verification will never fail, but it modifies the artifact
-    queue which affects the rest of the rules verification routine. See
-    `verify_item_rules`.
+    Authorizes an artifact in the corresponding queue, by removing any
+    artifacts filtered by the rule pattern from the queue.
 
   <Arguments>
     rule:
@@ -960,8 +960,20 @@ def verify_allow_rule(rule, source_artifacts_queue):
 def verify_disallow_rule(rule, source_artifacts_queue):
   """
   <Purpose>
-    Verifies that the specified pattern does not match any materials or
-    products.
+    Verifies that the specified pattern does not match any artifacts in the
+    passed artifacts queue and fails if it does.
+
+    IMPORTANT NOTE:
+    All other artifact rules(**) only modify artifact queues, that is if any of
+    the other rules can be applied successfully, they remove the corresponding
+    artifact from the queue.
+
+    In a reverse conclusion, a rule that can not be applied successfully,
+    leaves the artifact in the queue, and hence requires a subsequent
+    disallow rule (e.g. DISALLOW *) to fail the overall verification.
+
+
+   (**) (see `verify_delete_rule` for an exception)
 
   <Arguments>
     rule:
@@ -972,8 +984,10 @@ def verify_disallow_rule(rule, source_artifacts_queue):
             A list of artifact paths that were not matched by a previous rule.
 
   <Exceptions>
+    FormatError
+        if the rule does not conform with any rule format.
     RuleVerificationError
-        if path pattern matches artifacts in artifact queue.
+        if the rule pattern matches artifacts in the artifact queue.
 
   <Side Effects>
     None.
@@ -988,8 +1002,9 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerificationError("Rule '{0}' failed, pattern matched disallowed"
-        " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
+    raise RuleVerificationError("Rule '{0}' failed, rule pattern matches the"
+        " following artifacts of the artifact queue, which is disallowed:"
+        " '{1}' ".format(" ".join(rule), matched_artifacts))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -1002,6 +1017,11 @@ def verify_item_rules(source_name, source_type, rules, links):
     In the beginning all artifacts are placed in a queue according to their
     type. If an artifact gets consumed by a rule it is removed from the queue,
     hence an artifact can only be consumed once.
+
+    Most rules only remove artifacts from the corresponding queues on success,
+    and leave the queue unchanged on failure. Hence, it is left to a subsequent
+    DISALLOW rule to fail overall verification, if any artifacts are left in
+    the queue that should have been consumed be preceding rules.
 
 
   <Algorithm>
@@ -1036,9 +1056,12 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   <Exceptions>
     FormatError
-        if source_type is not "materials" or "products"
+        if source_type is not "materials" or "products", or
+        if a rule in the passed list of rules does not conform with any rule
+        format.
     RuleVerificationError
-        if the artifacts queue is not empty after all rules were applied
+        if a DISALLOW rule matches any artifacts in the corresponding artifact
+        queue.
 
   <Side Effects>
     None.
