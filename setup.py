@@ -33,7 +33,7 @@
 """
 from setuptools import setup, find_packages
 
-version = "0.2.2"
+version = "0.2.3"
 
 setup(
   name="in-toto",
@@ -47,12 +47,12 @@ setup(
     "`repository on GitHub "
     "<https://github.com/in-toto/in-toto/tree/{version}>`__."
     .format(version=version)),
-  license="MIT",
+  license="Apache-2.0",
   keywords="software supply chain security",
   classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
+    'License :: OSI Approved :: Apache Software License',
     'Natural Language :: English',
     'Operating System :: POSIX',
     'Operating System :: POSIX :: Linux',
@@ -61,17 +61,18 @@ setup(
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: Implementation :: CPython',
     'Topic :: Security',
     'Topic :: Software Development'
   ],
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.2", "attrs",
-                    "python-dateutil", "iso8601"],
+  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
+                    "python-dateutil", "iso8601", "pathspec",
+                    "subprocess32; python_version < '3'"],
   test_suite="tests.runtests",
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",

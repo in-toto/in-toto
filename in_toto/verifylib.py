@@ -572,7 +572,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     The rule only modifies the source artifacts queue, by removing artifacts
     that were successfully consumed by the rule, i.e. if there was a match with
     a target artifact.
-
+    
   <Terms>
     queued source artifacts:
         Artifacts reported by the link for the step/inspection containing passed
@@ -655,6 +655,8 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   dest_type = rule_data["dest_type"]
 
   # Extract destination link
+  # FIXME: In alignment with in-toto/in-toto#204, we should return the
+  # unmodified source artifact queue instead of raising an exception.
   try:
     dest_link = links[dest_name]
   except KeyError:
@@ -675,7 +677,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   if rule_data["source_prefix"]:
     filtered_source_paths = []
     # Add trailing slash to source prefix if it does not exist
-    normalized_source_prefix = os.path.join(rule_data["source_prefix"], "")
+    normalized_source_prefix = os.path.join(rule_data["source_prefix"], "").replace("\\", "/")
     for artifact_path in source_artifacts_queue:
       if artifact_path.startswith(normalized_source_prefix):
         filtered_source_paths.append(
@@ -695,7 +697,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # globbing. We have to re-prepend the prefix in order to retrieve the
     # corresponding source artifact below.
     if rule_data["source_prefix"]:
-      full_source_path = os.path.join(rule_data["source_prefix"], path)
+      full_source_path = os.path.join(rule_data["source_prefix"], path).replace("\\", "/")
 
     else:
       full_source_path = path
@@ -704,7 +706,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # be queried with the full destination path, i.e. the prefix joined with
     # the globbed path.
     if rule_data["dest_prefix"]:
-      full_dest_path = os.path.join(rule_data["dest_prefix"], path)
+      full_dest_path = os.path.join(rule_data["dest_prefix"], path).replace("\\", "/")
 
     else:
       full_dest_path = path

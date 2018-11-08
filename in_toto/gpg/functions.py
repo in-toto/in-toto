@@ -15,8 +15,6 @@
   publicly-usable functions for exporting public-keys, signing data and
   verifying signatures.
 """
-import subprocess
-import shlex
 import logging
 
 import in_toto.gpg.common
@@ -25,8 +23,9 @@ import in_toto.gpg.formats
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
     SIGNATURE_HANDLERS, FULLY_SUPPORTED_MIN_VERSION)
 
-import securesystemslib.formats
+import in_toto.process
 
+import securesystemslib.formats
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
@@ -86,13 +85,12 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
   homearg = ""
   if homedir:
-    homearg = "--homedir {}".format(homedir)
+    homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
-  process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
-      stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-  signature_data, junk = process.communicate(content)
-
+  process = in_toto.process.run(command, input=content,
+    stdout=in_toto.process.PIPE, stderr=in_toto.process.DEVNULL)
+  signature_data = process.stdout
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
@@ -225,13 +223,12 @@ def gpg_export_pubkey(keyid, homedir=None):
 
   homearg = ""
   if homedir:
-    homearg = "--homedir {}".format(homedir)
+    homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
-  process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE,
-      stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-  key_packet, junk = process.communicate()
-
+  process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
+    stderr=in_toto.process.DEVNULL)
+  key_packet = process.stdout
   key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
 
   return key_bundle

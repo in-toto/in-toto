@@ -29,6 +29,18 @@ import inspect
 import unittest
 from mock import patch
 
+def run_with_portable_scripts(decorated):
+
+  print("patching...")
+  scripts_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "scripts")
+  print("scripts are located in {}".format(scripts_path))
+  @patch.dict(os.environ, {"PATH": "{};{}".format(scripts_path, os.environ['PATH'])})
+  class Patched(decorated):
+    pass
+
+  return Patched
+
+
 
 class CliTestCase(unittest.TestCase):
   """TestCase subclass providing a test helper that patches sys.argv with

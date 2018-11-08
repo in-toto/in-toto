@@ -15,29 +15,29 @@
   aggregates all the constant definitions and lookup structures for signature
   handling
 """
+
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
-import in_toto.user_settings as settings
 
-# The key used to get user-specified GPG executable from the environment.
-GPG_EXECUTABLE_KEY = "GPG_EXECUTABLE"
+import in_toto.process as process
 
-# First, try getting the GPG executable from the RC file.
-GPG_EXECUTABLE = settings.get_rc().get(GPG_EXECUTABLE_KEY)
-
-# Second, otherwise, try getting it from environment variables.
-if not GPG_EXECUTABLE:
-  GPG_EXECUTABLE = settings.get_env().get(GPG_EXECUTABLE_KEY)
-
-# Third, otherwise, fix it to an expected binary.
-if not GPG_EXECUTABLE:
-  GPG_EXECUTABLE = "gpg2"
-
-GPG_SIGN_COMMAND = GPG_EXECUTABLE + " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
-GPG_EXPORT_PUBKEY_COMMAND = GPG_EXECUTABLE + " {homearg} --export {keyid}"
-GPG_VERSION_COMMAND = GPG_EXECUTABLE + " --version"
+# By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
+# exists.
+GPG_COMMAND = "gpg2"
+GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
+
+try:
+  process.run(GPG_VERSION_COMMAND, stdout=process.DEVNULL,
+    stderr=process.DEVNULL)
+except OSError: # pragma: no cover
+  GPG_COMMAND = "gpg"
+  GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
+
+GPG_SIGN_COMMAND = GPG_COMMAND + \
+                   " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
+GPG_EXPORT_PUBKEY_COMMAND = GPG_COMMAND + " {homearg} --export {keyid}"
 
 # The packet header is described in RFC4880 section 4.2, and the respective
 # packet types can be found in sections 5.2 (signature packet), 5.5.1.1

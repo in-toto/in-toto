@@ -33,7 +33,8 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     _hash_artifact)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT)
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -148,6 +149,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       with self.assertRaises(ValueError):
         record_artifacts_as_dict(["."], base_path=base_path)
 
+    def tearDown(self):
+      """ change back to the test dir, in case any tests fail """
+      os.chdir(self.test_dir)
+
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
@@ -202,6 +207,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       sorted(self.full_file_path_list))
 
 
+  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
     """Symlinked files are always recorded. """
     # Symlinked **files** are always recorded ...
@@ -235,6 +241,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       os.unlink(pair[1])
 
 
+  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_without_dead_symlinks(self):
     """Dead symlinks are never recorded. """
 
@@ -263,6 +270,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       os.unlink(link)
 
 
+  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_follow_symlinked_directories(self):
     """Record files in symlinked dirs if follow_symlink_dirs is True. """
 
@@ -342,8 +350,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   def test_hash_artifact_passing_algorithm(self):
     """Test _hash_artifact passing hash algorithm. """
+    os.chdir(self.test_dir)
     self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
-
 
 
 class TestInTotoRun(unittest.TestCase):
@@ -393,30 +401,35 @@ class TestInTotoRun(unittest.TestCase):
   def test_in_toto_run_verify_signature(self):
     """Successfully run, verify signed metadata. """
     link = in_toto_run(self.step_name, None, None,
-        ["echo", "test"], True, self.key)
+        ["python", "--version"], True, self.key)
     link.verify_signature(self.key)
 
   def test_in_toto_run_no_signature(self):
     """Successfully run, verify empty signature field. """
-    link = in_toto_run(self.step_name, None, None, ["echo", "test"])
+    link = in_toto_run(self.step_name, None, None, ["python", "--version"])
     self.assertFalse(len(link.signatures))
 
   def test_in_toto_run_with_byproduct(self):
     """Successfully run, verify recorded byproduct. """
-    link = in_toto_run(self.step_name, None, None, ["echo", "test"],
+    link = in_toto_run(self.step_name, None, None, ["python", "--version"],
         record_streams=True)
-    self.assertTrue("test" in link.signed.byproducts.get("stdout"))
+
+    # this or clause may seem weird, but given that python 2 prints its version
+    # to stderr while python3 prints it to stdout we check on both (or add a
+    # more verbose if clause)
+    self.assertTrue("Python" in link.signed.byproducts.get("stdout") or
+        "Python" in link.signed.byproducts.get("stderr"))
 
   def test_in_toto_run_without_byproduct(self):
     """Successfully run, verify byproduct is not recorded. """
-    link = in_toto_run(self.step_name, None, None, ["echo", "test"],
+    link = in_toto_run(self.step_name, None, None, ["python", "--version"],
         record_streams=False)
     self.assertFalse(len(link.signed.byproducts.get("stdout")))
 
   def test_in_toto_run_compare_dumped_with_returned_link(self):
     """Successfully run, compare dumped link is equal to returned link. """
     link = in_toto_run(self.step_name, [self.test_artifact],
-        [self.test_artifact], ["echo", "test"], True, self.key)
+        [self.test_artifact], ["python", "--version"], True, self.key)
     link_dump = Metablock.load(
         FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEquals(repr(link), repr(link_dump))
@@ -424,26 +437,56 @@ class TestInTotoRun(unittest.TestCase):
   def test_in_toto_run_verify_recorded_artifacts(self):
     """Successfully run, verify properly recorded artifacts. """
     link = in_toto_run(self.step_name, [self.test_artifact],
-        [self.test_artifact], ["echo", "test"])
+        [self.test_artifact], ["python", "--version"])
     self.assertEqual(list(link.signed.materials.keys()),
         list(link.signed.products.keys()), [self.test_artifact])
 
   def test_in_toto_run_verify_workdir(self):
     """Successfully run, verify cwd. """
-    link = in_toto_run(self.step_name, [], [], ["echo", "test"])
-    self.assertEquals(link.signed.environment["workdir"], os.getcwd())
+    link = in_toto_run(self.step_name, [], [], ["python", "--version"],
+        record_environment=True)
+    self.assertEquals(link.signed.environment["workdir"], 
+        os.getcwd().replace("\\", "/"))
+
+  def test_normalize_line_endings(self):
+    """Test cross-platform line ending normalization. """
+    paths = []
+    try:
+      # Create three artifacts with same content but different line endings
+      for line_ending in [b"\n", b"\r", b"\r\n"]:
+        fd, path = tempfile.mkstemp()
+        paths.append(path)
+        os.write(fd, b"hello" + line_ending + b"toto")
+        os.close(fd)
+
+      # Call in_toto_run and record artifacts as materials and products
+      # with line ending normalization on
+      link = in_toto_run(self.step_name, paths, paths, ["python", "--version"],
+          normalize_line_endings=True).signed
+
+      # Check that all three hashes in materials and products are equal
+      for artifact_dict in [link.materials, link.products]:
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
+
+    # Clean up
+    finally:
+      for path in paths:
+        os.remove(path)
+
 
   def test_in_toto_bad_signing_key_format(self):
     """Fail run, passed key is not properly formatted. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
-          ["echo", "test"], True, "this-is-not-a-key")
+          ["python", "--version"], True, "this-is-not-a-key")
 
   def test_in_toto_wrong_key(self):
     """Fail run, passed key is a public key. """
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
-          ["echo", "test"], True, self.key_pub)
+          ["python", "--version"], True, self.key_pub)
+
 
 class TestInTotoRecordStart(unittest.TestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
@@ -544,10 +587,11 @@ class TestInTotoRecordStop(unittest.TestCase):
 
   def test_create_metadata_with_expected_cwd(self):
     """Test record start/stop run, verify cwd. """
-    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_start(self.step_name, [], self.key, record_environment=True)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
-    self.assertEquals(link.signed.environment["workdir"], os.getcwd())
+    self.assertEquals(link.signed.environment["workdir"], 
+        os.getcwd().replace('\\', '/'))
     os.remove(self.link_name)
 
   def test_create_metadata_verify_signature(self):
@@ -595,6 +639,36 @@ class TestInTotoRecordStop(unittest.TestCase):
       in_toto_record_stop(
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
+
+  def test_normalize_line_endings(self):
+    """Test cross-platform line ending normalization. """
+    paths = []
+    try:
+      # Create three artifacts with same content but different line endings
+      for line_ending in [b"\n", b"\r", b"\r\n"]:
+        fd, path = tempfile.mkstemp()
+        paths.append(path)
+        os.write(fd, b"hello" + line_ending + b"toto")
+        os.close(fd)
+
+      # Call in_toto_record start and stop and record artifacts as
+      # materials and products with line ending normalization on
+      in_toto_record_start(self.step_name, paths, self.key,
+          normalize_line_endings=True)
+      in_toto_record_stop(self.step_name, paths, self.key,
+          normalize_line_endings=True)
+      link = Metablock.load(self.link_name).signed
+
+      # Check that all three hashes in materials and products are equal
+      for artifact_dict in [link.materials, link.products]:
+        hash_dicts = list(artifact_dict.values())
+        self.assertTrue(hash_dicts[1:] == hash_dicts[:-1])
+
+    # Clean up
+    finally:
+      for path in paths:
+        os.remove(path)
+
 
 if __name__ == "__main__":
   unittest.main()

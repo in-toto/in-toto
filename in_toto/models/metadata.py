@@ -46,17 +46,25 @@ class Metablock(ValidationMixin):
   def __init__(self, **kwargs):
     self.signatures = kwargs.get("signatures", [])
     self.signed = kwargs.get("signed")
+    self.compact_json = kwargs.get("compact_json", False)
 
     self.validate()
 
 
   def __repr__(self):
     """Returns an indented JSON string of the metadata object. """
+    indent = None if self.compact_json else 1
+    separators = (',', ':') if self.compact_json else (',', ': ')
+
     return json.dumps(
         {
           "signatures": self.signatures,
           "signed": attr.asdict(self.signed)
-        }, indent=1, separators=(",", ": "), sort_keys=True)
+        },
+        indent=indent,
+        separators=separators,
+        sort_keys=True
+      )
 
 
   def dump(self, filename):

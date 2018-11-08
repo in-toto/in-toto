@@ -1,4 +1,6 @@
-# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1523/badge)](https://bestpractices.coreinfrastructure.org/projects/1523)
+# in-toto [![Build Status](https://travis-ci.org/in-toto/in-toto.svg?branch=develop)](https://travis-ci.org/in-toto/in-toto) [![Coverage Status](https://coveralls.io/repos/github/in-toto/in-toto/badge.svg?branch=develop)](https://coveralls.io/github/in-toto/in-toto?branch=develop) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1523/badge)](https://bestpractices.coreinfrastructure.org/projects/1523) [![Build status](https://ci.appveyor.com/api/projects/status/taxlhrrlf3co07e1/branch/develop?svg=true)](https://ci.appveyor.com/project/in-toto/in-toto/branch/develop)
+
+
 
 in-toto provides a framework to protect the integrity of the software supply chain. It does so by verifying that each task in the chain is carried out as planned, by authorized personnel only, and that the product is not tampered with in transit.
 
@@ -64,11 +66,7 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` executes the passed command and records the path and hash of
-the passed *materials* - files before command execution - and *products* -
-files after command execution and optionally stores them together with the
-command's *byproducts* (e.g: return value, stdout or stderr) to a link file
-(`<NAME>.<KEYID-PREFIX>.link`), signed with the functionary's key.
+`in-toto-run` generates link metadata for the given command-line option and runs it as its own command. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain).
 
 ```shell
 in-toto-run  --step-name <unique step name>
@@ -124,6 +122,17 @@ in-toto-verify --layout <layout path>
                [--verbose]
 ```
 
+#### Signatures
+`in-toto-sign`, unlike `in-toto-verify`, can only add, replace, and verify signatures within in-toto Link or Layout metadata, with options to
+- replace (default) or add signature(s), with layout metadata able to be signed by multiple keys at once while link metadata can only be signed by one key at a time
+- write signed metadata to a specified path (if no output path is specified, layout metadata is written to the path of the input file while link metadata is written to '<name>.<keyid prefix>.link')
+- verify signatures
+This tool is intended to sign layouts created by the layout web wizard, but also serves well to re-sign test and demo data. For example, it can be used if metadata formats or signing routines change.
+```shell
+usage: in-toto-sign [-h] -f <path> [-k <path> [<path> ...]]
+                    [-t <key_type> [<key_type> ...]] [-g [<id> [<id> ...]]]
+                    [--gpg-home <path>] [-o <path>] [-a] [--verify] [-v | -q]
+```
 
 #### Settings
 Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following

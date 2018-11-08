@@ -3,3 +3,5 @@ attrs
 python-dateutil
 iso8601
 six
+pathspec
+subprocess32; python_version < '3'
