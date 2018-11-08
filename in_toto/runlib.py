@@ -99,11 +99,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     Paths are normalized for matching and storing by left stripping "./"
 
     NOTE on exclude patterns:
-      - Uses Python fnmatch
-            *       matches everything
-            ?       matches any single character
-            [seq]   matches any character in seq
-            [!seq]  matches any character not in seq
+      - Uses PathSpec to compile gitignore-style patterns, making use of the 
+        GitWildMatchPattern class (registered as 'gitwildmatch')
 
       - Patterns are checked for match against the full path relative to each
         path passed in the artifacts list
