@@ -595,15 +595,6 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     that were successfully consumed by the rule, i.e. if there was a match with
     a target artifact.
 
-    FIXME:
-    In in-toto/in-toto#204 the behavior of the match rule was changed to NOT
-    FAIL if a required destination artifact could not be found in the
-    corresponding destination link, or if a source and destination artifact
-    pair has no matching hashes. However, the rule verification still fails
-    if a required destination link is not found.
-    As failing the overall rule verification is now left to a subsequent
-    DISALLOW rule, the "fail on missing destination link" should be removed.
-
   <Terms>
     queued source artifacts:
         Artifacts reported by the link for the step/inspection containing passed
@@ -694,9 +685,7 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   try:
     dest_link = links[dest_name]
   except KeyError:
-    raise RuleVerificationError("Rule '{rule}' failed, destination link"
-        " '{dest_link}' not found in link dictionary".format(
-            rule=" ".join(rule), dest_link=dest_name))
+    return source_artifacts_queue
 
   # Extract destination artifacts from destination link
   if dest_type.lower() == "materials":
@@ -819,8 +808,7 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
 
   """
   rule_data = in_toto.rulelib.unpack_rule(rule)
-
-
+  
   matched_products = fnmatch.filter(
       source_products_queue, rule_data["pattern"])
 
@@ -894,8 +882,8 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
 
   for matched_material in matched_materials:
     if matched_material in source_products_queue:
-      raise RuleVerificationError("Rule '{0}' failed, material '{1}' was found"
-          " in products but should have been deleted."
+      raise RuleVerificationError("Rule '{0}' failed, material '{1}' that should"
+          " have been deleted was found in the products queue."
               .format(" ".join(rule), matched_material))
 
   return list(set(source_materials_queue) - set(matched_materials))
@@ -1048,8 +1036,9 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerificationError("Rule '{0}' failed, pattern matched disallowed"
-        " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
+    raise RuleVerificationError("Rule '{0}' failed, rule pattern matches the"
+        " following artifacts of the artifact queue, which is disallowed:"
+        " '{1}' ".format(" ".join(rule), matched_artifacts))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
