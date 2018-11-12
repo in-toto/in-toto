@@ -152,7 +152,7 @@ Also, setting values that contain colons are parsed as list.
 
 `ARTIFACT_EXCLUDE_PATTERNS` Specifies a list of glob patterns that can be used to
 exclude files from being recorded as materials or products. See [runlib
-docs for more details](https://github.com/in-toto/in-toto/blob/develop/in_toto/runlib.py#L93-L114).
+docs for more details](in_toto/runlib.py#L101-L119).
 
 `ARTIFACT_BASE_PATH` If set, material and product paths passed to
 `in-toto-run` are searched relative to the set base path. Also, the base
