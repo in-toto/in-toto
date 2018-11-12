@@ -49,6 +49,8 @@ import in_toto.rulelib
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
+RULE_TRACEBACK_QUEUE = list()
+
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -1049,7 +1051,8 @@ def verify_disallow_rule(rule, source_artifacts_queue):
   if len(matched_artifacts):
     raise RuleVerificationError("Rule '{0}' failed, rule pattern matches the"
         " following artifacts of the artifact queue, which is disallowed:"
-        " '{1}' ".format(" ".join(rule), matched_artifacts))
+        " '{1}' . Here is the traceback for all earlier rule processing:\n"
+        " '{2}' ".format(" ".join(rule), matched_artifacts, RULE_TRACEBACK_QUEUE))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -1149,9 +1152,11 @@ def verify_item_rules(source_name, source_type, rules, links):
     if rule_type == "match":
       source_artifacts_queue = verify_match_rule(
           rule, source_artifacts_queue, source_artifacts, links)
+      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
 
     elif rule_type == "allow":
       source_artifacts_queue = verify_allow_rule(rule, source_artifacts_queue)
+      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
 
     elif rule_type == "disallow":
       verify_disallow_rule(rule, source_artifacts_queue)
@@ -1162,15 +1167,17 @@ def verify_item_rules(source_name, source_type, rules, links):
     elif rule_type == "create":
       source_products_queue = verify_create_rule(
           rule, source_materials_queue, source_products_queue)
+      RULE_TRACEBACK_QUEUE.append(source_products_queue)
 
       # The create rule only updates the products_queue, which in turn
       # only affects the generic artifacts queue if source_type is "products"
       if source_type == "products":
         source_artifacts_queue = source_products_queue
-
+        
     elif rule_type == "delete":
       source_materials_queue = verify_delete_rule(
           rule, source_materials_queue, source_products_queue)
+      RULE_TRACEBACK_QUEUE.append(source_materials_queue)
 
       # The delete rule only updates the materials_queue, which in turn
       # only affects the generic artifacts queue if source_type is "materials"
@@ -1195,6 +1202,8 @@ def verify_item_rules(source_name, source_type, rules, links):
             rule, source_materials_queue, source_artifacts_queue,
             source_materials, source_products)
         source_artifacts_queue = source_products_queue
+
+      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
 
 
 def verify_all_item_rules(items, links):
