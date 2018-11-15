@@ -15,11 +15,15 @@
   aggregates all the constant definitions and lookup structures for signature
   handling
 """
+import logging
 
 import in_toto.gpg.rsa as rsa
 import in_toto.gpg.dsa as dsa
 
 import in_toto.process as process
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
 
 # By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
 # exists.
@@ -29,8 +33,12 @@ GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
 try:
-  process.run(GPG_VERSION_COMMAND, stdout=process.DEVNULL,
-    stderr=process.DEVNULL)
+  proc = process.run(GPG_VERSION_COMMAND, stdout=process.PIPE,
+    stderr=process.PIPE)
+
+  # TODO: Remove debug statements after fixing in-toto/in-toto#171
+  log.debug("{0} (stdout):{1}".format(GPG_VERSION_COMMAND, proc.stdout))
+  log.debug("{0} (stderr):{1}".format(GPG_VERSION_COMMAND, proc.stderr))
 except OSError: # pragma: no cover
   GPG_COMMAND = "gpg"
   GPG_VERSION_COMMAND = GPG_COMMAND + " --version"

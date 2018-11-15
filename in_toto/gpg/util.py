@@ -17,6 +17,7 @@
 import struct
 import binascii
 import re
+import logging
 
 from distutils.version import StrictVersion # pylint: disable=no-name-in-module,import-error
 
@@ -25,6 +26,9 @@ import cryptography.hazmat.primitives.hashes as hashing
 
 import in_toto.gpg.exceptions
 import in_toto.process
+
+# Inherits from in_toto base logger (c.f. in_toto.log)
+log = logging.getLogger(__name__)
 
 def get_mpi_length(data):
   """
@@ -215,7 +219,12 @@ def get_version():
   """
   command = in_toto.gpg.constants.GPG_VERSION_COMMAND
   process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
-    stderr=in_toto.process.DEVNULL, universal_newlines=True)
+    stderr=in_toto.process.PIPE, universal_newlines=True)
+
+  # TODO: Remove debug statements after fixing in-toto/in-toto#171
+  log.debug("{0} (stdout):{1}".format(command, process.stdout))
+  log.debug("{0} (stderr):{1}".format(command, process.stderr))
+
   full_version_info = process.stdout
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
 
