@@ -164,6 +164,18 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
 
   pubkey_object = create_pubkey(pubkey_info)
 
+  # zero-pad the signature due to a discrepancy between the openssl backend
+  # and the gnupg interpretation of PKCSv1.5. Read more at:
+  # https://github.com/in-toto/in-toto/issues/171#issuecomment-440039256
+  # we are skipping this if on the tests because well, how would one test this
+  # deterministically.
+  pubkey_length = len(pubkey_info['keyval']['public']['n'])
+  signature_length = len(signature_object['signature'])
+  if pubkey_length != signature_length: # pragma: no cover
+    zero_pad = "0"*(pubkey_length - signature_length)
+    signature_object['signature'] = "{}{}".format(zero_pad,
+        signature_object['signature'])
+
   digest = in_toto.gpg.util.hash_object(
       binascii.unhexlify(signature_object['other_headers']),
       hashing.SHA256(), content)

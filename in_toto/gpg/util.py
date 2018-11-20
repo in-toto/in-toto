@@ -221,10 +221,6 @@ def get_version():
   process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
     stderr=in_toto.process.PIPE, universal_newlines=True)
 
-  # TODO: Remove debug statements after fixing in-toto/in-toto#171
-  log.debug("{0} (stdout):{1}".format(command, process.stdout))
-  log.debug("{0} (stderr):{1}".format(command, process.stderr))
-
   full_version_info = process.stdout
   version_string = re.search(r'(\d\.\d\.\d+)', full_version_info).group(1)
 
