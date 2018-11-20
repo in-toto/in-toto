@@ -36,9 +36,6 @@ try:
   proc = process.run(GPG_VERSION_COMMAND, stdout=process.PIPE,
     stderr=process.PIPE)
 
-  # TODO: Remove debug statements after fixing in-toto/in-toto#171
-  log.debug("{0} (stdout):{1}".format(GPG_VERSION_COMMAND, proc.stdout))
-  log.debug("{0} (stderr):{1}".format(GPG_VERSION_COMMAND, proc.stderr))
 except OSError: # pragma: no cover
   GPG_COMMAND = "gpg"
   GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
