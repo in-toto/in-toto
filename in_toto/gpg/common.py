@@ -33,7 +33,7 @@ from in_toto.gpg.constants import (
     SIGNATURE_TYPE_CERTIFICATES, SIGNATURE_TYPE_SUB_KEY_BINDING,
     SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
     SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET, SHA1,
-    SHA256, SHA512)
+    SHA256, SHA512, KEY_EXPIRATION_SUBPACKET)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
@@ -42,6 +42,8 @@ import securesystemslib.formats
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
+# Initializes stack repository for all parsed public keys
+pubkey_repo = {}
 
 def parse_pubkey_payload(data):
   """
@@ -93,7 +95,7 @@ def parse_pubkey_payload(data):
         version_number, SUPPORTED_PUBKEY_PACKET_VERSIONS))
 
   # NOTE: Uncomment this line to decode the time of creation
-  # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
+  time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
   ptr += 4
 
   algorithm = data[ptr]
@@ -126,6 +128,7 @@ def parse_pubkey_payload(data):
     "method": keyinfo['method'],
     "type": keyinfo['type'],
     "hashes": [GPG_HASH_ALGORITHM_STRING],
+    "creation_date": time_of_creation[0],
     "keyid": keyinfo['keyid'],
     "keyval" : {
       "private": "",
@@ -150,11 +153,17 @@ def parse_pubkey_bundle(data):
     data:
           Public key data as written to stdout by GPG_EXPORT_PUBKEY_COMMAND.
 
+    keyid:
+          Keyid used to identify master public key or its subkeys.
+
   <Exceptions>
     in_toto.gpg.exceptions.PacketParsingError
           If data is empty.
           If data cannot be parsed.
 
+    in_toto.gpg.exceptions.KeyNotFoundError
+          If neither the master key or one of the subkeys match the passed
+          keyid or if none of the stored repo keys match the passed keyid.
 
   <Side Effects>
     None.
@@ -181,6 +190,8 @@ def parse_pubkey_bundle(data):
 
   # Iterate over gpg data and parse out packets of different types
   position = 0
+  expiration_datetime = 0
+  expires_after = None
   while position < len(data):
     try:
       packet_type, header_len, body_len, packet_length = \
@@ -212,6 +223,8 @@ def parse_pubkey_bundle(data):
           "packet": packet,
           "signatures": []
         }
+        keybundle[PACKET_TYPE_PRIMARY_KEY]['expires'] = \
+            key_bundle[PACKET_TYPE_PRIMARY_KEY]['key']["creation_date"]
 
       # Other non-signature packets in the key bundle include User IDs and User
       # Attributes, required to verify primary key certificates, and subkey
@@ -241,6 +254,7 @@ def parse_pubkey_bundle(data):
             # Add to most recently added packet's signatures of matching type
             key_bundle[_type][next(reversed(key_bundle[_type]))]\
                 ["signatures"].append(packet)
+            # expires_after = signature["key_expire_time"]
             break
 
         else:
@@ -262,6 +276,14 @@ def parse_pubkey_bundle(data):
 
     # Go to next packet
     position += packet_length
+
+
+  if expires_after and created:
+    current_version_expiration = int(created) + int(expires_after)
+    # FIXME: this *may* fail as of now
+    if current_version_expiration > expiration_datetime:
+      expiration_datetime = current_version_expiration
+
 
   return key_bundle
 
@@ -515,6 +537,10 @@ def get_pubkey_bundle(data, keyid):
   if sub_public_keys:
     master_public_key["subkeys"] = sub_public_keys
 
+  # Add expiration date to master pubkey "expiration" field if expiration exists
+  if expiration_datetime:
+    master_public_key["expiration"] = expiration_datetime
+
   return master_public_key
 
 
@@ -678,6 +704,12 @@ def parse_signature_packet(data, supported_signature_types=None,
     #   subpacket_type,
     #   binascii.hexlify(subpacket_data).decode("ascii")))
 
+  # We need to return the key expiration date so we can check for expired keys
+  for subpacket_tuple in hashed_subpacket_info:
+    if subpacket_tuple[0] == KEY_EXPIRATION_SUBPACKET: # pragma: no cover
+      key_expire_time = struct.unpack(">I", subpacket_tuple[1])[0]
+      break
+
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
     raise ValueError("This signature packet seems to be corrupted. It does "
@@ -701,6 +733,7 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature_data = {
     'keyid': "{}".format(keyid),
+    'key_expire_time': key_expire_time,
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }

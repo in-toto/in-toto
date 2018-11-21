@@ -16,6 +16,8 @@
   verifying signatures.
 """
 import logging
+import datetime
+# from dateutil import tz
 
 import in_toto.gpg.common
 import in_toto.gpg.exceptions
@@ -92,7 +94,15 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
 
   signature_data = process.stdout
-  signature = in_toto.gpg.common.parse_signature_packet(signature_data)
+  signature = in_toto.gpg.common.parse_signature_packet(signature_data,"BINARY")
+
+  pubkey_info = gpg_export_pubkey(signature["short_keyid"], homedir)
+
+  if pubkey_info.get("expiration"): # pragma: no cover
+    expire_datetime = datetime.datetime.fromtimestamp(pubkey_info["expiration"])
+    if expire_datetime < datetime.datetime.now():
+      log.warning("Key is already expired, which means the generated GPG"
+          " signature will no longer be considered as valid.")
 
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing
@@ -111,6 +121,13 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
     # Export public key bundle (master key including with optional subkeys)
     public_key_bundle = gpg_export_pubkey(short_keyid, homedir)
+    key_expiration_date = public_key_bundle.get("expiration")
+    error_str = ("Now that the key has been extracted from the gpg keychain, it"
+        " will be cut off from any gpg key server updates.\nThese will include"
+        " elements like extensions of the expiration date for the key.\n")
+    if key_expiration_date:
+      error_str += " Key Expiration Date: '{}'".format(key_expiration_date)
+    log.warning(error_str)
 
     # Test if the short keyid matches the master key ...
     master_key_full_keyid = public_key_bundle["keyid"]
@@ -158,7 +175,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
             The content to be verified. (bytes)
 
   <Exceptions>
-    None.
+    ValueError:
+            if public key object has passed its official expiration date.
 
   <Side Effects>
     None.
@@ -179,6 +197,15 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   # we use that subkey for verification instead of the master key.
   if sig_keyid in list(pubkey_info.get("subkeys", {}).keys()):
     verification_key = pubkey_info["subkeys"][sig_keyid]
+
+  # If the expiration date of the key has already passed, GPG signature
+  # being checked should fail the verification process and be rejected.
+  key_expiration = pubkey_info.get("expiration")
+  if key_expiration:
+    expiration_datetime = datetime.datetime.fromtimestamp(key_expiration)
+    if expiration_datetime <= datetime.datetime.now():
+      raise ValueError("Key with keyid '{}' has passed its expiration date. "
+              "Signature is not valid and has been rejected.".format(sig_keyid))
 
   return handler.gpg_verify_signature(
       signature_object, verification_key, content, SHA256)
@@ -205,10 +232,10 @@ def gpg_export_pubkey(keyid, homedir=None):
             Path to the gpg keyring. If not passed the default keyring is used.
 
   <Exceptions>
-    ValueError
+    ValueError:
             if the keyid does not match the required format.
 
-    in_toto.gpg.execeptions.KeyNotFoundError
+    in_toto.gpg.execeptions.KeyNotFoundError:
             if no key or subkey was found for that keyid.
 
 

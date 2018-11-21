@@ -20,10 +20,13 @@
 """
 
 import os
+import sys
 import shutil
 import tempfile
 import unittest
 from mock import patch
+import time
+import datetime
 from six import string_types
 from copy import deepcopy
 
@@ -43,7 +46,7 @@ from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
     parse_signature_packet)
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
-    PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
+    PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY, PACKET_TYPE_SIGNATURE)
 from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
     KeyNotFoundError)
@@ -600,6 +603,203 @@ class TestGPGDSA(unittest.TestCase):
 
     self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
+
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
+class TestGPGExpiration(unittest.TestCase):
+  """Test signature creation, verification and key export from the gpg
+  module using key expiration dates"""
+  default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
+  #default_keyid = "4DC594A140BBAB0C58884B23AF71E9D00DE7407B"
+
+  @classmethod
+  def setUpClass(self):
+    # Create directory to run the tests without having everything blow up
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    os.chdir(self.test_dir)
+
+
+  @classmethod
+  def tearDownClass(self):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+
+
+  def test_gpg_verify_object_with_expired_key(self):
+    """Test that passing an expired public key to gpg_verify_signature will
+    raise ValueError. """
+
+    test_data = b'test_data'
+    wrong_expire_date = datetime.datetime.now() - datetime.timedelta(days=7)
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = int(time.mktime(wrong_expire_date.timetuple()))
+
+    with self.assertRaises(ValueError):
+      gpg_verify_signature(signature, key_data, test_data)
+
+
+  def test_gpg_verify_object_with_valid_key(self):
+    """Test that passing an valid public key to gpg_verify_signature will pass
+    and not raise ValueError. """
+
+    test_data = b'test_data'
+    valid_expire_date = datetime.datetime.now() + datetime.timedelta(days=100)
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = int(time.mktime(valid_expire_date.timetuple()))
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+
+
+  def test_gpg_verify_object_with_about_to_expire_key(self):
+    """Test that passing an about-to-expire public key to gpg_verify_signature
+    will raise ValueError due to time delay of verification. """
+
+    test_data = b'test_data'
+    test_exp = datetime.datetime.now() + datetime.timedelta(seconds=1)
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = int(time.mktime(test_exp.timetuple()))
+
+    with patch('in_toto.gpg.functions.datetime') as mock_module:
+      mock_module.datetime.now = lambda: test_exp
+      mock_module.datetime.fromtimestamp = lambda x: test_exp
+      with self.assertRaises(ValueError):
+        gpg_verify_signature(signature, key_data, test_data)
+
+
+  def test_gpg_verify_object_with_set_expiration(self):
+    """Test that setting expiration date for a public key and then passing the
+    modified key to gpg_verify_signature will pass. """
+
+    test_data = b'test_data'
+    test_expire_date = 1564089230
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = test_expire_date
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+
+
+  def test_gpg_verify_object_with_nonsense_expiration(self):
+    """Test that setting expiration date for public key to nonsense value and
+    passing the modified key to gpg_verify_signature raises FormatError. """
+
+    test_data = b'test_data'
+    wrong_expire_date = (1549095332,)
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = wrong_expire_date
+
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
+      gpg_verify_signature(signature, key_data, test_data)
+
+
+  def test_gpg_verify_object_with_set_master_key_expiration(self):
+    """Test that setting expiration date for a master public key and passing
+    the modified master key to gpg_verify_signature will pass. """
+
+    test_data = b'test_data'
+    test_expire_date = 1589459236
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    key_data["expiration"] = test_expire_date
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+
+
+  def test_gpg_verify_object_with_set_subkey_expiration(self):
+    """Test that setting expiration date for a public subkey and passing
+    the modified subkey to gpg_verify_signature will pass. """
+
+    test_data = b'test_data'
+    test_expire_date = 1569137258
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+    subkey_data = key_data["subkeys"]
+    subkey_data[list(subkey_data.keys())[0]]["expiration"] = test_expire_date
+    key_data["subkeys"] = subkey_data
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+
+
+  def test_gpg_sign_and_verify_object_with_default_key(self):
+    """Create a signature using the default key on the keyring """
+
+    test_data = b'test_data'
+    wrong_data = b'something malicious'
+
+    signature = gpg_sign_object(test_data, homedir=self.gnupg_home,
+        keyid=self.default_keyid)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+    self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
+
+  def test_gpg_sign_and_verify_object(self):
+    """Create a signature using a specific key on the keyring """
+
+    test_data = b'test_data'
+    wrong_data = b'something malicious'
+
+    signature = gpg_sign_object(test_data, keyid=self.default_keyid,
+        homedir=self.gnupg_home)
+    key_data = gpg_export_pubkey(self.default_keyid, homedir=self.gnupg_home)
+
+    self.assertTrue(gpg_verify_signature(signature, key_data, test_data))
+    self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
+
+
+  def test_gpg_invalid_signature_keyid_and_data(self):
+    """Test that signature data packet passed into parse_pubkey_bundle with
+    invalid keyid that is not already stored raises KeyNotFoundError. """
+    
+    bad_keyid = "5465A1E2E0FB2B40ADB2529E18FB3F537E0C8A12"
+    
+    homearg = "--homedir {}".format(self.gnupg_home).replace("\\", "/")
+
+    command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=self.default_keyid,
+        homearg=homearg)
+    proc = process.run(command, stdout=process.PIPE,
+      stderr=process.PIPE)
+
+    key_packet = proc.stdout
+    # import pdb; pdb.set_trace()
+    packet_start = 0
+    while packet_start < len(key_packet):
+      payload, length, p_type = parse_packet_header(key_packet[packet_start:])
+      if p_type == PACKET_TYPE_SIGNATURE:
+        key_packet = key_packet[packet_start:]
+        with self.assertRaises(KeyNotFoundError):
+          parse_pubkey_bundle(key_packet, bad_keyid)
+        break
+      else:
+        packet_start += length
 
 
 if __name__ == "__main__":
