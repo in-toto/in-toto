@@ -88,6 +88,9 @@ SIGNATURE_TYPE_BINARY = 0x00
 SIGNATURE_TYPE_SUB_KEY_BINDING = 0x18
 SIGNATURE_TYPE_CERTIFICATES = {0x10, 0x11, 0x12, 0x13}
 
+# See section 5.2.3.1 (Key Expiration Time) of RFC4880
+KEY_EXPIRATION_SUBPACKET = 0x09
+
 # See section 5.2.3.5. (Issuer) of RFC4880
 PARTIAL_KEYID_SUBPACKET = 0x10
 # See section 5.2.3.28. (Issuer Fingerprint) of rfc4880bis-06

@@ -75,7 +75,6 @@ def _create_pubkey_with_subkey_schema(pubkey_schema):
   schema._required.append(subkey_schema_tuple) # pylint: disable=protected-access
   return schema
 
-
 GPG_HASH_ALGORITHM_STRING = "pgp+SHA2"
 PGP_RSA_PUBKEY_METHOD_STRING = "pgp+rsa-pkcsv1.5"
 PGP_DSA_PUBKEY_METHOD_STRING = "pgp+dsa-fips-180-2"
@@ -95,6 +94,8 @@ _RSA_PUBKEY_SCHEMA = ssl_schema.Object(
   type = ssl_schema.String("rsa"),
   method = ssl_schema.String(PGP_RSA_PUBKEY_METHOD_STRING),
   hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
+  creation_date = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
+  expiration = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = RSA_PUBKEYVAL_SCHEMA,
@@ -122,6 +123,8 @@ _DSA_PUBKEY_SCHEMA = ssl_schema.Object(
   type = ssl_schema.String("dsa"),
   method = ssl_schema.String(PGP_DSA_PUBKEY_METHOD_STRING),
   hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
+  creation_date = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
+  expiration = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = DSA_PUBKEYVAL_SCHEMA,
@@ -140,6 +143,7 @@ SIGNATURE_SCHEMA = ssl_schema.Object(
     object_name = "SIGNATURE_SCHEMA",
     keyid = ssl_formats.KEYID_SCHEMA,
     short_keyid = ssl_schema.Optional(ssl_formats.KEYID_SCHEMA),
+    key_expire_time = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
     other_headers = ssl_formats.HEX_SCHEMA,
     signature = ssl_formats.HEX_SCHEMA,
     info = ssl_schema.Optional(ssl_schema.Any()),
