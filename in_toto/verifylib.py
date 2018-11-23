@@ -1152,11 +1152,13 @@ def verify_item_rules(source_name, source_type, rules, links):
     if rule_type == "match":
       source_artifacts_queue = verify_match_rule(
           rule, source_artifacts_queue, source_artifacts, links)
-      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
+      results_dict = {'Rule Used': rule, 'Remaining Artifacts': source_artifacts_queue}
+      RULE_TRACEBACK_QUEUE.append(results_dict)
 
     elif rule_type == "allow":
       source_artifacts_queue = verify_allow_rule(rule, source_artifacts_queue)
-      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
+      results_dict = {'Rule Used': rule, 'Remaining Artifacts': source_artifacts_queue}
+      RULE_TRACEBACK_QUEUE.append(results_dict)
 
     elif rule_type == "disallow":
       verify_disallow_rule(rule, source_artifacts_queue)
@@ -1167,7 +1169,8 @@ def verify_item_rules(source_name, source_type, rules, links):
     elif rule_type == "create":
       source_products_queue = verify_create_rule(
           rule, source_materials_queue, source_products_queue)
-      RULE_TRACEBACK_QUEUE.append(source_products_queue)
+      results_dict = {'Rule Used': rule, 'Remaining Products': source_products_queue}
+      RULE_TRACEBACK_QUEUE.append(results_dict)
 
       # The create rule only updates the products_queue, which in turn
       # only affects the generic artifacts queue if source_type is "products"
@@ -1177,7 +1180,8 @@ def verify_item_rules(source_name, source_type, rules, links):
     elif rule_type == "delete":
       source_materials_queue = verify_delete_rule(
           rule, source_materials_queue, source_products_queue)
-      RULE_TRACEBACK_QUEUE.append(source_materials_queue)
+      results_dict = {'Rule Used': rule, 'Remaining Materials': source_materials_queue}
+      RULE_TRACEBACK_QUEUE.append(results_dict)
 
       # The delete rule only updates the materials_queue, which in turn
       # only affects the generic artifacts queue if source_type is "materials"
@@ -1194,6 +1198,9 @@ def verify_item_rules(source_name, source_type, rules, links):
             rule, source_artifacts_queue, source_products_queue,
             source_materials, source_products)
         source_artifacts_queue = source_materials_queue
+        results_dict = {'Rule Used': rule, 'Remaining Products': source_products_queue,
+            'Remaining Materials': source_materials_queue}
+        RULE_TRACEBACK_QUEUE.append(results_dict)
 
       # NOTE: Can't reach `else` branch, if the source_type is none of these
       # types an exception would have been raised above in `unpack_rule`
@@ -1202,8 +1209,9 @@ def verify_item_rules(source_name, source_type, rules, links):
             rule, source_materials_queue, source_artifacts_queue,
             source_materials, source_products)
         source_artifacts_queue = source_products_queue
-
-      RULE_TRACEBACK_QUEUE.append(source_artifacts_queue)
+        results_dict = {'Rule Used': rule, 'Remaining Products': source_products_queue,
+            'Remaining Artifacts': source_artifacts_queue}
+        RULE_TRACEBACK_QUEUE.append(results_dict)
 
 
 def verify_all_item_rules(items, links):
