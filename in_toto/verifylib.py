@@ -1051,9 +1051,9 @@ def verify_disallow_rule(rule, source_artifacts_queue):
 
   if len(matched_artifacts):
     rule_traceback = pprint.pformat(RULE_TRACE)
-    raise RuleVerificationError("Rule '{0}' failed, rule pattern matches the"
-        " following artifacts of the artifact queue, which is disallowed:"
-        " '{1}' . Here is the traceback for all earlier rule processing:\n"
+    raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
+        " following artifacts of the artifact queue, which is disallowed:\n"
+        " '{1}' \nHere is the traceback for all earlier rule processing:\n"
         " '{2}' ".format(" ".join(rule), matched_artifacts, rule_traceback))
 
 
@@ -1146,10 +1146,10 @@ def verify_item_rules(source_name, source_type, rules, links):
   RULE_TRACE["name"] = source_name
   RULE_TRACE["type"] = source_type
   RULE_TRACE["trace"] = list()
-  results_dict = {}
 
   # Apply (verify) all rule
   for rule in rules:
+    results_dict = {}
 
     log.info("Verifying '{}'...".format(" ".join(rule)))
 
