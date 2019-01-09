@@ -72,6 +72,7 @@ To learn more about the different rule types, their guarantees and how they are 
 in-toto-run  --step-name <unique step name>
             {--key <functionary signing key path>,  --gpg [<functionary gpg signing key id>]}
             [--gpg-home <path to gpg keyring>]
+            [--base-path <filepath>]
             [--materials <filepath>[ <filepath> ...]]
             [--products <filepath>[ <filepath> ...]]
             [--record-streams]
@@ -93,11 +94,13 @@ link metadata file.
 usage: in-toto-record start --step-name <unique step name>
                             (--key <signing key path> | --gpg [<gpg keyid>])
                             [--gpg-home <gpg keyring path>] [-v]
+                            [--base-path <filepath>]
                             [--materials <material path> [<material path> ...]]
 
 usage: in-toto-record stop -step-name <unique step name>
                            (--key <signing key path> | --gpg [<gpg keyid>])
                            [--gpg-home <gpg keyring path>] [-v]
+                           [--base-path <filepath>]
                            [--products <product path> [<product path> ...]]
 ```
 
