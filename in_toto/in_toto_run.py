@@ -105,7 +105,8 @@ import in_toto.user_settings
 from in_toto import (util, runlib)
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
-    BASE_PATH_ARGS, BASE_PATH_KWARGS)
+    BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
+    LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -198,6 +199,7 @@ examples:
 
   parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
+  parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
