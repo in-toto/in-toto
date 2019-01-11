@@ -260,14 +260,14 @@ examples:
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path, lstrip_paths=args.lstrip_paths)
 
     # Mutually exclusiveness is guaranteed by argparser
     else: # args.command == "stop":
       in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path, lstrip_paths=args.lstrip_paths)
 
   except Exception as e:
     log.error("(in-toto-record {0}) {1}: {2}"

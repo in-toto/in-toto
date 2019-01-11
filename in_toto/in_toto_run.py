@@ -255,7 +255,7 @@ examples:
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home, args.exclude_patterns, args.base_path)
+        args.gpg_home, args.exclude_patterns, args.base_path, args.lstrip_paths)
 
   except Exception as e:
     log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
