@@ -51,7 +51,7 @@ LSTRIP_PATHS_ARGS = ["--lstrip-paths"]
 LSTRIP_PATHS_KWARGS = {
   "dest": "lstrip_paths",
   "required": False,
-  "nargs": "+",
+  "nargs": 1,
   "metavar": "<path>",
   "help": ("Record the path of artifacts in link metadata after left"
           " stripping the specified <path> from the full path. If"

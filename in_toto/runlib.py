@@ -264,7 +264,12 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # FIXME: this is necessary to provide consisency between windows filepaths and
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
-          artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
+          if lstrip_paths:
+            normalized_prefix = lstrip_paths.replace("\\", "/")
+            artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = _hash_artifact(filepath,
+              normalize_line_endings=normalize_line_endings)
+          else:
+            artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
 
     # Path is no file and no directory
