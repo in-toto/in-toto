@@ -86,7 +86,7 @@ def _apply_exclude_patterns(names, exclude_filter):
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False):
+    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False, lstrip_paths=None):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -266,8 +266,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           normalized_filepath = filepath.replace("\\", "/")
           if lstrip_paths:
             normalized_prefix = lstrip_paths.replace("\\", "/")
-            artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = _hash_artifact(filepath,
-              normalize_line_endings=normalize_line_endings)
+            artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = \
+              _hash_artifact(filepath, normalize_line_endings=normalize_line_endings)
           else:
             artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
@@ -382,7 +382,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False):
+    normalize_line_endings=False, lstrip_paths=None):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -481,7 +481,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -495,7 +495,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   products_dict = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
 
   log.info("Creating link metadata...")
   environment = {}
@@ -534,7 +534,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, record_environment=False,
-    normalize_line_endings=False):
+    normalize_line_endings=False, lstrip_paths=None):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -620,7 +620,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
 
   log.info("Creating preliminary link metadata...")
   environment = {}
@@ -658,7 +658,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None, normalize_line_endings=False):
+    exclude_patterns=None, base_path=None, normalize_line_endings=False,
+    lstrip_paths=None):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -804,7 +805,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   link_metadata.signed.products = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
 
   link_metadata.signatures = []
   if signing_key:
