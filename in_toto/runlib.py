@@ -265,6 +265,9 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
           if lstrip_paths:
+            # If a prefix is passed using the argument --lstrip-paths,
+            # that prefix is left stripped from the filepath passed.
+            # Currently, it's set to only take a single prefix in common_args.
             normalized_prefix = lstrip_paths.replace("\\", "/")
             artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = \
               _hash_artifact(filepath, normalize_line_endings=normalize_line_endings)
