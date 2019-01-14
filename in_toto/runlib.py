@@ -221,11 +221,11 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         normalized_prefix = lstrip_paths.replace('\\', '/')
         # Path was already normalized above
         artifacts_dict[artifact.lstrip(normalized_prefix)] = \
-          _hash_artifact(artifact, normalize_line_endings=normalize_line_endings)
+            _hash_artifact(artifact, normalize_line_endings=normalize_line_endings)
       else:
         # Path was already normalized above
         artifacts_dict[artifact] = _hash_artifact(artifact,
-          normalize_line_endings=normalize_line_endings)
+            normalize_line_endings=normalize_line_endings)
 
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact,
@@ -279,10 +279,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # Currently, it's set to only take a single prefix in common_args.
             normalized_prefix = lstrip_paths.replace("\\", "/")
             artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = \
-              _hash_artifact(filepath, normalize_line_endings=normalize_line_endings)
+                _hash_artifact(filepath, normalize_line_endings=normalize_line_endings)
           else:
             artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
-              normalize_line_endings=normalize_line_endings)
+                normalize_line_endings=normalize_line_endings)
 
     # Path is no file and no directory
     else:
