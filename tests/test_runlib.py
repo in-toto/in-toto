@@ -188,6 +188,17 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
     os.chdir(self.test_dir)
 
+
+  def test_lstrip_paths(self):
+    lstrip_paths = "subdir/subsubdir"
+    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+      "subdir/foosub2", "foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["."],
+      lstrip_paths=lstrip_paths)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+      expected_artifacts)
+
+
   def test_empty_artifacts_list_record_nothing(self):
     """Empty list passed. Return empty dict. """
     self.assertDictEqual(record_artifacts_as_dict([]), {})
