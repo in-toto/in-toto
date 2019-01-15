@@ -190,7 +190,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
 
   def test_lstrip_paths_valid_prefix(self):
-    lstrip_paths = "subdir/subsubdir"
+    lstrip_paths = "subdir/subsubdir/"
     expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
         "subdir/foosub2", "foosubsub"])
     artifacts_dict = record_artifacts_as_dict(["."],
