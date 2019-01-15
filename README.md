@@ -66,20 +66,7 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` generates link metadata for the given command-line option and runs it as its own command. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain).
-
-```shell
-in-toto-run  --step-name <unique step name>
-            {--key <functionary signing key path>,  --gpg [<functionary gpg signing key id>]}
-            [--gpg-home <path to gpg keyring>]
-            [--base-path <filepath>]
-            [--materials <filepath>[ <filepath> ...]]
-            [--products <filepath>[ <filepath> ...]]
-            [--record-streams]
-            [--no-command]
-            [--verbose] -- <cmd> [args]
-```
-
+`in-toto-run` generates link metadata for the given command-line option and runs it as its own command. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain). For a detailed list of all the arguments, run `in-toto-run -help` or look at the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
 
 ##### in-toto-record
 `in-toto-record` works similar to `in-toto-run` but can be used for
@@ -88,21 +75,8 @@ by a single command. Use `in-toto-record start ...` to create a
 preliminary link file that only records the *materials*, then run the
 commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
-link metadata file.
-
-```shell
-usage: in-toto-record start --step-name <unique step name>
-                            (--key <signing key path> | --gpg [<gpg keyid>])
-                            [--gpg-home <gpg keyring path>] [-v]
-                            [--base-path <filepath>]
-                            [--materials <material path> [<material path> ...]]
-
-usage: in-toto-record stop -step-name <unique step name>
-                           (--key <signing key path> | --gpg [<gpg keyid>])
-                           [--gpg-home <gpg keyring path>] [-v]
-                           [--base-path <filepath>]
-                           [--products <product path> [<product path> ...]]
-```
+link metadata file. For a detailed list of all arguments, run 'in-toto-record start --help`
+or `in-toto-record stop --help`. You can also find the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
 
 #### Release final product
 
