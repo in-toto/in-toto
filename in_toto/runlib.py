@@ -225,9 +225,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # Currently, it's set to only take a single prefix in common_args.
         # Note: if the prefix doesn't include a trailing /, the dictionary key
         # may include an unexpected /.
-        normalized_prefix = lstrip_paths.replace('\\', '/')
         # Path was already normalized above
-        artifacts_dict[artifact.lstrip(normalized_prefix)] = \
+        artifacts_dict[artifact.lstrip(lstrip_paths)] = \
             _hash_artifact(artifact, normalize_line_endings=normalize_line_endings)
       else:
         # Path was already normalized above
@@ -286,8 +285,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # Currently, it's set to only take a single prefix in common_args.
             # Note: if the prefix doesn't include a trailing /, the dictionary key
             # may include an unexpected /.
-            normalized_prefix = lstrip_paths.replace("\\", "/")
-            artifacts_dict[normalized_filepath.lstrip(normalized_prefix)] = \
+            artifacts_dict[normalized_filepath.lstrip(lstrip_paths)] = \
                 _hash_artifact(filepath, normalize_line_endings=normalize_line_endings)
           else:
             artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
