@@ -149,6 +149,11 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             endings before hashing the content of the passed files, for
             cross-platform support.
 
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix. Currently,
+            a the prefix is a single path.
+
   <Exceptions>
     in_toto.exceptions.ValueError,
         if we cannot change to base path directory
@@ -461,6 +466,10 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             If True, replaces windows and mac line endings with unix line
             endings before hashing materials and products, for cross-platform
             support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix. Currently,
+            a the prefix is a single path.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -592,6 +601,10 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     normalize_line_endings: (optional)
             If True, replaces windows and mac line endings with unix line
             endings before hashing materials, for cross-platform support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix. Currently,
+            a the prefix is a single path.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -717,6 +730,10 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     normalize_line_endings: (optional)
             If True, replaces windows and mac line endings with unix line
             endings before hashing products, for cross-platform support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix. Currently,
+            a the prefix is a single path.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
