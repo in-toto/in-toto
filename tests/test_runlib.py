@@ -199,6 +199,16 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
 
+  def test_lstrip_paths_invalid_prefix(self):
+    lstrip_paths = "not/a/directory/"
+    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+                                 "subdir/foosub2", "subdir/subsubdir/foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["."],
+        lstrip_paths=lstrip_paths)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+                         expected_artifacts)
+
+
   def test_empty_artifacts_list_record_nothing(self):
     """Empty list passed. Return empty dict. """
     self.assertDictEqual(record_artifacts_as_dict([]), {})
