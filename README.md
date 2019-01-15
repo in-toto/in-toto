@@ -92,12 +92,7 @@ Use `in-toto-verify` on the final product to verify that
 - materials and products of each step were in place as defined by the rules, and
 - run the defined inspections
 
-```shell
-in-toto-verify --layout <layout path>
-               {--layout-keys <filepath>[ <filepath> ...],  --gpg <keyid> [ <keyid> ...]}
-               [--gpg-home <path to gpg keyring>]
-               [--verbose]
-```
+For a detailed list of arguments and usage, run `in-toto-verify --help` or look at the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
 
 #### Signatures
 `in-toto-sign`, unlike `in-toto-verify`, can only add, replace, and verify signatures within in-toto Link or Layout metadata, with options to
@@ -105,11 +100,8 @@ in-toto-verify --layout <layout path>
 - write signed metadata to a specified path (if no output path is specified, layout metadata is written to the path of the input file while link metadata is written to '<name>.<keyid prefix>.link')
 - verify signatures
 This tool is intended to sign layouts created by the layout web wizard, but also serves well to re-sign test and demo data. For example, it can be used if metadata formats or signing routines change.
-```shell
-usage: in-toto-sign [-h] -f <path> [-k <path> [<path> ...]]
-                    [-t <key_type> [<key_type> ...]] [-g [<id> [<id> ...]]]
-                    [--gpg-home <path>] [-o <path>] [-a] [--verify] [-v | -q]
-```
+
+For a detailed list of arguments and usage, run `in-toto-sign --help` or look at the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py).
 
 #### Settings
 Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
