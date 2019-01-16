@@ -227,8 +227,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # may include an unexpected /.
         # Path was already normalized above
         if artifact.startswith(lstrip_paths):
-          artifact = artifact[len(lstrip_paths):]
-        artifacts_dict[artifact] = _hash_artifact(artifact,
+          stripped_artifact = artifact[len(lstrip_paths):]
+        artifacts_dict[stripped_artifact] = _hash_artifact(artifact,
             normalize_line_endings=normalize_line_endings)
       else:
         # Path was already normalized above
