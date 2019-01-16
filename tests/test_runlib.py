@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#coding=utf-8
 
 """
 <Program Name>
@@ -125,6 +126,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         fp.write(path)
 
 
+
   @classmethod
   def tearDownClass(self):
     """Change back to working dir, remove temp directory, restore settings. """
@@ -216,6 +218,27 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         lstrip_paths=lstrip_paths)
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
         expected_artifacts)
+
+
+  def test_lstrip_paths_valid_unicode_prefix_file(self):
+    # Try to create a file with unicode character
+    try:
+      os.mkdir("ಠ")
+      path = "ಠ/foobar"
+      with open(path, "w") as fp:
+        fp.write(path)
+
+      # Attempt to left strip the path now that the file has been created
+      lstrip_paths = "ಠ/"
+      expected_artifacts = sorted(["foobar"])
+      artifacts_dict = record_artifacts_as_dict(["./ಠ/"],
+          lstrip_paths=lstrip_paths)
+      self.assertListEqual(sorted(list(artifacts_dict.keys())),
+          expected_artifacts)
+      os.remove(path)
+    except OSError:
+      # OS doesn't support unicode explicit files
+      pass
 
 
   def test_empty_artifacts_list_record_nothing(self):
