@@ -69,8 +69,8 @@ To learn more about the different rule types, their guarantees and how they are 
 `in-toto-run` generates link metadata for the given command-line option and 
 runs it as its own command. See the [this simple usage example from the demo 
 application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain). 
-For a detailed list of all the arguments, run `in-toto-run --help` or look at 
-the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
+For a detailed list of all the command line arguments, run `in-toto-run --help` 
+or look at the code documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
 
 ##### in-toto-record
 `in-toto-record` works similar to `in-toto-run` but can be used for
@@ -79,9 +79,9 @@ by a single command. Use `in-toto-record start ...` to create a
 preliminary link file that only records the *materials*, then run the
 commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
-link metadata file. For a detailed list of all arguments, run `in-toto-record start --help`
-or `in-toto-record stop --help`. You can also find the documentation 
-[here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
+link metadata file. For a detailed list of all command line arguments and their usage,
+run `in-toto-record start --help` or `in-toto-record stop --help`. You can also 
+find the code documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
 
 #### Release final product
 
@@ -97,8 +97,9 @@ Use `in-toto-verify` on the final product to verify that
 - materials and products of each step were in place as defined by the rules, and
 - run the defined inspections
 
-For a detailed list of arguments and usage, run `in-toto-verify --help` or look 
-at the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
+For a detailed list of all command line arguments and their usage, run 
+`in-toto-verify --help` or look at the code documentation 
+[here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
 
 #### Signatures
 `in-toto-sign`, unlike `in-toto-verify`, can only add, replace, and 
@@ -114,8 +115,9 @@ This tool is intended to sign layouts created by the layout web wizard, but
 also serves well to re-sign test and demo data. For example, it can be used 
 if metadata formats or signing routines change.
 
-For a detailed list of arguments and usage, run `in-toto-sign --help` or look 
-at the documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py).
+For a detailed list of all command line arguments and their usage, run 
+`in-toto-sign --help` or look at the code documentation 
+[here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py).
 
 #### Settings
 Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
