@@ -68,7 +68,7 @@ To learn more about the different rule types, their guarantees and how they are 
 ##### in-toto-run
 `in-toto-run` generates link metadata for the given command-line option and 
 runs it as its own command. See [this simple usage example from the demo application 
-for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain). 
+for more details](https://github.com/in-toto/demo). 
 For a detailed list of all the command line arguments, run `in-toto-run --help` 
 or look at the code documentation [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
 
