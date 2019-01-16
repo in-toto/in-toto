@@ -210,9 +210,9 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
 
   def test_lstrip_paths_valid_prefix_file(self):
-    lstrip_paths = "./"
-    expected_artifacts = sorted(["bar"])
-    artifacts_dict = record_artifacts_as_dict(["./bar"],
+    lstrip_paths = "subdir/subsubdir/"
+    expected_artifacts = sorted(["foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["./subdir/subsubdir/foosubsub"],
         lstrip_paths=lstrip_paths)
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
         expected_artifacts)
