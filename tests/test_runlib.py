@@ -189,7 +189,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     os.chdir(self.test_dir)
 
 
-  def test_lstrip_paths_valid_prefix(self):
+  def test_lstrip_paths_valid_prefix_directory(self):
     lstrip_paths = "subdir/subsubdir/"
     expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
         "subdir/foosub2", "foosubsub"])
@@ -199,7 +199,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
 
-  def test_lstrip_paths_invalid_prefix(self):
+  def test_lstrip_paths_invalid_prefix_directory(self):
     lstrip_paths = "not/a/directory/"
     expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
                                  "subdir/foosub2", "subdir/subsubdir/foosubsub"])
