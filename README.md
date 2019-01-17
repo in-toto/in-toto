@@ -109,8 +109,8 @@ For a detailed list of all command line arguments and their usage, run
 [here](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
 
 #### Signatures
-`in-toto-sign`, unlike `in-toto-verify`, can only add, replace, and 
-verify signatures within in-toto Link or Layout metadata, with options to
+`in-toto-sign` is a metadata signature helper tool to add, replace, and 
+verify signatures within in-toto Link or Layout metadata, with options to:
 - replace (default) or add signature(s), with layout metadata able to be 
 signed by multiple keys at once while link metadata can only be signed by one key at a time
 - write signed metadata to a specified path (if no output path is specified, 
