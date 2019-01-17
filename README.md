@@ -115,7 +115,7 @@ verify signatures within in-toto Link or Layout metadata, with options to
 signed by multiple keys at once while link metadata can only be signed by one key at a time
 - write signed metadata to a specified path (if no output path is specified, 
 layout metadata is written to the path of the input file while link metadata 
-is written to '<name>.<keyid prefix>.link')
+is written to '&lt;name&gt;.&lt;keyid prefix&gt;.link')
 - verify signatures
 
 This tool is intended to sign layouts created by the layout web wizard, but 
