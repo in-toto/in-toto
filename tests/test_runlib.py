@@ -242,7 +242,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       pass
 
   @unittest.skipUnless(os.getenv("TEST_SKIP_WINDOWS_PY3"), "test only applies to windows and py3")
-  def test_lstrip_paths_valid_unicode_prefix_file(self):
+  def test_lstrip_paths_valid_unicode_prefix_file_windows_py_3(self):
     # Try to create a file with unicode character
     try:
       os.mkdir("ಠ")
