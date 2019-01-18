@@ -220,6 +220,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_WINDOWS_PY3"), "unicode paths tested separately for windows and py3")
   def test_lstrip_paths_valid_unicode_prefix_file(self):
     # Try to create a file with unicode character
     try:
@@ -235,6 +236,27 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
           lstrip_paths=lstrip_paths)
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
           expected_artifacts)
+      os.remove(path)
+    except OSError:
+      # OS doesn't support unicode explicit files
+      pass
+
+  @unittest.skipUnless(os.getenv("TEST_SKIP_WINDOWS_PY3"), "test only applies to windows and py3")
+  def test_lstrip_paths_valid_unicode_prefix_file(self):
+    # Try to create a file with unicode character
+    try:
+      os.mkdir("ಠ")
+      path = "ಠ/foobar"
+      with open(path, "w", encoding="utf-8") as fp:
+        fp.write(path)
+
+      # Attempt to left strip the path now that the file has been created
+      lstrip_paths = "ಠ/"
+      expected_artifacts = sorted(["foobar"])
+      artifacts_dict = record_artifacts_as_dict(["./ಠ/"],
+                                                lstrip_paths=lstrip_paths)
+      self.assertListEqual(sorted(list(artifacts_dict.keys())),
+                           expected_artifacts)
       os.remove(path)
     except OSError:
       # OS doesn't support unicode explicit files
