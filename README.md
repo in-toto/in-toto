@@ -67,12 +67,15 @@ To learn more about the different rule types, their guarantees and how they are 
 
 ##### in-toto-run
 
-`in-toto-run` is used to execute one of the software supply chain steps. The 
-relevant step name and command are passed as arguments, along with materials, 
-which are files required for command execution, and products which are files
-expected as a result of the execution of the command. These, and other 
-relevant details pertaining to the step are stored in a link file, which is 
-signed using the functionary's key.
+`in-toto-run` is used to execute a step in the software supply chain. This can be 
+anything relevant to the project such as tagging a release with `git`, running 
+a test, or building a binary to ship. The relevant step name and command are 
+passed as arguments, along with materials, which are files required for that 
+step's command to execute, and products which are files expected as a result 
+of the execution of that command. These, and other relevant details 
+pertaining to the step are stored in a link file, which is signed using the 
+functionary's key. If materials are not passed to the command, the link file 
+generated just doesn't record them.
 
 See [this simple usage example from the demo application 
 for more details](https://github.com/in-toto/demo). 
