@@ -123,9 +123,10 @@ layout metadata is written to the path of the input file while link metadata
 is written to '&lt;name&gt;.&lt;keyid prefix&gt;.link')
 - verify signatures
 
-This tool is intended to sign layouts created by the layout web wizard, but 
-also serves well to re-sign test and demo data. For example, it can be used 
-if metadata formats or signing routines change.
+This tool is intended to sign layouts created by the 
+[layout web wizard](https://in-toto.engineering.nyu.edu/), but also serves 
+well to re-sign test and demo data. For example, it can be used if metadata 
+formats or signing routines change.
 
 For a detailed list of all command line arguments and their usage, run 
 `in-toto-sign --help` or look at the 
