@@ -109,6 +109,11 @@ def load_links_for_layout(layout, link_dir_path):
   <Side Effects>
     Calls function to read files from disk
 
+  <Exceptions>
+    in_toto.exceptions.LinkNotFoundError,
+            if fewer than `threshold` link files can be found for any given
+            step of the supply chain (preliminary threshold check)
+
   <Returns>
     A dictionary carrying all the found metadata corresponding to the
     passed layout, e.g.:
@@ -146,7 +151,9 @@ def load_links_for_layout(layout, link_dir_path):
         except IOError:
           pass
 
-    # Check if the step has been performed by enough number of functionaries
+    # This is only a preliminary threshold check, based on (authorized)
+    # filenames, to fail early. A more thorough signature-based threshold
+    # check is indispensable.
     if len(links_per_step) < step.threshold:
       raise in_toto.exceptions.LinkNotFoundError("Step '{0}' requires '{1}'"
           " link metadata file(s), found '{2}'."
