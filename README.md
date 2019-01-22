@@ -79,7 +79,7 @@ generated just doesn't record them.
 See [this simple usage example from the demo application
 for more details](https://github.com/in-toto/demo).
 For a detailed list of all the command line arguments, run `in-toto-run --help`
-or look at the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py) here.
+or look at the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
 
 ##### in-toto-record
 `in-toto-record` works similar to `in-toto-run` but can be used for
@@ -90,8 +90,7 @@ commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
 link metadata file. For a detailed list of all command line arguments and their usage,
 run `in-toto-record start --help` or `in-toto-record stop --help`. You can also
-find the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py)
-here.
+find the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
 
 #### Release final product
 
@@ -109,8 +108,7 @@ Use `in-toto-verify` on the final product to verify that
 
 For a detailed list of all command line arguments and their usage, run
 `in-toto-verify --help` or look at the
-[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py)
-here.
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
 
 #### Signatures
 `in-toto-sign` is a metadata signature helper tool to add, replace, and
@@ -129,8 +127,7 @@ formats or signing routines change.
 
 For a detailed list of all command line arguments and their usage, run
 `in-toto-sign --help` or look at the
-[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py)
-here.
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py).
 
 #### Settings
 Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
