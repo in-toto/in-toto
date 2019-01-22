@@ -225,8 +225,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # Note: if the prefix doesn't include a trailing /, the dictionary key
         # may include an unexpected /.
         # Path was already normalized above
-        if artifact.startswith(lstrip_paths[0]):
-          key = artifact[len(lstrip_paths[0]):]
+        if artifact.startswith(lstrip_paths):
+          key = artifact[len(lstrip_paths):]
 
       artifacts_dict[key] = _hash_artifact(artifact,
           normalize_line_endings=normalize_line_endings)
@@ -284,8 +284,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # that prefix is left stripped from the filepath passed.
             # Note: if the prefix doesn't include a trailing /, the dictionary key
             # may include an unexpected /.
-            if normalized_filepath.startswith(lstrip_paths[0]):
-              key = normalized_filepath[len(lstrip_paths[0]):]
+            if normalized_filepath.startswith(lstrip_paths):
+              key = normalized_filepath[len(lstrip_paths):]
 
           artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
