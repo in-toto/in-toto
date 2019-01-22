@@ -200,6 +200,13 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
 
+  def test_lstrip_paths_substring_prefix_directory(self):
+    lstrip_paths = ["subdir/subsubdir/", "subdir/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      artifacts_dict = record_artifacts_as_dict(["."],
+          lstrip_paths=lstrip_paths)
+
+
   def test_lstrip_paths_invalid_prefix_directory(self):
     lstrip_paths = ["not/a/directory/"]
     expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
