@@ -207,6 +207,18 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
           lstrip_paths=lstrip_paths)
 
 
+  def test_lstrip_paths_non_unique_key(self):
+    os.mkdir("subdir_new")
+    path = "subdir_new/foosub1"
+    shutil.copy("subdir/foosub1", path)
+    lstrip_paths = ["subdir/", "subdir_new/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      artifacts_dict = record_artifacts_as_dict(["."],
+          lstrip_paths=lstrip_paths)
+    os.remove(path)
+    os.rmdir("subdir_new")
+
+
   def test_lstrip_paths_invalid_prefix_directory(self):
     lstrip_paths = ["not/a/directory/"]
     expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
