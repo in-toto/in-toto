@@ -48,7 +48,7 @@ optional arguments:
                         gpg' option. If '--gpg-home' is not passed, the
                         default GPG keyring is used.
   -b, --record-streams  If passed 'stdout' and 'stderr' of the executed
-                        command are redirected and stored in the resulting
+                        command are duplicated and stored in the resulting
                         link metadata.
   -x, --no-command      Generate link metadata without executing a command,
                         e.g. for a 'signed off by' step.
@@ -188,7 +188,7 @@ examples:
 
   parser.add_argument("-s", "--record-streams", dest="record_streams",
       default=False, action="store_true", help=(
-      "If passed 'stdout' and 'stderr' of the executed command are redirected"
+      "If passed 'stdout' and 'stderr' of the executed command are duplicated"
       " and stored in the resulting link metadata."))
 
   parser.add_argument("-x", "--no-command", dest="no_command", default=False,

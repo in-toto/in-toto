@@ -309,20 +309,19 @@ def execute_link(link_cmd_args, record_streams):
     - The return value of the executed command.
   """
   if record_streams:
-    process = in_toto.process.run(link_cmd_args, check=False,
-      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE,
-      universal_newlines=True)
-    stdout_str, stderr_str = process.stdout, process.stderr
+    return_code, stdout_str, stderr_str = \
+        in_toto.process.run_duplicate_streams(link_cmd_args)
 
   else:
     process = in_toto.process.run(link_cmd_args, check=False,
       stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
     stdout_str = stderr_str = ""
+    return_code = process.returncode
 
   return {
       "stdout": stdout_str,
       "stderr": stderr_str,
-      "return-value": process.returncode
+      "return-value": return_code
     }
 
 
