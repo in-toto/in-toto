@@ -242,6 +242,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
           expected_artifacts)
       os.remove(path)
+      os.rmdir("ಠ")
     except OSError:
       # OS doesn't support unicode explicit files
       pass
@@ -262,6 +263,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
                            expected_artifacts)
       os.remove(path)
+      os.rmdir("ಠ")
     except OSError:
       # OS doesn't support unicode explicit files
       pass
