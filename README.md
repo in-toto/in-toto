@@ -66,19 +66,19 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` is used to execute a step in the software supply chain. This can be 
-anything relevant to the project such as tagging a release with `git`, running 
-a test, or building a binary to ship. The relevant step name and command are 
-passed as arguments, along with materials, which are files required for that 
-step's command to execute, and products which are files expected as a result 
-of the execution of that command. These, and other relevant details 
-pertaining to the step are stored in a link file, which is signed using the 
-functionary's key. If materials are not passed to the command, the link file 
+`in-toto-run` is used to execute a step in the software supply chain. This can be
+anything relevant to the project such as tagging a release with `git`, running
+a test, or building a binary to ship. The relevant step name and command are
+passed as arguments, along with materials, which are files required for that
+step's command to execute, and products which are files expected as a result
+of the execution of that command. These, and other relevant details
+pertaining to the step are stored in a link file, which is signed using the
+functionary's key. If materials are not passed to the command, the link file
 generated just doesn't record them.
 
-See [this simple usage example from the demo application 
-for more details](https://github.com/in-toto/demo). 
-For a detailed list of all the command line arguments, run `in-toto-run --help` 
+See [this simple usage example from the demo application
+for more details](https://github.com/in-toto/demo).
+For a detailed list of all the command line arguments, run `in-toto-run --help`
 or look at the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py) here.
 
 ##### in-toto-record
@@ -89,8 +89,8 @@ preliminary link file that only records the *materials*, then run the
 commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
 link metadata file. For a detailed list of all command line arguments and their usage,
-run `in-toto-record start --help` or `in-toto-record stop --help`. You can also 
-find the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py) 
+run `in-toto-record start --help` or `in-toto-record stop --help`. You can also
+find the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py)
 here.
 
 #### Release final product
@@ -107,29 +107,29 @@ Use `in-toto-verify` on the final product to verify that
 - materials and products of each step were in place as defined by the rules, and
 - run the defined inspections
 
-For a detailed list of all command line arguments and their usage, run 
-`in-toto-verify --help` or look at the 
-[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py) 
+For a detailed list of all command line arguments and their usage, run
+`in-toto-verify --help` or look at the
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py)
 here.
 
 #### Signatures
-`in-toto-sign` is a metadata signature helper tool to add, replace, and 
+`in-toto-sign` is a metadata signature helper tool to add, replace, and
 verify signatures within in-toto Link or Layout metadata, with options to:
-- replace (default) or add signature(s), with layout metadata able to be 
+- replace (default) or add signature(s), with layout metadata able to be
 signed by multiple keys at once while link metadata can only be signed by one key at a time
-- write signed metadata to a specified path (if no output path is specified, 
-layout metadata is written to the path of the input file while link metadata 
+- write signed metadata to a specified path (if no output path is specified,
+layout metadata is written to the path of the input file while link metadata
 is written to '&lt;name&gt;.&lt;keyid prefix&gt;.link')
 - verify signatures
 
-This tool is intended to sign layouts created by the 
-[layout web wizard](https://in-toto.engineering.nyu.edu/), but also serves 
-well to re-sign test and demo data. For example, it can be used if metadata 
+This tool is intended to sign layouts created by the
+[layout web wizard](https://in-toto.engineering.nyu.edu/), but also serves
+well to re-sign test and demo data. For example, it can be used if metadata
 formats or signing routines change.
 
-For a detailed list of all command line arguments and their usage, run 
-`in-toto-sign --help` or look at the 
-[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py) 
+For a detailed list of all command line arguments and their usage, run
+`in-toto-sign --help` or look at the
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py)
 here.
 
 #### Settings
