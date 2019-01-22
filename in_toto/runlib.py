@@ -213,7 +213,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # of another
   if lstrip_paths:
     for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
-      if prefix_one.startswith(prefix_two) or
+      if prefix_one.startswith(prefix_two) or \
           prefix_two.startswith(prefix_one):
         raise in_toto.exceptions.PrefixError("'{}' and '{}'"
             "triggered a left substring error".format(prefix_one, prefix_two))
@@ -236,7 +236,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # may include an unexpected /.
         for prefix in lstrip_paths:
           if artifact.startswith(prefix):
-            key = artifact[len(lstrip_paths):]
+            key = artifact[len(prefix):]
             break
 
       artifacts_dict[key] = _hash_artifact(artifact,
@@ -297,7 +297,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # may include an unexpected /.
             for prefix in lstrip_paths:
               if normalized_filepath.startswith(prefix):
-                key = normalized_filepath[len(lstrip_paths):]
+                key = normalized_filepath[len(prefix):]
                 break
 
           artifacts_dict[key] = _hash_artifact(filepath,
