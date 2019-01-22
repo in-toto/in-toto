@@ -239,6 +239,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             key = artifact[len(prefix):]
             break
 
+      if key in artifacts_dict:
+        raise in_toto.exceptions.PrefixError("Prefix selection has resulted in"
+            " non unique dictionary key '{}'".format(key))
+
       artifacts_dict[key] = _hash_artifact(artifact,
           normalize_line_endings=normalize_line_endings)
 
@@ -299,6 +303,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
               if normalized_filepath.startswith(prefix):
                 key = normalized_filepath[len(prefix):]
                 break
+
+          if key in artifacts_dict:
+            raise in_toto.exceptions.PrefixError("Prefix selection has resulted"
+                " in non unique dictionary key '{}'".format(key))
 
           artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
