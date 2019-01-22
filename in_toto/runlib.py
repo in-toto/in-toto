@@ -508,7 +508,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -522,7 +523,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   products_dict = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   log.info("Creating link metadata...")
   environment = {}
@@ -651,7 +653,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   log.info("Creating preliminary link metadata...")
   environment = {}
