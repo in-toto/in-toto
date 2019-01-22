@@ -126,7 +126,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         fp.write(path)
 
 
-
   @classmethod
   def tearDownClass(self):
     """Change back to working dir, remove temp directory, restore settings. """
