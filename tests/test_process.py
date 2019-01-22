@@ -19,13 +19,17 @@
 import os
 import tempfile
 import unittest
+import shlex
+import mock
+import io
+import sys
 import in_toto.process
 
 
 class Test_Process(unittest.TestCase):
   """Test subprocess interface. """
 
-  def test_input_vs_stdin(self):
+  def test_run_input_vs_stdin(self):
     """Test that stdin kwarg is only used if input kwarg is not supplied. """
 
     # Create a temporary file, passed as `stdin` argument
@@ -48,6 +52,68 @@ class Test_Process(unittest.TestCase):
     # Clean up
     stdin_file.close()
     os.remove(path)
+
+
+  def test_run_duplicate_streams(self):
+    """Test output as streams and as returned.  """
+    # Command that prints 'foo' to stdout and 'bar' to stderr.
+    cmd = ("python -c \""
+        "import sys;"
+        "sys.stdout.write('foo');"
+        "sys.stderr.write('bar');\"")
+
+    # Create and open fake targets for standard streams
+    stdout_fd, stdout_fn = tempfile.mkstemp()
+    stderr_fd, stderr_fn = tempfile.mkstemp()
+    with io.open(stdout_fn, "r+") as fake_stdout, \
+        io.open(stderr_fn, "r+") as fake_stderr:
+
+      # Backup original standard streams and redirect to fake targets
+      real_stdout = sys.stdout
+      real_stderr = sys.stderr
+      sys.stdout = fake_stdout
+      sys.stderr = fake_stderr
+
+      # Run command
+      ret_code, ret_stdout, ret_stderr = \
+          in_toto.process.run_duplicate_streams(cmd)
+
+      # Rewind fake standard streams
+      fake_stdout.seek(0)
+      fake_stderr.seek(0)
+
+      # Assert that what was printed and what was returned is correct
+      self.assertTrue(ret_stdout == fake_stdout.read() == "foo")
+      self.assertTrue(ret_stderr == fake_stderr.read() == "bar")
+      # Also assert the default return value
+      self.assertEqual(ret_code, 0)
+
+      # Reset original streams
+      sys.stdout = real_stdout
+      sys.stderr = real_stderr
+
+    # Remove fake standard streams
+    os.remove(stdout_fn)
+    os.remove(stderr_fn)
+
+
+  def test_run_duplicate_streams_arg_return_code(self):
+    """Test command arg as string and list and return code. """
+    cmd_str = ("python -c \""
+        "import sys;"
+        "sys.exit(100)\"")
+    cmd_list = shlex.split(cmd_str)
+
+    for cmd in [cmd_str, cmd_list]:
+      return_code, _, _ = in_toto.process.run_duplicate_streams(cmd)
+      self.assertEqual(return_code, 100)
+
+
+  def test_run_duplicate_streams_timeout(self):
+    """Test raise TimeoutExpired. """
+    with self.assertRaises(in_toto.process.subprocess.TimeoutExpired):
+      in_toto.process.run_duplicate_streams("python --version", timeout=-1)
+
 
 
 if __name__ == "__main__":
