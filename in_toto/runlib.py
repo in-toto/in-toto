@@ -284,7 +284,6 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           if lstrip_paths:
             # If a prefix is passed using the argument --lstrip-paths,
             # that prefix is left stripped from the filepath passed.
-            # Currently, it's set to only take a single prefix in common_args.
             # Note: if the prefix doesn't include a trailing /, the dictionary key
             # may include an unexpected /.
             if normalized_filepath.startswith(lstrip_paths[0]):
@@ -468,8 +467,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             support.
     lstrip_paths: (optional)
             If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix. Currently,
-            the prefix is a single path.
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -605,8 +603,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
             endings before hashing materials, for cross-platform support.
     lstrip_paths: (optional)
             If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix. Currently,
-            the prefix is a single path.
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -735,8 +732,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
             endings before hashing products, for cross-platform support.
     lstrip_paths: (optional)
             If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix. Currently,
-            the prefix is a single path.
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
