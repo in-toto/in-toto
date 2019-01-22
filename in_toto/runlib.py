@@ -151,8 +151,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
     lstrip_paths: (optional)
             If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix. Currently,
-            the prefix is a single path.
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     in_toto.exceptions.ValueError,
@@ -223,7 +222,6 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       if lstrip_paths:
         # If a prefix is passed using the argument --lstrip-paths,
         # that prefix is left stripped from the filepath passed.
-        # Currently, it's set to only take a single prefix in common_args.
         # Note: if the prefix doesn't include a trailing /, the dictionary key
         # may include an unexpected /.
         # Path was already normalized above
