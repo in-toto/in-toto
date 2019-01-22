@@ -27,6 +27,7 @@
 import glob
 import logging
 import os
+import itertools
 
 from pathspec import PathSpec
 
@@ -208,6 +209,15 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
     norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
 
+  # Check if any of the prefixes passed for left stripping is a left substring
+  # of another
+  if lstrip_paths:
+    for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
+      if prefix_one.startswith(prefix_two) or
+          prefix_two.startswith(prefix_one):
+        raise in_toto.exceptions.PrefixError("'{}' and '{}'"
+            "triggered a left substring error".format(prefix_one, prefix_two))
+
   # Compile the gitignore-style patterns
   exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
 
@@ -224,9 +234,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # that prefix is left stripped from the filepath passed.
         # Note: if the prefix doesn't include a trailing /, the dictionary key
         # may include an unexpected /.
-        # Path was already normalized above
-        if artifact.startswith(lstrip_paths):
-          key = artifact[len(lstrip_paths):]
+        for prefix in lstrip_paths:
+          if artifact.startswith(prefix):
+            key = artifact[len(lstrip_paths):]
+            break
 
       artifacts_dict[key] = _hash_artifact(artifact,
           normalize_line_endings=normalize_line_endings)
@@ -284,8 +295,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # that prefix is left stripped from the filepath passed.
             # Note: if the prefix doesn't include a trailing /, the dictionary key
             # may include an unexpected /.
-            if normalized_filepath.startswith(lstrip_paths):
-              key = normalized_filepath[len(lstrip_paths):]
+            for prefix in lstrip_paths:
+              if normalized_filepath.startswith(prefix):
+                key = normalized_filepath[len(lstrip_paths):]
+                break
 
           artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
