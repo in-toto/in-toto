@@ -219,6 +219,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       # *nix filepaths. A better solution may be in order though...
       artifact = artifact.replace('\\', '/')
 
+      key = artifact
       if lstrip_paths:
         # If a prefix is passed using the argument --lstrip-paths,
         # that prefix is left stripped from the filepath passed.
@@ -227,13 +228,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # may include an unexpected /.
         # Path was already normalized above
         if artifact.startswith(lstrip_paths[0]):
-          stripped_artifact = artifact[len(lstrip_paths[0]):]
-        artifacts_dict[stripped_artifact] = _hash_artifact(artifact,
-            normalize_line_endings=normalize_line_endings)
-      else:
-        # Path was already normalized above
-        artifacts_dict[artifact] = _hash_artifact(artifact,
-            normalize_line_endings=normalize_line_endings)
+          key = artifact[len(lstrip_paths[0]):]
+
+      artifacts_dict[key] = _hash_artifact(artifact,
+          normalize_line_endings=normalize_line_endings)
 
     elif os.path.isdir(artifact):
       for root, dirs, files in os.walk(artifact,
@@ -281,6 +279,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # FIXME: this is necessary to provide consisency between windows filepaths and
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
+
+          key = normalized_filepath
           if lstrip_paths:
             # If a prefix is passed using the argument --lstrip-paths,
             # that prefix is left stripped from the filepath passed.
@@ -288,12 +288,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             # Note: if the prefix doesn't include a trailing /, the dictionary key
             # may include an unexpected /.
             if normalized_filepath.startswith(lstrip_paths[0]):
-              normalized_filepath = normalized_filepath[len(lstrip_paths[0]):]
-            artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
-                normalize_line_endings=normalize_line_endings)
-          else:
-            artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
-                normalize_line_endings=normalize_line_endings)
+              key = normalized_filepath[len(lstrip_paths[0]):]
+
+          artifacts_dict[key] = _hash_artifact(filepath,
+              normalize_line_endings=normalize_line_endings)
 
     # Path is no file and no directory
     else:
