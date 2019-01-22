@@ -213,7 +213,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     shutil.copy("subdir/foosub1", path)
     lstrip_paths = ["subdir/", "subdir_new/"]
     with self.assertRaises(in_toto.exceptions.PrefixError):
-      artifacts_dict = record_artifacts_as_dict(["."],
+      record_artifacts_as_dict(["."],
           lstrip_paths=lstrip_paths)
     os.remove(path)
     os.rmdir("subdir_new")
