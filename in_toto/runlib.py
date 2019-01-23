@@ -235,7 +235,9 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         # that prefix is left stripped from the filepath passed.
         # Note: if the prefix doesn't include a trailing /, the dictionary key
         # may include an unexpected /.
-        for prefix in lstrip_paths:
+        for prefix in lstrip_paths: # pragma: no cover
+          # This clause is hit by test_lstrip_paths_valid_prefix_file
+          # but coverage doesn't see it, due to the break statement
           if artifact.startswith(prefix):
             key = artifact[len(prefix):]
             break
