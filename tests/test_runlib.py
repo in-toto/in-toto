@@ -236,6 +236,18 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
 
+  def test_lstrip_paths_non_unique_key_file(self):
+    os.mkdir("subdir/subsubdir_new")
+    path = "subdir/subsubdir_new/foosubsub"
+    shutil.copy("subdir/subsubdir/foosubsub", path)
+    lstrip_paths = ["subdir/subsubdir/", "subdir/subsubdir_new/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      record_artifacts_as_dict(["subdir/subsubdir/foosubsub",
+          "subdir/subsubdir_new/foosubsub"], lstrip_paths=lstrip_paths)
+    os.remove(path)
+    os.rmdir("subdir/subsubdir_new")
+
+
   @unittest.skipIf(os.getenv("TEST_SKIP_WINDOWS_PY3"), "unicode paths tested separately for windows and py3")
   def test_lstrip_paths_valid_unicode_prefix_file(self):
     # Try to create a file with unicode character
