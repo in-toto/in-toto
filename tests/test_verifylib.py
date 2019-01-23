@@ -1335,6 +1335,9 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
   (*) NOTE: Master keys with a subkey with signing capability always use that
   subkey, even if the master keyid is specified and has signing capability.
 
+
+  Plus additional gpg subkey related threshold tests.
+
   """
 
   @classmethod
@@ -1454,6 +1457,38 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     layout, chain_link_dict = self._verify_link_signature_tresholds(
         self.sub, self.sub, self.sub)
     verify_link_signature_thresholds(layout, chain_link_dict)
+
+
+  def test_verify_subkey_thresholds(self):
+    """Subkeys of same main key count only once towards threshold. """
+
+    masterkey = "40e692c3ae03f6b88dff95d0d2c9fe930766998d"
+    subkey1 = "35830aa342b9fea0178876b02b25647ff0ef59fe"
+    subkey2 = "732d722578f71a9ec967a64bfead922c91eb7351"
+
+    link1 = Metablock(signed=Link(name=self.step_name))
+    link1.sign_gpg(subkey1, self.gnupg_home)
+    link2 = Metablock(signed=Link(name=self.step_name))
+    link2.sign_gpg(subkey2, self.gnupg_home)
+
+    chain_link_dict = {
+      self.step_name : {
+        subkey1: link1,
+        subkey2: link2
+      }
+    }
+
+    layout = Layout(
+      steps=[
+          Step(name=self.step_name, pubkeys=[masterkey], threshold=2)
+        ],
+      keys={
+          masterkey: in_toto.gpg.functions.gpg_export_pubkey(
+              masterkey, self.gnupg_home)
+        }
+      )
+    with self.assertRaises(ThresholdVerificationError):
+      verify_link_signature_thresholds(layout, chain_link_dict)
 
 
 

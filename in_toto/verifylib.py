@@ -109,6 +109,11 @@ def load_links_for_layout(layout, link_dir_path):
   <Side Effects>
     Calls function to read files from disk
 
+  <Exceptions>
+    in_toto.exceptions.LinkNotFoundError,
+            if fewer than `threshold` link files can be found for any given
+            step of the supply chain (preliminary threshold check)
+
   <Returns>
     A dictionary carrying all the found metadata corresponding to the
     passed layout, e.g.:
@@ -146,7 +151,9 @@ def load_links_for_layout(layout, link_dir_path):
         except IOError:
           pass
 
-    # Check if the step has been performed by enough number of functionaries
+    # This is only a preliminary threshold check, based on (authorized)
+    # filenames, to fail early. A more thorough signature-based threshold
+    # check is indispensable.
     if len(links_per_step) < step.threshold:
       raise in_toto.exceptions.LinkNotFoundError("Step '{0}' requires '{1}'"
           " link metadata file(s), found '{2}'."
@@ -399,32 +406,36 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
 
   """
   # Create an inverse keys-subkeys dictionary, with subkey keyids as
-  # dictionary keys and main keys as dictionary values.
-  # NOTE: We assume that a given subkey can only belong to one master key
+  # dictionary keys and main keys as dictionary values. This will be
+  # required below to assess main-subkey trust delegations.
+  # We assume that a given subkey can only belong to one master key
   # TODO: Is this a safe assumption? Should we assert for it?
   main_keys_for_subkeys = {}
   for main_key in list(layout.keys.values()):
     for sub_keyid in main_key.get("subkeys", []):
       main_keys_for_subkeys[sub_keyid] = main_key
 
+  # Dict for valid and authorized links of all steps of the layout
   verfied_chain_link_dict = {}
-  # Check signatures on passed links, if they are valid and authorized, but
-  # don't fail yet, instead add authorized links with passing signatures
-  # to a `verfied_chain_link_dict` and check later if the threshold
-  # requirements are fulfilled. That is, we don't care if there are a few
-  # bad links, as long as we have enough good links. Only the good links will
-  # be considered for further final product verification.
-  for step in layout.steps:
-    # Will contain all links corresponding to a step with successfully
-    # verified signatures, authorized to perform the step
-    verified_key_link_dict = {}
 
-    # Iterate over links corresponding to a step
+  # For each step of the layout check the signatures of corresponding links.
+  # Consider only links where the signature is valid and keys are authorized,
+  # and discard others.
+  # Only count one of multiple links signed with different subkeys of a main
+  # key towards link threshold.
+  # Only proceed with final product verification if threshold requirements are
+  # fulfilled.
+  for step in layout.steps:
+    # Dict for valid and authorized links of a given step
+    verified_key_link_dict = {}
+    # List of used keyids
+    used_main_keyids = []
+
+    # Do per step link threshold verification
     for link_keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
-      # Check if the link's keyid is authorized to provide a link for the step.
       # Iterate over authorized keyids to find a key or subkey corresponding
-      # to the given link. Subkeys of authorized main keys are authorized
-      # implicitly.
+      # to the given link and check if the link's keyid is authorized.
+      # Subkeys of authorized main keys are authorized implicitly.
       for authorized_keyid in step.pubkeys:
 
         authorized_key = layout.keys.get(authorized_keyid)
@@ -440,7 +451,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
           verification_key = main_key_for_subkey
           break
 
-        # The signing key is a subkey belonging to an authorized key
+        # The signing key is a subkey of an authorized key
         elif (authorized_key and
             link_keyid in authorized_key.get("subkeys", {}).keys()):
           verification_key = authorized_key
@@ -458,28 +469,39 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
       except SignatureVerificationError:
         log.info("Skipping link. Broken link signature with keyid '{0}'"
             " for step '{1}'".format(link_keyid, step.name))
+        continue
 
-      else:
-        # Good link: The signature is valid and the signer was authorized
-        verified_key_link_dict[link_keyid] = link
+      # Warn if there are links signed by different subkeys of same main key
+      if verification_key["keyid"] in used_main_keyids:
+        log.warning("Found links signed by different subkeys of the same main"
+            " key '{}' for step '{}'. Only one of them is counted towards the"
+            " step threshold.".format(verification_key["keyid"], step.name))
 
+      used_main_keyids.append(verification_key["keyid"])
 
-    # Add all good links for a step to the dictionary of links for all steps
+      # Keep only links with valid and authorized signature
+      verified_key_link_dict[link_keyid] = link
+
+    # For each step, verify that we have enough validly signed links from
+    # distinct authorized functionaries. Links signed by different subkeys of
+    # the same main key are counted only once towards the threshold.
+    valid_authorized_links_cnt = (len(verified_key_link_dict) -
+        (len(used_main_keyids) - len(set(used_main_keyids))))
+    # TODO: To guarantee that links are signed by different functionaries
+    # we rely on the layout to not carry duplicate verification keys under
+    # different dictionary keys, e.g. {keyid1: KEY1, keyid2: KEY1}
+    # Maybe we should add such a check to the layout validation? Or here?
+    if valid_authorized_links_cnt < step.threshold:
+      raise ThresholdVerificationError("Step '{}' requires at least '{}' links"
+          " validly signed by different authorized functionaries. Only"
+          " found '{}'".format(step.name, step.threshold,
+          valid_authorized_links_cnt))
+
+    # Add all good links of this step to the dictionary of links of all steps
     verfied_chain_link_dict[step.name] = verified_key_link_dict
 
-  # For each step, verify that we have enough validly signed links signed by
-  # different authorized functionaries.
-  # TODO: To guarantee that links are signed by different functionaries
-  # we rely on the layout to not carry duplicate verification keys under
-  # different dictionary keys, e.g. {keyid1: KEY1, keyid2: KEY1}
-  # Maybe we should add such a check to the layout validation? Or here?
-  for step in layout.steps:
-    valid_authorized_links_cnt = len(verfied_chain_link_dict[step.name])
-    if valid_authorized_links_cnt < step.threshold:
-      raise ThresholdVerificationError("Step requires at least '{}' links"
-          " validly signed by different authorized functionaries. Only"
-          " found '{}'".format(step.threshold, valid_authorized_links_cnt))
-
+  # Threshold verification succeeded, return valid and authorized links for
+  # further verification
   return verfied_chain_link_dict
 
 def verify_command_alignment(command, expected_command):
