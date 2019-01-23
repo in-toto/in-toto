@@ -281,9 +281,9 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       lstrip_paths = ["ಠ/"]
       expected_artifacts = sorted(["foo"])
       artifacts_dict = record_artifacts_as_dict(["./ಠ/"],
-                                                lstrip_paths=lstrip_paths)
+          lstrip_paths=lstrip_paths)
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
-                           expected_artifacts)
+          expected_artifacts)
       os.remove(path)
       os.rmdir("ಠ")
     except OSError:
