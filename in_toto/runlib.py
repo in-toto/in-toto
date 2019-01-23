@@ -87,7 +87,8 @@ def _apply_exclude_patterns(names, exclude_filter):
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False, lstrip_paths=None):
+    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
+    lstrip_paths=None):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
