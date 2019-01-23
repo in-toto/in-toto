@@ -216,7 +216,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
       if prefix_one.startswith(prefix_two) or \
           prefix_two.startswith(prefix_one):
-        raise in_toto.exceptions.PrefixError("'{}' and '{}'"
+        raise in_toto.exceptions.PrefixError("'{}' and '{}' "
             "triggered a left substring error".format(prefix_one, prefix_two))
 
   # Compile the gitignore-style patterns
