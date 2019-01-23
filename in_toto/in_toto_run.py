@@ -60,8 +60,13 @@ optional arguments:
                         for additional info.
   --base-path <path>    Record 'materials/products' relative to <path>. If not
                         set, current working directory is used as base path.
-  --lstrip-paths <path> If a prefix path is passed, the prefix is left stripped
-                        from the path of every artifact that contains the prefix.
+  --lstrip-paths <path> [<path> ...]
+                        Record the path of artifacts in link metadata after left
+                        stripping the specified <path> from the full path. If
+                        there are multiple prefixes specified, only a single
+                        prefix can match the path of any artifact and that is
+                        then left stripped. All prefixes are checked to ensure none
+                        of them are a left substring of another.
   -t {ed25519,rsa}, --key-type {ed25519,rsa}
                         Specify the key-type of the key specified by the
                         '--key' option. If '--key-type' is not passed, default

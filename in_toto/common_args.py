@@ -55,6 +55,8 @@ LSTRIP_PATHS_KWARGS = {
   "metavar": "<path>",
   "help": ("Record the path of artifacts in link metadata after left"
           " stripping the specified <path> from the full path. If"
-          " there are multiple prefixes specified, the longest match"
-          " is what is actually stripped from the full path.")
+          " there are multiple prefixes specified, only a single "
+           "prefix can match the path of any artifact and that is "
+           "then left stripped. All prefixes are checked to ensure none "
+           "of them are a left substring of another.")
 }
