@@ -86,7 +86,7 @@ def _apply_exclude_patterns(names, exclude_filter):
   return sorted(included)
 
 
-def _apply_left_strip(artifact_filepath, artifacts_dict,lstrip_paths=None):
+def _apply_left_strip(artifact_filepath, artifacts_dict, lstrip_paths=None):
   """ Internal helper function to left strip dictionary keys based on
   prefixes passed by the user. """
   if lstrip_paths:
