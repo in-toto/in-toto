@@ -68,6 +68,13 @@ optional arguments:
                         for additional info.
   --base-path <path>    Record 'materials/products' relative to <path>. If not
                         set, current working directory is used as base path.
+  --lstrip-paths <path> [<path> ...]
+                        Record the path of artifacts in link metadata after
+                        left stripping the specified <path> from the full
+                        path. If there are multiple prefixes specified, only a
+                        single prefix can match the path of any artifact and
+                        that is then left stripped. All prefixes are checked
+                        to ensure none of them are a left substring of another.
   -v, --verbose         Verbose execution.
   -q, --quiet           Suppress all output.
 
@@ -115,7 +122,8 @@ import in_toto.user_settings
 import in_toto.runlib
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
-    BASE_PATH_ARGS, BASE_PATH_KWARGS)
+    BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
+    LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -195,6 +203,7 @@ examples:
 
   parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
+  parent_parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
 
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
@@ -258,14 +267,16 @@ examples:
       in_toto.runlib.in_toto_record_start(args.step_name, args.materials,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path,
+          lstrip_paths=args.lstrip_paths)
 
     # Mutually exclusiveness is guaranteed by argparser
     else: # args.command == "stop":
       in_toto.runlib.in_toto_record_stop(args.step_name, args.products,
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
-          exclude_patterns=args.exclude_patterns, base_path=args.base_path)
+          exclude_patterns=args.exclude_patterns, base_path=args.base_path,
+          lstrip_paths=args.lstrip_paths)
 
   except Exception as e:
     log.error("(in-toto-record {0}) {1}: {2}"

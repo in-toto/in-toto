@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#coding=utf-8
 
 """
 <Program Name>
@@ -187,6 +188,86 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
         expected_artifacts)
 
     os.chdir(self.test_dir)
+
+
+  def test_lstrip_paths_valid_prefix_directory(self):
+    lstrip_paths = ["subdir/subsubdir/"]
+    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+        "subdir/foosub2", "foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["."],
+        lstrip_paths=lstrip_paths)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+
+
+  def test_lstrip_paths_substring_prefix_directory(self):
+    lstrip_paths = ["subdir/subsubdir/", "subdir/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      record_artifacts_as_dict(["."], lstrip_paths=lstrip_paths)
+
+
+  def test_lstrip_paths_non_unique_key(self):
+    os.mkdir("subdir_new")
+    path = "subdir_new/foosub1"
+    shutil.copy("subdir/foosub1", path)
+    lstrip_paths = ["subdir/", "subdir_new/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      record_artifacts_as_dict(["."], lstrip_paths=lstrip_paths)
+    os.remove(path)
+    os.rmdir("subdir_new")
+
+
+  def test_lstrip_paths_invalid_prefix_directory(self):
+    lstrip_paths = ["not/a/directory/"]
+    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+                                 "subdir/foosub2", "subdir/subsubdir/foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["."],
+        lstrip_paths=lstrip_paths)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+                         expected_artifacts)
+
+
+  def test_lstrip_paths_valid_prefix_file(self):
+    lstrip_paths = ["subdir/subsubdir/"]
+    expected_artifacts = sorted(["foosubsub"])
+    artifacts_dict = record_artifacts_as_dict(["./subdir/subsubdir/foosubsub"],
+        lstrip_paths=lstrip_paths)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+
+
+  def test_lstrip_paths_non_unique_key_file(self):
+    os.mkdir("subdir/subsubdir_new")
+    path = "subdir/subsubdir_new/foosubsub"
+    shutil.copy("subdir/subsubdir/foosubsub", path)
+    lstrip_paths = ["subdir/subsubdir/", "subdir/subsubdir_new/"]
+    with self.assertRaises(in_toto.exceptions.PrefixError):
+      record_artifacts_as_dict(["subdir/subsubdir/foosubsub",
+          "subdir/subsubdir_new/foosubsub"], lstrip_paths=lstrip_paths)
+    os.remove(path)
+    os.rmdir("subdir/subsubdir_new")
+
+
+  def test_lstrip_paths_valid_unicode_prefix_file(self):
+    # Try to create a file with unicode character
+    try:
+      os.mkdir("ಠ")
+      path = "ಠ/foo"
+      shutil.copy("foo", path)
+
+      # Attempt to left strip the path now that the file has been created
+      lstrip_paths = ["ಠ/"]
+      expected_artifacts = sorted(["foo"])
+      artifacts_dict = record_artifacts_as_dict(["./ಠ/"],
+          lstrip_paths=lstrip_paths)
+      self.assertListEqual(sorted(list(artifacts_dict.keys())),
+          expected_artifacts)
+      os.remove(path)
+      os.rmdir("ಠ")
+    except OSError:
+      # OS doesn't support unicode explicit files
+      pass
+
 
   def test_empty_artifacts_list_record_nothing(self):
     """Empty list passed. Return empty dict. """

@@ -60,6 +60,13 @@ optional arguments:
                         for additional info.
   --base-path <path>    Record 'materials/products' relative to <path>. If not
                         set, current working directory is used as base path.
+  --lstrip-paths <path> [<path> ...]
+                        Record the path of artifacts in link metadata after
+                        left stripping the specified <path> from the full
+                        path. If there are multiple prefixes specified, only a
+                        single prefix can match the path of any artifact and
+                        that is then left stripped. All prefixes are checked
+                        to ensure none of them are a left substring of another.
   -t {ed25519,rsa}, --key-type {ed25519,rsa}
                         Specify the key-type of the key specified by the
                         '--key' option. If '--key-type' is not passed, default
@@ -105,7 +112,8 @@ import in_toto.user_settings
 from in_toto import (util, runlib)
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
-    BASE_PATH_ARGS, BASE_PATH_KWARGS)
+    BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
+    LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger("in_toto")
@@ -198,6 +206,7 @@ examples:
 
   parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
+  parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument("-v", "--verbose", dest="verbose",
@@ -253,7 +262,7 @@ examples:
 
     runlib.in_toto_run(args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home, args.exclude_patterns, args.base_path)
+        args.gpg_home, args.exclude_patterns, args.base_path, args.lstrip_paths)
 
   except Exception as e:
     log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))

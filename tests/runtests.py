@@ -38,6 +38,7 @@ def check_usable_gpg():
   except (WindowsError, FileNotFound) as e:
     os.environ["TEST_SKIP_GPG"] = "1"
 
+
 # set the test prerrequisites (so far, we only check if gpg is installed)
 check_usable_gpg()
 

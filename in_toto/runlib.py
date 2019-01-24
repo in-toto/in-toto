@@ -27,6 +27,7 @@
 import glob
 import logging
 import os
+import itertools
 
 from pathspec import PathSpec
 
@@ -85,8 +86,30 @@ def _apply_exclude_patterns(names, exclude_filter):
   return sorted(included)
 
 
+def _apply_left_strip(artifact_filepath, artifacts_dict, lstrip_paths=None):
+  """ Internal helper function to left strip dictionary keys based on
+  prefixes passed by the user. """
+  if lstrip_paths:
+    # If a prefix is passed using the argument --lstrip-paths,
+    # that prefix is left stripped from the filepath passed.
+    # Note: if the prefix doesn't include a trailing /, the dictionary key
+    # may include an unexpected /.
+    for prefix in lstrip_paths:
+      if artifact_filepath.startswith(prefix):
+        artifact_filepath = artifact_filepath[len(prefix):]
+        break
+
+    if artifact_filepath in artifacts_dict:
+      raise in_toto.exceptions.PrefixError("Prefix selection has "
+          "resulted in non unique dictionary key '{}'"
+          .format(artifact_filepath))
+
+  return artifact_filepath
+
+
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False):
+    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
+    lstrip_paths=None):
   """
   <Purpose>
     Hashes each file in the passed path list. If the path list contains
@@ -149,6 +172,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             endings before hashing the content of the passed files, for
             cross-platform support.
 
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix.
+
   <Exceptions>
     in_toto.exceptions.ValueError,
         if we cannot change to base path directory
@@ -204,6 +231,15 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
     norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
 
+  # Check if any of the prefixes passed for left stripping is a left substring
+  # of another
+  if lstrip_paths:
+    for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
+      if prefix_one.startswith(prefix_two) or \
+          prefix_two.startswith(prefix_one):
+        raise in_toto.exceptions.PrefixError("'{}' and '{}' "
+            "triggered a left substring error".format(prefix_one, prefix_two))
+
   # Compile the gitignore-style patterns
   exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
 
@@ -213,9 +249,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       # FIXME: this is necessary to provide consisency between windows filepaths and
       # *nix filepaths. A better solution may be in order though...
       artifact = artifact.replace('\\', '/')
-
-      # Path was already normalized above
-      artifacts_dict[artifact] = _hash_artifact(artifact,
+      key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
+      artifacts_dict[key] = _hash_artifact(artifact,
           normalize_line_endings=normalize_line_endings)
 
     elif os.path.isdir(artifact):
@@ -264,7 +299,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # FIXME: this is necessary to provide consisency between windows filepaths and
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
-          artifacts_dict[normalized_filepath] = _hash_artifact(filepath,
+          key = _apply_left_strip(normalized_filepath, artifacts_dict, lstrip_paths)
+          artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
 
     # Path is no file and no directory
@@ -377,7 +413,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False):
+    normalize_line_endings=False, lstrip_paths=None):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -440,6 +476,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
             If True, replaces windows and mac line endings with unix line
             endings before hashing materials and products, for cross-platform
             support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -476,7 +515,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
@@ -490,7 +530,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   products_dict = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   log.info("Creating link metadata...")
   environment = {}
@@ -529,7 +570,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, record_environment=False,
-    normalize_line_endings=False):
+    normalize_line_endings=False, lstrip_paths=None):
   """
   <Purpose>
     Starts creating link metadata for a multi-part in-toto step. I.e.
@@ -571,6 +612,9 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     normalize_line_endings: (optional)
             If True, replaces windows and mac line endings with unix line
             endings before hashing materials, for cross-platform support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -615,7 +659,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   log.info("Creating preliminary link metadata...")
   environment = {}
@@ -653,7 +698,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None, normalize_line_endings=False):
+    exclude_patterns=None, base_path=None, normalize_line_endings=False,
+    lstrip_paths=None):
   """
   <Purpose>
     Finishes creating link metadata for a multi-part in-toto step.
@@ -695,6 +741,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     normalize_line_endings: (optional)
             If True, replaces windows and mac line endings with unix line
             endings before hashing products, for cross-platform support.
+    lstrip_paths: (optional)
+            If a prefix path is passed, the prefix is left stripped from
+            the path of every artifact that contains the prefix.
 
   <Exceptions>
     ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
@@ -799,7 +848,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   link_metadata.signed.products = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings)
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
 
   link_metadata.signatures = []
   if signing_key:

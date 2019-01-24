@@ -21,3 +21,6 @@ class LinkNotFoundError(Error):
 
 class UnsupportedKeyTypeError(Error):
   """Indicates that the specified key type is not yet supported. """
+
+class PrefixError(Error):
+  """Indicates that there is an error because of the prefixes passed. """
