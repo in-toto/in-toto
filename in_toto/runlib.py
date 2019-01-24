@@ -86,6 +86,27 @@ def _apply_exclude_patterns(names, exclude_filter):
   return sorted(included)
 
 
+def _apply_left_strip(artifact_filepath, artifacts_dict,lstrip_paths=None):
+  """ Internal helper function to left strip dictionary keys based on
+  prefixes passed by the user. """
+  if lstrip_paths:
+    # If a prefix is passed using the argument --lstrip-paths,
+    # that prefix is left stripped from the filepath passed.
+    # Note: if the prefix doesn't include a trailing /, the dictionary key
+    # may include an unexpected /.
+    for prefix in lstrip_paths:
+      if artifact_filepath.startswith(prefix):
+        artifact_filepath = artifact_filepath[len(prefix):]
+        break
+
+    if artifact_filepath in artifacts_dict:
+      raise in_toto.exceptions.PrefixError("Prefix selection has "
+          "resulted in non unique dictionary key '{}'"
+          .format(artifact_filepath))
+
+  return artifact_filepath
+
+
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
     lstrip_paths=None):
@@ -228,24 +249,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       # FIXME: this is necessary to provide consisency between windows filepaths and
       # *nix filepaths. A better solution may be in order though...
       artifact = artifact.replace('\\', '/')
-
-      key = artifact
-      if lstrip_paths:
-        # If a prefix is passed using the argument --lstrip-paths,
-        # that prefix is left stripped from the filepath passed.
-        # Note: if the prefix doesn't include a trailing /, the dictionary key
-        # may include an unexpected /.
-        for prefix in lstrip_paths: # pragma: no branch
-          # This clause is hit by test_lstrip_paths_valid_prefix_file
-          # but coverage doesn't see it, due to the break statement
-          if artifact.startswith(prefix):
-            key = artifact[len(prefix):]
-            break
-
-      if key in artifacts_dict:
-        raise in_toto.exceptions.PrefixError("Prefix selection has resulted "
-            "in non unique dictionary key '{}'".format(key))
-
+      key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
       artifacts_dict[key] = _hash_artifact(artifact,
           normalize_line_endings=normalize_line_endings)
 
@@ -295,22 +299,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           # FIXME: this is necessary to provide consisency between windows filepaths and
           # *nix filepaths. A better solution may be in order though...
           normalized_filepath = filepath.replace("\\", "/")
-
-          key = normalized_filepath
-          if lstrip_paths:
-            # If a prefix is passed using the argument --lstrip-paths,
-            # that prefix is left stripped from the filepath passed.
-            # Note: if the prefix doesn't include a trailing /, the dictionary key
-            # may include an unexpected /.
-            for prefix in lstrip_paths:
-              if normalized_filepath.startswith(prefix):
-                key = normalized_filepath[len(prefix):]
-                break
-
-          if key in artifacts_dict:
-            raise in_toto.exceptions.PrefixError("Prefix selection has resulted"
-                " in non unique dictionary key '{}'".format(key))
-
+          key = _apply_left_strip(normalized_filepath, artifacts_dict, lstrip_paths)
           artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
 
