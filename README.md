@@ -73,10 +73,13 @@ passed as arguments, along with materials, which are files required for that
 step's command to execute, and products which are files expected as a result
 of the execution of that command. These, and other relevant details
 pertaining to the step are stored in a link file, which is signed using the
-functionary's key. If materials are not passed to the command, the link file
-generated just doesn't record them. Similarly, if the execution of a command
-via `in-toto-run` doesn't result in any products, they're not recorded in the
-link file.
+functionary's key.
+
+If materials are not passed to the command, the link file generated just doesn't
+record them. Similarly, if the execution of a command via `in-toto-run` doesn't
+result in any products, they're not recorded in the link file. Similarly, any
+materials or products passed to the command are recorded in the link file even
+if they're not part of the execution of the command.
 
 See [this simple usage example from the demo application
 for more details](https://github.com/in-toto/demo).
