@@ -39,16 +39,8 @@ def check_usable_gpg():
     os.environ["TEST_SKIP_GPG"] = "1"
 
 
-def check_windows_system_python_3():
-  """ Checks if system is a Windows system based on the path separator
-  """
-  if os.path.sep == "\\" and sys.version_info > (3,4):
-    os.environ["TEST_SKIP_WINDOWS_PY3"] = "1"
-
-
 # set the test prerrequisites (so far, we only check if gpg is installed)
 check_usable_gpg()
-check_windows_system_python_3()
 
 suite = defaultTestLoader.discover(start_dir=".")
 result = TextTestRunner(verbosity=2, buffer=True).run(suite)
