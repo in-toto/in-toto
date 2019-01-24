@@ -91,8 +91,8 @@ preliminary link file that only records the *materials*, then run the
 commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
 link metadata file. For a detailed list of all command line arguments and their usage,
-run `in-toto-record start --help` or `in-toto-record stop --help`. You can also
-find the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
+run `in-toto-record start --help` or `in-toto-record stop --help`, or look at
+the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
 
 #### Release final product
 
