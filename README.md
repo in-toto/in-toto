@@ -66,9 +66,9 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` is used to execute a step in the software supply chain. This can be
-anything relevant to the project such as tagging a release with `git`, running
-a test, or building a binary. The relevant step name and command are
+`in-toto-run` is used to execute a step in the software supply chain. This can
+be anything relevant to the project such as tagging a release with `git`,
+running a test, or building a binary. The relevant step name and command are
 passed as arguments, along with materials, which are files required for that
 step's command to execute, and products which are files expected as a result
 of the execution of that command. These, and other relevant details
