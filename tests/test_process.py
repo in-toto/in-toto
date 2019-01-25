@@ -65,26 +65,28 @@ class Test_Process(unittest.TestCase):
     # Create and open fake targets for standard streams
     stdout_fd, stdout_fn = tempfile.mkstemp()
     stderr_fd, stderr_fn = tempfile.mkstemp()
-    with io.open(stdout_fn, "r+") as fake_stdout, \
-        io.open(stderr_fn, "r+") as fake_stderr:
+    with io.open(stdout_fn, "r") as fake_stdout_reader, \
+        os.fdopen(stdout_fd, "w") as fake_stdout_writer, \
+        io.open(stderr_fn, "r") as fake_stderr_reader, \
+        os.fdopen(stderr_fd, "w") as fake_stderr_writer:
 
       # Backup original standard streams and redirect to fake targets
       real_stdout = sys.stdout
       real_stderr = sys.stderr
-      sys.stdout = fake_stdout
-      sys.stderr = fake_stderr
+      sys.stdout = fake_stdout_writer
+      sys.stderr = fake_stderr_writer
 
       # Run command
       ret_code, ret_stdout, ret_stderr = \
           in_toto.process.run_duplicate_streams(cmd)
 
       # Rewind fake standard streams
-      fake_stdout.seek(0)
-      fake_stderr.seek(0)
+      fake_stdout_reader.seek(0)
+      fake_stderr_reader.seek(0)
 
       # Assert that what was printed and what was returned is correct
-      self.assertTrue(ret_stdout == fake_stdout.read() == "foo")
-      self.assertTrue(ret_stderr == fake_stderr.read() == "bar")
+      self.assertTrue(ret_stdout == fake_stdout_reader.read() == "foo")
+      self.assertTrue(ret_stderr == fake_stderr_reader.read() == "bar")
       # Also assert the default return value
       self.assertEqual(ret_code, 0)
 

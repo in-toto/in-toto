@@ -178,11 +178,13 @@ def run_duplicate_streams(cmd, timeout=SUBPROCESS_TIMEOUT):
   stderr_fd, stderr_name = tempfile.mkstemp()
   try:
     with io.open(stdout_name, "r") as stdout_reader, \
-        io.open(stderr_name, "r") as stderr_reader:
+        os.fdopen(stdout_fd, "w") as stdout_writer, \
+        io.open(stderr_name, "r") as stderr_reader, \
+        os.fdopen(stderr_fd, "w") as stderr_writer:
 
       # Start child , writing standard streams to temporary files
-      proc = subprocess.Popen(cmd, stdout=stdout_fd,
-          stderr=stderr_fd, universal_newlines=True)
+      proc = subprocess.Popen(cmd, stdout=stdout_writer,
+          stderr=stderr_writer, universal_newlines=True)
       proc_start_time = time.time()
 
       stdout_str = stderr_str = ""
