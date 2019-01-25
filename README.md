@@ -66,19 +66,28 @@ To learn more about the different rule types, their guarantees and how they are 
 #### Carrying out software supply chain steps
 
 ##### in-toto-run
-`in-toto-run` generates link metadata for the given command-line option and runs it as its own command. See the [this simple usage example from the demo application for more details](https://github.com/in-toto/demo#tampering-with-the-software-supply-chain).
+`in-toto-run` is used to execute a step in the software supply chain. This can
+be anything relevant to the project such as tagging a release with `git`,
+running a test, or building a binary. The relevant step name and command are
+passed as arguments, along with materials, which are files required for that
+step's command to execute, and products which are files expected as a result
+of the execution of that command. These, and other relevant details
+pertaining to the step are stored in a link file, which is signed using the
+functionary's key.
 
-```shell
-in-toto-run  --step-name <unique step name>
-            {--key <functionary signing key path>,  --gpg [<functionary gpg signing key id>]}
-            [--gpg-home <path to gpg keyring>]
-            [--materials <filepath>[ <filepath> ...]]
-            [--products <filepath>[ <filepath> ...]]
-            [--record-streams]
-            [--no-command]
-            [--verbose] -- <cmd> [args]
-```
+If materials are not passed to the command, the link file generated just
+doesn't record them. Similarly, if the execution of a command via
+`in-toto-run` doesn't result in any products, they're not recorded in the link
+file. Any files that are modified or used in any way during the execution of
+the command are not recorded in the link file unless explicitly passed as
+artifacts. Conversely, any materials or products passed to the command are
+recorded in the link file even if they're not part of the execution
+of the command.
 
+See [this simple usage example from the demo application
+for more details](https://github.com/in-toto/demo).
+For a detailed list of all the command line arguments, run `in-toto-run --help`
+or look at the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_run.py).
 
 ##### in-toto-record
 `in-toto-record` works similar to `in-toto-run` but can be used for
@@ -87,19 +96,9 @@ by a single command. Use `in-toto-record start ...` to create a
 preliminary link file that only records the *materials*, then run the
 commands of that step or edit files manually and finally use
 `in-toto-record stop ...` to record the *products* and generate the actual
-link metadata file.
-
-```shell
-usage: in-toto-record start --step-name <unique step name>
-                            (--key <signing key path> | --gpg [<gpg keyid>])
-                            [--gpg-home <gpg keyring path>] [-v]
-                            [--materials <material path> [<material path> ...]]
-
-usage: in-toto-record stop -step-name <unique step name>
-                           (--key <signing key path> | --gpg [<gpg keyid>])
-                           [--gpg-home <gpg keyring path>] [-v]
-                           [--products <product path> [<product path> ...]]
-```
+link metadata file. For a detailed list of all command line arguments and their usage,
+run `in-toto-record start --help` or `in-toto-record stop --help`, or look at
+the [code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_record.py).
 
 #### Release final product
 
@@ -115,24 +114,28 @@ Use `in-toto-verify` on the final product to verify that
 - materials and products of each step were in place as defined by the rules, and
 - run the defined inspections
 
-```shell
-in-toto-verify --layout <layout path>
-               {--layout-keys <filepath>[ <filepath> ...],  --gpg <keyid> [ <keyid> ...]}
-               [--gpg-home <path to gpg keyring>]
-               [--verbose]
-```
+For a detailed list of all command line arguments and their usage, run
+`in-toto-verify --help` or look at the
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_verify.py).
 
 #### Signatures
-`in-toto-sign`, unlike `in-toto-verify`, can only add, replace, and verify signatures within in-toto Link or Layout metadata, with options to
-- replace (default) or add signature(s), with layout metadata able to be signed by multiple keys at once while link metadata can only be signed by one key at a time
-- write signed metadata to a specified path (if no output path is specified, layout metadata is written to the path of the input file while link metadata is written to '<name>.<keyid prefix>.link')
+`in-toto-sign` is a metadata signature helper tool to add, replace, and
+verify signatures within in-toto Link or Layout metadata, with options to:
+- replace (default) or add signature(s), with layout metadata able to be
+signed by multiple keys at once while link metadata can only be signed by one key at a time
+- write signed metadata to a specified path (if no output path is specified,
+layout metadata is written to the path of the input file while link metadata
+is written to `<name>.<keyid prefix>.link`)
 - verify signatures
-This tool is intended to sign layouts created by the layout web wizard, but also serves well to re-sign test and demo data. For example, it can be used if metadata formats or signing routines change.
-```shell
-usage: in-toto-sign [-h] -f <path> [-k <path> [<path> ...]]
-                    [-t <key_type> [<key_type> ...]] [-g [<id> [<id> ...]]]
-                    [--gpg-home <path>] [-o <path>] [-a] [--verify] [-v | -q]
-```
+
+This tool is intended to sign layouts created by the
+[layout web wizard](https://in-toto.engineering.nyu.edu/), but also serves
+well to re-sign test and demo data. For example, it can be used if metadata
+formats or signing routines change.
+
+For a detailed list of all command line arguments and their usage, run
+`in-toto-sign --help` or look at the
+[code documentation](https://github.com/in-toto/in-toto/blob/develop/in_toto/in_toto_sign.py).
 
 #### Settings
 Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
