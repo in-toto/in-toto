@@ -104,6 +104,9 @@ def parse_packet_header(data, expected_type=None):
 
   <Exceptions>
     in_toto.gpg.exceptions.PacketParsingError
+            If the new format packet length encodes a partial body length
+            If the old format packet length encodes an indeterminate length
+            If header or body length could not be determined
             If the expected_type was passed and does not match the packet type
 
   <Side Effects>
@@ -111,23 +114,71 @@ def parse_packet_header(data, expected_type=None):
 
   <Returns>
     The RFC4880-compliant packet payload, its length and its type.
+    (see RFC 4880 4.3. for the list of available packet types)
   """
   data = bytearray(data)
-  packet_type = (data[0] & 0x3c ) >> 2
-  packet_length_bytes = data[0] & 0x03
+  header_len = None
+  body_len = None
 
-  ptr = 3
-  if packet_length_bytes == 1:
-    packet_length = struct.unpack(">H", data[1:ptr])[0]
+  # If Bit 6 of 1st octet is set we parse a New Format Packet Length, and
+  # an Old Format Packet Lengths otherwise
+  if data[0] & 0x40:
+    # In new format packet lengths the packet type is encoded in Bits 5-0 of
+    # the 1st octet of the packet
+    packet_type = data[0] & 0x3f
+
+    # The rest of the packet header is the body length header, which may
+    # consist of one, two or five octets. To disambiguate the RFC, the first
+    # octet of the body length header is the second octet of the packet.
+    if data[1] < 192:
+      header_len = 2
+      body_len = data[1]
+
+    elif data[1] >= 192 and data[1] <= 223:
+      header_len = 3
+      body_len = (data[1] - 192 << 8) + data[2] + 192
+
+    elif data[1] >= 224 and data[1] < 255:
+      raise in_toto.gpg.exceptions.PacketParsingError("New length format "
+          " packets of partial body lengths are not supported")
+
+    elif data[1] == 255:
+      header_len = 6
+      body_len = data[2] << 24 | data[3] << 16 | data[4] << 8 | data[5]
+
   else:
-    packet_length = data[1]
-    ptr = 2
+    # In old format packet lengths the packet type is encoded in Bits 5-2 of
+    # the 1st octet and the length type in Bits 1-0
+    packet_type = (data[0] & 0x3c ) >> 2
+    length_type = data[0] & 0x03
+
+    # The body length is encoded using one, two, or four octets, starting
+    # with the second octet of the packet
+    if length_type == 0:
+      body_len = data[1]
+      header_len = 2
+
+    elif length_type == 1:
+      header_len = 3
+      body_len = struct.unpack(">H", data[1:header_len])[0]
+
+    elif length_type == 2:
+      header_len = 5
+      body_len = struct.unpack(">I", data[1:header_len])[0]
+
+    elif length_type == 3:
+      raise in_toto.gpg.exceptions.PacketParsingError("Old length format "
+          "packets of indeterminate length are not supported")
+
+  if header_len == None or body_len == None:
+    raise in_toto.gpg.exceptions.PacketParsingError("Could not determine "
+        "packet length")
 
   if expected_type != None and packet_type != expected_type: # pragma: no cover
     raise in_toto.gpg.exceptions.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
 
-  return data[ptr:ptr+packet_length], ptr+packet_length, packet_type
+  return data[header_len:header_len+body_len], header_len+body_len, packet_type
 
 
 def compute_keyid(pubkey_packet_data):
