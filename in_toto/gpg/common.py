@@ -301,26 +301,48 @@ def parse_signature_packet(data):
 
   ptr += unhashed_octet_count
 
-  keyid = ""
-  # Newer signature types contain the full keyid in subpacket 33
-  for subpacket_tuple in hashed_subpacket_info:
-    if subpacket_tuple[0] == FULL_KEYID_SUBPACKET: # pragma: no cover
-      # NOTE: The first byte of the payload is a version number
-      # https://archive.cert.uni-stuttgart.de/openpgp/2016/06/msg00004.html
-      keyid = binascii.hexlify(subpacket_tuple[1][1:]).decode("ascii")
-      break
 
+  keyid = ""
   short_keyid = ""
-  # We also return the short keyid, because the full might not be available
-  for subpacket_tuple in unhashed_subpacket_info:
-    if subpacket_tuple[0] == PARTIAL_KEYID_SUBPACKET: # pragma: no branch
-      short_keyid = binascii.hexlify(subpacket_tuple[1]).decode("ascii")
-      break
+
+  # Parse Issuer (short keyid) and Issuer Fingerprint (full keyid) from hashed
+  # and unhashed signature subpackets. Full keyids are only available in newer
+  # signatures. (see RFC4880 and rfc4880bis-06 5.2.3.1.)
+  # NOTE: A subpacket may be found either in the hashed or unhashed subpacket
+  # sections of a signature. If a subpacket is not hashed, then the information
+  # in it cannot be considered definitive because it is not part of the
+  # signature proper.
+  # (see RFC4880 5.2.3.2.)
+  # NOTE: Signatures may contain conflicting information in subpackets. In most
+  # cases, an implementation SHOULD use the last subpacket, but MAY use any
+  # conflict resolution scheme that makes more sense.
+  # (see RFC4880 5.2.4.1.)
+  # Below we only consider the last and favor hashed over unhashed subpackets
+  for subpacket_type, subpacket_data in \
+      unhashed_subpacket_info + hashed_subpacket_info:
+    if subpacket_type == FULL_KEYID_SUBPACKET:
+      # NOTE: The first byte of the subpacket payload is a version number
+      # (see rfc4880bis-06 5.2.3.28.)
+      keyid = binascii.hexlify(subpacket_data[1:]).decode("ascii")
+
+    # We also return the short keyid, because the full might not be available
+    if subpacket_type == PARTIAL_KEYID_SUBPACKET:
+      short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
+
 
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
-    raise ValueError("The signature packet seems to be corrupted. It is"
-        " missing the issuer subpacket.")
+    raise ValueError("This signature packet seems to be corrupted. It does "
+        "not have an 'Issuer' or 'Issuer Fingerprint' subpacket (see RFC4880 "
+        "and rfc4880bis-06 5.2.3.1. Signature Subpacket Specification).")
+
+  # Fail keyid and short keyid are specified but don't match
+  if keyid and not keyid.endswith(short_keyid): # pragma: no cover
+    raise ValueError("This signature packet seems to be corrupted. The key ID "
+        "'{}' of the 'Issuer' subpacket must match the lower 64 bits of the "
+        "fingerprint '{}' of the 'Issuer Fingerprint' subpacket (see RFC4880 "
+        "and rfc4880bis-06 5.2.3.28. Issuer Fingerprint).".format(
+        short_keyid, keyid))
 
   # Uncomment this variable to obtain the left-hash-bits information (used for
   # early rejection)
