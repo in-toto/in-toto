@@ -208,7 +208,8 @@ def parse_pubkey_bundle(data, keyid):
   return master_public_key
 
 
-def parse_signature_packet(data, supported_hash_algorithms=None):
+def parse_signature_packet(data, supported_signature_types=None,
+    supported_hash_algorithms=None):
   """
   <Purpose>
     Parse the signature information on an RFC4880-encoded binary signature data
@@ -223,6 +224,10 @@ def parse_signature_packet(data, supported_hash_algorithms=None):
     data:
            the RFC4880-encoded binary signature data buffer as described in
            section 5.2 (and 5.2.3.1).
+    supported_signature_types: (optional)
+          a set of supported signature_types, the signature packet may be
+          (see in_toto.gpg.constants for available types). If None is specified
+          the signature packet must be of type SIGNATURE_TYPE_BINARY.
     supported_hash_algorithms: (optional)
           a set of supported hash algorithm ids, the signature packet
           may use. Available ids are SHA1, SHA256, SHA512 (see
@@ -240,6 +245,9 @@ def parse_signature_packet(data, supported_hash_algorithms=None):
     A signature dictionary matching in_toto.gpg.formats.SIGNATURE_SCHEMA
 
   """
+  if not supported_signature_types:
+    supported_signature_types = {SIGNATURE_TYPE_BINARY}
+
   if not supported_hash_algorithms:
     supported_hash_algorithms = {SHA256}
 
@@ -259,14 +267,10 @@ def parse_signature_packet(data, supported_hash_algorithms=None):
   signature_type = data[ptr]
   ptr += 1
 
-  # INFO: as per RFC4880 (section 5.2.1) there are multiple types of signatures
-  # with different purposes (e.g., there is one for pubkey signatures, key
-  # revocation, etc.). Binary document signatures are the ones done over
-  # "arbitrary text," and it's the one it's defaulted to when doing a signature
-  # (i.e., gpg --sign [...])
-  if signature_type != SIGNATURE_TYPE_BINARY: # pragma: no cover
-    raise ValueError("We can only use binary signature types (i.e., "
-        "gpg --sign [...] or signatures created by in-toto).")
+  if signature_type not in supported_signature_types: # pragma: no cover
+    raise ValueError("Signature type '{}' not supported, must be one of {} "
+        "(see RFC4880 5.2.1. Signature Types).".format(signature_type,
+        supported_signature_types))
 
   signature_algorithm = data[ptr]
   ptr += 1
