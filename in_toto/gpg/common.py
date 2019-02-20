@@ -27,8 +27,8 @@ from in_toto.gpg.exceptions import (PacketVersionNotSupportedError,
 from in_toto.gpg.constants import (PACKET_TYPES,
         SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
         SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-        SUPPORTED_HASH_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
-        PARTIAL_KEYID_SUBPACKET)
+        SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
+        PARTIAL_KEYID_SUBPACKET, SHA256)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
@@ -208,7 +208,7 @@ def parse_pubkey_bundle(data, keyid):
   return master_public_key
 
 
-def parse_signature_packet(data):
+def parse_signature_packet(data, supported_hash_algorithms=None):
   """
   <Purpose>
     Parse the signature information on an RFC4880-encoded binary signature data
@@ -217,12 +217,17 @@ def parse_signature_packet(data):
     NOTE: Older gpg versions (< FULLY_SUPPORTED_MIN_VERSION) might only
     reveal the partial key id. It is the callers responsibility to determine
     the full keyid based on the partial keyid, e.g. by exporting the related
-    public and replacing the paritla keyid with the full keyid.
+    public and replacing the partial keyid with the full keyid.
 
   <Arguments>
     data:
            the RFC4880-encoded binary signature data buffer as described in
            section 5.2 (and 5.2.3.1).
+    supported_hash_algorithms: (optional)
+          a set of supported hash algorithm ids, the signature packet
+          may use. Available ids are SHA1, SHA256, SHA512 (see
+          in_toto.gpg.constants). If None is specified, the signature
+          packet must use SHA256.
 
   <Exceptions>
     ValueError: if the signature packet is not supported or the data is
@@ -235,6 +240,9 @@ def parse_signature_packet(data):
     A signature dictionary matching in_toto.gpg.formats.SIGNATURE_SCHEMA
 
   """
+  if not supported_hash_algorithms:
+    supported_hash_algorithms = {SHA256}
+
   data, junk_length, junk_type = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPES['signature_packet'])
 
@@ -274,9 +282,10 @@ def parse_signature_packet(data):
   hash_algorithm = data[ptr]
   ptr += 1
 
-  if hash_algorithm not in SUPPORTED_HASH_ALGORITHMS: # pragma: no cover
-    raise ValueError("This library only supports SHA256 as "
-        "the hash algorithm!")
+  if hash_algorithm not in supported_hash_algorithms: # pragma: no cover
+    raise ValueError("Hash algorithm '{}' not supported, must be one of {}"
+        " (see RFC4880 9.4. Hash Algorithms).".format(hash_algorithm,
+        supported_hash_algorithms))
 
   # Obtain the hashed octets
   hashed_octet_count = struct.unpack(">H", data[ptr:ptr+2])[0]
