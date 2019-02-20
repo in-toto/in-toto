@@ -210,7 +210,7 @@ def parse_pubkey_bundle(data, keyid):
 
 
 def parse_signature_packet(data, supported_signature_types=None,
-    supported_hash_algorithms=None):
+    supported_hash_algorithms=None, include_info=False):
   """
   <Purpose>
     Parse the signature information on an RFC4880-encoded binary signature data
@@ -234,6 +234,10 @@ def parse_signature_packet(data, supported_signature_types=None,
           may use. Available ids are SHA1, SHA256, SHA512 (see
           in_toto.gpg.constants). If None is specified, the signature
           packet must use SHA256.
+    include_info: (optional)
+          a boolean that indicates whether an opaque dictionary should be
+          added to the returned signature under the key "info". Default is
+          False.
 
   <Exceptions>
     ValueError: if the signature packet is not supported or the data is
@@ -317,6 +321,11 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   ptr += unhashed_octet_count
 
+  info = {
+    "signature_type": signature_type,
+    "hash_algorithm": hash_algorithm,
+    "subpackets": [],
+  }
 
   keyid = ""
   short_keyid = ""
@@ -345,6 +354,10 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
+    # info["subpackets"].append((
+    #   subpacket_type,
+    #   binascii.hexlify(subpacket_data).decode("ascii")))
+
 
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
@@ -367,9 +380,14 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature = handler.get_signature_params(data[ptr:])
 
-  return {
+  signature_data = {
     'keyid': "{}".format(keyid),
     'short_keyid': "{}".format(short_keyid),
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
+
+  if include_info:
+    signature_data["info"] = info
+
+  return signature_data
