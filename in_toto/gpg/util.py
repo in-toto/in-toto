@@ -26,6 +26,7 @@ import cryptography.hazmat.primitives.hashes as hashing
 
 import in_toto.gpg.exceptions
 import in_toto.process
+import in_toto.gpg.constants
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ def hash_object(headers, algorithm, content):
   <Returns>
     The RFC4880-compliant hashed buffer
   """
-  # as per RFC4880 Section 5.2.2 paragraph 4, we need to hash the content,
+  # As per RFC4880 Section 5.2.4., we need to hash the content,
   # signature headers and add a very opinionated trailing header
   hasher = hashing.Hash(algorithm, backend=backends.default_backend())
   hasher.update(content)
@@ -306,3 +307,37 @@ def is_version_fully_supported():
 
   else: # pragma: no cover
     return False
+
+
+def get_hashing_class(hash_algorithm_id):
+  """
+  <Purpose>
+    Return a pyca/cryptography hashing class reference for the passed RFC4880
+    hash algorithm ID.
+
+  <Arguments>
+    hash_algorithm_id:
+            one of SHA1, SHA256, SHA512 (see in_toto.gpg.constants)
+
+  <Exceptions>
+    ValueError
+            if the passed hash_algorithm_id is not supported.
+
+  <Returns>
+    A pyca/cryptography hashing class
+
+  """
+  if hash_algorithm_id == in_toto.gpg.constants.SHA1:
+    return hashing.SHA1
+
+  elif hash_algorithm_id == in_toto.gpg.constants.SHA256:
+    return hashing.SHA256
+
+  elif hash_algorithm_id == in_toto.gpg.constants.SHA512:
+    return hashing.SHA512
+
+  else:
+    raise ValueError("Hash algorithm '{}' not supported, must be one of '{}' "
+        "(see RFC4880 9.4. Hash Algorithms).".format(hash_algorithm_id,
+        {in_toto.gpg.constants.SHA1, in_toto.gpg.constants.SHA256,
+         in_toto.gpg.constants.SHA512}))

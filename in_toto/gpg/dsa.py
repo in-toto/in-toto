@@ -16,7 +16,6 @@
 """
 import binascii
 
-import cryptography.hazmat.primitives.hashes as hashing
 import cryptography.hazmat.primitives.asymmetric.dsa as dsa
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.asymmetric.utils as dsautils
@@ -165,7 +164,8 @@ def get_signature_params(data):
   return signature
 
 
-def gpg_verify_signature(signature_object, pubkey_info, content):
+def gpg_verify_signature(signature_object, pubkey_info, content,
+    hash_algorithm_id):
   """
   <Purpose>
     Verify the passed signature against the passed content with the passed
@@ -180,6 +180,10 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
             The DSA public key info dictionary as specified by
             gpg.formats.DSA_PUBKEY_SCHEMA
 
+    hash_algorithm_id:
+            one of SHA1, SHA256, SHA512 (see in_toto.gpg.constants) used to
+            verify the signature
+
     content:
             The signed bytes against which the signature is verified
 
@@ -188,6 +192,10 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
       signature_object does not match gpg.formats.SIGNATURE_SCHEMA
       pubkey_info does not match gpg.formats.DSA_PUBKEY_SCHEMA
 
+    ValueError:
+      if the passed hash_algorithm_id is not supported (see
+      in_toto.gpg.util.get_hashing_class)
+
   <Returns>
     True if signature verification passes and False otherwise
 
@@ -195,17 +203,19 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
   in_toto.gpg.formats.DSA_PUBKEY_SCHEMA.check_match(pubkey_info)
 
+  hasher = in_toto.gpg.util.get_hashing_class(hash_algorithm_id)
+
   pubkey_object = create_pubkey(pubkey_info)
 
   digest = in_toto.gpg.util.hash_object(
       binascii.unhexlify(signature_object['other_headers']),
-      hashing.SHA256(), content)
+      hasher(), content)
 
   try:
     pubkey_object.verify(
       binascii.unhexlify(signature_object['signature']),
       digest,
-      dsautils.Prehashed(hashing.SHA256())
+      dsautils.Prehashed(hasher())
     )
     return True
   except cryptography.exceptions.InvalidSignature:
