@@ -82,7 +82,8 @@ def parse_pubkey_payload(data):
   ptr += 1
   if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
     raise PacketVersionNotSupportedError(
-        "This pubkey packet version is not supported!")
+        "Pubkey packet version '{}' not supported, must be one of {}".format(
+        version_number, SUPPORTED_PUBKEY_PACKET_VERSIONS))
 
   # NOTE: Uncomment this line to decode the time of creation
   # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
@@ -103,10 +104,10 @@ def parse_pubkey_payload(data):
   # by the value 27 (see section 5.2.3.1.) containing a list of binary flags
   # as described in section 5.2.3.21.
   if algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
-    raise SignatureAlgorithmNotSupportedError(
-        "This signature algorithm is not supported. Please"
-        " verify that this gpg key is used for creating either DSA or RSA"
-        " signatures.")
+    raise SignatureAlgorithmNotSupportedError("Signature algorithm '{}' not "
+        "supported, please verify that your gpg configuration is creating "
+        "either DSA or RSA signatures (see RFC4880 9.1. Public-Key "
+        "Algorithms).".format(algorithm))
   else:
     keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
     keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
@@ -193,7 +194,7 @@ def parse_pubkey_bundle(data, keyid):
       [master_public_key] + list(sub_public_keys.values())):
     if public_key and public_key["keyid"].endswith(keyid.lower()):
       if idx > 1:
-        log.warning("Exporting master key '{}' including subkeys '{}'. For"
+        log.warning("Exporting master key '{}' including subkeys '{}' for"
             " passed keyid '{}'.".format(master_public_key["keyid"],
             ", ".join(list(sub_public_keys.keys())), keyid))
       break
@@ -261,7 +262,8 @@ def parse_signature_packet(data, supported_signature_types=None,
   version_number = data[ptr]
   ptr += 1
   if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS: # pragma: no cover
-    raise ValueError("Only version 4 gpg signatures are supported.")
+    raise ValueError("Signature version '{}' not supported, must be one of "
+        "{}.".format(version_number, SUPPORTED_SIGNATURE_PACKET_VERSIONS))
 
   # here, we want to make sure the signature type is indeed PKCSV1.5 with RSA
   signature_type = data[ptr]
@@ -276,9 +278,10 @@ def parse_signature_packet(data, supported_signature_types=None,
   ptr += 1
 
   if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
-    raise ValueError("This signature algorithm is not supported. please"
-        " verify that your gpg configuration is creating either DSA or RSA"
-        " signatures")
+    raise ValueError("Signature algorithm '{}' not "
+        "supported, please verify that your gpg configuration is creating "
+        "either DSA or RSA signatures (see RFC4880 9.1. Public-Key "
+        "Algorithms).".format(signature_algorithm))
 
   key_type = SUPPORTED_SIGNATURE_ALGORITHMS[signature_algorithm]['type']
   handler = SIGNATURE_HANDLERS[key_type]
