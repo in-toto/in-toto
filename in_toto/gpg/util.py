@@ -110,6 +110,9 @@ def parse_packet_header(data, expected_type=None):
             If header or body length could not be determined
             If the expected_type was passed and does not match the packet type
 
+    IndexError
+            If the passed data is incomplete
+
   <Side Effects>
     None.
 

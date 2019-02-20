@@ -53,7 +53,7 @@ PACKET_TYPES = {
     'pub_subkey_packet': 0x0E,
 }
 
-# See sections 5.2.3 (signature) and 5.2.2 (public key) of RFC4880
+# See sections 5.2.3 (signature) and 5.5.2 (public key) of RFC4880
 SUPPORTED_SIGNATURE_PACKET_VERSIONS = {0x04}
 SUPPORTED_PUBKEY_PACKET_VERSIONS = {0x04}
 
@@ -85,9 +85,7 @@ SHA512 = 0x0A
 # See section 5.2.1 of RFC4880
 SIGNATURE_TYPE_BINARY = 0x00
 
-# See section 5.2.3.1 (Issuer) of RFC4880
+# See section 5.2.3.5. (Issuer) of RFC4880
 PARTIAL_KEYID_SUBPACKET = 0x10
-
-# Subpacket 33 is not part of RFC4880
-# see https://archive.cert.uni-stuttgart.de/openpgp/2016/06/msg00004.html
+# See section 5.2.3.28. (Issuer Fingerprint) of rfc4880bis-06
 FULL_KEYID_SUBPACKET = 0x21
