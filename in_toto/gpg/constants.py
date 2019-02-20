@@ -77,8 +77,11 @@ SIGNATURE_HANDLERS = {
 }
 
 # The constants for hash algorithms are taken from section 9.4 of RFC4880.
+SHA1 = 0x02
 SHA256 = 0x08
+SHA512 = 0x0A
 SUPPORTED_HASH_ALGORITHMS = {SHA256}
+
 
 # See section 5.2.1 of RFC4880
 SIGNATURE_TYPE_BINARY = 0x00
