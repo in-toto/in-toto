@@ -1423,8 +1423,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
         summary_link = in_toto_verify(link, layout_key_dict,
-            link_dir_path=sublayout_link_dir_path,
-            step_name=step_name)
+            link_dir_path=sublayout_link_dir_path, step_name=step_name)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
