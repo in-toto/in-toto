@@ -1423,7 +1423,8 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
         summary_link = in_toto_verify(link, layout_key_dict,
-            link_dir_path=sublayout_link_dir_path)
+            link_dir_path=sublayout_link_dir_path,
+            step_name=step_name)
 
         # Replace the layout object in the passed chain_link_dict
         # with the link file returned by in-toto-verify
@@ -1432,7 +1433,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
   return chain_link_dict
 
 
-def get_summary_link(layout, reduced_chain_link_dict):
+def get_summary_link(layout, reduced_chain_link_dict, step_name):
   """
   <Purpose>
     Merges the materials of the first step (as mentioned in the layout)
@@ -1455,6 +1456,9 @@ def get_summary_link(layout, reduced_chain_link_dict):
               <link name> : <Metablock containing a Link object>,
               ...
             }
+    step_name:
+            The step that the layout corresponds to, only used in sublayout
+            verification.
 
   <Exceptions>
     None.
@@ -1477,7 +1481,7 @@ def get_summary_link(layout, reduced_chain_link_dict):
     last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
     summary_link.materials = first_step_link.signed.materials
-    summary_link.name = first_step_link.signed.name
+    summary_link.name = step_name
 
     summary_link.products = last_step_link.signed.products
     summary_link.byproducts = last_step_link.signed.byproducts
@@ -1487,7 +1491,7 @@ def get_summary_link(layout, reduced_chain_link_dict):
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
-    substitution_parameters=None):
+    substitution_parameters=None, step_name=""):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1568,6 +1572,9 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
               - artifact rules in step and inspection definitions in the layout
               - the run fields in the inspection definitions
               - the expected command in the step definitions
+    step_name: (optional)
+            The step that the layout corresponds to, used only for sublayout
+            verification to generate summary links.
 
   <Exceptions>
     None.
@@ -1631,4 +1638,4 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded
   # in another supply chain
-  return get_summary_link(layout, reduced_chain_link_dict)
+  return get_summary_link(layout, reduced_chain_link_dict, step_name)
