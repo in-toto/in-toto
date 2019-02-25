@@ -1729,10 +1729,10 @@ class TestGetSummaryLink(unittest.TestCase):
 
   def test_get_summary_link_from_demo_layout(self):
     """Create summary link from demo link files and compare properties. """
-    sum_link = get_summary_link(self.demo_layout.signed, self.demo_links)
+    sum_link = get_summary_link(self.demo_layout.signed, self.demo_links, "")
 
     self.assertEquals(sum_link.signed._type, self.code_link.signed._type)
-    self.assertEquals(sum_link.signed.name, self.code_link.signed.name)
+    self.assertEquals(sum_link.signed.name, "")
     self.assertEquals(sum_link.signed.materials, self.code_link.signed.materials)
 
     self.assertEquals(sum_link.signed.products, self.package_link.signed.products)
