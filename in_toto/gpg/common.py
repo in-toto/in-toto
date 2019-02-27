@@ -247,7 +247,12 @@ def parse_signature_packet(data, supported_signature_types=None,
     None.
 
   <Returns>
-    A signature dictionary matching in_toto.gpg.formats.SIGNATURE_SCHEMA
+    A signature dictionary matching in_toto.gpg.formats.SIGNATURE_SCHEMA with
+    the following special characteristics:
+     - The "keyid" field is an empty string if it cannot be determined
+     - The "short_keyid" is not added if it cannot be determined
+     - At least one of non-empty "keyid" or "short_keyid" are part of the
+       signature
 
   """
   if not supported_signature_types:
@@ -382,10 +387,12 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature_data = {
     'keyid': "{}".format(keyid),
-    'short_keyid': "{}".format(short_keyid),
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
+
+  if short_keyid:
+    signature_data["short_keyid"] = short_keyid
 
   if include_info:
     signature_data["info"] = info
