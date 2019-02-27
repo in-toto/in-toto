@@ -97,7 +97,9 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing
   # key or its subkeys, identified by the short keyid.
-  # Exclude the following code from coverage for consistent coverage accross
+  # parse_signature_packet is guaranteed to return at least one of keyid or
+  # short_keyid.
+  # Exclude the following code from coverage for consistent coverage across
   # test environments.
   if not signature["keyid"]: # pragma: no cover
     log.warning("The created signature does not include the hashed subpacket"
@@ -129,8 +131,8 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     raise ValueError("Full keyid could not be determined for signature '{}'".
         format(signature))
 
-  # If we have a full keyid it is safe to remove the short keyid to save space
-  del signature["short_keyid"]
+  # It is okay now to remove the optional short keyid to save space
+  signature.pop("short_keyid", None)
 
   return signature
 
