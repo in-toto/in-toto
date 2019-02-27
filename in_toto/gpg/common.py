@@ -108,11 +108,10 @@ def parse_pubkey_payload(data):
         "supported, please verify that your gpg configuration is creating "
         "either DSA or RSA signatures (see RFC4880 9.1. Public-Key "
         "Algorithms).".format(algorithm))
-  else:
-    keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
-    keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
-    handler = SIGNATURE_HANDLERS[keyinfo['type']]
 
+  keyinfo['type'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['type']
+  keyinfo['method'] = SUPPORTED_SIGNATURE_ALGORITHMS[algorithm]['method']
+  handler = SIGNATURE_HANDLERS[keyinfo['type']]
   keyinfo['keyid'] = in_toto.gpg.util.compute_keyid(data)
   key_params = handler.get_pubkey_params(data[ptr:])
 
