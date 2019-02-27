@@ -101,7 +101,7 @@ def parse_packet_header(data, expected_type=None):
 
     expected_type: (optional)
             Used to error out if the packet does not have the expected
-            type. See in_toto.gpg.constants.PACKET_TYPES for available types.
+            type. See in_toto.gpg.constants.PACKET_TYPE_* for available types.
 
   <Exceptions>
     in_toto.gpg.exceptions.PacketParsingError

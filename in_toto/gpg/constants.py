@@ -44,14 +44,16 @@ GPG_SIGN_COMMAND = GPG_COMMAND + \
                    " --detach-sign --digest-algo SHA256 {keyarg} {homearg}"
 GPG_EXPORT_PUBKEY_COMMAND = GPG_COMMAND + " {homearg} --export {keyid}"
 
-# The packet header is described in RFC4880 section 4.2, and the respective
-# packet types can be found in sections 5.2 (signature packet), 5.5.1.1
-# (master pubkey packet) and 5.5.1.2 (sub pubkey packet).
-PACKET_TYPES = {
-    'signature_packet': 0x02,
-    'master_pubkey_packet': 0x06,
-    'pub_subkey_packet': 0x0E,
-}
+# See RFC4880 section 4.3. Packet Tags for a list of all packet types The
+# relevant packets defined below are described in sections 5.2 (signature),
+# 5.5.1.1 (primary pubkey) and 5.5.1.2 (pub subkey), 5.12 (user id) and 5.13
+# (user attribute)
+PACKET_TYPE_SIGNATURE = 0x02
+PACKET_TYPE_PRIMARY_KEY = 0x06
+PACKET_TYPE_USER_ID = 0x0D
+PACKET_TYPE_USER_ATTR = 0x11
+PACKET_TYPE_SUB_KEY = 0x0E
+
 
 # See sections 5.2.3 (signature) and 5.5.2 (public key) of RFC4880
 SUPPORTED_SIGNATURE_PACKET_VERSIONS = {0x04}
@@ -81,9 +83,10 @@ SHA1 = 0x02
 SHA256 = 0x08
 SHA512 = 0x0A
 
-
 # See section 5.2.1 of RFC4880
 SIGNATURE_TYPE_BINARY = 0x00
+SIGNATURE_TYPE_SUB_KEY_BINDING = 0x18
+SIGNATURE_TYPE_CERTIFICATES = {0x10, 0x11, 0x12, 0x13}
 
 # See section 5.2.3.5. (Issuer) of RFC4880
 PARTIAL_KEYID_SUBPACKET = 0x10
