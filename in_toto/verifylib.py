@@ -1050,11 +1050,16 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    rule_traceback = pprint.pformat(RULE_TRACE)
+    rule_traceback = "Initial state of queues:\n"
+    rule_traceback += pprint.pformat(RULE_TRACE["trace"][0])
+    for num in range(1,len(RULE_TRACE["trace"])):
+      queue_prompt = "\nQueues after processing of rule '{0}':\n".format(num)
+      rule_traceback += queue_prompt + pprint.pformat(RULE_TRACE["trace"][num])
     raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
         " following artifacts of the artifact queue, which is disallowed:\n"
-        " '{1}' \nHere is the traceback for all earlier rule processing:\n"
-        " '{2}' ".format(" ".join(rule), matched_artifacts, rule_traceback))
+        " '{1}' \nHere is the trace for earlier '{2}' rules of item '{3}':\n"
+        " '{4}' ".format(" ".join(rule), matched_artifacts, RULE_TRACE["type"],
+        RULE_TRACE["name"], rule_traceback))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -1145,9 +1150,11 @@ def verify_item_rules(source_name, source_type, rules, links):
   # Initialize rule traceback dictionary
   RULE_TRACE["name"] = source_name
   RULE_TRACE["type"] = source_type
-  RULE_TRACE["trace"] = list()
+  RULE_TRACE["trace"] = {0: {'artifacts': source_artifacts_queue, 
+      'materials': source_materials_queue, 'products': source_products_queue}}
 
   # Apply (verify) all rule
+  rule_count = 1
   for rule in rules:
     results_dict = {}
 
@@ -1214,7 +1221,8 @@ def verify_item_rules(source_name, source_type, rules, links):
     results_dict["artifacts"] = source_artifacts_queue
     results_dict["materials"] = source_materials_queue
     results_dict["products"] = source_products_queue
-    RULE_TRACE["trace"].append(results_dict)
+    RULE_TRACE["trace"][rule_count] = results_dict
+    rule_count += 1
 
 
 def verify_all_item_rules(items, links):
