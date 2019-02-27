@@ -20,17 +20,24 @@
 import struct
 import binascii
 import logging
+import collections
 
 import in_toto.gpg.util
 from in_toto.gpg.exceptions import (PacketVersionNotSupportedError,
-    SignatureAlgorithmNotSupportedError, KeyNotFoundError)
-from in_toto.gpg.constants import (PACKET_TYPES,
-        SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
-        SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-        SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET,
-        PARTIAL_KEYID_SUBPACKET, SHA256)
+    SignatureAlgorithmNotSupportedError, KeyNotFoundError, PacketParsingError)
+
+from in_toto.gpg.constants import (
+    PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
+    PACKET_TYPE_SUB_KEY, PACKET_TYPE_SIGNATURE,
+    SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
+    SIGNATURE_TYPE_CERTIFICATES, SIGNATURE_TYPE_SUB_KEY_BINDING,
+    SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
+    SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET, SHA1,
+    SHA256, SHA512)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
+
+import securesystemslib.formats
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
@@ -127,62 +134,363 @@ def parse_pubkey_payload(data):
     }
 
 
-def parse_pubkey_bundle(data, keyid):
+def parse_pubkey_bundle(data):
   """
   <Purpose>
-    Parse the public key data received by GPG_EXPORT_PUBKEY_COMMAND and
-    construct a public key dictionary, containing a master key and optional
-    subkeys, where either the master key or the subkeys are identified by
-    the passed keyid.
-
-    NOTE: If the keyid matches one of the subkeys, a warning is issued to
-    notify the user about potential privilege escalation.
+    Parse and verify passed gpg public key data and return the master
+    key (aka. primary key) including certified information (e.g. key
+    expiration date), and corresponding subkeys bound to the primary key via
+    signatures.
 
   <Arguments>
     data:
           Public key data as written to stdout by GPG_EXPORT_PUBKEY_COMMAND.
 
   <Exceptions>
-    ValueError:
-          If no data is passed
+    in_toto.gpg.exceptions.PacketParsingError
+          If data is empty.
+          If data cannot be parsed.
 
-    in_toto.gpg.exceptions.KeyNotFoundError
-          If neither the master key or one of the subkeys match the passed
-          keyid.
 
   <Side Effects>
     None.
 
   <Returns>
-    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA containing
-    available subkeys, where either the master key or one of the subkeys match
-    the passed keyid.
+    A tuple of a public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA
+    that contains the master key, and a list of public keys in the same format.
 
   """
-  master_public_key = None
-  sub_public_keys = {}
+  if not data:
+    raise PacketParsingError("Cannot parse keys from empty gpg data.")
 
-  # Iterate over the passed public key data and parse out master and sub keys.
-  # The individual keys' headers identify the key as master or sub key.
-  packet_start = 0
-  while packet_start < len(data):
-    payload, length, _type = in_toto.gpg.util.parse_packet_header(
-        data[packet_start:])
+  # Temporary data structure to hold parsed gpg packets
+  key_bundle = {
+    PACKET_TYPE_PRIMARY_KEY: {
+      "key": None,
+      "packet": None,
+      "signatures": []
+    },
+    PACKET_TYPE_USER_ID: collections.OrderedDict(),
+    PACKET_TYPE_USER_ATTR: collections.OrderedDict(),
+    PACKET_TYPE_SUB_KEY: collections.OrderedDict()
+  }
 
+  # Iterate over gpg data and parse out packets of different types
+  position = 0
+  while position < len(data):
     try:
-      if _type == PACKET_TYPES["master_pubkey_packet"]:
-        master_public_key = in_toto.gpg.common.parse_pubkey_payload(payload)
+      payload, packet_length, packet_type = \
+          in_toto.gpg.util.parse_packet_header(data[position:])
+      body_len = len(payload)
+      packet = data[position:position+packet_length]
 
-      elif _type == PACKET_TYPES["pub_subkey_packet"]:
-        sub_public_key = in_toto.gpg.common.parse_pubkey_payload(payload)
-        sub_public_keys[sub_public_key["keyid"]] = sub_public_key
+      # The first (and only the first) packet in the bundle must be the master
+      # key.  See RFC4880 12.1 Key Structures, V4 version keys
+      # TODO: Do we need additional key structure assertions? e.g.
+      # - there must be least one User ID packet, or
+      # - order and type of signatures, or
+      # - disallow duplicate packets
+      if packet_type != PACKET_TYPE_PRIMARY_KEY and \
+          not key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
+        raise Exception("First packet must be a primary key ('{}'), got '{}'."
+            .format(PACKET_TYPE_PRIMARY_KEY, packet_type))
 
-    # The data might contain non-supported subkeys, which we just ignore
-    except (ValueError, PacketVersionNotSupportedError,
-        SignatureAlgorithmNotSupportedError):
-      pass
+      elif packet_type == PACKET_TYPE_PRIMARY_KEY and \
+          key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
+        raise Exception("Unexpected primary key.")
 
-    packet_start += length
+      # Fully parse master key to fail early, e.g. if key is malformed
+      # or not supported, but also retain original packet for subkey binding
+      # signature verification
+      elif packet_type == PACKET_TYPE_PRIMARY_KEY:
+        key_bundle[PACKET_TYPE_PRIMARY_KEY] = {
+          "key": parse_pubkey_payload(payload),
+          "packet": packet,
+          "signatures": []
+        }
+
+      # Other non-signature packets in the key bundle include User IDs and User
+      # Attributes, required to verify primary key certificates, and subkey
+      # packets. For each packet we create a new ordered dictionary entry. We
+      # use a dictionary to aggregate signatures by packet below,
+      # and it must be ordered because each signature packet belongs to the
+      # most recently parsed packet of a type.
+      elif packet_type in [PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
+          PACKET_TYPE_SUB_KEY]:
+        key_bundle[packet_type][packet] = {
+          "body_len": body_len,
+          "signatures": []
+        }
+
+      # The remaining relevant packets are signatures, required to bind subkeys
+      # to the primary key, or to gather additional information about the
+      # primary key, e.g. expiration date.
+      # A signatures corresponds to the most recently parsed packet of a type,
+      # where the type is given by the availability of respective packets.
+      # We test availability and assign accordingly as per the order of packet
+      # types defined in RFC4880 12.1 (bottom-up).
+      elif packet_type == PACKET_TYPE_SIGNATURE:
+        for _type in [PACKET_TYPE_SUB_KEY, PACKET_TYPE_USER_ATTR,
+            PACKET_TYPE_USER_ID]:
+          if key_bundle[_type]:
+            # Add to most recently added packet's signatures of matching type
+            key_bundle[_type][next(reversed(key_bundle[_type]))]\
+                ["signatures"].append(packet)
+            break
+
+        else:
+          # If no packets are available for any of above types (yet), the
+          # signature belongs to the primary key
+          key_bundle[PACKET_TYPE_PRIMARY_KEY]["signatures"].append(packet)
+
+      else:
+        log.info("Ignoring gpg key packet '{}', we only handle packets of "
+            "types '{}' (see RFC4880 4.3. Packet Tags).".format(packet_type,
+            [PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
+            PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY,
+            PACKET_TYPE_SIGNATURE]))
+
+    except Exception as e:
+      raise PacketParsingError("Invalid public key data at position {}: {}."
+          .format(position, e))
+
+    # Go to next packet
+    position += packet_length
+
+  # Parsing is done. Now enrich the master key with certificate info and
+  # verify the subkeys bindings.
+  master_key = _assign_certified_key_info(key_bundle)
+  verified_subkeys = _get_verified_subkeys(key_bundle)
+
+  return master_key, verified_subkeys
+
+
+def _assign_certified_key_info(bundle):
+  """
+  <Purpose>
+    Helper function to verify User ID certificates corresponding to a gpg
+    master key, in order to enrich the master key with additional information
+    (e.g. expiration dates). The enriched master key is returned.
+
+    TODO: Do extract the information and address ambiguity (see inline TODO
+    below).
+
+    NOTE: Currently we only consider User ID certificates. We can do the same
+    for User Attribute certificates by iterating over
+    bundle[PACKET_TYPE_USER_ATTR] instead of bundle[PACKET_TYPE_USER_ID], and
+    replacing the signed_content constant '\xb4'  with '\xd1' (see RFC4880
+    section 5.2.4. paragraph 4).
+
+  <Arguments>
+    bundle:
+          GPG key bundle as parsed in parse_pubkey_bundle().
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA.
+
+  """
+  # Create handler shortcut
+  handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
+
+  # Verify User ID signatures to gather information about primary key
+  # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
+  for user_id_packet, packet_data in bundle[PACKET_TYPE_USER_ID].items():
+    try:
+      # Construct signed content (see RFC4880 section 5.2.4. paragraph 4)
+      signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] +
+          b"\xb4\x00\x00\x00" + user_id_packet[1:])
+
+    except Exception as e:
+      log.info(e)
+      continue
+
+    for signature_packet in packet_data["signatures"]:
+      try:
+        signature = parse_signature_packet(signature_packet,
+            supported_hash_algorithms={SHA1, SHA256, SHA512},
+            supported_signature_types=SIGNATURE_TYPE_CERTIFICATES,
+            include_info=True)
+        # gpg_verify_signature requires a "keyid" even if it is short.
+        # (see parse_signature_packet for more information about keyids)
+        signature["keyid"] = signature["keyid"] or signature["short_keyid"]
+
+      except Exception as e:
+        log.info(e)
+        continue
+
+      if not bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["keyid"].endswith(
+          signature["keyid"]):
+        log.info("Ignoring User ID certificate issued by '{}'.".format(
+            signature["keyid"]))
+        continue
+
+      is_valid = handler.gpg_verify_signature(signature,
+          bundle[PACKET_TYPE_PRIMARY_KEY]["key"], signed_content,
+          signature["info"]["hash_algorithm"])
+
+      if not is_valid:
+        log.info("Ignoring invalid User ID self-certificate issued "
+            "by '{}'.".format(signature["keyid"]))
+        continue
+
+      # TODO: If the signature is valid, extract relevant information from
+      # its "info" field and assign to master key (e.g. expiration) here
+      # NOTE: Beware of conflicting information. There might be multiple User
+      # IDs per primary key and multiple signatures per User ID. See RFC4880
+      # 5.2.3.19. and last paragraph of 5.2.3.3. for more info about ambiguity.
+
+  return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
+
+
+def _get_verified_subkeys(bundle):
+  """
+  <Purpose>
+    Helper function to verify the subkey binding signature for all subkeys in
+    the passed bundle. Only valid (i.e. parsable) subkeys that are verifiably
+    bound to the the master key of the bundle are returned. All other subkeys
+    are discarded.
+
+    TODO: Extract additional information about subkeys from the signatures
+    (see inline TODO below).
+
+  <Arguments>
+    bundle:
+          GPG key bundle as parsed in parse_pubkey_bundle().
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A list of public keys, each in the format
+    in_toto.gpg.formats.PUBKEY_SCHEMA.
+
+  """
+  # Create handler shortcut
+  handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
+
+  # Verify subkey binding signatures and only keep verified keys
+  # See notes about subkey binding signature in RFC4880 5.2.3.3
+  verified_subkeys = {}
+  for subkey_packet, packet_data in bundle[PACKET_TYPE_SUB_KEY].items():
+    try:
+      # Parse subkey if possible and skip if invalid (e.g. not-supported)
+      subkey = parse_pubkey_payload(
+          bytearray(subkey_packet[-packet_data["body_len"]:]))
+      # Construct signed content (see RFC4880 section 5.2.4. paragraph 3)
+      signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] + b"\x99" +
+          subkey_packet[1:])
+
+    except Exception as e:
+      log.info(e)
+      continue
+
+    # Filter sub key binding signature (there must be exactly one for each key)
+    key_binding_signatures = []
+    for signature_packet in packet_data["signatures"]:
+      try:
+        signature = parse_signature_packet(signature_packet,
+            supported_hash_algorithms={SHA1, SHA256, SHA512},
+            supported_signature_types={SIGNATURE_TYPE_SUB_KEY_BINDING},
+            include_info=True)
+        # gpg_verify_signature requires a "keyid" even if it is short.
+        # (see parse_signature_packet for more information about keyids)
+        signature["keyid"] = signature["keyid"] or signature["short_keyid"]
+        key_binding_signatures.append(signature)
+
+      except Exception as e:
+        log.info(e)
+        continue
+
+    # NOTE: As per the V4 key structure diagram in RFC4880 section 12.1., a
+    # subkey must be followed by exactly one Primary-Key-Binding-Signature.
+    # Based on inspection of real-world keys and other parts of the RFC (e.g.
+    # the paragraph below the diagram and paragraph 0x18: Subkey Binding
+    # Signature in section 5.2.1.) the mandated signature is actually a
+    # *subkey binding signature*, which in case of a signing subkey, must have
+    # an *embedded primary key binding signature*.
+    if len(key_binding_signatures) != 1:
+      log.info("Ignoring subkey '{}' due to wrong amount of key binding "
+          "signatures ({}), must be exactly 1.".format(subkey["keyid"],
+          len(key_binding_signatures)))
+      continue
+
+    is_valid = handler.gpg_verify_signature(signature,
+        bundle[PACKET_TYPE_PRIMARY_KEY]["key"], signed_content,
+        signature["info"]["hash_algorithm"])
+
+    if not is_valid:
+      log.info("Ignoring subkey '{}' due to invalid key binding signature."
+          .format(subkey["keyid"]))
+      continue
+
+    # TODO: If the signature is valid, we may also extract relevant information
+    # from its "info" field (e.g. subkey expiration date) and assign to it to
+    # the subkey here
+
+    verified_subkeys[subkey["keyid"]] = subkey
+
+  return verified_subkeys
+
+
+def get_pubkey_bundle(data, keyid):
+  """
+  <Purpose>
+    Call function to extract and verify master key and subkeys from the passed
+    gpg key data, where either the master key or one of the subkeys matches the
+    passed keyid.
+
+    NOTE:
+    - If the keyid matches one of the subkeys, a warning is issued to notify
+      the user about potential privilege escalation
+    - Subkeys with invalid key binding signatures are discarded
+
+  <Arguments>
+    data:
+          Public key data as written to stdout by
+          in_toto.gpg.constants.GPG_EXPORT_PUBKEY_COMMAND.
+
+    keyid:
+          The keyid of the master key or one of its subkeys expected to be
+          contained in the passed gpg data.
+
+  <Exceptions>
+    in_toto.gpg.exceptions.PacketParsingError
+          If the key data could not be parsed
+
+    in_toto.gpg.exceptions.KeyNotFoundError
+          If the passed data is empty.
+          If no master key or subkeys could be found that matches the passed
+          keyid.
+
+    securesystemslib.exceptions.FormatError
+          If the passed keyid does not match
+          securesystemslib.formats.KEYID_SCHEMA
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA with optional
+    subkeys.
+
+  """
+  securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
+  if not data:
+    raise KeyNotFoundError("Could not find gpg key '{}' in empty exported key "
+        "data.".format(keyid))
+
+  # Parse out master key and subkeys (enriched and verified via certificates
+  # and binding signatures)
+  master_public_key, sub_public_keys = parse_pubkey_bundle(data)
 
   # Since GPG returns all pubkeys associated with a keyid (master key and
   # subkeys) we check which key matches the passed keyid.
@@ -199,7 +507,8 @@ def parse_pubkey_bundle(data, keyid):
       break
 
   else:
-    raise KeyNotFoundError("No key found for gpg keyid '{}'".format(keyid))
+    raise KeyNotFoundError("Could not find gpg key '{}' in exported key data."
+        .format(keyid))
 
   # Add subkeys dictionary to master pubkey "subkeys" field if subkeys exist
   if sub_public_keys:
@@ -261,7 +570,7 @@ def parse_signature_packet(data, supported_signature_types=None,
     supported_hash_algorithms = {SHA256}
 
   data, junk_length, junk_type = in_toto.gpg.util.parse_packet_header(
-      data, PACKET_TYPES['signature_packet'])
+      data, PACKET_TYPE_SIGNATURE)
 
   ptr = 0
 

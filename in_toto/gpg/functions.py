@@ -243,6 +243,6 @@ def gpg_export_pubkey(keyid, homedir=None):
     stderr=in_toto.process.PIPE)
 
   key_packet = process.stdout
-  key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
+  key_bundle = in_toto.gpg.common.get_pubkey_bundle(key_packet, keyid)
 
   return key_bundle
