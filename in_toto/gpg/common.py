@@ -166,7 +166,7 @@ def parse_pubkey_bundle(data):
   # Temporary data structure to hold parsed gpg packets
   key_bundle = {
     PACKET_TYPE_PRIMARY_KEY: {
-      "key": None,
+      "key": {},
       "packet": None,
       "signatures": []
     },
