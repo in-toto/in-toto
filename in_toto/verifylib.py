@@ -164,7 +164,7 @@ def load_links_for_layout(layout, link_dir_path):
   return steps_metadata
 
 
-def run_all_inspections(layout):
+def run_all_inspections(layout, inspection_dir_path):
   """
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
@@ -177,6 +177,11 @@ def run_all_inspections(layout):
   <Arguments>
     layout:
             A Layout object which is used to extract the Inspections.
+
+    inspection_dir_path:
+            A path to the directory from which materials for the inspection are
+            read, and products are written to.  Default is the current working
+            directory.
 
   <Exceptions>
     Calls function that raises BadReturnValueError if an inspection returned
@@ -207,9 +212,9 @@ def run_all_inspections(layout):
     # Is the current directory a sensible default? In general?
     # If so, we should probably make it a default in run_link
     # We could use artifact rule paths.
-    material_list = product_list = ["."]
+    material_list = product_list = [inspection_dir_path]
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
-        product_list, inspection.run)
+        product_list, inspection.run, link_cmd_cwd=inspection_dir_path)
 
     _raise_on_bad_retval(link.signed.byproducts.get("return-value"), inspection.run)
 
@@ -1487,7 +1492,7 @@ def get_summary_link(layout, reduced_chain_link_dict):
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
-    substitution_parameters=None):
+    substitution_parameters=None, inspection_dir_path="."):
   """
   <Purpose>
     Does entire in-toto supply chain verification of a final product
@@ -1561,6 +1566,11 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
             corresponding to the steps in the passed layout are loaded.
             Default is the current working directory.
 
+    inspection_dir_path: (optional)
+            A path to the directory from which materials for the inspection are
+            read, and products are written to.  Default is the current working
+            directory.
+
     substitution_parameters: (optional)
             a dictionary containing key-value pairs for substituting in the 
             following metadata fields:
@@ -1616,7 +1626,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
   log.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout)
+  inspection_link_dict = run_all_inspections(layout, inspection_dir_path)
 
   log.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to

@@ -314,7 +314,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   return artifacts_dict
 
-def execute_link(link_cmd_args, record_streams):
+def execute_link(link_cmd_args, record_streams, link_cmd_cwd):
   """
   <Purpose>
     Executes the passed command plus arguments in a subprocess and returns
@@ -330,6 +330,8 @@ def execute_link(link_cmd_args, record_streams):
             A bool that specifies whether to redirect standard output and
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
+    link_cmd_cwd:
+            A path to the directory where the link command must be executed.
 
   <Exceptions>
     TBA (see https://github.com/in-toto/in-toto/issues/6)
@@ -346,13 +348,14 @@ def execute_link(link_cmd_args, record_streams):
   """
   if record_streams:
     process = in_toto.process.run(link_cmd_args, check=False,
-      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE,
-      universal_newlines=True)
+      cwd=link_cmd_cwd, stdout=in_toto.process.PIPE,
+      stderr=in_toto.process.PIPE, universal_newlines=True)
     stdout_str, stderr_str = process.stdout, process.stderr
 
   else:
     process = in_toto.process.run(link_cmd_args, check=False,
-      stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
+      cwd=link_cmd_cwd, stdout=in_toto.process.DEVNULL,
+      stderr=in_toto.process.DEVNULL)
     stdout_str = stderr_str = ""
 
   return {
@@ -413,7 +416,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None):
+    normalize_line_endings=False, lstrip_paths=None, link_cmd_cwd=None):
   """
   <Purpose>
     Calls functions in this module to run the command passed as link_cmd_args
@@ -479,6 +482,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     lstrip_paths: (optional)
             If a prefix path is passed, the prefix is left stripped from
             the path of every artifact that contains the prefix.
+    link_cmd_cwd: (optional)
+            A path to the directory where the link command must be executed.
 
   <Exceptions>
     securesystemslib.FormatError if a signing_key is passed and does not match
@@ -520,7 +525,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if link_cmd_args:
     log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts = execute_link(link_cmd_args, record_streams)
+    byproducts = execute_link(link_cmd_args, record_streams, link_cmd_cwd)
   else:
     byproducts = {}
 
