@@ -116,7 +116,7 @@ class TestRunAllInspections(unittest.TestCase):
     open(ignore_foo, "w").write("ignore foo")
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
-    run_all_inspections(self.layout)
+    run_all_inspections(self.layout, ".")
     link = Metablock.load("touch-bar.link")
     self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
     self.assertListEqual(sorted(list(link.signed.products.keys())), sorted(["foo", "bar"]))
@@ -135,7 +135,7 @@ class TestRunAllInspections(unittest.TestCase):
         }]
     })
     with self.assertRaises(BadReturnValueError):
-      run_all_inspections(layout)
+      run_all_inspections(layout, ".")
 
 
 class TestVerifyCommandAlignment(unittest.TestCase):
