@@ -688,6 +688,8 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
   dest_name = rule_data["dest_name"]
   dest_type = rule_data["dest_type"]
 
+  matched_artifacts = set()
+
   # Extract destination link
   # FIXME: In alignment with in-toto/in-toto#204, we should return the
   # unmodified source artifact queue instead of raising an exception.
@@ -769,9 +771,9 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
 
     # Only if matching went well, do we remove it from the queue. Subsequent
     # rules (e.g. DISALLOW) won't see this artifact anymore.
-    source_artifacts_queue.remove(full_source_path)
+    matched_artifacts.add(full_source_path)
 
-  return source_artifacts_queue
+  return list(set(source_artifacts_queue) - set(matched_artifacts))
 
 
 def verify_create_rule(rule, source_materials_queue, source_products_queue):
@@ -1122,11 +1124,11 @@ def verify_item_rules(source_name, source_type, rules, links):
   # Create generic source artifacts list and queue depending on the source type
   if source_type == "materials":
     source_artifacts = source_materials
-    source_artifacts_queue = source_materials_queue
+    source_artifacts_queue = list(source_materials_queue)
 
   elif source_type == "products":
     source_artifacts = source_products
-    source_artifacts_queue = source_products_queue
+    source_artifacts_queue = list(source_products_queue)
 
   else:
     raise securesystemslib.exceptions.FormatError(
