@@ -1432,7 +1432,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
   return chain_link_dict
 
 
-def get_summary_link(layout, reduced_chain_link_dict, step_name):
+def get_summary_link(layout, reduced_chain_link_dict, name):
   """
   <Purpose>
     Merges the materials of the first step (as mentioned in the layout)
@@ -1455,9 +1455,8 @@ def get_summary_link(layout, reduced_chain_link_dict, step_name):
               <link name> : <Metablock containing a Link object>,
               ...
             }
-    step_name:
-            The step that the layout corresponds to, only used in sublayout
-            verification.
+    name:
+            The name that the summary link will be associated with.
 
   <Exceptions>
     None.
@@ -1480,7 +1479,7 @@ def get_summary_link(layout, reduced_chain_link_dict, step_name):
     last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
     summary_link.materials = first_step_link.signed.materials
-    summary_link.name = step_name
+    summary_link.name = name
 
     summary_link.products = last_step_link.signed.products
     summary_link.byproducts = last_step_link.signed.byproducts
@@ -1572,8 +1571,10 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
               - the run fields in the inspection definitions
               - the expected command in the step definitions
     step_name: (optional)
-            The step that the layout corresponds to, used only for sublayout
-            verification to generate summary links.
+            The step that the layout corresponds to, typically used during
+            recursive calls of in_toto_verify. This usually happens when
+            resolving sublayouts. The function verify_sublayouts may provide a
+            clearer picture on how it's used.
 
   <Exceptions>
     None.
