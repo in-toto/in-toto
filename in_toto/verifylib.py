@@ -1355,8 +1355,9 @@ def get_traceback_info():
 
   for trace_entry in RULE_TRACE["trace"]:
     traceback_str += "Queues after processing of rule '{0}':\n".format(
-        trace_entry.pop("rule"))
-    traceback_str += pprint.pformat(trace_entry) + "\n"
+        trace_entry["rule"])
+    queues = {k: trace_entry[k] for k in ('artifacts', 'materials', 'products')}
+    traceback_str += pprint.pformat(queues) + "\n"
 
   return traceback_str
 
