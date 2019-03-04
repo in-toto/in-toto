@@ -1050,16 +1050,10 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    rule_traceback = "Initial state of queues:\n"
-    rule_traceback += pprint.pformat(RULE_TRACE["trace"][0])
-    for num in range(1,len(RULE_TRACE["trace"])):
-      curr_rnd = RULE_TRACE["trace"][num]
-      rule_name = curr_rnd["rule"]
-      queues = {k: curr_rnd[k] for k in ('artifacts', 'materials', 'products')}
-      q_prompt = "\nQueues after processing of rule '{0}':\n".format(rule_name)
-      rule_traceback += q_prompt + pprint.pformat(queues)
-    raise RuleVerificationError(print_error_message(rule, matched_artifacts,
-        RULE_TRACE, rule_traceback))
+    raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
+        " following artifacts of the artifact queue, which is disallowed:\n"
+        " '{1}' \n'{2}'".format(" ".join(rule), matched_artifacts,
+            get_traceback_info()))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -1332,30 +1326,14 @@ def verify_threshold_constraints(layout, chain_link_dict):
                     step_name=step.name, keyid=keyid)))
 
 
-def print_error_message(rule, matched_artifacts, rule_trace, error_traceback):
+def get_traceback_info():
   """
   <Purpose>
-    Formats the queue for the error message meant to be printed out when a
-    RuleVerificationError is raised using the rule that triggers the error,
-    mismatched artifacts, elements of the rule trace and the error traceback.
+    Retrieves traceback information for the error message meant to be printed 
+    out when a RuleVerificationError is raised using elements of the rule trace.
 
   <Arguments>
-    rule:
-            The rule that triggers the error at the time of its processing
-            due to being matched to existing artifacts.
-
-    matched_artifacts:
-            Artifacts with which the error-inducing rule has been matched to
-            within the current artifacts queue at time of processing.
-
-    rule_trace:
-            Rule trace that stores information about rule processing like the
-            name of the processed item and the type of the processed rule list.
-
-    error_traceback:
-            Traceback of all processed rules and the state of their queues
-            after each round of rule processing that is printed to provide a
-            comprehensive traceback for error handling.
+    None.
 
   <Exceptions>
     None.
@@ -1364,19 +1342,23 @@ def print_error_message(rule, matched_artifacts, rule_trace, error_traceback):
     None.
 
   <Returns>
-    A string formatted as an error message containing the name of the processed
-    item, type of the processed rule list, and a traceback for all processed 
-    rules with rule names and states of the queues after each processed rule.
+    A string containing a traceback for all processed rules with rule names 
+    and the states of the queues after each round of rule processing.
 
   """
 
-  error_message = ("Rule '{0}' failed.\nRule pattern matches the following"
-        " artifacts of the artifact queue, which is disallowed:\n '{1}'"
-        "  \nHere is the trace for earlier '{2}' rules of item '{3}':\n"
-        " '{4}' ").format(" ".join(rule), matched_artifacts, rule_trace["type"],
-        rule_trace["name"], error_traceback)
+  traceback_str = "Trace for earlier '{0}' rules of item '{1}':\n".format(
+      RULE_TRACE["type"], RULE_TRACE["name"])
 
-  return error_message
+  traceback_str += "Initial state of queues:\n"
+  traceback_str += pprint.pformat(RULE_TRACE["trace"].pop(0)) + "\n"
+
+  for trace_entry in RULE_TRACE["trace"]:
+    traceback_str += "Queues after processing of rule '{0}':\n".format(
+        trace_entry.pop("rule"))
+    traceback_str += pprint.pformat(trace_entry) + "\n"
+
+  return traceback_str
 
 
 def reduce_chain_links(chain_link_dict):
