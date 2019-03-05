@@ -28,7 +28,6 @@ import iso8601
 import fnmatch
 import six
 import logging
-import pprint
 from dateutil import tz
 
 import securesystemslib.exceptions
@@ -1052,7 +1051,7 @@ def verify_disallow_rule(rule, source_artifacts_queue):
   if len(matched_artifacts):
     raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
         " following artifacts of the artifact queue, which is disallowed:\n"
-        " '{1}' \n'{2}'".format(" ".join(rule), matched_artifacts,
+        " {1} \n{2}".format(" ".join(rule), matched_artifacts,
             get_traceback_info()))
 
 
@@ -1113,7 +1112,7 @@ def verify_item_rules(source_name, source_type, rules, links):
         queue.
 
   <Side Effects>
-    None.
+    Clears and populates the global RULE_TRACE data structure.
 
   """
 
@@ -1350,14 +1349,14 @@ def get_traceback_info():
   traceback_str = "Trace for earlier '{0}' rules of item '{1}':\n".format(
       RULE_TRACE["type"], RULE_TRACE["name"])
 
-  traceback_str += "Initial state of queues:\n"
-  traceback_str += pprint.pformat(RULE_TRACE["trace"].pop(0)) + "\n"
-
-  for trace_entry in RULE_TRACE["trace"]:
-    traceback_str += "Queues after processing of rule '{0}':\n".format(
-        trace_entry["rule"])
-    queues = {k: trace_entry[k] for k in ('artifacts', 'materials', 'products')}
-    traceback_str += pprint.pformat(queues) + "\n"
+  for count, trace_entry in enumerate(RULE_TRACE["trace"]):
+    if count == 0:
+      traceback_str += "Initial state of queues:\n"
+    else:
+      traceback_str += "Queues after processing of rule '{0}':\n".format(
+          trace_entry["rule"])
+    for q_name in ["artifacts", "materials", "products"]:
+      traceback_str += "\t{}: {}\n".format(q_name, trace_entry[q_name])
 
   return traceback_str
 
