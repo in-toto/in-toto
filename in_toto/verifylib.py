@@ -49,6 +49,8 @@ import in_toto.rulelib
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
+RULE_TRACE = {}
+
 
 def _raise_on_bad_retval(return_value, command=None):
   """
@@ -820,7 +822,6 @@ def verify_create_rule(rule, source_materials_queue, source_products_queue):
   """
   rule_data = in_toto.rulelib.unpack_rule(rule)
 
-
   matched_products = fnmatch.filter(
       source_products_queue, rule_data["pattern"])
 
@@ -894,8 +895,8 @@ def verify_delete_rule(rule, source_materials_queue, source_products_queue):
 
   for matched_material in matched_materials:
     if matched_material in source_products_queue:
-      raise RuleVerificationError("Rule '{0}' failed, material '{1}' was found"
-          " in products but should have been deleted."
+      raise RuleVerificationError("Rule '{0}' failed, material '{1}' that"
+          " should have been deleted was found in the products queue."
               .format(" ".join(rule), matched_material))
 
   return list(set(source_materials_queue) - set(matched_materials))
@@ -1048,8 +1049,10 @@ def verify_disallow_rule(rule, source_artifacts_queue):
       source_artifacts_queue, rule_data["pattern"])
 
   if len(matched_artifacts):
-    raise RuleVerificationError("Rule '{0}' failed, pattern matched disallowed"
-        " artifacts: '{1}' ".format(" ".join(rule), matched_artifacts))
+    raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
+        " following artifacts of the artifact queue, which is disallowed:\n"
+        " {1} \n{2}".format(" ".join(rule), matched_artifacts,
+            get_traceback_info()))
 
 
 def verify_item_rules(source_name, source_type, rules, links):
@@ -1109,7 +1112,7 @@ def verify_item_rules(source_name, source_type, rules, links):
         queue.
 
   <Side Effects>
-    None.
+    Clears and populates the global RULE_TRACE data structure.
 
   """
 
@@ -1118,6 +1121,9 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   source_materials_queue = list(source_materials.keys())
   source_products_queue = list(source_products.keys())
+
+  # Reset rule traceback dictionary
+  RULE_TRACE.clear()
 
   # Create generic source artifacts list and queue depending on the source type
   if source_type == "materials":
@@ -1134,9 +1140,15 @@ def verify_item_rules(source_name, source_type, rules, links):
         " one of 'materials' or 'products.'\n"
         "Got:\n\t'{}'".format(source_type))
 
+  # Initialize rule traceback dictionary
+  RULE_TRACE["name"] = source_name
+  RULE_TRACE["type"] = source_type
+  RULE_TRACE["trace"] = [{'artifacts': source_artifacts_queue, 
+      'materials': source_materials_queue, 'products': source_products_queue}]
 
   # Apply (verify) all rule
   for rule in rules:
+    results_dict = {}
 
     log.info("Verifying '{}'...".format(" ".join(rule)))
 
@@ -1195,6 +1207,13 @@ def verify_item_rules(source_name, source_type, rules, links):
             rule, source_materials_queue, source_artifacts_queue,
             source_materials, source_products)
         source_artifacts_queue = source_products_queue
+
+    # Store all available queues of rule in results and add to traceback
+    results_dict["rule"] = rule
+    results_dict["artifacts"] = source_artifacts_queue
+    results_dict["materials"] = source_materials_queue
+    results_dict["products"] = source_products_queue
+    RULE_TRACE["trace"].append(results_dict)
 
 
 def verify_all_item_rules(items, links):
@@ -1304,6 +1323,42 @@ def verify_threshold_constraints(layout, chain_link_dict):
                     step_name=step.name, keyid=reference_keyid),
                 in_toto.models.link.FILENAME_FORMAT.format(
                     step_name=step.name, keyid=keyid)))
+
+
+def get_traceback_info():
+  """
+  <Purpose>
+    Retrieves traceback information for the error message meant to be printed 
+    out when a RuleVerificationError is raised using elements of the rule trace.
+
+  <Arguments>
+    None.
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    A string containing a traceback for all processed rules with rule names 
+    and the states of the queues after each round of rule processing.
+
+  """
+
+  traceback_str = "Trace for earlier '{0}' rules of item '{1}':\n".format(
+      RULE_TRACE["type"], RULE_TRACE["name"])
+
+  for count, trace_entry in enumerate(RULE_TRACE["trace"]):
+    if count == 0:
+      traceback_str += "Initial state of queues:\n"
+    else:
+      traceback_str += "Queues after processing of rule '{0}':\n".format(
+          trace_entry["rule"])
+    for q_name in ["artifacts", "materials", "products"]:
+      traceback_str += "\t{}: {}\n".format(q_name, trace_entry[q_name])
+
+  return traceback_str
 
 
 def reduce_chain_links(chain_link_dict):
