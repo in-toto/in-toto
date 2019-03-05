@@ -1734,7 +1734,8 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase):
           pubkeys=[
             keys["bob_pub"]["keyid"]
           ],
-          expected_products=[["MATCH", "foo.tar.gz", "WITH", "PRODUCTS", "FROM", root_layout_step_name]]
+          expected_products=[["MATCH", "foo.tar.gz", "WITH", "PRODUCTS",
+              "FROM", root_layout_step_name], ["DISALLOW", "*"]]
         )
       ]
     )
