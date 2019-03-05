@@ -595,15 +595,6 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     that were successfully consumed by the rule, i.e. if there was a match with
     a target artifact.
 
-    FIXME:
-    In in-toto/in-toto#204 the behavior of the match rule was changed to NOT
-    FAIL if a required destination artifact could not be found in the
-    corresponding destination link, or if a source and destination artifact
-    pair has no matching hashes. However, the rule verification still fails
-    if a required destination link is not found.
-    As failing the overall rule verification is now left to a subsequent
-    DISALLOW rule, the "fail on missing destination link" should be removed.
-
   <Terms>
     queued source artifacts:
         Artifacts reported by the link for the step/inspection containing passed
@@ -1049,8 +1040,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   <Arguments>
     source_name:
-            The name of the item (Step or Inspection) being verified
-            (used for user logging).
+            The name of the item (Step or Inspection) being verified.
 
     source_type:
             "materials" or "products" depending on whether the rules were in the
@@ -1081,27 +1071,33 @@ def verify_item_rules(source_name, source_type, rules, links):
     None.
 
   """
-  source_materials = links[source_name].signed.materials
-  source_products = links[source_name].signed.products
+  # Create shortcuts to the processed item's materials and products including
+  # their hashes, needed for "match" and "modify" rules, which compare
+  # artifacts by hash.
+  materials = links[source_name].signed.materials
+  products = links[source_name].signed.products
 
-  source_materials_queue = set(source_materials.keys())
-  source_products_queue = set(source_products.keys())
+  # "create", "delete" and "modify" rules operate on the item's materials and
+  # products, hence we need a queue for both.
+  materials_queue = set(materials.keys())
+  products_queue = set(products.keys())
 
-  # Create generic source artifacts list and queue depending on the source type
+  # For "match", "allow" and "disallow" rule we need either materials
+  # or products depending on the rules' source_type, 
+  # Create a reference to the material or product queue
+  # NOTE: Be careful to not involuntarily modify the reference in called functions
   if source_type == "materials":
-    source_artifacts = source_materials
-    source_artifacts_queue = set(source_materials_queue)
+    artifacts = materials
+    artifacts_queue = materials_queue
 
   elif source_type == "products":
-    source_artifacts = source_products
-    source_artifacts_queue = set(source_products_queue)
+    artifacts = products
+    artifacts_queue = products_queue
 
   else:
     raise securesystemslib.exceptions.FormatError(
-        "Argument 'source_type' of function 'verify_item_rules' has to be"
-        " one of 'materials' or 'products.'\n"
-        "Got:\n\t'{}'".format(source_type))
-
+        "Argument 'source_type' of function 'verify_item_rules' has to be "
+        "one of 'materials' or 'products'. Got: '{}'".format(source_type))
 
   # Apply (verify) all rule
   for rule in rules:
@@ -1113,39 +1109,31 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     if rule_type == "match":
       consumed = verify_match_rule(
-          rule, source_artifacts_queue, source_artifacts, links)
+          rule, artifacts_queue, artifacts, links)
 
     elif rule_type == "allow":
-      consumed = verify_allow_rule(rule, source_artifacts_queue)
+      consumed = verify_allow_rule(rule, artifacts_queue)
 
     elif rule_type == "create":
-      consumed = verify_create_rule(
-          rule, source_materials_queue, source_products_queue)
+      consumed = verify_create_rule(rule, materials_queue, products_queue)
 
     elif rule_type == "delete":
-      consumed = verify_delete_rule(
-          rule, source_materials_queue, source_products_queue)
+      consumed = verify_delete_rule(rule, materials_queue, products_queue)
 
     elif rule_type == "modify":
-      consumed = verify_modify_rule(
-          rule, source_materials_queue, source_artifacts_queue,
-          source_materials, source_products)
+      consumed = verify_modify_rule(rule, materials_queue, products_queue,
+          materials, products)
 
     # Fail
     elif rule_type == "disallow":
-      verify_disallow_rule(rule, source_artifacts_queue)
+      verify_disallow_rule(rule, artifacts_queue)
 
-    # Unreachable
-    else: # pragma: no cover
-      pass
+    else: # pragma: no cover (unreachable)
+      raise ValueError("Invaldid rule type {}.".format(rule_type))
 
-    source_artifacts_queue -= consumed
+    # Update queues (this also updates materials queue!!)
+    artifacts_queue -= consumed
 
-    if source_type == "materials":
-      source_materials_queue -= consumed
-
-    elif source_type == "products":
-      source_products_queue -= consumed
 
 
 def verify_all_item_rules(items, links):
