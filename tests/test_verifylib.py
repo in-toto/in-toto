@@ -24,6 +24,7 @@ import copy
 import tempfile
 import unittest
 import glob
+import shlex
 from mock import patch
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -44,6 +45,7 @@ from in_toto.exceptions import (RuleVerificationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
+from in_toto.rulelib import unpack_rule
 import in_toto.gpg.functions
 
 import securesystemslib.exceptions
@@ -170,281 +172,153 @@ class TestVerifyCommandAlignment(unittest.TestCase):
           .format(self.command, expected_command))
 
 
-class TestVerifyDeleteRule(unittest.TestCase):
-  """Test verify_delete_rule
-  takes a rule ["DELETE", "<path pattern>"], a product queue and a
-  material queue.
-  Materials filtered by path pattern can't appear as products.
-  Returns the material queue minus the deleted materials.
-  """
+class TestVerifyRule(unittest.TestCase):
+  """Table driven tests for individual rule verification functions. """
 
-  def test_fail_delete_file(self):
-    """["DELETE", "foo"], foo still in products (not deleted), fails. """
-    materials_queue = ["foo"]
-    products_queue = ["foo"]
-    rule = ["DELETE", "foo"]
-    with self.assertRaises(RuleVerificationError):
-      verify_delete_rule(rule, materials_queue, products_queue)
+  def test_verify_delete_rule(self):
+    """Test verifylib.verify_delete_rule. """
+    test_data_keys = [
+        "rule pattern", "artifact queue", "materials", "products", "expected"]
+    test_cases = [
+      # Consume deleted artifact
+      ["foo", {"foo"}, {"foo"}, set(), {"foo"}],
+      # Consume multiple deleted artifacts with wildcard
+      ["*", {"foo", "bar"}, {"foo", "bar"}, set(), {"foo", "bar"}],
+      # Don't consume created artifact (in products only)
+      ["foo", {"foo"}, set(), {"foo"}, set()],
+      # Don't consume artifact that's not in materials or products
+      # NOTE: In real life this shouldn't be in the queue either
+      ["foo", {"foo"}, set(), set(), set()],
+      # Don't consume deleted but not queued artifact
+      ["foo", set(), {"foo"}, set(), set()],
+      # Don't consume deleted but not matched artifact
+      ["bar", {"foo"}, {"foo"}, set(), set()]
+    ]
 
-  def test_fail_delete_star(self):
-    """["DELETE", "*"], not all (*) materials were deleted, fails. """
-
-    materials_queue = ["foo", "bar"]
-    products_queue = ["foo"]
-    rule = ["DELETE", "*"]
-
-    with self.assertRaises(RuleVerificationError):
-        verify_delete_rule(rule, materials_queue, products_queue)
-
-  def test_pass_delete_file(self):
-    """["DELETE", "foo"], foo not in products (deleted), passes. """
-    materials_queue = ["foo", "baz"]
-    products_queue = []
-    rule = ["DELETE", "foo"]
-    queue = verify_delete_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, ["baz"])
-
-  def test_pass_delete_star(self):
-    """["DELETE", "*"], no materials appear in products (deleted), passes. """
-    materials_queue = ["foo", "baz"]
-    products_queue = []
-    rule = ["DELETE", "*"]
-    queue = verify_delete_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
-
-  def test_pass_delete_nothing_nothing_filtered(self):
-    """["DELETE", "bar"], bar in products but not in materials, passes. """
-    materials_queue = []
-    products_queue = ["bar"]
-    rule = ["DELETE", "bar"]
-    queue = verify_delete_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
-
-  def test_pass_delete_nothing_empty_queue(self):
-    """["DELETE", "*"], nothing in materials, passes. """
-    materials_queue = []
-    products_queue = ["foo", "bar", "baz"]
-    rule = ["DELETE", "*"]
-    queue = verify_delete_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, materials, products, expected = test_data
+      result = verify_delete_rule(pattern, queue, materials, products)
+      self.assertSetEqual(result, expected,
+          "test {}: {}".format(i, dict(zip(test_data_keys, test_data))))
 
 
-class TestVerifyCreateRule(unittest.TestCase):
-  """Test verifylib.verify_create_rule
-  takes a rule ["CREATE", "<path pattern>"], a product queue and a
-  material queue.
-  Products filtered by path pattern can't appear as materials.
-  Returns the product queue minus the created products.
-  """
+  def test_verify_create_rule(self):
+    """Test verifylib.verify_create_rule. """
+    test_data_keys = [
+        "rule pattern", "artifact queue", "materials", "products", "expected"]
+    test_cases = [
+      # Consume created artifact
+      ["foo", {"foo"}, set(), {"foo"}, {"foo"}],
+      # Consume multiple created artifacts with wildcard
+      ["*", {"foo", "bar"},  set(), {"foo", "bar"}, {"foo", "bar"}],
+      # Don't consume deleted artifact (in materials only)
+      ["foo", {"foo"}, {"foo"}, set(), set()],
+      # Don't consume artifact that's not in materials or products
+      # NOTE: In real life this shouldn't be in the queue either
+      ["foo", {"foo"}, set(), set(), set()],
+      # Don't consume created but not queued artifact
+      ["foo", set(), set(), {"foo"}, set()],
+      # Don't consume created but not matched artifact
+      ["bar", {"foo"}, set(), {"foo"}, set()]
+    ]
 
-  def test_fail(self):
-    """Different scenarios for failing create rule verification"""
-    # Foo already in materials (not created)
-    materials_queue = ["foo"]
-    products_queue = ["foo"]
-    rule = ["CREATE", "foo"]
-    result = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertEqual(['foo'], result)
-
-    # Not all (*) products newly created
-    materials_queue = ["foo"]
-    products_queue = ["foo", "bar"]
-    rule = ["CREATE", "*"]
-    result = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertEqual(['foo'], result)
-
-  def test_pass(self):
-    """"Different scenarios for passing create rule verification. """
-    # Foo created
-    materials_queue = ["bar"]
-    products_queue = ["foo", "bar"]
-    rule = ["CREATE", "foo"]
-    queue = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, ["bar"])
-
-    # * created
-    materials_queue = []
-    products_queue = ["foo", "bar", "baz"]
-    rule = ["CREATE", "*"]
-    queue = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
-
-    # No products filtered by pattern
-    materials_queue = ["foo", "bar"]
-    products_queue = []
-    rule = ["CREATE", "*"]
-    queue = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
-
-    # No products filtered by pattern (pass seems strange)
-    materials_queue = ["foo", "bar"]
-    products_queue = []
-    rule = ["CREATE", "baz"]
-    queue = verify_create_rule(rule, materials_queue, products_queue)
-    self.assertListEqual(queue, [])
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, materials, products, expected = test_data
+      result = verify_create_rule(pattern, queue, materials, products)
+      self.assertSetEqual(result, expected,
+          "test {}: {}".format(i, dict(zip(test_data_keys, test_data))))
 
 
-class TestVerifyModifyRule(unittest.TestCase):
-  """Test verifylib.verify_modify_rule
-  takes a rule ["MODIFY", "<path pattern>"], a product queue, a
-  material queue, a material dict and a product dict.
+  def test_verify_modify_rule(self):
+    """Test verifylib.verify_modify_rule. """
+    sha_a = "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    sha_b = "155c693a6b7481f48626ebfc545f05236df679f0099225d6d0bc472e6dd21155"
 
-  The sets of materials and products from the queue filtered by the path pattern
-  must be equal in terms of paths.
-  And each material-product must have different hashes.
+    test_data_keys = [
+        "rule pattern", "artifact queue", "materials", "products", "expected"]
+    test_cases = [
+      # Consume modified artifact
+      ["foo", {"foo"}, {"foo": {"sha256": sha_a}}, {"foo": {"sha256": sha_b}},
+          {"foo"}],
+      # Consume multiple modified artifacts with wildcard
+      ["*", {"foo", "bar"},
+          {"foo": {"sha256": sha_a}, "bar": {"sha256": sha_a}},
+          {"foo": {"sha256": sha_b}, "bar": {"sha256": sha_b}},
+          {"foo", "bar"}],
+      # Don't consume unmodified artifact
+      ["foo", {"foo"}, {"foo": {"sha256": sha_a}}, {"foo": {"sha256": sha_a}},
+          set()],
+      # Don't consume artifact that's not in materials or products
+      # NOTE: In real life this shouldn't be in the queue either
+      ["foo", {"foo"}, {}, {}, set()],
+      # Don't consume modified but not queued artifact
+      ["foo", set(), {"foo": {"sha256": sha_a}}, {"foo": {"sha256": sha_b}},
+          set()],
+      # Don't consume modified but not matched artifact
+      ["bar", {"foo"}, {"foo": {"sha256": sha_a}}, {"foo": {"sha256": sha_b}},
+          set()],
+    ]
 
-  Returns updated materials and products queues minus the respective filtered
-  artifacts.
-  """
-
-  @classmethod
-  def setUpClass(self):
-    sha256_1 = ("d65165279105ca6773180500688df4bd"
-                  "c69a2c7b771752f0a46ef120b7fd8ec3")
-
-    sha256_2 = ("155c693a6b7481f48626ebfc545f0523"
-                  "6df679f0099225d6d0bc472e6dd21155")
-
-    self.materials = {
-      "foo": {"sha256": sha256_1},
-      "bar": {"sha256": sha256_1}
-    }
-    self.products = {
-      "foo": {"sha256": sha256_2},
-      "bar": {"sha256": sha256_1}
-    }
-
-  def test_pass(self):
-    """Different scenarios for passing modify rule verification. """
-
-    # Modify single file
-    materials_queue = ["foo"]
-    products_queue = ["foo", "bar"]
-    rule = ["MODIFY", "foo"]
-    m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
-        self.materials, self.products)
-    self.assertListEqual(m_queue, ["foo"])
-    self.assertListEqual(p_queue, ["bar"])
-
-    # Modify all files from queue
-    materials_queue = ["foo"]
-    products_queue = ["foo"]
-    rule = ["MODIFY", "*"]
-    m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
-        self.materials, self.products)
-    self.assertListEqual(m_queue, ["foo"])
-    self.assertListEqual(p_queue, [])
-
-    # Nothing filtered by pattern, still passes (seems strange)
-    rule = ["MODIFY", "baz"]
-    m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
-        self.materials, self.products)
-    self.assertListEqual(m_queue, p_queue, [])
-
-    # Nothing filtered by pattern, still passes
-    rule = ["MODIFY", "*"]
-    materials_queue = []
-    products_queue = []
-    m_queue, p_queue = verify_modify_rule(rule, materials_queue, products_queue,
-        self.materials, self.products)
-    self.assertListEqual(m_queue, p_queue, [])
-
-  def test_fail(self):
-    """Different scenarios for failing create rule verification. """
-    materials_queue = ["bar", "foo"]
-    products_queue = ["bar", "foo"]
-
-    # Single file not modified
-    rule = ["MODIFY", "bar"]
-    result = verify_modify_rule(rule, materials_queue, products_queue,
-        self.materials, self.products)
-    self.assertEquals((materials_queue, products_queue),
-        (sorted(result[0]), sorted(result[1])))
-
-    # Some files not modified
-    rule = ["MODIFY", "*"]
-    result = verify_modify_rule(rule, materials_queue, products_queue,
-          self.materials, self.products)
-    self.assertEquals((materials_queue, ['bar']),
-        (sorted(result[0]), sorted(result[1])))
-
-    # Pattern filters bar as material but not as product
-    materials_queue = ["bar", "foo"]
-    products_queue = ["foo"]
-    result = verify_modify_rule(rule, materials_queue, products_queue,
-          self.materials, self.products)
-    self.assertEquals((materials_queue, []),
-        (sorted(result[0]), sorted(result[1])))
-
-    # Pattern filters bar as product but not as material
-    materials_queue = ["foo"]
-    products_queue = ["bar", "foo"]
-    result = verify_modify_rule(rule, materials_queue, products_queue,
-          self.materials, self.products)
-    self.assertEquals((materials_queue, ['bar']),
-        (sorted(result[0]), sorted(result[1])))
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, materials, products, expected = test_data
+      result = verify_modify_rule(pattern, queue, materials, products)
+      self.assertSetEqual(result, expected,
+          "test {}: {}".format(i, dict(zip(test_data_keys, test_data))))
 
 
-class TestVerifyAllowRule(unittest.TestCase):
-  """ Verify verifylib.verify_allow_rule
-  takes a rule ["ALLOW", "<path pattern>"] and an artifact queue
-  (materials or products).
+  def test_verify_allow_rule(self):
+    """Test verifylib.verify_allow_rule. """
+    test_data_keys = ["rule pattern", "artifact queue", "expected"]
+    test_cases = [
+      # Consume allowed artifact
+      ["foo", {"foo"}, {"foo"}],
+      # Consume multiple allowed artifacts with wildcard
+      ["*", {"foo", "bar"}, {"foo", "bar"}],
+      # Consume multiple allowed artifacts with wildcard 2
+      ["foo*", {"foo", "foobar", "bar"}, {"foo", "foobar"}],
+      # Don't consume unmatched artifacts
+      ["bar", {"foo"}, set()],
+      # Don't consume artifacts if nothing is in the queue
+      ["foo", set(), set()],
 
-  The rule never fails but only pops filtered items from the artifacts queue
-  and returns the updated queue.
-  """
-
-  def test(self):
-    """Test returned artifact queue. """
-    queue = ["foo", "bar", "foobar"]
-    rule = ["ALLOW", "foo"]
-    queue = verify_allow_rule(rule, queue)
-    self.assertListEqual(sorted(queue), ["bar", "foobar"])
-
-    queue = ["foo", "bar", "foobar"]
-    rule = ["ALLOW", "foo*"]
-    queue = verify_allow_rule(rule, queue)
-    self.assertListEqual(queue, ["bar"])
-
-    rule = ["ALLOW", "*"]
-    queue = verify_allow_rule(rule, queue)
-    self.assertListEqual(queue, [])
+    ]
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, expected = test_data
+      result = verify_allow_rule(pattern, queue)
+      self.assertSetEqual(result, expected,
+          "test {}: {}".format(i, dict(zip(test_data_keys, test_data))))
 
 
-class TestVerifyDisallowRule(unittest.TestCase):
-  """ Verify verifylib.verify_disallow_rule
-  takes a rule ["DISALLOW", "<path pattern>"] and an artifact queue
-  (materials or products).
-  Fails if an artifact is filtered by the pattern.
-  """
+  def test_verify_disallow_rule(self):
+    """Test verifylib.verify_disallow_rule. """
+    test_data_keys = ["rule pattern", "artifact queue"]
+    test_cases = [
+      # Foo disallowed, raise
+      ["foo", {"foo"}, True],
+      # All disallowed, raise
+      ["*", {"foo", "bar"}, True],
+      # Foo disallowed, but only bar there, don't raise
+      ["foo", {"bar"}, False],
+      # All disallowed, but no artifacts, don't raise
+      ["*", {}, False]
+    ]
 
-  def test_pass(self):
-    """ Test different passing disallow rule scenarios. """
-    queue = ["foo", "bar", "foobar"]
-    rule = ["DISALLOW", "baz"]
-    verify_disallow_rule(rule, queue)
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, should_raise = test_data
 
-    queue = []
-    rule = ["DISALLOW", "*"]
-    verify_disallow_rule(rule, queue)
+      msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+      exception = None
 
+      try:
+        verify_disallow_rule(pattern, queue)
+      except RuleVerificationError as e:
+        exception = e
 
-  def test_fail(self):
-    """ Test different failing disallow rule scenarios. """
-    queue = ["foo", "bar", "foobar"]
-    rule = ["DISALLOW", "foo"]
-    with self.assertRaises(RuleVerificationError):
-      verify_disallow_rule(rule, queue)
+      if should_raise and not exception:
+         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
 
-    queue = ["foo", "bar", "foobar"]
-    rule = ["DISALLOW", "foo*"]
-    with self.assertRaises(RuleVerificationError):
-      verify_disallow_rule(rule, queue)
-
-    queue = ["foo", "bar", "foobar"]
-    rule = ["DISALLOW", "*"]
-    with self.assertRaises(RuleVerificationError):
-      verify_disallow_rule(rule, queue)
+      if exception and not should_raise:
+          self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
 class TestVerifyMatchRule(unittest.TestCase):
@@ -465,244 +339,143 @@ class TestVerifyMatchRule(unittest.TestCase):
 
     # Link dictionary containing dummy artifacts related to Steps the rule is
     # matched with (match destination).
-    materials = {
+    self.materials = {
       "foo": {"sha256": self.sha256_foo},
       "foobar": {"sha256": self.sha256_foobar},
-      "dev/foo": {"sha256": self.sha256_foo},
-      "dev/foobar": {"sha256": self.sha256_foobar}
+      "sub/foo": {"sha256": self.sha256_foo},
+      "sub/foobar": {"sha256": self.sha256_foobar}
 
     }
-    products = {
+    self.products = {
       "bar": {"sha256": self.sha256_bar},
       "barfoo": {"sha256": self.sha256_barfoo},
-      "dev/bar": {"sha256": self.sha256_bar},
-      "dev/barfoo": {"sha256": self.sha256_barfoo},
+      "sub/bar": {"sha256": self.sha256_bar},
+      "sub/barfoo": {"sha256": self.sha256_barfoo},
       }
 
-    # Note: For simplicity the Links don't have all usually required fields set
     self.links = {
-        "link-1" : Metablock(signed=Link(
-            name="link-1", materials=materials, products=products)),
+        "dest-item": Metablock(signed=Link(
+            name="dest-item",
+            materials=self.materials,
+            products=self.products)),
     }
 
 
-  def test_pass_match_material(self):
-    """["MATCH", "foo", "WITH", "MATERIALS", "FROM", "link-1"],
-    source artifact foo and destination material foo hashes match, passes. """
+  def test_verify_match_rule(self):
+    test_data_keys = [
+        "rule string", "artifacts queue", "source artifacts", "expected"]
+    test_cases = [
+      [
+        # Consume foo matching with dest material foo
+        "MATCH foo WITH MATERIALS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"foo"}
+      ],
+      [
+        # Consume foo matching with dest product foo
+        "MATCH bar WITH PRODUCTS FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"bar"}
+      ],
+      [
+        # Consume sub/foo matching with dest material foo
+        "MATCH foo IN sub WITH MATERIALS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo"}
+      ],
+      [
+        # Consume sub/foo matching with dest material foo (ignore trailing /)
+        "MATCH foo IN sub/ WITH MATERIALS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo"}
+      ],
+      [
+        # Consume sub/bar matching with dest product bar
+        "MATCH bar IN sub WITH PRODUCTS FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"sub/bar"}
+      ],
+      [
+        # Consume foo matching with dest material sub/foo
+        "MATCH foo WITH MATERIALS IN sub FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"foo"}
+      ],
+      [
+        # Consume bar matching with dest product sub/bar
+        "MATCH bar WITH PRODUCTS IN sub FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"bar"}
+      ],
+      [
+        # Consume bar matching with dest product sub/bar (ignore trailing /)
+        "MATCH bar WITH PRODUCTS IN sub/ FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"bar"}
+      ],
+      [
+        # Consume foo* matching with dest material foo*
+        "MATCH foo* WITH MATERIALS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"foo", "foobar"}
+      ],
+      [
+        # Consume sub/foo* matching with dest material foo*
+        "MATCH foo* IN sub WITH MATERIALS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo", "sub/foobar"}
+      ],
+      [
+        # Consume bar* matching with dest product bar*
+        "MATCH bar* WITH PRODUCTS FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"bar", "barfoo"}
+      ],
+      [
+        # Consume bar* matching with dest product sub/bar*
+        "MATCH bar* WITH PRODUCTS IN sub FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"bar", "barfoo"}
+      ],
+      [
+        # Don't consume (empty queue)
+        "MATCH foo WITH MATERIALS FROM dest-item",
+        set(), self.materials,
+        set()
+      ],
+      [
+        # Don't consume (no destination artifact)
+        "MATCH foo WITH PRODUCTS FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        set()
+      ],
+      [
+        # Don't consume (non-matching hashes)
+        "MATCH foo WITH MATERIALS FROM dest-item",
+        {"foo"}, {"foo": {"sha256": "deadbeef"}},
+        set()
+      ],
+      [
+        # Don't consume (missing link)
+        "MATCH foo WITH MATERIALS FROM dest-item-missing-link",
+        set(self.materials.keys()), self.materials,
+        set()
+      ]
+    ]
 
-    rule = ["MATCH", "foo", "WITH", "MATERIALS", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
+    for i, test_data in enumerate(test_cases):
+      rule_string, queue, source_artifacts, expected = test_data
 
+      # Generate rule data from rule string
+      rule_data = unpack_rule(shlex.split(rule_string))
 
-  def test_pass_match_product(self):
-    """["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"],
-    source artifact bar and destination product bar hashes match, passes. """
+      result = verify_match_rule(
+          rule_data, queue, source_artifacts, self.links)
 
-    rule = ["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
+      self.assertSetEqual(result, expected,
+          "'result': {}\n test {}: {}, 'links':{}".format(result,
+          i, dict(zip(test_data_keys, test_data)), self.links))
 
-
-  def test_pass_match_in_source_dir_with_materials(self):
-    """["MATCH", "foo", "IN", "dist", "WITH", "MATERIALS", "FROM", "link-1"],
-    source artifact dist/foo and destination material foo hashes match, passes. """
-
-    for slash in ["", "/"]:
-      rule = ["MATCH", "foo", "IN", "dist" + slash, "WITH", "MATERIALS", "FROM",
-        "link-1"]
-      artifacts = {
-        "dist/foo": {"sha256": self.sha256_foo},
-        "dist/bar": {"sha256": self.sha256_bar}
-      }
-      queue = list(artifacts.keys())
-      self.assertListEqual(
-          verify_match_rule(rule, queue, artifacts, self.links), ["dist/bar"])
-
-  def test_pass_match_in_source_dir_with_products(self):
-    """["MATCH", "bar", "IN", "dist", "WITH", "PRODUCTS", "FROM", "link-1"],
-    source artifact dist/bar and destination product bar hashes match, passes. """
-
-    for slash in ["", "/"]:
-      rule = ["MATCH", "bar", "IN", "dist" + slash, "WITH", "PRODUCTS", "FROM",
-          "link-1"]
-      artifacts = {
-        "dist/bar": {"sha256": self.sha256_bar},
-        "dist/foo": {"sha256": self.sha256_foo}
-      }
-      queue = list(artifacts.keys())
-      self.assertListEqual(
-          verify_match_rule(rule, queue, artifacts, self.links), ["dist/foo"])
-
-  def test_pass_match_with_materials_in_destination_dir(self):
-    """["MATCH", "foo", "WITH", "MATERIALS", "IN", "dev", "FROM", "link-1"],
-    source artifact foo and destination material dev/foo hashes match, passes. """
-
-    for slash in ["", "/"]:
-      rule = ["MATCH", "foo", "WITH", "MATERIALS", "IN", "dev" + slash, "FROM",
-          "link-1"]
-      artifacts = {
-        "foo": {"sha256": self.sha256_foo},
-        "bar": {"sha256": self.sha256_bar}
-      }
-      queue = list(artifacts.keys())
-      self.assertListEqual(
-          verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
-
-  def test_pass_match_with_products_in_destination_dir(self):
-    """["MATCH", "bar", "WITH", "PRODUCTS", "IN", "dev", "FROM", "link-1"],
-    source artifact bar and destination product dev/bar hashes match, passes. """
-
-    for slash in ["", "/"]:
-      rule = ["MATCH", "bar", "WITH", "PRODUCTS", "IN", "dev" + slash, "FROM",
-          "link-1"]
-      artifacts = {
-        "bar": {"sha256": self.sha256_bar},
-        "foo": {"sha256": self.sha256_foo}
-      }
-      queue = list(artifacts.keys())
-      self.assertListEqual(
-          verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
-
-  def test_pass_match_material_star(self):
-    """["MATCH", "foo*", "WITH", "MATERIALS", "FROM", "link-1"]],
-    source artifacts foo* match destination materials foo* hashes, passes. """
-
-    rule = ["MATCH", "foo*", "WITH", "MATERIALS", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-      "foobar": {"sha256": self.sha256_foobar},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
-
-  def test_pass_match_product_star(self):
-    """["MATCH", "bar*", "WITH", "PRODUCTS", "FROM", "link-1"],
-    source artifacts bar* match destination products bar* hashes, passes. """
-
-    rule = ["MATCH", "bar*", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "bar": {"sha256": self.sha256_bar},
-      "barfoo": {"sha256": self.sha256_barfoo},
-      "foo": {"sha256": self.sha256_foo}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
-
-  def test_pass_match_star_in_source_dir_with_materials(self):
-    """["MATCH", "foo*", "IN", "dist", "WITH", "MATERIALS", "FROM", "link-1"],
-    source artifacts dist/* match destination materials foo* hashes, passes. """
-
-    rule = ["MATCH", "foo*", "IN", "dist", "WITH", "MATERIALS", "FROM", "link-1"]
-    artifacts = {
-      "dist/foo": {"sha256": self.sha256_foo},
-      "dist/foobar": {"sha256": self.sha256_foobar},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
-
-  def test_pass_match_star_in_source_dir_with_products(self):
-    """["MATCH", "bar*", "WITH", "PRODUCTS", "IN", "dist", "FROM", "link-1"],
-    source artifacts dist/* match destination products bar* hashes, passes. """
-
-    rule = ["MATCH", "bar*", "IN", "dist", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "dist/bar": {"sha256": self.sha256_bar},
-      "dist/barfoo": {"sha256": self.sha256_barfoo},
-      "foo": {"sha256": self.sha256_foo}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
-
-  def test_pass_match_star_in_with_materials_in_destination_dir(self):
-    """["MATCH", "foo*", "WITH", "MATERIALS", "IN", "dist", "FROM", "link-1"],
-    source artifacts foo* match destination materials dev/foo* hashes, passes. """
-
-    rule = ["MATCH", "foo*", "WITH", "MATERIALS", "IN", "dev", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-      "foobar": {"sha256": self.sha256_foobar},
-      "bar": {"sha256": self.sha256_bar}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["bar"])
-
-  def test_pass_match_star_with_products_destination_dir(self):
-    """["MATCH", "bar*", "WITH", "PRODUCTS", "IN", "dev", "FROM", "link-1"],
-    source artifacts bar* match destination products dev/bar* hashes, passes. """
-
-    rule = ["MATCH", "bar*", "WITH", "PRODUCTS", "IN", "dev", "FROM", "link-1"]
-    artifacts = {
-      "bar": {"sha256": self.sha256_bar},
-      "barfoo": {"sha256": self.sha256_barfoo},
-      "foo": {"sha256": self.sha256_foo}
-    }
-    queue = list(artifacts.keys())
-    self.assertListEqual(
-        verify_match_rule(rule, queue, artifacts, self.links), ["foo"])
-
-  def test_fail_destination_link_not_found(self):
-    """["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-null"],
-    destination link "link-null" not found, fails. """
-
-    rule = ["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-null"]
-    artifacts = {}
-    queue = list(artifacts.keys())
-    with self.assertRaises(RuleVerificationError):
-      verify_match_rule(rule, queue, artifacts, self.links)
-
-  def test_fail_path_not_in_destination_materials(self):
-    """["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-1"]
-    pattern bar does not match any materials in destination, fails. """
-
-    rule = ["MATCH", "bar", "WITH", "MATERIALS", "FROM", "link-1"]
-    artifacts = {
-      "bar": {"sha256": self.sha256_bar},
-    }
-    queue = list(artifacts.keys())
-    result = verify_match_rule(rule, queue, artifacts, self.links)
-    self.assertEquals(['bar'], result);
-
-  def test_fail_path_not_in_destination_products(self):
-    """["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "link-1"],
-    pattern foo does not match any products in destination, fails. """
-
-    rule = ["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "foo": {"sha256": self.sha256_foo},
-    }
-    queue = list(artifacts.keys())
-    result = verify_match_rule(rule, queue, artifacts, self.links)
-    self.assertEquals(['foo'], result);
-
-  def test_fail_hash_not_equal(self):
-    """"["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"],
-    source and destination bar have different hashes, fails. """
-
-    rule = ["MATCH", "bar", "WITH", "PRODUCTS", "FROM", "link-1"]
-    artifacts = {
-      "bar": {"sha256": "aaaaaaaaaa"},
-    }
-    queue = list(artifacts.keys())
-    result = verify_match_rule(rule, queue, artifacts, self.links)
-    self.assertEquals(['bar'], result);
 
 
 class TestVerifyItemRules(unittest.TestCase):
@@ -720,50 +493,48 @@ class TestVerifyItemRules(unittest.TestCase):
           materials={
               "foo": {"sha256": self.sha256_1},
               "foobar": {"sha256": self.sha256_1},
-              "bar": {"sha256": self.sha256_1}
+              "bar": {"sha256": self.sha256_1},
+              "foobarbaz": {"sha256": self.sha256_1}
           },
           products={
               "baz" : {"sha256": self.sha256_1},
               "foo": {"sha256": self.sha256_1},
-              "bar": {"sha256": self.sha256_2}
+              "bar": {"sha256": self.sha256_2},
+              "foobarbaz": {"sha256": self.sha256_1}
+
           }
       ))
     }
 
-  def test_pass_material_rules_with_each_rule_type(self):
-    """Pass with list of material rules of each rule type. """
+  def test_pass_rules_with_each_rule_type(self):
+    """Pass with list of rules of each rule type. """
     rules = [
       ["DELETE", "foobar"],
       ["CREATE", "baz"],
       ["MODIFY", "bar"],
       ["MATCH", "foo", "WITH", "MATERIALS", "FROM", "item"], # match with self
-      ["DISALLOW", "barfoo"],
-      ["ALLOW", "*"],
+      ["ALLOW", "foobarbaz"],
+      ["DISALLOW", "*"],
     ]
-    verify_item_rules(self.item_name, "materials", rules, self.links)
+    for source_type in ["materials", "products"]:
+      verify_item_rules(self.item_name, source_type, rules, self.links)
 
-  def test_pass_product_rules_with_each_rule_type(self):
-    """Pass with list of material rules of each rule type. """
+  def test_fail_disallow_not_consumed_artifacts(self):
+    """Fail with not consumed artifacts and terminal DISALLOW. """
     rules = [
-      ["DELETE", "foobar"],
-      ["CREATE", "baz"],
-      ["MODIFY", "bar"],
-      ["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "item"], # match with self
-      ["DISALLOW", "barfoo"],
-      ["ALLOW", "*"],
+      ["DISALLOW", "*"],
     ]
-    verify_item_rules(self.item_name, "products", rules, self.links)
+    with self.assertRaises(RuleVerificationError):
+      verify_item_rules(self.item_name, "materials", rules, self.links)
 
   def test_fail_wrong_source_type(self):
     """Fail with wrong source_type."""
-
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       verify_item_rules(self.item_name, "artifacts", [], self.links)
 
   def test_pass_not_consumed_artifacts(self):
-    """Pass with not consumed artifacts (implicit ALLOW *) """
-    rules = []
-    verify_item_rules(self.item_name, "materials", rules, self.links)
+    """Pass with not consumed artifacts and implicit terminal ALLOW * """
+    verify_item_rules(self.item_name, "materials", [], self.links)
 
 
 class TestVerifyAllItemRules(unittest.TestCase):

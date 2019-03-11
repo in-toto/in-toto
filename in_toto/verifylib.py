@@ -255,7 +255,7 @@ def substitute_parameters(layout, parameter_dictionary):
   """
   <Purpose>
     This function is a transitionary measure for parameter substitution (or
-    any other solution defined by the in-toto team). As of now, it acts as 
+    any other solution defined by the in-toto team). As of now, it acts as
     a very simple replacement layer for python-like parameters
 
   <Arguments>
@@ -304,7 +304,6 @@ def substitute_parameters(layout, parameter_dictionary):
     step.expected_products = new_product_rules
 
   for inspection in layout.inspect:
-    
     new_material_rules = []
     for rule in inspection.expected_materials:
       new_rule = []
@@ -584,147 +583,79 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
       verify_command_alignment(command, expected_command)
 
 
-def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
+def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
   """
   <Purpose>
-    Verifies that for each queued source artifact, filtered by the specified
-    source pattern, there is a destination artifact, filtered by the specified
-    destination pattern, and they are equal in terms of path and file hash.
+    Filters artifacts from artifact queue using rule pattern and optional rule
+    source prefix and consumes them if there is a corresponding destination
+    artifact, filtered using the same rule pattern and an optional rule
+    destination prefix, and source and destination artifacts have matching
+    hashes.
 
-    This guarantees that artifacts were not modified between steps/inspections.
+    NOTE: The destination artifacts are extracted from the links dictionary,
+    using destination name and destination type from the rule data. The source
+    artifacts could also be extracted from the links dictionary, but would
+    require the caller to pass source name and source type, as those are not
+    encoded in the rule. However, we choose to let the caller directly pass the
+    relevant artifacts.
 
-    The rule only modifies the source artifacts queue, by removing artifacts
-    that were successfully consumed by the rule, i.e. if there was a match with
-    a target artifact.
-
-    FIXME:
-    In in-toto/in-toto#204 the behavior of the match rule was changed to NOT
-    FAIL if a required destination artifact could not be found in the
-    corresponding destination link, or if a source and destination artifact
-    pair has no matching hashes. However, the rule verification still fails
-    if a required destination link is not found.
-    As failing the overall rule verification is now left to a subsequent
-    DISALLOW rule, the "fail on missing destination link" should be removed.
-
-  <Terms>
-    queued source artifacts:
-        Artifacts reported by the link for the step/inspection containing passed
-        rule that have not been handled by a previous rule (are still in the
-        queue). If the rule was in the expected_materials list the artifacts are
-        materials, if the rule was in the expected_products list the artifacts
-        are products.
-
-    destination artifacts:
-        Artifacts reported by the link of the step as specified by the rule
-        (... FROM <step>). The artifacts are materials or products as specified
-        by the rule (... WITH (MATERIALS|PRODUCTS)).
-
-    source pattern:
-        Glob pattern specified by the rule, i.e.:
-        [<source-path-prefix>] + <pattern>
-        See https://docs.python.org/2/library/fnmatch.html for wildcards
-
-    destination pattern:
-        Glob pattern specified by the rule, i.e.:
-        [<destination-path-prefix>] + <pattern>
-        See https://docs.python.org/2/library/fnmatch.html for wildcards
-
-    artifact equality:
-        A source and destination artifact are equal if the source artifact path
-        minus an optional source-path-prefix equals the destination artifact
-        path minus an optional destination-path-prefix, and the hash of both
-        artifacts are equal.
-        The path prefixes allow for relocating the artifacts between
-        steps/inspections. Path prefixes don't allow wildcards.
-
-  <Notes>
-    The rule is only applied on source artifacts filtered by the source
-    pattern, i.e.: if no artifacts are found the rule always passes.
-
-    rule: ["MATCH", "*", WITH, ...]
-    source artifacts queue: [], destination artifacts: ["foo"]
-    PASS (makes sense?)
-
-    rule: ["MATCH", "foo", WITH, ...]
-    source artifacts queue: ["bar"], destination artifacts: ["foo"]
-    PASS (might seem strange)
 
   <Arguments>
-    rule:
-            ["MATCH", "<pattern>", ["IN", "<source-path-prefix>",]
-                "WITH", ("MATERIALS"|"PRODUCTS"),
-                ["IN", "<destination-path-prefix>",] "FROM" "<step>"]
+    rule_data:
+            An unpacked "MATCH" rule (see in_toto.rulelib).
 
-    source_artifacts_queue:
-            A list of artifact paths that haven't been handled by a previous
-            rule of the step/inspection.
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
+
 
     source_artifacts:
-            A dictionary of artifacts, depending on the list the rule was
-            extracted from, materials or products of the step or inspection the
-            rule was extracted from, with artifact paths as keys and HASHDICTS
-            as values. The format is: { <path> : HASHDICT, ...}
+            All artifacts of the source item (including hashes).
 
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Metablock containing a link object>,
               ...
             }
 
   <Exceptions>
-    FormatError
-        if the rule does not conform with the rule format.
-
-    RuleVerificationError
-        if the destination link is not found in the passed link dictionary.
+    None.
 
   <Side Effects>
     None.
 
   <Returns>
-    A list of source artifacts that were not consumed by the rule.
+    The set of consumed artifacts (paths only).
 
   """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
-  dest_name = rule_data["dest_name"]
-  dest_type = rule_data["dest_type"]
+  consumed = set()
 
-  # Extract destination link
-  # FIXME: In alignment with in-toto/in-toto#204, we should return the
-  # unmodified source artifact queue instead of raising an exception.
-  try:
-    dest_link = links[dest_name]
-  except KeyError:
-    raise RuleVerificationError("Rule '{rule}' failed, destination link"
-        " '{dest_link}' not found in link dictionary".format(
-            rule=" ".join(rule), dest_link=dest_name))
+  # The rule can only consume artifacts if the destination link exists
+  dest_link = links.get(rule_data["dest_name"])
+  if not dest_link:
+    return consumed
 
   # Extract destination artifacts from destination link
-  if dest_type.lower() == "materials":
-    dest_artifacts = dest_link.signed.materials
+  dest_artifacts = getattr(dest_link.signed, rule_data["dest_type"])
 
-  # NOTE: Can't reach `else` branch, if the source_type is none of these
-  # types an exception would have been raised above in `unpack_rule`
-  elif dest_type.lower() == "products": # pragma: no branch
-    dest_artifacts = dest_link.signed.products
-
-  # Filter part 1: Filter paths with source prefix if specified
-  # But substract the prefix before applying the glob pattern (filter part 2)
-  # to prevent globbing in the prefix.
+  # Filter part 1 - Filter artifacts using optional source prefix, and subtract
+  # prefix before filtering with rule pattern (see filter part 2) to prevent
+  # globbing in the prefix.
   if rule_data["source_prefix"]:
     filtered_source_paths = []
     # Add trailing slash to source prefix if it does not exist
-    normalized_source_prefix = os.path.join(rule_data["source_prefix"], "").replace("\\", "/")
-    for artifact_path in source_artifacts_queue:
+    normalized_source_prefix = os.path.join(
+        rule_data["source_prefix"], "").replace("\\", "/")
+
+    for artifact_path in artifacts_queue:
       if artifact_path.startswith(normalized_source_prefix):
         filtered_source_paths.append(
             artifact_path[len(normalized_source_prefix):])
 
   else:
-    filtered_source_paths = source_artifacts_queue
+    filtered_source_paths = artifacts_queue
 
-  # Filter part 2 - apply glob pattern on remaining artifact paths
+  # Filter part 2 - glob above filtered artifact paths
   filtered_source_paths = fnmatch.filter(
       filtered_source_paths, rule_data["pattern"])
 
@@ -735,7 +666,8 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # globbing. We have to re-prepend the prefix in order to retrieve the
     # corresponding source artifact below.
     if rule_data["source_prefix"]:
-      full_source_path = os.path.join(rule_data["source_prefix"], path).replace("\\", "/")
+      full_source_path = os.path.join(
+          rule_data["source_prefix"], path).replace("\\", "/")
 
     else:
       full_source_path = path
@@ -744,297 +676,205 @@ def verify_match_rule(rule, source_artifacts_queue, source_artifacts, links):
     # be queried with the full destination path, i.e. the prefix joined with
     # the globbed path.
     if rule_data["dest_prefix"]:
-      full_dest_path = os.path.join(rule_data["dest_prefix"], path).replace("\\", "/")
+      full_dest_path = os.path.join(
+          rule_data["dest_prefix"], path).replace("\\", "/")
 
     else:
       full_dest_path = path
 
-    # Is it okay to assume that full_source_path returns an artifact? The path
-    # should not be in the queue, if it is not in the artifact dictionary
+    # Extract source artifact hash dict
+    # We know the source artifact is available, it is also in the queue
     source_artifact = source_artifacts[full_source_path]
 
-    # Try to extract destination artifact from destination artifacts
+    # Don't consume source artifact w/o corresponding dest artifact (by path)
     try:
       dest_artifact = dest_artifacts[full_dest_path]
-
-    # If there is no destination artifact with the same path as the source
-    # artifact, we won't mark this artifact as matched, i.e. we leave it in the
-    # queue
     except KeyError:
       continue
 
-    # Finally, if source and destination artifact exist, make sure they do in
-    # fact have the same hash. If not, we won't mark it as matched, i.e. we
-    # leave it in the queue
+    # Don't consume source artifact w/o corresponding dest artifact (by hash)
     if source_artifact != dest_artifact:
       continue
 
-    # Only if matching went well, do we remove it from the queue. Subsequent
-    # rules (e.g. DISALLOW) won't see this artifact anymore.
-    source_artifacts_queue.remove(full_source_path)
+    # Source and destination matched, consume artifact
+    consumed.add(full_source_path)
 
-  return source_artifacts_queue
+  return consumed
 
 
-def verify_create_rule(rule, source_materials_queue, source_products_queue):
+def verify_create_rule(rule_pattern, artifacts_queue, materials, products):
   """
   <Purpose>
-    Verifies that no products matched by applying the rule pattern on the
-    product queue, are already in the material queue, i.e. that all matched
-    products were created in that step. If the rule finds an artifact to be
-    indeed created, it is taken from the products queue.
-
-  <Notes>
-    The create rule always passes if the pattern does not match any products:
-
-    rule: ["CREATE", "*"]
-    source materials queue: ["foo"], source products queue: []
-    PASS (makes sense?)
-
-    rule: ["CREATE", "foo"]
-    source materials queue: ["foo"], source products queue: []
-    PASS (might seem strange)
-
-    The CREATE rule DOES NOT verify if the artifact has appeared in previous or
-    will appear in later steps of the software supply chain.
+    Filters artifacts from artifacts queue using rule pattern and consumes them
+    if they are not in the materials set but are in the products set, i.e.
+    were created.
 
   <Arguments>
-    rule:
-            ["CREATE", "<path pattern>"]
-            See https://docs.python.org/2/library/fnmatch.html for wildcards
+    rule_pattern:
+            A "CREATE" rule pattern (see in_toto.rulelib).
 
-    source_materials_queue:
-            A list of material paths that were not matched by a previous rule.
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
 
-    source_products_queue:
-            A list of product paths that were not matched by a previous rule.
+    materials:
+            All materials of an item (paths only).
+
+    products:
+            All products of an item (paths only).
 
   <Exceptions>
-    FormatError
-        if the rule does not conform with the rule format.
+    None.
 
   <Side Effects>
     None.
 
   <Returns>
-    The updated products queue (minus newly created artifacts).
+    The set of consumed artifacts (paths only).
 
   """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
+  # Filter queued artifacts using the rule pattern
+  filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
-  matched_products = fnmatch.filter(
-      source_products_queue, rule_data["pattern"])
+  # Consume filtered artifacts that are products but not materials
+  consumed = set(filtered_artifacts) & (products - materials)
 
-  unmatched_materials = set()
-
-  for matched_product in matched_products:
-    if matched_product in source_materials_queue:
-      unmatched_materials.add(matched_product)
-
-  matched_products = set(matched_products) - unmatched_materials
-  return list(set(source_products_queue) - matched_products)
+  return consumed
 
 
-def verify_delete_rule(rule, source_materials_queue, source_products_queue):
+def verify_delete_rule(rule_pattern, artifacts_queue, materials, products):
   """
   <Purpose>
-    Verifies that no materials matched by applying the rule pattern on the
-    material queue, are still in the product queue, i.e. that all matched
-    materials were deleted in that step. If the rule finds an artifact to be
-    indeed deleted, it is taken from the products queue, otherwise a
-    RuleVerificationError is raised.
-
-    FIXME: Currently, the DELETE rule is the only other rule besides DISALLOW
-    that can fail the overall verification. Changing the DELETE rule to only
-    modify the queue and leave it up to a subsequent DISALLOW rule to fail the
-    overall verification probably should have been part of in-toto/in-toto#204.
-
-  <Notes>
-    The delete rule always passes if the pattern does not match any materials:
-
-    rule: ["DELETE", "*"]
-    source materials queue: [], source products queue: ["foo"]
-    PASS (makes sense?)
-
-    rule: ["DELETE", "foo"]
-    source materials queue: [], source products queue: ["foo"]
-    PASS (might seem strange)
-
-    The delete rule DOES NOT verify if the artifact has appeared in previous or
-    will appear in later steps of the software supply chain.
+    Filters artifacts from artifacts queue using rule pattern and consumes them
+    if they are in the materials set but are not in the products set, i.e.
+    were deleted.
 
   <Arguments>
-    rule:
-            ["DELETE", "<path pattern>"]
-            See https://docs.python.org/2/library/fnmatch.html for wildcards
+    rule_pattern:
+            A "DELETE" rule pattern (see in_toto.rulelib).
 
-    source_materials_queue:
-            A list of material paths that were not matched by a previous rule.
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
 
-    source_products_queue:
-            A list of product paths that were not matched by a previous rule.
+    materials:
+            All materials of an item (paths only).
+
+    products:
+            All products of an item (paths only).
 
   <Exceptions>
-    FormatError
-        if the rule does not conform with the rule format.
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    The set of consumed artifacts (paths only).
+
+  """
+  # Filter queued artifacts using the rule pattern
+  filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
+
+  # Consume filtered artifacts that are materials but not products
+  consumed = set(filtered_artifacts) & (materials - products)
+
+  return consumed
+
+
+def verify_modify_rule(rule_pattern, artifacts_queue, materials, products):
+  """
+  <Purpose>
+    Filters artifacts from artifacts queue using rule pattern and consumes them
+    if they are in both the materials dict and in the products doct, but have
+    different hashes, i.e. were modified.
+
+  <Arguments>
+    rule_pattern:
+            A "MODIFY" rule pattern (see in_toto.rulelib).
+
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
+
+    materials:
+            All materials of an item (including hashes).
+
+    products:
+            All products of an item (including hashes).
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    The set of consumed artifacts (paths only).
+
+  """
+  # Filter queued artifacts using the rule pattern
+  filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
+
+  # Filter filtered artifacts that are materials and products
+  filtered_artifacts = set(filtered_artifacts) & \
+      set(materials.keys()) & set(products.keys())
+
+  # Consume filtered artifacts that have different hashes
+  consumed = set()
+  for path in filtered_artifacts:
+    if materials[path] != products[path]:
+      consumed.add(path)
+
+  return consumed
+
+
+def verify_allow_rule(rule_pattern, artifacts_queue):
+  """
+  <Purpose>
+    Consumes artifacts, filtered from the artifacts queue using rule pattern.
+
+  <Arguments>
+    rule_pattern:
+            An "ALLOW" rule pattern (see in_toto.rulelib).
+
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
+
+  <Exceptions>
+    None.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    The set of consumed artifacts (paths only).
+
+  """
+  # Filter queued artifacts using the rule pattern
+  filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
+
+  # Consume all filtered artifacts
+  return set(filtered_artifacts)
+
+
+def verify_disallow_rule(rule_pattern, artifacts_queue):
+  """
+  <Purpose>
+    Raises RuleVerificationError if rule pattern applies to any artifacts in
+    the queue.
+
+    NOTE: Each set of rules should have a terminal DISALLOW rule to make
+    overall verification fail in case preceding rules did not consume all
+    artifacts as intended.
+
+  <Arguments>
+    rule_pattern:
+            A "DISALLOW" rule pattern (see in_toto.rulelib).
+
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
+
+  <Exceptions>
     RuleVerificationError
-        if a material filtered by the pattern also appears in the products
-        queue.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    The updated materials queue (minus deleted artifacts).
-
-  """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
-
-  matched_materials = fnmatch.filter(
-      source_materials_queue, rule_data["pattern"])
-
-  for matched_material in matched_materials:
-    if matched_material in source_products_queue:
-      raise RuleVerificationError("Rule '{0}' failed, material '{1}' that"
-          " should have been deleted was found in the products queue."
-              .format(" ".join(rule), matched_material))
-
-  return list(set(source_materials_queue) - set(matched_materials))
-
-
-def verify_modify_rule(rule, source_materials_queue, source_products_queue,
-      source_materials, source_products):
-  """
-  <Purpose>
-    Verifies that artifacts matched by applying the rule pattern on the
-    product queue are already in the material queue and have different
-    hashes, i.e. were modified in that step. If the rule finds an artifact to
-    be indeed modified, it is taken from the products queue.
-
-    TODO:
-    Rethink rule, it is unclear why it only modifies the products queue.
-
-
-  <Arguments>
-    rule:
-            ["MODIFY", "<path pattern>"]
-            See https://docs.python.org/2/library/fnmatch.html for wildcards
-
-    source_materials_queue:
-            A list of material paths that were not matched by a previous rule.
-
-    source_products_queue:
-            A list of product paths that were not matched by a previous rule.
-
-    source_materials:
-            A dictionary of materials with artifact paths as keys and HASHDICTS
-            as values. Format is: {<path> : HASHDICT}
-
-    source_products:
-            A dictionary of products with artifact paths as keys and HASHDICTS
-            as values. Format is: {<path> : HASHDICT}
-
-  <Exceptions>
-    FormatError
-        if the rule does not conform with the rule format.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    The updated materials and products queues (the latter minus modified
-    artifacts).
-
-  """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
-
-  # Filter materials and products using the pattern and create sets to
-  # take advantage of Python set operations
-  matched_materials = set(fnmatch.filter(
-      source_materials_queue, rule_data["pattern"]))
-  matched_products = set(fnmatch.filter(
-      source_products_queue, rule_data["pattern"]))
-
-  modified_materials = set()
-  for path in matched_products:
-
-    if path not in matched_materials:
-      continue
-
-    # Is it okay to assume that path returns an artifact? The path
-    # should not be in the queues, if it is not in the artifact dictionaries
-    if source_materials[path] == source_products[path]:
-      continue
-
-    modified_materials.add(path)
-
-  return (source_materials_queue, list(set(source_products_queue) - modified_materials))
-
-
-def verify_allow_rule(rule, source_artifacts_queue):
-  """
-  <Purpose>
-    Authorizes an artifact in the corresponding queue, by removing any
-    artifacts filtered by the rule pattern from the queue.
-
-  <Arguments>
-    rule:
-            ["ALLOW", "<path pattern>"]
-            See https://docs.python.org/2/library/fnmatch.html for wildcards
-
-    source_artifacts_queue:
-            A list of artifact paths that were not matched by a previous rule.
-
-  <Exceptions>
-    FormatError
-        if the rule does not conform with the rule format.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    The source artifact queue minus the files that were matched by the rule.
-
-  """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
-
-  matched_artifacts = fnmatch.filter(
-      source_artifacts_queue, rule_data["pattern"])
-
-  return list(set(source_artifacts_queue) - set(matched_artifacts))
-
-
-def verify_disallow_rule(rule, source_artifacts_queue):
-  """
-  <Purpose>
-    Verifies that the specified pattern does not match any artifacts in the
-    passed artifacts queue and fails if it does.
-
-    IMPORTANT NOTE:
-    All other artifact rules(**) only modify artifact queues, that is if any of
-    the other rules can be applied successfully, they remove the corresponding
-    artifact from the queue.
-
-    In a reverse conclusion, a rule that can not be applied successfully,
-    leaves the artifact in the queue, and hence requires a subsequent
-    disallow rule (e.g. DISALLOW *) to fail the overall verification.
-
-
-   (**) (see `verify_delete_rule` for an exception)
-
-  <Arguments>
-    rule:
-            ["DISALLOW", "<path pattern>"]
-            See https://docs.python.org/2/library/fnmatch.html for wildcards
-
-    source_artifacts_queue:
-            A list of artifact paths that were not matched by a previous rule.
-
-  <Exceptions>
-    FormatError
-        if the rule does not conform with any rule format.
-    RuleVerificationError
-        if the rule pattern matches artifacts in the artifact queue.
+        if the rule pattern filters artifacts in the artifact queue.
 
   <Side Effects>
     None.
@@ -1043,70 +883,84 @@ def verify_disallow_rule(rule, source_artifacts_queue):
     None.
 
   """
-  rule_data = in_toto.rulelib.unpack_rule(rule)
+  filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
-  matched_artifacts = fnmatch.filter(
-      source_artifacts_queue, rule_data["pattern"])
+  if len(filtered_artifacts):
+    raise RuleVerificationError("'DISALLOW {}' matched the following "
+      "artifacts: {}\n{}".format(rule_pattern, filtered_artifacts,
+      _get_artifact_rule_traceback()))
 
-  if len(matched_artifacts):
-    raise RuleVerificationError("Rule '{0}' failed.\nRule pattern matches the"
-        " following artifacts of the artifact queue, which is disallowed:\n"
-        " {1} \n{2}".format(" ".join(rule), matched_artifacts,
-            get_traceback_info()))
+
+def _get_artifact_rule_traceback():
+  """Build and return string form global `RULE_TRACE` which may be used as
+  error message for RuleVerificationError.
+
+  """
+  traceback_str = "Full trace for 'expected_{0}' of item '{1}':\n".format(
+      RULE_TRACE["source_type"], RULE_TRACE["source_name"])
+
+  # Show all materials and products available in the beginning and
+  # label the one that is used to generate a queue.
+  for source_type in ["materials", "products"]:
+    traceback_str += "Available {}{}:\n{}\n".format(
+        source_type,
+        [" (used for queue)", ""][RULE_TRACE["source_type"] != source_type],
+        RULE_TRACE[source_type])
+
+  for trace_entry in RULE_TRACE["trace"]:
+    traceback_str += "Queue after '{0}':\n".format(
+        " ".join(trace_entry["rule"]))
+    traceback_str += "{}\n".format(trace_entry["queue"])
+
+  return traceback_str
 
 
 def verify_item_rules(source_name, source_type, rules, links):
   """
   <Purpose>
-    Iteratively apply all passed material or product rules of one item (step or
-    inspection) to enforce and authorize artifacts reported by the
-    corresponding link and/or to guarantee that artifacts are linked together
-    across links.
-    In the beginning all artifacts are placed in a queue according to their
-    type. If an artifact gets consumed by a rule it is removed from the queue,
-    hence an artifact can only be consumed once.
+    Apply all passed material or product rules (see source_type) of a given
+    step or inspection (see source_name), to enforce and authorize the
+    corresponding artifacts and to guarantee that artifacts are linked together
+    across steps of the supply chain.
 
-    Most rules only remove artifacts from the corresponding queues on success,
-    and leave the queue unchanged on failure. Hence, it is left to a subsequent
-    DISALLOW rule to fail overall verification, if any artifacts are left in
-    the queue that should have been consumed be preceding rules.
+    The mode of operation is similar to that of a firewall:
+    In the beginning all materials or products of the step or inspection are
+    placed into an artifact queue. The rules are then applied sequentially,
+    consuming artifacts in the queue, i.e. removing them from the queue, on
+    success.
+    The only exception is the "DISALLOW" rule. It does not consume artifacts
+    but instead raises a RuleVerificationError if its pattern matches any
+    artifacts in the queue.
+    Thus, each set of rules should have a terminal "DISALLOW" rule in order
+    to be effective.
 
-
-  <Algorithm>
-      1.  Create materials queue and products queue, and a generic artifacts
-          queue based on the source_type (materials or products)
-
-      2.  For each rule:
-          1.  Apply rule on corresponding queue(s)
-          2.  If rule verification passes, remove consumed items from the
-              corresponding queue(s) and continue with next rule
 
   <Arguments>
     source_name:
-            The name of the item (Step or Inspection) being verified
-            (used for user logging).
+            The name of the item (step or inspection) being verified.
 
     source_type:
-            "materials" or "products" depending on whether the rules were in the
-            "expected_materials" or "expected_products" field.
+            One of "materials" or "products" depending on whether the rules are
+            taken from the "expected_materials" or "expected_products" field of
+            the item being verified.
 
     rules:
-            The list of rules (material or product rules) for the item
-            being verified.
+            The list of rules (material or product rules) for the item being
+            verified.
 
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Metablock containing a link>,
               ...
             }
-
 
   <Exceptions>
     FormatError
         if source_type is not "materials" or "products", or
         if a rule in the passed list of rules does not conform with any rule
         format.
+
     RuleVerificationError
         if a DISALLOW rule matches any artifacts in the corresponding artifact
         queue.
@@ -1115,105 +969,79 @@ def verify_item_rules(source_name, source_type, rules, links):
     Clears and populates the global RULE_TRACE data structure.
 
   """
-
-  source_materials = links[source_name].signed.materials
-  source_products = links[source_name].signed.products
-
-  source_materials_queue = list(source_materials.keys())
-  source_products_queue = list(source_products.keys())
-
-  # Reset rule traceback dictionary
-  RULE_TRACE.clear()
-
-  # Create generic source artifacts list and queue depending on the source type
-  if source_type == "materials":
-    source_artifacts = source_materials
-    source_artifacts_queue = source_materials_queue
-
-  elif source_type == "products":
-    source_artifacts = source_products
-    source_artifacts_queue = source_products_queue
-
-  else:
+  if source_type not in ["materials", "products"]:
     raise securesystemslib.exceptions.FormatError(
-        "Argument 'source_type' of function 'verify_item_rules' has to be"
-        " one of 'materials' or 'products.'\n"
-        "Got:\n\t'{}'".format(source_type))
+        "Argument 'source_type' of function 'verify_item_rules' has to be "
+        "one of 'materials' or 'products'. Got: '{}'".format(source_type))
 
-  # Initialize rule traceback dictionary
-  RULE_TRACE["name"] = source_name
-  RULE_TRACE["type"] = source_type
-  RULE_TRACE["trace"] = [{'artifacts': source_artifacts_queue, 
-      'materials': source_materials_queue, 'products': source_products_queue}]
+  # Create shortcuts to item's materials and products (including hashes),
+  # required to verify "modify" and "match" rules.
+  materials_dict = links[source_name].signed.materials
+  products_dict = links[source_name].signed.products
 
-  # Apply (verify) all rule
+  # All other rules only require materials or products paths (without hashes)
+  materials_paths = set(materials_dict.keys())
+  products_paths = set(products_dict.keys())
+
+  # Depending on the source type we create the artifact queue from the item's
+  # materials or products and use it to keep track of (not) consumed artifacts.
+  # The queue also only contains aritfact keys (without hashes)
+  artifacts = getattr(links[source_name].signed, source_type)
+  artifacts_queue = set(artifacts.keys())
+
+  # Reset and re-populate rule traceback info dict for a rich error message
+  RULE_TRACE.clear()
+  RULE_TRACE["source_name"] = source_name
+  RULE_TRACE["source_type"] = source_type
+  RULE_TRACE["materials"] = list(materials_dict)
+  RULE_TRACE["products"] = list(products_dict)
+  RULE_TRACE["trace"] = []
+
+  # Process rules and remove consumed items from queue in each iteration
   for rule in rules:
-    results_dict = {}
-
     log.info("Verifying '{}'...".format(" ".join(rule)))
 
-    # Unpack rules for dispatching and rule format verification
+    # Parse the rule and create two shortcuts to contained rule data
     rule_data = in_toto.rulelib.unpack_rule(rule)
-    rule_type = rule_data["rule_type"]
+    _type = rule_data["rule_type"]
+    _pattern = rule_data["pattern"]
 
-    # MATCH, ALLOW, DISALLOW operate equally on either products or materials
-    # depending on the source_type
-    if rule_type == "match":
-      source_artifacts_queue = verify_match_rule(
-          rule, source_artifacts_queue, source_artifacts, links)
+    # All rules except "disallow" consume artifacts in the queue
+    if _type == "match":
+      consumed = verify_match_rule(
+          rule_data, artifacts_queue, artifacts, links)
 
-    elif rule_type == "allow":
-      source_artifacts_queue = verify_allow_rule(rule, source_artifacts_queue)
+    elif _type == "create":
+      consumed = verify_create_rule(
+          _pattern, artifacts_queue, materials_paths, products_paths)
 
-    elif rule_type == "disallow":
-      verify_disallow_rule(rule, source_artifacts_queue)
+    elif _type == "delete":
+      consumed = verify_delete_rule(
+          _pattern, artifacts_queue, materials_paths, products_paths)
 
+    elif _type == "modify":
+      consumed = verify_modify_rule(
+          _pattern, artifacts_queue, materials_dict, products_dict)
 
-    # CREATE, DELETE and MODIFY always operate either on products, on materials
-    # or both, independently of the source_type ...
-    elif rule_type == "create":
-      source_products_queue = verify_create_rule(
-          rule, source_materials_queue, source_products_queue)
+    elif _type == "allow":
+      consumed = verify_allow_rule(_pattern, artifacts_queue)
 
-      # The create rule only updates the products_queue, which in turn
-      # only affects the generic artifacts queue if source_type is "products"
-      if source_type == "products":
-        source_artifacts_queue = source_products_queue
+    # It's up to the "disallow" rule to raise an error if artifacts were not
+    # consumed as intended
+    elif _type == "disallow":
+      verify_disallow_rule(_pattern, artifacts_queue)
 
-    elif rule_type == "delete":
-      source_materials_queue = verify_delete_rule(
-          rule, source_materials_queue, source_products_queue)
+    else: # pragma: no cover (unreachable)
+      raise securesystemslib.exceptions.FormatError(
+          "Invaldid rule type '{}'.".format(_type))
 
-      # The delete rule only updates the materials_queue, which in turn
-      # only affects the generic artifacts queue if source_type is "materials"
-      if source_type == "materials":
-        source_artifacts_queue = source_materials_queue
+    artifacts_queue -= consumed
 
-    # NOTE: Can't reach `else` branch, if the rule is none of these types
-    # an exception would have been raised above in `unpack_rule`
-    elif rule_type == "modify": # pragma: no branch
-      # The modify rule updates materials_queue and products_queue. We have to
-      # update the generic artifacts queue accordingly.
-      if source_type == "materials":
-        source_materials_queue, source_products_queue = verify_modify_rule(
-            rule, source_artifacts_queue, source_products_queue,
-            source_materials, source_products)
-        source_artifacts_queue = source_materials_queue
-
-      # NOTE: Can't reach `else` branch, if the source_type is none of these
-      # types an exception would have been raised above in `unpack_rule`
-      elif source_type == "products": # pragma: no branch
-        source_materials_queue, source_products_queue = verify_modify_rule(
-            rule, source_materials_queue, source_artifacts_queue,
-            source_materials, source_products)
-        source_artifacts_queue = source_products_queue
-
-    # Store all available queues of rule in results and add to traceback
-    results_dict["rule"] = rule
-    results_dict["artifacts"] = source_artifacts_queue
-    results_dict["materials"] = source_materials_queue
-    results_dict["products"] = source_products_queue
-    RULE_TRACE["trace"].append(results_dict)
+    # Append rule and copy of queue to global info for a rich error message
+    RULE_TRACE["trace"].append({
+          "rule": rule,
+          "queue": list(artifacts_queue)
+        })
 
 
 def verify_all_item_rules(items, links):
@@ -1240,7 +1068,6 @@ def verify_all_item_rules(items, links):
     None.
 
   """
-
   for item in items:
     log.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
@@ -1323,42 +1150,6 @@ def verify_threshold_constraints(layout, chain_link_dict):
                     step_name=step.name, keyid=reference_keyid),
                 in_toto.models.link.FILENAME_FORMAT.format(
                     step_name=step.name, keyid=keyid)))
-
-
-def get_traceback_info():
-  """
-  <Purpose>
-    Retrieves traceback information for the error message meant to be printed 
-    out when a RuleVerificationError is raised using elements of the rule trace.
-
-  <Arguments>
-    None.
-
-  <Exceptions>
-    None.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    A string containing a traceback for all processed rules with rule names 
-    and the states of the queues after each round of rule processing.
-
-  """
-
-  traceback_str = "Trace for earlier '{0}' rules of item '{1}':\n".format(
-      RULE_TRACE["type"], RULE_TRACE["name"])
-
-  for count, trace_entry in enumerate(RULE_TRACE["trace"]):
-    if count == 0:
-      traceback_str += "Initial state of queues:\n"
-    else:
-      traceback_str += "Queues after processing of rule '{0}':\n".format(
-          trace_entry["rule"])
-    for q_name in ["artifacts", "materials", "products"]:
-      traceback_str += "\t{}: {}\n".format(q_name, trace_entry[q_name])
-
-  return traceback_str
 
 
 def reduce_chain_links(chain_link_dict):
