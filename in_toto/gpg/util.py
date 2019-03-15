@@ -250,7 +250,7 @@ def parse_subpackets(subpacket_octets):
     length = subpacket_octets[ptr]
     ptr += 1
 
-    if length >= 192 and length < 255 : # pragma: no cover
+    if length >= 192 and length < 255: # pragma: no cover
       length = ((length - 192 << 8) + (subpacket_octets[ptr] + 192))
       ptr += 1
 
