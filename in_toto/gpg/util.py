@@ -330,17 +330,19 @@ def get_hashing_class(hash_algorithm_id):
     A pyca/cryptography hashing class
 
   """
-  if hash_algorithm_id == in_toto.gpg.constants.SHA1:
-    return hashing.SHA1
+  supported_hashing_algorithms = [in_toto.gpg.constants.SHA1,
+      in_toto.gpg.constants.SHA256, in_toto.gpg.constants.SHA512]
+  corresponding_hashing_classes = [hashing.SHA1, hashing.SHA256,
+      hashing.SHA512]
 
-  elif hash_algorithm_id == in_toto.gpg.constants.SHA256:
-    return hashing.SHA256
+  # Map supported hash algorithm ids to corresponding hashing classes
+  hashing_class = dict(zip(supported_hashing_algorithms,
+      corresponding_hashing_classes))
 
-  elif hash_algorithm_id == in_toto.gpg.constants.SHA512:
-    return hashing.SHA512
+  try:
+    return hashing_class[hash_algorithm_id]
 
-  else:
+  except KeyError:
     raise ValueError("Hash algorithm '{}' not supported, must be one of '{}' "
         "(see RFC4880 9.4. Hash Algorithms).".format(hash_algorithm_id,
-        {in_toto.gpg.constants.SHA1, in_toto.gpg.constants.SHA256,
-         in_toto.gpg.constants.SHA512}))
+        supported_hashing_algorithms))
