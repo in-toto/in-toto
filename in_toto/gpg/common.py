@@ -192,12 +192,12 @@ def parse_pubkey_bundle(data):
       # - disallow duplicate packets
       if packet_type != PACKET_TYPE_PRIMARY_KEY and \
           not key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
-        raise Exception("First packet must be a primary key ('{}'), got '{}'."
-            .format(PACKET_TYPE_PRIMARY_KEY, packet_type))
+        raise PacketParsingError("First packet must be a primary key ('{}'), "
+            "got '{}'.".format(PACKET_TYPE_PRIMARY_KEY, packet_type))
 
       elif packet_type == PACKET_TYPE_PRIMARY_KEY and \
           key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
-        raise Exception("Unexpected primary key.")
+        raise PacketParsingError("Unexpected primary key.")
 
       # Fully parse master key to fail early, e.g. if key is malformed
       # or not supported, but also retain original packet for subkey binding
@@ -250,7 +250,8 @@ def parse_pubkey_bundle(data):
             PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY,
             PACKET_TYPE_SIGNATURE]))
 
-    except Exception as e:
+    # Both errors might be raised in parse_packet_header and in this loop
+    except (PacketParsingError, IndexError) as e:
       raise PacketParsingError("Invalid public key data at position {}: {}."
           .format(position, e))
 
