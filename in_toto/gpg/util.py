@@ -126,10 +126,10 @@ def parse_packet_header(data, expected_type=None):
 
   # If Bit 6 of 1st octet is set we parse a New Format Packet Length, and
   # an Old Format Packet Lengths otherwise
-  if data[0] & 0x40: # pragma: no cover
+  if data[0] & 0b0100_0000: # pragma: no cover
     # In new format packet lengths the packet type is encoded in Bits 5-0 of
     # the 1st octet of the packet
-    packet_type = data[0] & 0x3f
+    packet_type = data[0] & 0b0011_1111
 
     # The rest of the packet header is the body length header, which may
     # consist of one, two or five octets. To disambiguate the RFC, the first
@@ -157,8 +157,8 @@ def parse_packet_header(data, expected_type=None):
   else:
     # In old format packet lengths the packet type is encoded in Bits 5-2 of
     # the 1st octet and the length type in Bits 1-0
-    packet_type = (data[0] & 0x3c ) >> 2
-    length_type = data[0] & 0x03
+    packet_type = (data[0] & 0b0011_1100 ) >> 2
+    length_type = data[0] & 0b0000_0011
 
     # The body length is encoded using one, two, or four octets, starting
     # with the second octet of the packet
