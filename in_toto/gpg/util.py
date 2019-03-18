@@ -151,9 +151,9 @@ def parse_packet_header(data, expected_type=None):
       header_len = 6
       body_len = data[2] << 24 | data[3] << 16 | data[4] << 8 | data[5]
 
-    else:
-      # raise PacketParsingError below if lengths cannot be determined
-      pass
+    else: # pragma: no cover
+      # Unreachable: octet must be between 0 and 255
+      raise in_toto.gpg.exceptions.PacketParsingError("Invalid new length")
 
   else:
     # In old format packet lengths the packet type is encoded in Bits 5-2 of
@@ -179,11 +179,12 @@ def parse_packet_header(data, expected_type=None):
       raise in_toto.gpg.exceptions.PacketParsingError("Old length format "
           "packets of indeterminate length are not supported")
 
-    else: # pragma: no cover
-      # raise PacketParsingError below if lengths cannot be determined
-      pass
+    else: # pragma: no cover (unreachable)
+      # Unreachable: bits 1-0 must be one of 0 to 3
+      raise in_toto.gpg.exceptions.PacketParsingError("Invalid old length")
 
   if header_len == None or body_len == None: # pragma: no cover
+    # Unreachable: One of above must have assigned lengths or raised error
     raise in_toto.gpg.exceptions.PacketParsingError("Could not determine "
         "packet length")
 
