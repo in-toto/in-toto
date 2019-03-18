@@ -32,11 +32,12 @@ import cryptography.hazmat.primitives.hashes as hashing
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
 from in_toto.gpg.util import (get_version, is_version_fully_supported,
-    get_hashing_class)
+    get_hashing_class, parse_packet_header)
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import parse_pubkey_payload
 from in_toto.gpg.constants import SHA1, SHA256, SHA512
+from in_toto.gpg.exceptions import PacketParsingError
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -59,6 +60,69 @@ class TestUtil(unittest.TestCase):
     # Assert raises ValueError with non-supported hashing id
     with self.assertRaises(ValueError):
       get_hashing_class("bogus_hashing_id")
+
+  def test_parse_packet_header(self):
+    """Test parse_packet_header with manually crafted data. """
+    data_list = [
+        ## New format packet length with mock packet type 100001
+        # one-octet length, header len: 2, body len: 0 to 191
+        [0b01100001, 0],
+        [0b01100001, 191],
+        # two-octet length, header len: 3, body len: 192 to 8383
+        [0b01100001, 192, 0],
+        [0b01100001, 223, 255],
+        # five-octet length, header len: 6, body len: 0 to 4,294,967,295
+        [0b01100001, 255, 0, 0, 0, 0],
+        [0b01100001, 255, 255, 255, 255, 255],
+
+        ## Old format packet lengths with mock packet type 1001
+        # one-octet length, header len: 2, body len: 0 to 255
+        [0b00100100, 0],
+        [0b00100100, 255],
+        # two-octet length, header len: 3, body len: 0 to 65,535
+        [0b00100101, 0, 0],
+        [0b00100101, 255, 255],
+        # four-octet length, header len: 5, body len: 0 to 4,294,967,295
+        [0b00100110, 0, 0, 0, 0, 0],
+        [0b00100110, 255, 255, 255, 255, 255],
+      ]
+
+    # packet_type | header_len | body_len | packet_len
+    expected = [
+        (33, 2, 0, 2),
+        (33, 2, 191, 193),
+        (33, 3, 192, 195),
+        (33, 3, 8383, 8386),
+        (33, 6, 0, 6),
+        (33, 6, 4294967295, 4294967301),
+        (9, 2, 0, 2),
+        (9, 2, 255, 257),
+        (9, 3, 0, 3),
+        (9, 3, 65535, 65538),
+        (9, 5, 0, 5),
+        (9, 5, 4294967295, 4294967300),
+      ]
+
+    for idx, data in enumerate(data_list):
+      result = parse_packet_header(bytearray(data))
+      self.assertEqual(result, expected[idx])
+
+
+    # New Format Packet Lengths with Partial Body Lengths range
+    for second_octet in [224, 254]:
+      with self.assertRaises(PacketParsingError):
+        parse_packet_header(bytearray([0b01100001, second_octet]))
+
+    # Old Format Packet Lengths with indeterminate length (length type 3)
+    with self.assertRaises(PacketParsingError):
+      parse_packet_header(bytearray([0b00100111]))
+
+    # Get expected type
+    parse_packet_header(bytearray([0b01100001, 0]), expected_type=33)
+
+    # Raise with unexpected type
+    with self.assertRaises(PacketParsingError):
+      parse_packet_header(bytearray([0b01100001, 0]), expected_type=34)
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")

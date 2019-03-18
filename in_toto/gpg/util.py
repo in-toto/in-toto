@@ -127,7 +127,7 @@ def parse_packet_header(data, expected_type=None):
 
   # If Bit 6 of 1st octet is set we parse a New Format Packet Length, and
   # an Old Format Packet Lengths otherwise
-  if data[0] & 0b01000000: # pragma: no cover
+  if data[0] & 0b01000000:
     # In new format packet lengths the packet type is encoded in Bits 5-0 of
     # the 1st octet of the packet
     packet_type = data[0] & 0b00111111
@@ -167,15 +167,15 @@ def parse_packet_header(data, expected_type=None):
       body_len = data[1]
       header_len = 2
 
-    elif length_type == 1: # pragma: no branch
+    elif length_type == 1:
       header_len = 3
       body_len = struct.unpack(">H", data[1:header_len])[0]
 
-    elif length_type == 2: # pragma: no cover
+    elif length_type == 2:
       header_len = 5
       body_len = struct.unpack(">I", data[1:header_len])[0]
 
-    elif length_type == 3: # pragma: no cover
+    elif length_type == 3:
       raise in_toto.gpg.exceptions.PacketParsingError("Old length format "
           "packets of indeterminate length are not supported")
 
@@ -188,10 +188,9 @@ def parse_packet_header(data, expected_type=None):
     raise in_toto.gpg.exceptions.PacketParsingError("Could not determine "
         "packet length")
 
-  if expected_type != None and packet_type != expected_type: # pragma: no cover
+  if expected_type != None and packet_type != expected_type:
     raise in_toto.gpg.exceptions.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
-
 
   return packet_type, header_len, body_len, header_len + body_len
 
