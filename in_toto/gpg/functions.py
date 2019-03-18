@@ -137,8 +137,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   return signature
 
 
-def gpg_verify_signature(signature_object, pubkey_info, content,
-    hash_algorithm_id=None):
+def gpg_verify_signature(signature_object, pubkey_info, content):
   """
   <Purpose>
     Verifies the passed signature against the passed content using the
@@ -157,11 +156,6 @@ def gpg_verify_signature(signature_object, pubkey_info, content,
 
     content:
             The content to be verified. (bytes)
-    hash_algorithm_id: (optional)
-            one of SHA1, SHA256, SHA512 (see in_toto.gpg.constants) used to
-            verify the signature. Default is SHA256.
-            NOTE: The hash algorithms specified in "pubkey_info"'s
-            "hashes" or "method" field are currently not considered.
 
   <Exceptions>
     None.
@@ -176,9 +170,6 @@ def gpg_verify_signature(signature_object, pubkey_info, content,
   in_toto.gpg.formats.PUBKEY_SCHEMA.check_match(pubkey_info)
   in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
 
-  if hash_algorithm_id == None:
-    hash_algorithm_id = SHA256
-
   handler = SIGNATURE_HANDLERS[pubkey_info['type']]
   sig_keyid = signature_object["keyid"]
 
@@ -190,7 +181,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content,
     verification_key = pubkey_info["subkeys"][sig_keyid]
 
   return handler.gpg_verify_signature(
-      signature_object, verification_key, content, hash_algorithm_id)
+      signature_object, verification_key, content, SHA256)
 
 
 def gpg_export_pubkey(keyid, homedir=None):

@@ -183,6 +183,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content,
     hash_algorithm_id:
             one of SHA1, SHA256, SHA512 (see in_toto.gpg.constants) used to
             verify the signature
+            NOTE: Overrides any hash algorithm specification in "pubkey_info"'s
+            "hashes" or "method" fields.
 
     content:
             The signed bytes against which the signature is verified
