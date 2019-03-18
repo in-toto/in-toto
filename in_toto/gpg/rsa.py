@@ -25,7 +25,6 @@ import cryptography.exceptions
 import in_toto.gpg.util
 import in_toto.gpg.exceptions
 import in_toto.gpg.formats
-import in_toto.gpg.constants
 
 def create_pubkey(pubkey_info):
   """
