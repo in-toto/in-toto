@@ -27,13 +27,16 @@ from six import string_types
 
 import cryptography.hazmat.primitives.serialization as serialization
 import cryptography.hazmat.backends as backends
+import cryptography.hazmat.primitives.hashes as hashing
 
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
-from in_toto.gpg.util import get_version, is_version_fully_supported
+from in_toto.gpg.util import (get_version, is_version_fully_supported,
+    get_hashing_class)
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import parse_pubkey_payload
+from in_toto.gpg.constants import SHA1, SHA256, SHA512
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -45,6 +48,18 @@ class TestUtil(unittest.TestCase):
     """Run dummy tests for coverage. """
     self.assertTrue(isinstance(get_version(), string_types))
     self.assertTrue(isinstance(is_version_fully_supported(), bool))
+
+  def test_get_hashing_class(self):
+    # Assert return expected hashing class
+    expected_hashing_class = [hashing.SHA1, hashing.SHA256, hashing.SHA512]
+    for idx, hashing_id in enumerate([SHA1, SHA256, SHA512]):
+      result = get_hashing_class(hashing_id)
+      self.assertEqual(result, expected_hashing_class[idx])
+
+    # Assert raises ValueError with non-supported hashing id
+    with self.assertRaises(ValueError):
+      get_hashing_class("bogus_hashing_id")
+
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestCommon(unittest.TestCase):
