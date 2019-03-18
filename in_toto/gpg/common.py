@@ -179,10 +179,11 @@ def parse_pubkey_bundle(data):
   position = 0
   while position < len(data):
     try:
-      payload, packet_length, packet_type = \
+      packet_type, header_len, body_len, packet_length = \
           in_toto.gpg.util.parse_packet_header(data[position:])
-      body_len = len(payload)
+
       packet = data[position:position+packet_length]
+      payload = packet[header_len:]
 
       # The first (and only the first) packet in the bundle must be the master
       # key.  See RFC4880 12.1 Key Structures, V4 version keys
@@ -204,7 +205,7 @@ def parse_pubkey_bundle(data):
       # signature verification
       elif packet_type == PACKET_TYPE_PRIMARY_KEY:
         key_bundle[PACKET_TYPE_PRIMARY_KEY] = {
-          "key": parse_pubkey_payload(payload),
+          "key": parse_pubkey_payload(bytearray(payload)),
           "packet": packet,
           "signatures": []
         }
@@ -551,6 +552,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   <Exceptions>
     ValueError: if the signature packet is not supported or the data is
       malformed
+    IndexError: if the signature packet is incomplete
 
   <Side Effects>
     None.
@@ -570,8 +572,10 @@ def parse_signature_packet(data, supported_signature_types=None,
   if not supported_hash_algorithms:
     supported_hash_algorithms = {SHA256}
 
-  data, junk_length, junk_type = in_toto.gpg.util.parse_packet_header(
+  _, header_len, _, packet_len = in_toto.gpg.util.parse_packet_header(
       data, PACKET_TYPE_SIGNATURE)
+
+  data = bytearray(data[header_len:packet_len])
 
   ptr = 0
 
