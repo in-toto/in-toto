@@ -32,7 +32,7 @@ import cryptography.hazmat.primitives.hashes as hashing
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
 from in_toto.gpg.util import (get_version, is_version_fully_supported,
-    get_hashing_class, parse_packet_header)
+    get_hashing_class, parse_packet_header, parse_subpacket_header)
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import parse_pubkey_payload
@@ -123,6 +123,36 @@ class TestUtil(unittest.TestCase):
     # Raise with unexpected type
     with self.assertRaises(PacketParsingError):
       parse_packet_header(bytearray([0b01100001, 0]), expected_type=34)
+
+
+  def test_parse_subpacket_header(self):
+    """Test parse_subpacket_header with manually crafted data. """
+    # All items until last item encode the length of the subpacket,
+    # the last item encodes the mock subpacket type.
+    data_list = [
+      # length of length 1, subpacket length 0 to 191
+      [0, 33], # NOTE: Nonsense 0-length
+      [191, 33],
+      # # length of length 2, subpacket length 192 to 16,319
+      [192, 0, 33],
+      [254, 255, 33],
+      # # length of length 5, subpacket length 0 to 4,294,967,295
+      [255, 0, 0, 0, 0, 33], # NOTE: Nonsense 0-length
+      [255, 255, 255, 255, 255, 33],
+    ]
+    # packet_type | header_len | body_len | packet_len
+    expected = [
+      (33, 2, -1, 1), # NOTE: Nonsense negative payload
+      (33, 2, 190, 192),
+      (33, 3, 191, 194),
+      (33, 3, 16318, 16321),
+      (33, 6, -1, 5), # NOTE: Nonsense negative payload
+      (33, 6, 4294967294, 4294967300)
+    ]
+
+    for idx, data in enumerate(data_list):
+      result = parse_subpacket_header(bytearray(data))
+      self.assertEqual(result, expected[idx])
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
