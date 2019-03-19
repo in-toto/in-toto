@@ -218,17 +218,42 @@ def compute_keyid(pubkey_packet_data):
   hasher.update(bytes(pubkey_packet_data))
   return binascii.hexlify(hasher.finalize()).decode("ascii")
 
+def parse_subpacket_header(data):
+  """ Parse out subpacket header as per RFC4880 5.2.3.1. Signature Subpacket
+  Specification. """
+  # NOTE: Although the RFC does not state it explicitly, the length encoded
+  # in the header must be greater equal 1, as it includes the mandatory
+  # subpacket type octet.
+  # Hence, passed bytearrays like [0] or [255, 0, 0, 0, 0], which encode a
+  # subpacket length 0  are invalid.
+  # The caller has to deal with the resulting IndexError.
+  if data[0] < 192:
+    length_len = 1
+    length = data[0]
 
-def parse_subpackets(subpacket_octets):
+  elif data[0] >= 192 and data[0] < 255:
+    length_len = 2
+    length = ((data[0] - 192 << 8) + (data[1] + 192))
+
+  elif data[0] == 255:
+    length_len = 5
+    length = struct.unpack(">I", data[1:length_len])[0]
+
+  else: # pragma: no cover (unreachable)
+    raise in_toto.gpg.exceptions.PacketParsingError("Invalid subpacket header")
+
+  return data[length_len], length_len + 1, length - 1, length_len + length
+
+def parse_subpackets(data):
   """
   <Purpose>
     parse the subpackets fields
 
   <Arguments>
-    subpacket_octets: the unparsed subpacketoctets
+    data: the unparsed subpacketoctets
 
   <Exceptions>
-    in_toto.gpg.exceptions.PacketParsingError if the octets are malformed
+    IndexErrorif the subpackets octets are incomplete or malformed
 
   <Side Effects>
     None
@@ -241,31 +266,16 @@ def parse_subpackets(subpacket_octets):
         ]
   """
   parsed_subpackets = []
-  ptr = 0
+  position = 0
 
-  # As per section 5.2.3.1, paragraph four of RFC4880, the subpacket length
-  # can be encoded in 1, 2 or 5 octets. Depending on the values described here
-  # we unpack 1, 2 or 5 octets to decode the length.
-  # The subpacket length includes packet type (first octet) and payload, but
-  # not the length of the length.
-  while ptr < len(subpacket_octets):
-    length = subpacket_octets[ptr]
-    ptr += 1
+  while position < len(data):
+    subpacket_type, header_len, _, subpacket_len = \
+        parse_subpacket_header(data[position:])
 
-    if length >= 192 and length < 255: # pragma: no cover
-      length = ((length - 192 << 8) + (subpacket_octets[ptr] + 192))
-      ptr += 1
+    payload = data[position+header_len:position+subpacket_len]
+    parsed_subpackets.append((subpacket_type, payload))
 
-    if length == 255: # pragma: no cover
-      length = struct.unpack(">I", subpacket_octets[ptr:ptr + 4])[0]
-      ptr += 4
-
-    packet_type = subpacket_octets[ptr]
-    ptr += 1
-
-    packet_payload = subpacket_octets[ptr:ptr + length - 1]
-    parsed_subpackets.append((packet_type, packet_payload))
-    ptr += length - 1
+    position += subpacket_len
 
   return parsed_subpackets
 
