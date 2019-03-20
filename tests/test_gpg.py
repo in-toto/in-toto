@@ -37,7 +37,9 @@ from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import parse_pubkey_payload
 from in_toto.gpg.constants import SHA1, SHA256, SHA512
-from in_toto.gpg.exceptions import PacketParsingError
+from in_toto.gpg.exceptions import (PacketParsingError,
+    PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError)
+
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -158,10 +160,22 @@ class TestUtil(unittest.TestCase):
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
-  def test_parse_empty_pubkey_payload(self):
-    """Test that passing nothing to parse_pubkey_payload raises ValueError. """
-    with self.assertRaises(ValueError):
-      parse_pubkey_payload(None)
+  def test_parse_pubkey_payload_errors(self):
+    """ Test parse_pubkey_payload errors with manually crafted data. """
+    # passed data | expected error | expected error message
+    test_data = [
+      (None, ValueError, "empty pubkey"),
+      (bytearray([0x03]), PacketVersionNotSupportedError,
+          "packet version '3' not supported"),
+      (bytearray([0x04, 0, 0, 0, 0, 255]), SignatureAlgorithmNotSupportedError,
+          "Signature algorithm '255' not supported")
+    ]
+
+    for data, error, error_str in test_data:
+      with self.assertRaises(error) as ctx:
+        parse_pubkey_payload(data)
+      self.assertTrue(error_str in str(ctx.exception))
+
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")

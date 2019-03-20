@@ -87,7 +87,7 @@ def parse_pubkey_payload(data):
   keyinfo = {}
   version_number = data[ptr]
   ptr += 1
-  if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS: # pragma: no cover
+  if version_number not in SUPPORTED_PUBKEY_PACKET_VERSIONS:
     raise PacketVersionNotSupportedError(
         "Pubkey packet version '{}' not supported, must be one of {}".format(
         version_number, SUPPORTED_PUBKEY_PACKET_VERSIONS))
