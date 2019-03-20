@@ -137,10 +137,14 @@ def parse_pubkey_payload(data):
 def parse_pubkey_bundle(data):
   """
   <Purpose>
-    Parse and verify passed gpg public key data and return the master
-    key (aka. primary key) including certified information (e.g. key
-    expiration date), and corresponding subkeys bound to the primary key via
-    signatures.
+    Parse packets from passed gpg public key data, associating self-signatures
+    with the packets they correspond to, based on the structure of V4 keys
+    defined in RFC4880 12.1 Key Structures.
+
+    The returned raw key bundle may be used to further enrich the master key,
+    with certified information (e.g. key expiration date) taken from
+    self-signatures, and/or to verify that the parsed subkeys are bound to the
+    primary key via signatures.
 
   <Arguments>
     data:
@@ -156,8 +160,8 @@ def parse_pubkey_bundle(data):
     None.
 
   <Returns>
-    A tuple of a public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA
-    that contains the master key, and a list of public keys in the same format.
+    A raw public key bundle where self-signatures are associated with their
+    corresponding packets. See `key_bundle` for details.
 
   """
   if not data:
@@ -184,7 +188,6 @@ def parse_pubkey_bundle(data):
 
       packet = data[position:position+packet_length]
       payload = packet[header_len:]
-
       # The first (and only the first) packet in the bundle must be the master
       # key.  See RFC4880 12.1 Key Structures, V4 version keys
       # TODO: Do we need additional key structure assertions? e.g.
@@ -259,12 +262,7 @@ def parse_pubkey_bundle(data):
     # Go to next packet
     position += packet_length
 
-  # Parsing is done. Now enrich the master key with certificate info and
-  # verify the subkeys bindings.
-  master_key = _assign_certified_key_info(key_bundle)
-  verified_subkeys = _get_verified_subkeys(key_bundle)
-
-  return master_key, verified_subkeys
+  return key_bundle
 
 
 def _assign_certified_key_info(bundle):
@@ -492,7 +490,9 @@ def get_pubkey_bundle(data, keyid):
 
   # Parse out master key and subkeys (enriched and verified via certificates
   # and binding signatures)
-  master_public_key, sub_public_keys = parse_pubkey_bundle(data)
+  raw_key_bundle = parse_pubkey_bundle(data)
+  master_public_key = _assign_certified_key_info(raw_key_bundle)
+  sub_public_keys = _get_verified_subkeys(raw_key_bundle)
 
   # Since GPG returns all pubkeys associated with a keyid (master key and
   # subkeys) we check which key matches the passed keyid.
