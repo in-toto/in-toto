@@ -41,6 +41,7 @@ from in_toto.gpg.util import (get_version, is_version_fully_supported,
     get_hashing_class, parse_packet_header, parse_subpacket_header)
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
+
 from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
     get_pubkey_bundle, _assign_certified_key_info, _get_verified_subkeys,
     parse_signature_packet)
@@ -609,8 +610,8 @@ class TestGPGDSA(unittest.TestCase):
 class TestGPGExpiration(unittest.TestCase):
   """Test signature creation, verification and key export from the gpg
   module using key expiration dates"""
-  default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
-  #default_keyid = "4DC594A140BBAB0C58884B23AF71E9D00DE7407B"
+  default_keyid = "93F1502C7E881FBF19F6A9388E13C5924E113F88"
+  primary_user_keyid = "9B4D420F4C938E79A5472E0BC80CFCA4C436B2E3"
 
   @classmethod
   def setUpClass(self):
@@ -776,30 +777,48 @@ class TestGPGExpiration(unittest.TestCase):
 
 
   def test_gpg_invalid_signature_keyid_and_data(self):
-    """Test that signature data packet passed into parse_pubkey_bundle with
+    """Test that public key data passed into get_pubkey_bundle with
     invalid keyid that is not already stored raises KeyNotFoundError. """
-    
+
     bad_keyid = "5465A1E2E0FB2B40ADB2529E18FB3F537E0C8A12"
-    
+
     homearg = "--homedir {}".format(self.gnupg_home).replace("\\", "/")
 
     command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=self.default_keyid,
         homearg=homearg)
-    proc = process.run(command, stdout=process.PIPE,
-      stderr=process.PIPE)
 
-    key_packet = proc.stdout
-    # import pdb; pdb.set_trace()
-    packet_start = 0
-    while packet_start < len(key_packet):
-      payload, length, p_type = parse_packet_header(key_packet[packet_start:])
-      if p_type == PACKET_TYPE_SIGNATURE:
-        key_packet = key_packet[packet_start:]
-        with self.assertRaises(KeyNotFoundError):
-          parse_pubkey_bundle(key_packet, bad_keyid)
-        break
-      else:
-        packet_start += length
+    proc = process.run(command, stdout=process.PIPE, stderr=process.PIPE)
+    valid_data = proc.stdout
+
+    with self.assertRaises(KeyNotFoundError):
+      get_pubkey_bundle(valid_data, bad_keyid)
+
+
+  def test_gpg_invalid_public_key_data(self):
+    """Test that empty public key data passed into get_pubkey_bundle
+    even with valid public keyid will raise KeyNotFoundError. """
+
+    bad_data = None
+
+    with self.assertRaises(KeyNotFoundError):
+      get_pubkey_bundle(bad_data, self.default_keyid)
+
+
+  def test_gpg_parse_public_key_data_and_return(self):
+    """Test that public key data passed into parse_pubkey_bundle can be
+    parsed and verified to return a valid primary key with subkeys. """
+
+    homearg = "--homedir {}".format(self.gnupg_home).replace("\\", "/")
+
+    command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=self.primary_user_keyid,
+        homearg=homearg)
+    proc = process.run(command, stdout=process.PIPE, stderr=process.PIPE)
+    pubkey_data = proc.stdout
+
+    p_key = parse_pubkey_bundle(pubkey_data)[0]
+    m_key = gpg_export_pubkey(self.primary_user_keyid, homedir=self.gnupg_home)
+
+    self.assertEquals(p_key["expiration"], m_key["expiration"])
 
 
 if __name__ == "__main__":

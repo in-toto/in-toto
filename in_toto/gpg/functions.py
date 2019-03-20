@@ -94,13 +94,14 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
 
   signature_data = process.stdout
-  signature = in_toto.gpg.common.parse_signature_packet(signature_data,"BINARY")
+  signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
   pubkey_info = gpg_export_pubkey(signature["short_keyid"], homedir)
 
-  if pubkey_info.get("expiration"): # pragma: no cover
+  key_expiration_date = pubkey_info.get("expiration")
+  if key_expiration_date and key_expiration_date != 0: # pragma: no cover
     expire_datetime = datetime.datetime.fromtimestamp(pubkey_info["expiration"])
-    if expire_datetime < datetime.datetime.now():
+    if expire_datetime < datetime.datetime.now() and expire_datetime != 0:
       log.warning("Key is already expired, which means the generated GPG"
           " signature will no longer be considered as valid.")
 
@@ -125,7 +126,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     error_str = ("Now that the key has been extracted from the gpg keychain, it"
         " will be cut off from any gpg key server updates.\nThese will include"
         " elements like extensions of the expiration date for the key.\n")
-    if key_expiration_date:
+    if key_expiration_date and key_expiration_date != 0:
       error_str += " Key Expiration Date: '{}'".format(key_expiration_date)
     log.warning(error_str)
 
@@ -201,11 +202,12 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   # If the expiration date of the key has already passed, GPG signature
   # being checked should fail the verification process and be rejected.
   key_expiration = pubkey_info.get("expiration")
-  if key_expiration:
+  if key_expiration and key_expiration != 0:
     expiration_datetime = datetime.datetime.fromtimestamp(key_expiration)
     if expiration_datetime <= datetime.datetime.now():
-      raise ValueError("Key with keyid '{}' has passed its expiration date. "
-              "Signature is not valid and has been rejected.".format(sig_keyid))
+      raise ValueError("Key with keyid '{}' has passed its expiration date "
+              "'{}'. Signature is not valid and has been rejected.".
+              format(sig_keyid, key_expiration))
 
   return handler.gpg_verify_signature(
       signature_object, verification_key, content, SHA256)
