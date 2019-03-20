@@ -87,11 +87,16 @@ SHA512 = 0x0A
 SIGNATURE_TYPE_BINARY = 0x00
 SIGNATURE_TYPE_SUB_KEY_BINDING = 0x18
 SIGNATURE_TYPE_CERTIFICATES = {0x10, 0x11, 0x12, 0x13}
+SIGNATURE_TYPE_PARSING = {0x10, 0x11, 0x12, 0x13, 0x18}
 
-# See section 5.2.3.1 (Key Expiration Time) of RFC4880
+# See section 5.2.3.4 (Signature Creation Time) of RFC4880
+SIG_CREATION_SUBPACKET = 0x02
+# See section 5.2.3.6 (Key Expiration Time) of RFC4880
 KEY_EXPIRATION_SUBPACKET = 0x09
 
 # See section 5.2.3.5. (Issuer) of RFC4880
 PARTIAL_KEYID_SUBPACKET = 0x10
+# See section 5.2.3.19 (Primary User ID) of RFC4880
+PRIMARY_USERID_SUBPACKET = 0x19
 # See section 5.2.3.28. (Issuer Fingerprint) of rfc4880bis-06
 FULL_KEYID_SUBPACKET = 0x21

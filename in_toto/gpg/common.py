@@ -31,9 +31,10 @@ from in_toto.gpg.constants import (
     PACKET_TYPE_SUB_KEY, PACKET_TYPE_SIGNATURE,
     SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
     SIGNATURE_TYPE_CERTIFICATES, SIGNATURE_TYPE_SUB_KEY_BINDING,
-    SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-    SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET, SHA1,
-    SHA256, SHA512, KEY_EXPIRATION_SUBPACKET)
+    SIGNATURE_TYPE_PARSING, SUPPORTED_SIGNATURE_PACKET_VERSIONS, 
+    SUPPORTED_SIGNATURE_ALGORITHMS, SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, 
+    PARTIAL_KEYID_SUBPACKET, SHA1,SHA256, SHA512, KEY_EXPIRATION_SUBPACKET, 
+    PRIMARY_USERID_SUBPACKET, SIG_CREATION_SUBPACKET)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
@@ -166,7 +167,8 @@ def parse_pubkey_bundle(data):
 
   <Returns>
     A tuple of a public key in the format in_toto.gpg.formats.PUBKEY_SCHEMA
-    that contains the master key, and a list of public keys in the same format.
+    that contains the master key, a list of public keys in the same format,
+    and the most up-to-date expiration datetime of the master key.
 
   """
   if not data:
@@ -219,7 +221,7 @@ def parse_pubkey_bundle(data):
           "packet": packet,
           "signatures": []
         }
-        keybundle[PACKET_TYPE_PRIMARY_KEY]['expires'] = \
+        key_bundle[PACKET_TYPE_PRIMARY_KEY]['expires'] = \
             key_bundle[PACKET_TYPE_PRIMARY_KEY]['key']["creation_date"]
 
       # Other non-signature packets in the key bundle include User IDs and User
@@ -249,7 +251,11 @@ def parse_pubkey_bundle(data):
             # Add to most recently added packet's signatures of matching type
             key_bundle[_type][next(reversed(key_bundle[_type]))]\
                 ["signatures"].append(packet)
-            # expires_after = signature["key_expire_time"]
+            signature = parse_signature_packet(packet,
+                supported_hash_algorithms={SHA1, SHA256, SHA512},
+                supported_signature_types=SIGNATURE_TYPE_PARSING,
+                include_info=True)
+            expires_after = signature["key_expire_time"]
             break
 
         else:
@@ -275,14 +281,15 @@ def parse_pubkey_bundle(data):
   # verify the subkeys bindings.
   master_key = _assign_certified_key_info(key_bundle)
   verified_subkeys = _get_verified_subkeys(key_bundle)
+  created = master_key["creation_date"]
   if expires_after and created:
-      current_version_expiration = int(created) + int(expires_after)
-      # FIXME: this *may* fail as of now
-      if current_version_expiration > expiration_datetime:
-        expiration_datetime = current_version_expiration
+    current_version_expiration = int(created) + int(expires_after)
+    # FIXME: this *may* fail as of now
+    if current_version_expiration > expiration_datetime:
+      expiration_datetime = current_version_expiration
 
 
-  return master_key, verified_subkeys
+  return master_key, verified_subkeys, expiration_datetime
 
 
 def _assign_certified_key_info(bundle):
@@ -291,9 +298,6 @@ def _assign_certified_key_info(bundle):
     Helper function to verify User ID certificates corresponding to a gpg
     master key, in order to enrich the master key with additional information
     (e.g. expiration dates). The enriched master key is returned.
-
-    TODO: Do extract the information and address ambiguity (see inline TODO
-    below).
 
     NOTE: Currently we only consider User ID certificates. We can do the same
     for User Attribute certificates by iterating over
@@ -317,6 +321,11 @@ def _assign_certified_key_info(bundle):
   """
   # Create handler shortcut
   handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
+
+  # Initialize creation date and expiration time for most-recent signature
+  recent_sig_created = 0
+  recent_sig_expire = 0
+  user_sig_expire = None
 
   # Verify User ID signatures to gather information about primary key
   # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
@@ -359,11 +368,38 @@ def _assign_certified_key_info(bundle):
             "by '{}'.".format(signature["keyid"]))
         continue
 
-      # TODO: If the signature is valid, extract relevant information from
-      # its "info" field and assign to master key (e.g. expiration) here
+      # If the signature is valid, extract relevant information from its
+      # "info" field and assign to master key (e.g. expiration) here
       # NOTE: Beware of conflicting information. There might be multiple User
       # IDs per primary key and multiple signatures per User ID. See RFC4880
       # 5.2.3.19. and last paragraph of 5.2.3.3. for more info about ambiguity.
+      primary_flag = None
+      tentative_exp_time = None
+      sig_creation_date = 0
+
+      for subpacket in signature["info"]["subpackets"]:
+        if subpacket[0] == KEY_EXPIRATION_SUBPACKET:
+          tentative_exp_time = subpacket[1]
+        elif subpacket[0] == SIG_CREATION_SUBPACKET:
+          sig_creation_date = int(subpacket[1], 16)
+        elif subpacket[0] == PRIMARY_USERID_SUBPACKET:
+          primary_flag = subpacket[1]
+
+      if tentative_exp_time and sig_creation_date >= recent_sig_created:
+        if primary_flag:
+          user_sig_expire = int(tentative_exp_time, 16)
+        else:
+          recent_sig_expire = int(tentative_exp_time, 16)
+        recent_sig_created = sig_creation_date
+
+  if not user_sig_expire and recent_sig_expire == 0:
+    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = 0
+  elif user_sig_expire:
+    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = user_sig_expire + \
+        bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["creation_date"]
+  else:
+    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = recent_sig_expire + \
+        bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["creation_date"]
 
   return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
 
@@ -372,12 +408,10 @@ def _get_verified_subkeys(bundle):
   """
   <Purpose>
     Helper function to verify the subkey binding signature for all subkeys in
-    the passed bundle. Only valid (i.e. parsable) subkeys that are verifiably
-    bound to the the master key of the bundle are returned. All other subkeys
-    are discarded.
-
-    TODO: Extract additional information about subkeys from the signatures
-    (see inline TODO below).
+    the passed bundle in order to enrich subkeys with additional information
+    (e.g. expiration dates). Only valid (i.e. parsable) subkeys that are
+    verifiably bound to the the master key of the bundle are returned. All
+    other subkeys are discarded.
 
   <Arguments>
     bundle:
@@ -452,9 +486,14 @@ def _get_verified_subkeys(bundle):
           .format(subkey["keyid"]))
       continue
 
-    # TODO: If the signature is valid, we may also extract relevant information
+    # If the signature is valid, we may also extract relevant information
     # from its "info" field (e.g. subkey expiration date) and assign to it to
     # the subkey here
+    expire_time = signature["key_expire_time"]
+    if expire_time == 0:
+      subkey["expiration"] = 0
+    else:  
+      subkey["expiration"] = expire_time + subkey["creation_date"]
 
     verified_subkeys[subkey["keyid"]] = subkey
 
@@ -510,7 +549,7 @@ def get_pubkey_bundle(data, keyid):
 
   # Parse out master key and subkeys (enriched and verified via certificates
   # and binding signatures)
-  master_public_key, sub_public_keys = parse_pubkey_bundle(data)
+  master_public_key, sub_public_keys, exp_datetime = parse_pubkey_bundle(data)
     
   # Since GPG returns all pubkeys associated with a keyid (master key and
   # subkeys) we check which key matches the passed keyid.
@@ -535,8 +574,8 @@ def get_pubkey_bundle(data, keyid):
     master_public_key["subkeys"] = sub_public_keys
 
   # Add expiration date to master pubkey "expiration" field if expiration exists
-  if expiration_datetime:
-    master_public_key["expiration"] = expiration_datetime
+  if exp_datetime != 0:
+    master_public_key["expiration"] = exp_datetime
 
   return master_public_key
 
@@ -691,9 +730,8 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
-    # info["subpackets"].append((
-    #   subpacket_type,
-    #   binascii.hexlify(subpacket_data).decode("ascii")))
+    info["subpackets"].append((
+      subpacket_type, binascii.hexlify(subpacket_data).decode("ascii")))
 
   key_expire_time = 0
   # We need to return the key expiration date so we can check for expired keys
