@@ -23,20 +23,24 @@ import os
 import shutil
 import tempfile
 import unittest
+from mock import patch
 from six import string_types
 
 import cryptography.hazmat.primitives.serialization as serialization
 import cryptography.hazmat.backends as backends
 import cryptography.hazmat.primitives.hashes as hashing
 
+from in_toto import process
 from in_toto.gpg.functions import (gpg_sign_object, gpg_export_pubkey,
     gpg_verify_signature)
 from in_toto.gpg.util import (get_version, is_version_fully_supported,
     get_hashing_class, parse_packet_header, parse_subpacket_header)
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
-from in_toto.gpg.common import parse_pubkey_payload
-from in_toto.gpg.constants import SHA1, SHA256, SHA512
+from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
+    get_pubkey_bundle)
+from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
+    GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID)
 from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError)
 
@@ -160,6 +164,23 @@ class TestUtil(unittest.TestCase):
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
+  @classmethod
+  def setUpClass(self):
+    # Load test raw public key bundle from rsa keyring, used to construct
+    # erroneous gpg data in tests below.
+    keyid = "F557D0FF451DEF45372591429EA70BD13D883381"
+
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+    homearg = "--homedir {}".format(gpg_keyring_path)
+
+    cmd = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
+    proc = process.run(cmd, stdout=process.PIPE, stderr=process.PIPE)
+
+    self.raw_key_data = proc.stdout
+    self.raw_key_bundle = parse_pubkey_bundle(self.raw_key_data)
+
+
   def test_parse_pubkey_payload_errors(self):
     """ Test parse_pubkey_payload errors with manually crafted data. """
     # passed data | expected error | expected error message
@@ -176,6 +197,39 @@ class TestCommon(unittest.TestCase):
         parse_pubkey_payload(data)
       self.assertTrue(error_str in str(ctx.exception))
 
+
+  def test_parse_pubkey_bundle_errors(self):
+    """Test parse_pubkey_bundle errors with manually crafted data partially
+    based on a real gpg key data (see self.raw_key_bundle) . """
+    # Extract sample (legitimate) user ID packet and pass as first packet to
+    # raise first packet must be primary key error
+    user_id_packet = list(self.raw_key_bundle[PACKET_TYPE_USER_ID].keys())[0]
+    # Extract sample (legitimate) primary key packet and pass as first two
+    # packets to raise unexpected second primary key error
+    primary_key_packet = self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"]
+    # Create incomplete packet to re-raise header parsing IndexError as
+    # PacketParsingError
+    incomplete_packet = bytearray([0b01111111])
+
+    # passed data | expected error message
+    test_data = [
+      (None, "empty gpg data"),
+      (user_id_packet, "must be a primary key"),
+      (primary_key_packet + primary_key_packet, "Unexpected primary key"),
+      (incomplete_packet, "index out of range")
+    ]
+    for data, error_str in test_data:
+      with self.assertRaises(PacketParsingError) as ctx:
+        parse_pubkey_bundle(data)
+      self.assertTrue(error_str in str(ctx.exception))
+
+    # Create empty packet of unsupported type 66 (bit 0-5) and length 0 and
+    # pass as second packet to provoke skipping of unsupported packet
+    unsupported_packet = bytearray([0b01111111, 0])
+    with patch("in_toto.gpg.common.log") as mock_log:
+      parse_pubkey_bundle(primary_key_packet + unsupported_packet)
+      self.assertTrue("Ignoring gpg key packet '63'" in
+          mock_log.info.call_args[0][0])
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
