@@ -42,7 +42,8 @@ from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID)
 from in_toto.gpg.exceptions import (PacketParsingError,
-    PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError)
+    PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
+    KeyNotFoundError)
 
 
 import securesystemslib.formats
@@ -230,6 +231,13 @@ class TestCommon(unittest.TestCase):
       parse_pubkey_bundle(primary_key_packet + unsupported_packet)
       self.assertTrue("Ignoring gpg key packet '63'" in
           mock_log.info.call_args[0][0])
+
+
+  def test_get_pubkey_bundle_errors(self):
+    """Pass wrong keyid with valid gpg data to trigger KeyNotFoundError. """
+    not_associated_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
+    with self.assertRaises(KeyNotFoundError):
+      get_pubkey_bundle(self.raw_key_data, not_associated_keyid)
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
