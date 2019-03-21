@@ -32,6 +32,7 @@ WORKING_DIR = os.getcwd()
 
 
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestInTotoSignTool(tests.common.CliTestCase):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
