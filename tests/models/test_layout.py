@@ -217,10 +217,10 @@ class TestLayoutMethods(unittest.TestCase):
     self.assertEqual(len(layout.get_functionary_key_id_list()), 0)
 
     layout.add_functionary_keys_from_paths([self.pubkey_path1,
-                                            self.pubkey_path2])
+        self.pubkey_path2])
 
     layout.add_functionary_keys_from_gpg_keyids([self.gpg_keyid1,
-                                                 self.gpg_keyid2], gpg_home=self.gnupg_home)
+        self.gpg_keyid2], gpg_home=self.gnupg_home)
 
     layout._validate_keys()
 
