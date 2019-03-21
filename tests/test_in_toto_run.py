@@ -162,6 +162,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
           [self.test_artifact])
 
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
   def test_main_with_unencrypted_ed25519_key(self):
     """Test CLI command with ed25519 key. """
     args = ["-n", self.test_step,
