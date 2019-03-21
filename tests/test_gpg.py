@@ -39,7 +39,7 @@ from in_toto.gpg.util import (get_version, is_version_fully_supported,
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
-    get_pubkey_bundle, _assign_certified_key_info)
+    get_pubkey_bundle, _assign_certified_key_info, _get_verified_subkeys)
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
     PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
@@ -313,6 +313,59 @@ class TestCommon(unittest.TestCase):
     for bundle, expected_msg in test_data:
       with patch("in_toto.gpg.common.log") as mock_log:
         _assign_certified_key_info(bundle)
+        msg = str(mock_log.info.call_args[0][0])
+        self.assertTrue(expected_msg in msg,
+            "'{}' not in '{}'".format(expected_msg, msg))
+
+  def test_get_verified_subkeys_errors(self):
+    """Test _get_verified_subkeys errors with manually crafted data based on a
+    real gpg key data (see self.raw_key_bundle). """
+
+    # Tamper with subkey (change version number) to trigger key parsing error
+    bad_subkey_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = bad_subkey_bundle[PACKET_TYPE_SUB_KEY].popitem()
+    packet = bytes(packet[:packet_data["header_len"]] +
+        bytearray([0x03]) + packet[packet_data["header_len"]+1:])
+    bad_subkey_bundle[PACKET_TYPE_SUB_KEY][packet] = packet_data
+
+    # Add bogus sig to trigger sig parsing error
+    wrong_sig_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = wrong_sig_bundle[PACKET_TYPE_SUB_KEY].popitem()
+    # NOTE: We can't only pass the bogus sig, because that would also trigger
+    # the not enough sigs error (see not_enough_sigs_bundle) and mock only
+    # lets us assert for the most recent log statement
+    packet_data["signatures"].append(bytearray([0b01111111, 0]))
+    wrong_sig_bundle[PACKET_TYPE_SUB_KEY][packet] = packet_data
+
+    # Remove sigs to trigger not enough sigs error
+    not_enough_sigs_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = not_enough_sigs_bundle[PACKET_TYPE_SUB_KEY].popitem()
+    packet_data["signatures"] = []
+    not_enough_sigs_bundle[PACKET_TYPE_SUB_KEY][packet] = packet_data
+
+    # Duplicate sig to trigger wrong amount signatures
+    too_many_sigs_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = too_many_sigs_bundle[PACKET_TYPE_SUB_KEY].popitem()
+    packet_data["signatures"] = packet_data["signatures"] * 2
+    too_many_sigs_bundle[PACKET_TYPE_SUB_KEY][packet] = packet_data
+
+    # Tamper with primary key to trigger signature verification error
+    invalid_sig_bundle = deepcopy(self.raw_key_bundle)
+    invalid_sig_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] = \
+      invalid_sig_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"][:-1]
+
+
+    test_data = [
+      (bad_subkey_bundle, "Pubkey packet version '3' not supported"),
+      (wrong_sig_bundle, "Expected packet 2, but got 63 instead"),
+      (not_enough_sigs_bundle, "wrong amount of key binding signatures (0)"),
+      (too_many_sigs_bundle, "wrong amount of key binding signatures (2)"),
+      (invalid_sig_bundle, "invalid key binding signature"),
+    ]
+
+    for bundle, expected_msg in test_data:
+      with patch("in_toto.gpg.common.log") as mock_log:
+        _get_verified_subkeys(bundle)
         msg = str(mock_log.info.call_args[0][0])
         self.assertTrue(expected_msg in msg,
             "'{}' not in '{}'".format(expected_msg, msg))

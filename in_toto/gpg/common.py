@@ -298,14 +298,12 @@ def _assign_certified_key_info(bundle):
   """
   # Create handler shortcut
   handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
-
   # Verify User ID signatures to gather information about primary key
   # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
   for user_id_packet, packet_data in bundle[PACKET_TYPE_USER_ID].items():
     # Construct signed content (see RFC4880 section 5.2.4. paragraph 4)
     signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] +
         b"\xb4\x00\x00\x00" + user_id_packet[1:])
-
     for signature_packet in packet_data["signatures"]:
       try:
         signature = parse_signature_packet(signature_packet,
@@ -392,7 +390,8 @@ def _get_verified_subkeys(bundle):
     signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] + b"\x99" +
         subkey_packet[1:])
 
-    # Filter sub key binding signature (there must be exactly one for each key)
+    # Filter sub key binding signature from other signatures, e.g. subkey
+    # binding revocation signatures
     key_binding_signatures = []
     for signature_packet in packet_data["signatures"]:
       try:
