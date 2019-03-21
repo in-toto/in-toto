@@ -25,6 +25,7 @@ import tempfile
 import unittest
 from mock import patch
 from six import string_types
+from copy import deepcopy
 
 import cryptography.hazmat.primitives.serialization as serialization
 import cryptography.hazmat.backends as backends
@@ -38,7 +39,7 @@ from in_toto.gpg.util import (get_version, is_version_fully_supported,
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
-    get_pubkey_bundle)
+    get_pubkey_bundle, _assign_certified_key_info)
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
     PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
@@ -277,6 +278,44 @@ class TestCommon(unittest.TestCase):
       # and one self-signature
       self.assertEqual(
           len(self.raw_key_bundle[_type][raw_packet]["signatures"]), 1)
+
+
+  def test_assign_certified_key_info_errors(self):
+    """Test _assign_certified_key_info errors with manually crafted data
+    based on a real gpg key data (see self.raw_key_bundle). """
+
+    # Replace legitimate user certifacte with a bogus packet
+    wrong_cert_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = wrong_cert_bundle[PACKET_TYPE_USER_ID].popitem()
+    packet_data["signatures"] = [bytearray([0b01111111, 0])]
+    wrong_cert_bundle[PACKET_TYPE_USER_ID][packet] = packet_data
+
+    # Replace primary key id with a non-associated keyid
+    wrong_keyid_bundle = deepcopy(self.raw_key_bundle)
+    wrong_keyid_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["keyid"] = \
+        "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
+
+    # Remove a byte in user id packet to make signature verification fail
+    invalid_cert_bundle = deepcopy(self.raw_key_bundle)
+    packet, packet_data = invalid_cert_bundle[PACKET_TYPE_USER_ID].popitem()
+    packet = packet[:-1]
+    invalid_cert_bundle[PACKET_TYPE_USER_ID][packet] = packet_data
+
+    test_data = [
+      # Skip and log parse_signature_packet error
+      (wrong_cert_bundle, "Expected packet 2, but got 63 instead"),
+      # Skip and log signature packet that doesn't match primary key id
+      (wrong_keyid_bundle, "Ignoring User ID certificate issued by"),
+      # Skip and log invalid signature
+      (invalid_cert_bundle, "Ignoring invalid User ID self-certificate")
+    ]
+
+    for bundle, expected_msg in test_data:
+      with patch("in_toto.gpg.common.log") as mock_log:
+        _assign_certified_key_info(bundle)
+        msg = str(mock_log.info.call_args[0][0])
+        self.assertTrue(expected_msg in msg,
+            "'{}' not in '{}'".format(expected_msg, msg))
 
 
   def test_get_pubkey_bundle_errors(self):
