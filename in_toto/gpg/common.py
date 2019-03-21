@@ -222,6 +222,7 @@ def parse_pubkey_bundle(data):
       elif packet_type in [PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
           PACKET_TYPE_SUB_KEY]:
         key_bundle[packet_type][packet] = {
+          "header_len": header_len,
           "body_len": body_len,
           "signatures": []
         }
