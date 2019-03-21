@@ -302,14 +302,9 @@ def _assign_certified_key_info(bundle):
   # Verify User ID signatures to gather information about primary key
   # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
   for user_id_packet, packet_data in bundle[PACKET_TYPE_USER_ID].items():
-    try:
-      # Construct signed content (see RFC4880 section 5.2.4. paragraph 4)
-      signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] +
-          b"\xb4\x00\x00\x00" + user_id_packet[1:])
-
-    except Exception as e:
-      log.info(e)
-      continue
+    # Construct signed content (see RFC4880 section 5.2.4. paragraph 4)
+    signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] +
+        b"\xb4\x00\x00\x00" + user_id_packet[1:])
 
     for signature_packet in packet_data["signatures"]:
       try:
@@ -321,6 +316,7 @@ def _assign_certified_key_info(bundle):
         # (see parse_signature_packet for more information about keyids)
         signature["keyid"] = signature["keyid"] or signature["short_keyid"]
 
+      # TODO: Revise exception taxonomy
       except Exception as e:
         log.info(e)
         continue
@@ -386,13 +382,15 @@ def _get_verified_subkeys(bundle):
       # Parse subkey if possible and skip if invalid (e.g. not-supported)
       subkey = parse_pubkey_payload(
           bytearray(subkey_packet[-packet_data["body_len"]:]))
-      # Construct signed content (see RFC4880 section 5.2.4. paragraph 3)
-      signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] + b"\x99" +
-          subkey_packet[1:])
 
+    # TODO: Revise exception taxonomy
     except Exception as e:
       log.info(e)
       continue
+
+    # Construct signed content (see RFC4880 section 5.2.4. paragraph 3)
+    signed_content = (bundle[PACKET_TYPE_PRIMARY_KEY]["packet"] + b"\x99" +
+        subkey_packet[1:])
 
     # Filter sub key binding signature (there must be exactly one for each key)
     key_binding_signatures = []
@@ -407,6 +405,7 @@ def _get_verified_subkeys(bundle):
         signature["keyid"] = signature["keyid"] or signature["short_keyid"]
         key_binding_signatures.append(signature)
 
+      # TODO: Revise exception taxonomy
       except Exception as e:
         log.info(e)
         continue
