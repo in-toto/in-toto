@@ -48,7 +48,6 @@ import in_toto.gpg.util
 import tests.common
 
 
-@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestInTotoRunTool(tests.common.CliTestCase):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
@@ -190,6 +189,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
       self.assertTrue(os.path.exists(linkpath))
 
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
   def test_main_with_specified_gpg_key(self):
     """Test CLI command with specified gpg key. """
     args = ["-n", self.test_step,
@@ -203,6 +203,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     self.assertTrue(os.path.exists(link_filename))
 
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
   def test_main_with_default_gpg_key(self):
     """Test CLI command with default gpg key. """
     args = ["-n", self.test_step,
