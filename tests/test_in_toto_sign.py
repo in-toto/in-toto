@@ -221,6 +221,9 @@ class TestInTotoSignTool(tests.common.CliTestCase):
         "--verify"
         ], 2)
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
+  def test_fail_verification_gpg(self):
+    """Fail signature verification. """
     # Fail with wrong gpg keyid (not used for signing)
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
