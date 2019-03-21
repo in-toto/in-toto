@@ -180,7 +180,7 @@ class TestLayoutMethods(unittest.TestCase):
 
     layout._validate_keys()
 
-    self.assertEqual(len(layout.get_functionary_key_id_list()), 4)
+    self.assertEqual(len(layout.get_functionary_key_id_list()), 2)
 
     # Must be a valid key object
     with self.assertRaises(securesystemslib.exceptions.FormatError):
