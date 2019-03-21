@@ -32,7 +32,6 @@ WORKING_DIR = os.getcwd()
 
 
 
-@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestInTotoSignTool(tests.common.CliTestCase):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
@@ -162,6 +161,11 @@ class TestInTotoSignTool(tests.common.CliTestCase):
         "-k", self.alice_pub_path,
         "--verify"
         ], 0)
+
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
+  def test_sign_and_verify_gpg(self):
+    """Test signing and verifying Layout and Link metadata with
+    different combinations of arguments. """
 
     # Sign Layout with default gpg key
     self.assert_cli_sys_exit([
