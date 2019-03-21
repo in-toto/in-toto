@@ -172,6 +172,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     self.assertTrue(os.path.exists(self.test_link_ed25519))
 
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
   def test_main_with_encrypted_ed25519_key(self):
     """Test CLI command with encrypted ed25519 key. """
     key_path = "test_key_ed25519_enc"
