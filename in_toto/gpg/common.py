@@ -662,7 +662,8 @@ def parse_signature_packet(data, supported_signature_types=None,
   # Below we only consider the last and favor hashed over unhashed subpackets
   for subpacket_type, subpacket_data in \
       unhashed_subpacket_info + hashed_subpacket_info:
-    if subpacket_type == FULL_KEYID_SUBPACKET:
+    if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover
+      # Exclude from coverage for consistent results across test envs
       # NOTE: The first byte of the subpacket payload is a version number
       # (see rfc4880bis-06 5.2.3.28.)
       keyid = binascii.hexlify(subpacket_data[1:]).decode("ascii")
