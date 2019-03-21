@@ -40,10 +40,12 @@ from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
     get_pubkey_bundle)
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
-    GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID)
+    GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
+    PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
 from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
     KeyNotFoundError)
+from in_toto.gpg.formats import PUBKEY_SCHEMA
 
 
 import securesystemslib.formats
@@ -231,6 +233,50 @@ class TestCommon(unittest.TestCase):
       parse_pubkey_bundle(primary_key_packet + unsupported_packet)
       self.assertTrue("Ignoring gpg key packet '63'" in
           mock_log.info.call_args[0][0])
+
+
+  def test_parse_pubkey_bundle(self):
+    """Assert presence of packets expected returned from `parse_pubkey_bundle`
+    for specific test key). See
+    ```
+    gpg --homedir tests/gpg_keyrings/rsa/ --export 9EA70BD13D883381 | \
+        gpg --list-packets
+    ```
+    """
+    # Expect parsed primary key matching PUBKEY_SCHEMA
+    self.assertTrue(PUBKEY_SCHEMA.matches(
+         self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]))
+
+    # Parse corresponding raw packet for comparison
+    _, header_len, _, _ = parse_packet_header(
+        self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"])
+    parsed_raw_packet = parse_pubkey_payload(bytearray(
+          self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"][header_len:]))
+
+    # And compare
+    self.assertDictEqual(
+        self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"],
+        parsed_raw_packet)
+
+    # Expect one primary key signature (revocation signature)
+    self.assertEqual(
+        len(self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["signatures"]), 1)
+
+    # Expect one User ID packet, one User Attribute packet and one Subkey,
+    # each with correct data
+    for _type in [PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
+        PACKET_TYPE_SUB_KEY]:
+      # Of each type there is only one packet
+      self.assertTrue(len(self.raw_key_bundle[_type]) == 1)
+      # The raw packet is stored as key in the per-packet type collection
+      raw_packet = next(iter(self.raw_key_bundle[_type]))
+      # Its values are the raw packets header and body length
+      self.assertEqual(len(raw_packet),
+          self.raw_key_bundle[_type][raw_packet]["header_len"] +
+          self.raw_key_bundle[_type][raw_packet]["body_len"])
+      # and one self-signature
+      self.assertEqual(
+          len(self.raw_key_bundle[_type][raw_packet]["signatures"]), 1)
 
 
   def test_get_pubkey_bundle_errors(self):
