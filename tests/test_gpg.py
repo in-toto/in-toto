@@ -177,7 +177,7 @@ class TestCommon(unittest.TestCase):
 
     gpg_keyring_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-    homearg = "--homedir {}".format(gpg_keyring_path)
+    homearg = "--homedir {}".format(gpg_keyring_path).replace("\\", "/")
 
     cmd = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
     proc = process.run(cmd, stdout=process.PIPE, stderr=process.PIPE)
