@@ -158,6 +158,7 @@ class TestInTotoRecordTool(tests.common.CliTestCase):
       self.assert_cli_sys_exit(["stop"] + args + ["--products",
           self.test_artifact2, self.test_artifact2], 0)
 
+      @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
       # Start/stop sign with specified gpg keyid
       args = ["--step-name", "test7", "--gpg", self.gpg_keyid, "--gpg-home",
           self.gnupg_home]
