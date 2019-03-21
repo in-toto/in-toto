@@ -48,6 +48,7 @@ import in_toto.gpg.util
 import tests.common
 
 
+@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestInTotoRunTool(tests.common.CliTestCase):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
