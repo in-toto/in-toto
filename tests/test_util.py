@@ -227,6 +227,7 @@ class TestUtil(unittest.TestCase):
       import_public_keys_from_files_as_dict([name1, name2],
           [KEY_TYPE_ED25519] * 2)
 
+  @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
   def test_import_gpg_public_keys_from_keyring_as_dict(self):
     """Import gpg public keys from keyring and return KEYDICT. """
 
