@@ -582,7 +582,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   # FIXME: support v3 type signatures (which I haven't seen in the wild)
   version_number = data[ptr]
   ptr += 1
-  if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS: # pragma: no cover
+  if version_number not in SUPPORTED_SIGNATURE_PACKET_VERSIONS:
     raise ValueError("Signature version '{}' not supported, must be one of "
         "{}.".format(version_number, SUPPORTED_SIGNATURE_PACKET_VERSIONS))
 
@@ -590,7 +590,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   signature_type = data[ptr]
   ptr += 1
 
-  if signature_type not in supported_signature_types: # pragma: no cover
+  if signature_type not in supported_signature_types:
     raise ValueError("Signature type '{}' not supported, must be one of {} "
         "(see RFC4880 5.2.1. Signature Types).".format(signature_type,
         supported_signature_types))
@@ -598,7 +598,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   signature_algorithm = data[ptr]
   ptr += 1
 
-  if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS: # pragma: no cover
+  if signature_algorithm not in SUPPORTED_SIGNATURE_ALGORITHMS:
     raise ValueError("Signature algorithm '{}' not "
         "supported, please verify that your gpg configuration is creating "
         "either DSA or RSA signatures (see RFC4880 9.1. Public-Key "
@@ -610,7 +610,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   hash_algorithm = data[ptr]
   ptr += 1
 
-  if hash_algorithm not in supported_hash_algorithms: # pragma: no cover
+  if hash_algorithm not in supported_hash_algorithms:
     raise ValueError("Hash algorithm '{}' not supported, must be one of {}"
         " (see RFC4880 9.4. Hash Algorithms).".format(hash_algorithm,
         supported_hash_algorithms))
@@ -682,7 +682,7 @@ def parse_signature_packet(data, supported_signature_types=None,
         "not have an 'Issuer' or 'Issuer Fingerprint' subpacket (see RFC4880 "
         "and rfc4880bis-06 5.2.3.1. Signature Subpacket Specification).")
 
-  # Fail keyid and short keyid are specified but don't match
+  # Fail if keyid and short keyid are specified but don't match
   if keyid and not keyid.endswith(short_keyid): # pragma: no cover
     raise ValueError("This signature packet seems to be corrupted. The key ID "
         "'{}' of the 'Issuer' subpacket must match the lower 64 bits of the "
@@ -703,7 +703,7 @@ def parse_signature_packet(data, supported_signature_types=None,
     'signature': binascii.hexlify(signature).decode('ascii')
   }
 
-  if short_keyid:
+  if short_keyid: # pragma: no branch
     signature_data["short_keyid"] = short_keyid
 
   if include_info:

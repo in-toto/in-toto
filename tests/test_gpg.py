@@ -39,7 +39,8 @@ from in_toto.gpg.util import (get_version, is_version_fully_supported,
 from in_toto.gpg.rsa import create_pubkey as rsa_create_pubkey
 from in_toto.gpg.dsa import create_pubkey as dsa_create_pubkey
 from in_toto.gpg.common import (parse_pubkey_payload, parse_pubkey_bundle,
-    get_pubkey_bundle, _assign_certified_key_info, _get_verified_subkeys)
+    get_pubkey_bundle, _assign_certified_key_info, _get_verified_subkeys,
+    parse_signature_packet)
 from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     GPG_EXPORT_PUBKEY_COMMAND, PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
     PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
@@ -317,6 +318,7 @@ class TestCommon(unittest.TestCase):
         self.assertTrue(expected_msg in msg,
             "'{}' not in '{}'".format(expected_msg, msg))
 
+
   def test_get_verified_subkeys_errors(self):
     """Test _get_verified_subkeys errors with manually crafted data based on a
     real gpg key data (see self.raw_key_bundle). """
@@ -376,6 +378,27 @@ class TestCommon(unittest.TestCase):
     not_associated_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
     with self.assertRaises(KeyNotFoundError):
       get_pubkey_bundle(self.raw_key_data, not_associated_keyid)
+
+
+  def test_parse_signature_packet_errors(self):
+    """Test parse_signature_packet errors with manually crafted data. """
+
+    # passed data | expected error message
+    test_data = [
+      (bytearray([0b01000010, 1, 255]),
+          "Signature version '255' not supported"),
+      (bytearray([0b01000010, 2, 4, 255]),
+          "Signature type '255' not supported"),
+      (bytearray([0b01000010, 3, 4, 0, 255]),
+          "Signature algorithm '255' not supported"),
+      (bytearray([0b01000010, 4, 4, 0, 1, 255]),
+          "Hash algorithm '255' not supported"),
+    ]
+    for data, expected_error_str in test_data:
+      with self.assertRaises(ValueError) as ctx:
+        parse_signature_packet(data)
+      self.assertTrue(expected_error_str in str(ctx.exception),
+          "'{}' not in '{}'".format(expected_error_str, str(ctx.exception)))
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
