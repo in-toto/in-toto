@@ -35,7 +35,7 @@ def check_usable_gpg():
     with open(os.devnull, "w") as dev_null_fp:
       subprocess.check_call(['gpg', '--version'], stdout=dev_null_fp)
 
-  except (WindowsError, FileNotFound) as e:
+  except (WindowsError, subprocess.CalledProcessError) as e:
     os.environ["TEST_SKIP_GPG"] = "1"
 
 
