@@ -297,10 +297,9 @@ def _assign_certified_key_info(bundle):
   # Create handler shortcut
   handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
 
-  # Initialize creation date and expiration time for most-recent signature
-  recent_sig_created = 0
-  recent_sig_expire = 0
-  user_sig_expire = None
+  is_primary_user = False
+  validity_period = None
+  sig_creation_time = None
 
   # Verify User ID signatures to gather information about primary key
   # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
@@ -338,38 +337,61 @@ def _assign_certified_key_info(bundle):
             "by '{}'.".format(signature["keyid"]))
         continue
 
-      # If the signature is valid, extract relevant information from its
-      # "info" field and assign to master key (e.g. expiration) here
-      # NOTE: Beware of conflicting information. There might be multiple User
-      # IDs per primary key and multiple signatures per User ID. See RFC4880
-      # 5.2.3.19. and last paragraph of 5.2.3.3. for more info about ambiguity.
-      primary_flag = None
-      tentative_exp_time = None
-      sig_creation_date = 0
+      # If the signature is valid, we try to extract subpackets relevant to
+      # the primary key, i.e. expiration time.
+      # NOTE: There might be multiple User IDs per primary key and multiple
+      # certificates per User ID. RFC4880 5.2.3.19. and last paragraph of
+      # 5.2.3.3. provides some suggestions about ambiguity, but delegates the
+      # responsibility to the implementer.
 
-      for subpacket in signature["info"]["subpackets"]:
-        if subpacket[0] == KEY_EXPIRATION_SUBPACKET:
-          tentative_exp_time = subpacket[1]
-        elif subpacket[0] == SIG_CREATION_SUBPACKET:
-          sig_creation_date = int(subpacket[1], 16)
-        elif subpacket[0] == PRIMARY_USERID_SUBPACKET:
-          primary_flag = subpacket[1]
+      # Ambiguity resolution scheme:
+      # We take the key expiration time from the most recent certificate, i.e.
+      # the certificate with the highest signature creation time. Additionally,
+      # we prioritize certificates with primary user id flag set True. Note
+      # that, if the ultimately prioritized certificate does not have a key
+      # expiration time subpacket, we don't assign one, even if there were
+      # certificates of lower priority carrying that subpacket.
+      tmp_validity_period = \
+          signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
 
-      if tentative_exp_time and sig_creation_date >= recent_sig_created:
-        if primary_flag:
-          user_sig_expire = int(tentative_exp_time, 16)
-        else:
-          recent_sig_expire = int(tentative_exp_time, 16)
-        recent_sig_created = sig_creation_date
+      # No key expiration time, go to next certificate
+      if tmp_validity_period == None:
+        continue
 
-  if not user_sig_expire and recent_sig_expire == 0:
-    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = 0
-  elif user_sig_expire:
-    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = user_sig_expire + \
-        bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["creation_date"]
-  else:
-    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["expiration"] = recent_sig_expire + \
-        bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["creation_date"]
+      tmp_sig_creation_time = \
+          signature["info"]["subpackets"].get(SIG_CREATION_SUBPACKET)
+
+      # No signature creation time, no way to resolve potential ambiguities,
+      # go to next certificate
+      # TODO: As per the spec this cannot not happen, should we blow up?
+      if tmp_sig_creation_time == None: # pragma: no cover
+        continue
+
+      tmp_is_primary_user = \
+          signature["info"]["subpackets"].get(PRIMARY_USERID_SUBPACKET)
+
+      if tmp_is_primary_user != None:
+        tmp_is_primary_user = bool(tmp_is_primary_user[0])
+
+      # If we already have a primary user certified expiration date and this
+      # is none, we don't consider it, and go to next certificate
+      if is_primary_user and not tmp_is_primary_user:
+        continue
+
+      tmp_sig_creation_time = struct.unpack(">I", tmp_sig_creation_time)[0]
+      if not sig_creation_time or sig_creation_time < tmp_sig_creation_time:
+        # This is the most recent certificate that has a validity_period and
+        # doesn't have lower priority in regard to the primary user id flag. We
+        # accept it the keys validty_period, until we get a newer value from
+        # a certificate with higher priority.
+        validity_period = struct.unpack(">I", tmp_validity_period)[0]
+        # We also keep track of the used certificate's primary user id flag and
+        # the signature creation time, for priorization.
+        is_primary_user = tmp_is_primary_user
+        sig_creation_time = tmp_sig_creation_time
+
+  if validity_period != None:
+    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["validity_period"] = validity_period
 
   return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
 
