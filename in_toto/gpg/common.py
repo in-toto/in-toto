@@ -548,10 +548,6 @@ def get_pubkey_bundle(data, keyid):
   if sub_public_keys:
     master_public_key["subkeys"] = sub_public_keys
 
-  # Add expiration date to master pubkey "expiration" field if expiration exists
-  if exp_datetime != 0:
-    master_public_key["expiration"] = exp_datetime
-
   return master_public_key
 
 
