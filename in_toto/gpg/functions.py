@@ -21,7 +21,7 @@ import in_toto.gpg.common
 import in_toto.gpg.exceptions
 import in_toto.gpg.formats
 from in_toto.gpg.constants import (GPG_EXPORT_PUBKEY_COMMAND, GPG_SIGN_COMMAND,
-    SIGNATURE_HANDLERS, FULLY_SUPPORTED_MIN_VERSION)
+    SIGNATURE_HANDLERS, FULLY_SUPPORTED_MIN_VERSION, SHA256)
 
 import in_toto.process
 
@@ -97,7 +97,9 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing
   # key or its subkeys, identified by the short keyid.
-  # Exclude the following code from coverage for consistent coverage accross
+  # parse_signature_packet is guaranteed to return at least one of keyid or
+  # short_keyid.
+  # Exclude the following code from coverage for consistent coverage across
   # test environments.
   if not signature["keyid"]: # pragma: no cover
     log.warning("The created signature does not include the hashed subpacket"
@@ -129,8 +131,8 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     raise ValueError("Full keyid could not be determined for signature '{}'".
         format(signature))
 
-  # If we have a full keyid it is safe to remove the short keyid to save space
-  del signature["short_keyid"]
+  # It is okay now to remove the optional short keyid to save space
+  signature.pop("short_keyid", None)
 
   return signature
 
@@ -167,6 +169,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   """
   in_toto.gpg.formats.PUBKEY_SCHEMA.check_match(pubkey_info)
   in_toto.gpg.formats.SIGNATURE_SCHEMA.check_match(signature_object)
+
   handler = SIGNATURE_HANDLERS[pubkey_info['type']]
   sig_keyid = signature_object["keyid"]
 
@@ -178,7 +181,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
     verification_key = pubkey_info["subkeys"][sig_keyid]
 
   return handler.gpg_verify_signature(
-      signature_object, verification_key, content)
+      signature_object, verification_key, content, SHA256)
 
 
 def gpg_export_pubkey(keyid, homedir=None):
@@ -231,6 +234,6 @@ def gpg_export_pubkey(keyid, homedir=None):
     stderr=in_toto.process.PIPE)
 
   key_packet = process.stdout
-  key_bundle = in_toto.gpg.common.parse_pubkey_bundle(key_packet, keyid)
+  key_bundle = in_toto.gpg.common.get_pubkey_bundle(key_packet, keyid)
 
   return key_bundle

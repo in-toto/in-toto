@@ -53,9 +53,9 @@
   True
 
 """
-
 import securesystemslib.schema as ssl_schema
 import securesystemslib.formats as ssl_formats
+
 
 def _create_pubkey_with_subkey_schema(pubkey_schema):
   """Helper method to extend the passed public key schema with an optional
@@ -141,5 +141,6 @@ SIGNATURE_SCHEMA = ssl_schema.Object(
     keyid = ssl_formats.KEYID_SCHEMA,
     short_keyid = ssl_schema.Optional(ssl_formats.KEYID_SCHEMA),
     other_headers = ssl_formats.HEX_SCHEMA,
-    signature = ssl_formats.HEX_SCHEMA
+    signature = ssl_formats.HEX_SCHEMA,
+    info = ssl_schema.Optional(ssl_schema.Any()),
   )
