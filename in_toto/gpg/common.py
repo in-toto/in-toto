@@ -43,8 +43,6 @@ import securesystemslib.formats
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
-# Initializes stack repository for all parsed public keys
-pubkey_repo = {}
 
 def parse_pubkey_payload(data):
   """
@@ -154,17 +152,10 @@ def parse_pubkey_bundle(data):
     data:
           Public key data as written to stdout by GPG_EXPORT_PUBKEY_COMMAND.
 
-    keyid:
-          Keyid used to identify master public key or its subkeys.
-
   <Exceptions>
     in_toto.gpg.exceptions.PacketParsingError
           If data is empty.
           If data cannot be parsed.
-
-    in_toto.gpg.exceptions.KeyNotFoundError
-          If neither the master key or one of the subkeys match the passed
-          keyid or if none of the stored repo keys match the passed keyid.
 
   <Side Effects>
     None.
@@ -191,8 +182,6 @@ def parse_pubkey_bundle(data):
 
   # Iterate over gpg data and parse out packets of different types
   position = 0
-  expiration_datetime = 0
-  expires_after = None
   while position < len(data):
     try:
       packet_type, header_len, body_len, packet_length = \
@@ -224,8 +213,6 @@ def parse_pubkey_bundle(data):
           "packet": packet,
           "signatures": []
         }
-        key_bundle[PACKET_TYPE_PRIMARY_KEY]['expires'] = \
-            key_bundle[PACKET_TYPE_PRIMARY_KEY]['key']["creation_date"]
 
       # Other non-signature packets in the key bundle include User IDs and User
       # Attributes, required to verify primary key certificates, and subkey
@@ -255,11 +242,6 @@ def parse_pubkey_bundle(data):
             # Add to most recently added packet's signatures of matching type
             key_bundle[_type][next(reversed(key_bundle[_type]))]\
                 ["signatures"].append(packet)
-            signature = parse_signature_packet(packet,
-                supported_hash_algorithms={SHA1, SHA256, SHA512},
-                supported_signature_types=SIGNATURE_TYPE_PARSING,
-                include_info=True)
-            expires_after = signature["key_expire_time"]
             break
 
         else:
@@ -281,14 +263,6 @@ def parse_pubkey_bundle(data):
 
     # Go to next packet
     position += packet_length
-
-
-  created = master_key["creation_date"]
-  if expires_after and created:
-    current_version_expiration = int(created) + int(expires_after)
-    # FIXME: this *may* fail as of now
-    if current_version_expiration > expiration_datetime:
-      expiration_datetime = current_version_expiration
 
   return key_bundle
 
