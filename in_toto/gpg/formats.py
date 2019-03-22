@@ -143,7 +143,6 @@ SIGNATURE_SCHEMA = ssl_schema.Object(
     object_name = "SIGNATURE_SCHEMA",
     keyid = ssl_formats.KEYID_SCHEMA,
     short_keyid = ssl_schema.Optional(ssl_formats.KEYID_SCHEMA),
-    key_expire_time = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
     other_headers = ssl_formats.HEX_SCHEMA,
     signature = ssl_formats.HEX_SCHEMA,
     info = ssl_schema.Optional(ssl_schema.Any()),

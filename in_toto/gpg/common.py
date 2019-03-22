@@ -671,10 +671,13 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   ptr += unhashed_octet_count
 
+  # Use the info dict to return further signature information that may be
+  # needed for intermediate processing, but does not have to be on the eventual
+  # signature datastructure
   info = {
     "signature_type": signature_type,
     "hash_algorithm": hash_algorithm,
-    "subpackets": [],
+    "subpackets": {},
   }
 
   keyid = ""
@@ -693,6 +696,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   # conflict resolution scheme that makes more sense.
   # (see RFC4880 5.2.4.1.)
   # Below we only consider the last and favor hashed over unhashed subpackets
+  # TODO: Should we warn if a we use an unhashed subpacket?
   for subpacket_type, subpacket_data in \
       unhashed_subpacket_info + hashed_subpacket_info:
     if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover
@@ -705,14 +709,7 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
-    info["subpackets"].append((
-      subpacket_type, binascii.hexlify(subpacket_data).decode("ascii")))
-
-  # We need to return the key expiration date so we can check for expired keys
-  for subpacket_tuple in hashed_subpacket_info:
-    if subpacket_tuple[0] == KEY_EXPIRATION_SUBPACKET: # pragma: no cover
-      key_expire_time = struct.unpack(">I", subpacket_tuple[1])[0]
-      break
+    info["subpackets"][subpacket_type] = subpacket_data
 
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
@@ -737,7 +734,6 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature_data = {
     'keyid': "{}".format(keyid),
-    'key_expire_time': key_expire_time,
     'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
