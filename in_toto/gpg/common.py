@@ -219,8 +219,8 @@ def parse_pubkey_bundle(data):
       # use a dictionary to aggregate signatures by packet below,
       # and it must be ordered because each signature packet belongs to the
       # most recently parsed packet of a type.
-      elif packet_type in [PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
-          PACKET_TYPE_SUB_KEY]:
+      elif packet_type in {PACKET_TYPE_USER_ID, PACKET_TYPE_USER_ATTR,
+          PACKET_TYPE_SUB_KEY}:
         key_bundle[packet_type][packet] = {
           "header_len": header_len,
           "body_len": body_len,
