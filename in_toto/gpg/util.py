@@ -31,6 +31,7 @@ import in_toto.gpg.constants
 # Inherits from in_toto base logger (c.f. in_toto.log)
 log = logging.getLogger(__name__)
 
+
 def get_mpi_length(data):
   """
   <Purpose>

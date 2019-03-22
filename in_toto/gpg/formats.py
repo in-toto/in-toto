@@ -53,9 +53,9 @@
   True
 
 """
-
 import securesystemslib.schema as ssl_schema
 import securesystemslib.formats as ssl_formats
+
 
 def _create_pubkey_with_subkey_schema(pubkey_schema):
   """Helper method to extend the passed public key schema with an optional

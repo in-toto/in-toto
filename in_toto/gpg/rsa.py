@@ -26,6 +26,7 @@ import in_toto.gpg.util
 import in_toto.gpg.exceptions
 import in_toto.gpg.formats
 
+
 def create_pubkey(pubkey_info):
   """
   <Purpose>
