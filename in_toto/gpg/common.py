@@ -672,10 +672,11 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
+    # TODO: Use this to add subpackets for further processing, e.g. extracting
+    # key expiration date. Remove if not needed in in-toto/in-toto#245.
     # info["subpackets"].append((
     #   subpacket_type,
     #   binascii.hexlify(subpacket_data).decode("ascii")))
-
 
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
