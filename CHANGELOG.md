@@ -1,5 +1,18 @@
 # Changelog
 
+## in-toto v0.3.0
+
+* Re-factor rule verification engine and fix for a false-reject on very specific layouts (#262)
+* Add support for duplicate standard streams (#252)
+* Enhance support for Summary link naming (i.e., better sublayout verification, #256)
+* Improve rule verification messages (#243)
+* Small fixes for OpenPGP parsing functions (#255)
+* Properly verify self-signature and signature binding signatures upon export (#257)
+* Add lstrip-paths parameter (as an enhancement/replacement for basepath) (#250)
+* Fix a bug where multiple PGP subkeys could count towards the threshold (#251)
+* Fix a bug where RSA signatures wouldn't be sufficiently padded and a signature would be erroneously-rejected #170
+* Change license to Apache
+
 ## in-toto v0.2.3
 
 * Add common interface for Python's subprocess module
