@@ -94,8 +94,8 @@ _RSA_PUBKEY_SCHEMA = ssl_schema.Object(
   type = ssl_schema.String("rsa"),
   method = ssl_schema.String(PGP_RSA_PUBKEY_METHOD_STRING),
   hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
-  creation_date = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
-  expiration = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
+  creation_time = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
+  validity_period = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = RSA_PUBKEYVAL_SCHEMA,
@@ -123,8 +123,8 @@ _DSA_PUBKEY_SCHEMA = ssl_schema.Object(
   type = ssl_schema.String("dsa"),
   method = ssl_schema.String(PGP_DSA_PUBKEY_METHOD_STRING),
   hashes = ssl_schema.ListOf(ssl_schema.String(GPG_HASH_ALGORITHM_STRING)),
-  creation_date = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
-  expiration = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
+  creation_time = ssl_schema.Optional(ssl_formats.UNIX_TIMESTAMP_SCHEMA),
+  validity_period = ssl_schema.Optional(ssl_schema.Integer(lo=0)),
   keyid = ssl_formats.KEYID_SCHEMA,
   keyval = ssl_schema.Object(
       public = DSA_PUBKEYVAL_SCHEMA,

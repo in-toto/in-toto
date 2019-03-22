@@ -127,7 +127,7 @@ def parse_pubkey_payload(data):
     "method": keyinfo['method'],
     "type": keyinfo['type'],
     "hashes": [GPG_HASH_ALGORITHM_STRING],
-    "creation_date": time_of_creation[0],
+    "creation_time": time_of_creation[0],
     "keyid": keyinfo['keyid'],
     "keyval" : {
       "private": "",
@@ -460,14 +460,13 @@ def _get_verified_subkeys(bundle):
           .format(subkey["keyid"]))
       continue
 
-    # If the signature is valid, we may also extract relevant information
-    # from its "info" field (e.g. subkey expiration date) and assign to it to
-    # the subkey here
-    expire_time = signature["key_expire_time"]
-    if expire_time == 0:
-      subkey["expiration"] = 0
-    else:
-      subkey["expiration"] = expire_time + subkey["creation_date"]
+    # If the signature is valid, we may also extract relevant information from
+    # its "info" field (e.g. subkey expiration date) and assign to it to the
+    # subkey here
+    validity_period = \
+        signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
+    if validity_period != None:
+      subkey["validity_period"] = struct.unpack(">I", validity_period)[0]
 
     verified_subkeys[subkey["keyid"]] = subkey
 
