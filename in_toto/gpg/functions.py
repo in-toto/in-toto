@@ -17,7 +17,6 @@
 """
 import logging
 import datetime
-# from dateutil import tz
 
 import in_toto.gpg.common
 import in_toto.gpg.exceptions
