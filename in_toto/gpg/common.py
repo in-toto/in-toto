@@ -230,7 +230,7 @@ def parse_pubkey_bundle(data):
       # The remaining relevant packets are signatures, required to bind subkeys
       # to the primary key, or to gather additional information about the
       # primary key, e.g. expiration date.
-      # A signatures corresponds to the most recently parsed packet of a type,
+      # A signature corresponds to the most recently parsed packet of a type,
       # where the type is given by the availability of respective packets.
       # We test availability and assign accordingly as per the order of packet
       # types defined in RFC4880 12.1 (bottom-up).

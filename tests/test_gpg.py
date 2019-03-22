@@ -205,7 +205,7 @@ class TestCommon(unittest.TestCase):
 
   def test_parse_pubkey_bundle_errors(self):
     """Test parse_pubkey_bundle errors with manually crafted data partially
-    based on a real gpg key data (see self.raw_key_bundle) . """
+    based on real gpg key data (see self.raw_key_bundle). """
     # Extract sample (legitimate) user ID packet and pass as first packet to
     # raise first packet must be primary key error
     user_id_packet = list(self.raw_key_bundle[PACKET_TYPE_USER_ID].keys())[0]
@@ -283,7 +283,7 @@ class TestCommon(unittest.TestCase):
 
   def test_assign_certified_key_info_errors(self):
     """Test _assign_certified_key_info errors with manually crafted data
-    based on a real gpg key data (see self.raw_key_bundle). """
+    based on real gpg key data (see self.raw_key_bundle). """
 
     # Replace legitimate user certifacte with a bogus packet
     wrong_cert_bundle = deepcopy(self.raw_key_bundle)
@@ -320,7 +320,7 @@ class TestCommon(unittest.TestCase):
 
 
   def test_get_verified_subkeys_errors(self):
-    """Test _get_verified_subkeys errors with manually crafted data based on a
+    """Test _get_verified_subkeys errors with manually crafted data based on
     real gpg key data (see self.raw_key_bundle). """
 
     # Tamper with subkey (change version number) to trigger key parsing error
