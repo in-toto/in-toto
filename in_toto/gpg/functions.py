@@ -82,7 +82,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   keyarg = ""
   if keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-    keyarg = "--default-key {}".format(keyid)
+    keyarg = "--local-user {}".format(keyid)
 
   homearg = ""
   if homedir:
