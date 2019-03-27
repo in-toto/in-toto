@@ -28,6 +28,7 @@ import time
 import datetime
 from six import string_types
 from copy import deepcopy
+from collections import OrderedDict
 
 import cryptography.hazmat.primitives.serialization as serialization
 import cryptography.hazmat.backends as backends
@@ -173,20 +174,23 @@ class TestCommon(unittest.TestCase):
   """Test common functions of the in_toto.gpg module. """
   @classmethod
   def setUpClass(self):
-    # Load test raw public key bundle from rsa keyring, used to construct
-    # erroneous gpg data in tests below.
-    keyid = "F557D0FF451DEF45372591429EA70BD13D883381"
-
     gpg_keyring_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
     homearg = "--homedir {}".format(gpg_keyring_path).replace("\\", "/")
 
+    # Load test raw public key bundle from rsa keyring, used to construct
+    # erroneous gpg data in tests below.
+    keyid = "F557D0FF451DEF45372591429EA70BD13D883381"
     cmd = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
     proc = process.run(cmd, stdout=process.PIPE, stderr=process.PIPE)
-
     self.raw_key_data = proc.stdout
     self.raw_key_bundle = parse_pubkey_bundle(self.raw_key_data)
 
+    # Export pubkey bundle with expired key for key expiration tests
+    keyid = "E8AC80C924116DABB51D4B987CB07D6D2C199C7C"
+    cmd = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
+    proc = process.run(cmd, stdout=process.PIPE, stderr=process.PIPE)
+    self.raw_expired_key_bundle = parse_pubkey_bundle(proc.stdout)
 
   def test_parse_pubkey_payload_errors(self):
     """ Test parse_pubkey_payload errors with manually crafted data. """
@@ -321,6 +325,48 @@ class TestCommon(unittest.TestCase):
             "'{}' not in '{}'".format(expected_msg, msg))
 
 
+  def test_assign_certified_key_info_expiration(self):
+    """Test assignment of key expiration date in
+    gpg.common._assign_certified_key_info using real gpg data (with ambiguity
+    resolution / prioritization).
+
+    # FIXME: Below tests are missing proper assertions for which User ID
+    self-certificate is considered for the expiration date. Reasons are:
+    - gpg does not let you (easily) modify individual expiration dates of User
+      IDs (changing one changes all), hence we cannot assert the chosen packet
+      by the particular date
+    -  _assign_certified_key_info first verifies all self-certificates and then
+       only considers successfully verified ones, hence we cannot modify the
+       certificate data, before passing it to _assign_certified_key_info
+
+    IMO the best solution is a better separation of concerns, e.g. separate
+    self-certificate verification and packet prioritization.
+
+    """
+    # Test ambiguity resolution scheme with 3 User IDs
+    #   :user ID packet: "Test Expiration I <test@expir.one>"
+    #   :user ID packet: "Test Expiration II <test@expir.two>"
+    #   :user ID packet: "Test Expiration III <test@expir.three>"
+    # User ID packets are ordered by their creation time in ascending order.
+    # "Test Expiration II" has the primary user ID flag set and therefor has
+    # the highest priority.
+    key = _assign_certified_key_info(self.raw_expired_key_bundle)
+    self.assertTrue(key["validity_period"] == 87901) # ~ 1 day
+
+    # Test ambiguity resolution scheme with 2 User IDs
+    #   :user ID packet: "Test Expiration III <test@expir.three>"
+    #   :user ID packet: "Test Expiration I <test@expir.one>"
+    # User ID packets are ordered by their creation time in descending order.
+    # Neither packet has the primary user ID flag set.
+    # "Test Expiration III" has the highest priority.
+    raw_key_bundle = deepcopy(self.raw_expired_key_bundle)
+    user_id_items = list(reversed(raw_key_bundle[PACKET_TYPE_USER_ID].items()))
+    del user_id_items[1]
+    raw_key_bundle[PACKET_TYPE_USER_ID] = OrderedDict(user_id_items)
+    key = _assign_certified_key_info(raw_key_bundle)
+    self.assertTrue(key["validity_period"] == 87901) # ~ 1 day
+
+
   def test_get_verified_subkeys_errors(self):
     """Test _get_verified_subkeys errors with manually crafted data based on
     real gpg key data (see self.raw_key_bundle). """
@@ -373,6 +419,17 @@ class TestCommon(unittest.TestCase):
         msg = str(mock_log.info.call_args[0][0])
         self.assertTrue(expected_msg in msg,
             "'{}' not in '{}'".format(expected_msg, msg))
+
+
+  def test_get_verified_subkeys(self):
+    """Test correct assignment of subkey expiration date in
+    gpg.common._get_verified_subkeys using real gpg data. """
+    subkeys = _get_verified_subkeys(self.raw_expired_key_bundle)
+    # Test subkey 0 with validity period 175451, i.e. ~ 2 days
+    self.assertTrue(list(subkeys.values())[0]["validity_period"] == 175451)
+
+    # Test subkey 1 without validity period, i.e. it does not expire
+    self.assertTrue(list(subkeys.values())[1].get("validity_period") == None)
 
 
   def test_get_pubkey_bundle_errors(self):
