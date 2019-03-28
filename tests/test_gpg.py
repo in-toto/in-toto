@@ -425,11 +425,13 @@ class TestCommon(unittest.TestCase):
     """Test correct assignment of subkey expiration date in
     gpg.common._get_verified_subkeys using real gpg data. """
     subkeys = _get_verified_subkeys(self.raw_expired_key_bundle)
-    # Test subkey 0 with validity period 175451, i.e. ~ 2 days
-    self.assertTrue(list(subkeys.values())[0]["validity_period"] == 175451)
+    # Test subkey with validity period 175451, i.e. ~ 2 days
+    self.assertTrue(subkeys["0ce427fa3f0f50bc83a4a760ed95e1581691db4d"].get(
+        "validity_period") == 175451)
 
-    # Test subkey 1 without validity period, i.e. it does not expire
-    self.assertTrue(list(subkeys.values())[1].get("validity_period") == None)
+    # Test subkey  without validity period, i.e. it does not expire
+    self.assertTrue(subkeys["70cfabf1e2f1dc60ac5c7bca10cd20d3d5bcb6ef"].get(
+        "validity_period") == None)
 
 
   def test_get_pubkey_bundle_errors(self):

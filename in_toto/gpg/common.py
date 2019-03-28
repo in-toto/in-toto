@@ -416,8 +416,8 @@ def _get_verified_subkeys(bundle):
     None.
 
   <Returns>
-    A list of public keys, each in the format
-    in_toto.gpg.formats.PUBKEY_SCHEMA.
+    A dictionary of public keys in the format
+    in_toto.gpg.formats.PUBKEY_SCHEMA, with keyids as dict keys.
 
   """
   # Create handler shortcut
