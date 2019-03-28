@@ -44,6 +44,7 @@ from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
+from in_toto.gpg.exceptions import KeyExpirationError
 import in_toto.rulelib
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
@@ -473,6 +474,10 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
       except SignatureVerificationError:
         log.info("Skipping link. Broken link signature with keyid '{0}'"
             " for step '{1}'".format(link_keyid, step.name))
+        continue
+
+      except KeyExpirationError as e:
+        log.info("Skipping link. {}".format(e))
         continue
 
       # Warn if there are links signed by different subkeys of same main key

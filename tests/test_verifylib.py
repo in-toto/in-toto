@@ -1261,6 +1261,43 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     with self.assertRaises(ThresholdVerificationError):
       verify_link_signature_thresholds(layout, chain_link_dict)
 
+  def test_verify_thresholds_skip_expired_key(self):
+    """Verify that a link signed with an expired key is skipped.
+
+    NOTE: This test would be a better fit for `TestInTotoVerifyThresholds`,
+    but we make use of `TestInTotoVerifyThresholdsGpgSubkeys`'s gpg setup here.
+
+    """
+    expired_key_id = "e8ac80c924116dabb51d4b987cb07d6d2c199c7c"
+    expired_key = in_toto.gpg.functions.gpg_export_pubkey(expired_key_id,
+        self.gnupg_home)
+
+    # Chain link dict containing a single link for a single step
+    # The link's signature is (supposedly) signed by an expired key and
+    # hence does not count towards the link threshold as defined in the layout.
+    chain_link_dict = {
+      self.step_name : {
+        expired_key_id: Metablock(
+          signed=Link(name=self.step_name),
+          signatures=[{
+            "keyid": expired_key_id,
+            "other_headers": "deadbeef",
+            "signature": "deadbeef",
+          }])
+      }
+    }
+    layout = Layout(
+      steps=[Step(name=self.step_name, pubkeys=[expired_key_id], threshold=1)],
+      keys={expired_key_id: expired_key}
+    )
+
+    with self.assertRaises(ThresholdVerificationError), \
+        patch("in_toto.verifylib.log") as mock_log:
+      verify_link_signature_thresholds(layout, chain_link_dict)
+
+    msg = mock_log.info.call_args[0][0]
+    self.assertTrue("Skipping link" in msg and "expired" in msg,
+        "Unexpected log message: {}".format(msg))
 
 
 class TestVerifySublayouts(unittest.TestCase):
