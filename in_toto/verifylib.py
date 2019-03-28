@@ -351,8 +351,11 @@ def verify_layout_signatures(layout_metablock, keys_dict):
       if the passed key dict does not match ANY_VERIFICATION_KEY_DICT_SCHEMA.
 
     SignatureVerificationError
-      if the any empty verification key dictionary was passed, or
+      if an empty verification key dictionary was passed, or
       if any of the passed verification keys fails to verify a signature.
+
+    in_toto.gpg.exceptions.KeyExpirationError:
+      if any of the passed verification keys is an expired gpg key
 
   """
   in_toto.formats.ANY_VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)

@@ -171,7 +171,7 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
             The content to be verified. (bytes)
 
   <Exceptions>
-    in_toto.exceptions.KeyExpirationError:
+    in_toto.gpg.exceptions.KeyExpirationError:
             if the passed public key has expired
 
   <Side Effects>

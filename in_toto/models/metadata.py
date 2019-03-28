@@ -179,6 +179,12 @@ class Metablock(ValidationMixin):
               The path to the gpg keyring, if omitted the default gpg keyring
               is used
 
+    <Exceptions>
+      in_toto.gpg.exceptions.CommandError:
+              If the gpg signing command returned a non-zero exit code, e.g.
+              because the key has expired.
+
+
     <Returns>
       The dictionary representation of the newly created signature.
 
@@ -230,6 +236,9 @@ class Metablock(ValidationMixin):
             in_toto.gpg's signature schema.
 
             If the signature to be verified is malformed or invalid.
+
+      in_toto.gpg.exceptions.KeyExpirationError:
+            if the passed verification key is an expired gpg key
 
     <Returns>
       None.
