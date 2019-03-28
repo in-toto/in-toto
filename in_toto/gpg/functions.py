@@ -68,7 +68,10 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     OSError:
             If the gpg command is not present or non-executable.
 
-    in_toto.gpg.execeptions.KeyNotFoundError:
+    in_toto.gpg.exceptions.CommandError:
+            If the gpg command returned a non-zero exit code
+
+    in_toto.gpg.exceptions.KeyNotFoundError:
             If the used gpg version is not fully supported
             and no public key can be found for short keyid.
 
@@ -89,20 +92,20 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
-  process = in_toto.process.run(command, input=content,
-    stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
+  process = in_toto.process.run(command, input=content, check=False,
+      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
+
+  # TODO: It's suggested to take a look at `--status-fd` for proper error
+  # reporting, as there is no clear distinction between the return codes
+  # https://lists.gnupg.org/pipermail/gnupg-devel/2005-December/022559.html
+  if process.returncode is not 0:
+    raise in_toto.gpg.exceptions.CommandError("Command '{}' returned non-zero "
+        "exit status '{}', stderr was:\n{}.".format(process.args,
+        process.returncode, process.stderr.decode()))
 
   signature_data = process.stdout
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
 
-  pubkey_info = gpg_export_pubkey(signature["short_keyid"], homedir)
-
-  key_expiration_date = pubkey_info.get("expiration")
-  if key_expiration_date and key_expiration_date != 0: # pragma: no cover
-    expire_datetime = datetime.datetime.fromtimestamp(pubkey_info["expiration"])
-    if expire_datetime < datetime.datetime.now() and expire_datetime != 0:
-      log.warning("Key is already expired, which means the generated GPG"
-          " signature will no longer be considered as valid.")
 
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing
@@ -121,13 +124,6 @@ def gpg_sign_object(content, keyid=None, homedir=None):
 
     # Export public key bundle (master key including with optional subkeys)
     public_key_bundle = gpg_export_pubkey(short_keyid, homedir)
-    key_expiration_date = public_key_bundle.get("expiration")
-    error_str = ("Now that the key has been extracted from the gpg keychain, it"
-        " will be cut off from any gpg key server updates.\nThese will include"
-        " elements like extensions of the expiration date for the key.\n")
-    if key_expiration_date and key_expiration_date != 0:
-      error_str += " Key Expiration Date: '{}'".format(key_expiration_date)
-    log.warning(error_str)
 
     # Test if the short keyid matches the master key ...
     master_key_full_keyid = public_key_bundle["keyid"]

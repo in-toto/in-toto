@@ -29,3 +29,6 @@ class PacketVersionNotSupportedError(Exception):
 
 class SignatureAlgorithmNotSupportedError(Exception):
   pass
+
+class CommandError(Exception):
+  pass

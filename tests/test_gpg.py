@@ -49,7 +49,7 @@ from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
 from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
-    KeyNotFoundError)
+    KeyNotFoundError, CommandError)
 from in_toto.gpg.formats import PUBKEY_SCHEMA
 
 import securesystemslib.formats
@@ -468,6 +468,7 @@ class TestGPGRSA(unittest.TestCase):
   signing_subkey_keyid = "C5A0ABE6EC19D0D65F85E2C39BE9DF5131D924E9"
   encryption_subkey_keyid = "6A112FD3390B2E53AFC2E57F8FC8E12099AECEEA"
   unsupported_subkey_keyid = "611A9B648E16F54E8A7FAD5DA51E8CDF3B06524F"
+  expired_key_keyid = "E8AC80C924116DABB51D4B987CB07D6D2C199C7C"
 
   @classmethod
   def setUpClass(self):
@@ -544,7 +545,6 @@ class TestGPGRSA(unittest.TestCase):
     self.assertFalse(gpg_verify_signature(signature, key_data, wrong_data))
 
 
-
   def test_gpg_sign_and_verify_object(self):
     """Create a signature using a specific key on the keyring """
 
@@ -575,6 +575,17 @@ class TestGPGRSA(unittest.TestCase):
       os.environ["GNUPGHOME"] = gnupg_home_backup
     else:
       del os.environ["GNUPGHOME"]
+
+
+  def test_gpg_sign_object_with_expired_key(self):
+    """Test signing with expired key raises gpg CommandError. """
+    with self.assertRaises(CommandError) as ctx:
+      gpg_sign_object(b"livestock", keyid=self.expired_key_keyid,
+          homedir=self.gnupg_home)
+
+    expected = "returned non-zero exit status '2'"
+    self.assertTrue(expected in str(ctx.exception), "{} not in {}".format(
+        expected, ctx.exception))
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
