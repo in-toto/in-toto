@@ -603,10 +603,11 @@ class TestGPGRSA(unittest.TestCase):
       gpg_verify_signature(signature, key, content)
 
     expected = ("GPG key 'e8ac80c924116dabb51d4b987cb07d6d2c199c7c' "
-        "created on '2019-03-25 13:46' with validity period '1 day, 0:25:01' "
-        "expired on '2019-03-26 14:11'.")
-    self.assertTrue(expected == str(ctx.exception), "{} != {}".format(
-        expected, ctx.exception))
+        "created on '2019-03-25 12:46 UTC' with validity period '1 day, "
+        "0:25:01' expired on '2019-03-26 13:11 UTC'.")
+    self.assertTrue(expected == str(ctx.exception),
+        "\nexpected: {}"
+        "\ngot:      {}".format(expected, ctx.exception))
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")

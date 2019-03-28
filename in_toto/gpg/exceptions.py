@@ -19,6 +19,8 @@
 
 """
 import datetime
+import dateutil.tz
+
 
 class PacketParsingError(Exception):
   pass
@@ -42,11 +44,12 @@ class KeyExpirationError(Exception):
 
   def __str__(self):
     creation_time = datetime.datetime.fromtimestamp(
-        self.key["creation_time"])
+        self.key["creation_time"], dateutil.tz.UTC)
     expiration_time = datetime.datetime.fromtimestamp(
-        self.key["creation_time"] + self.key["validity_period"])
+        self.key["creation_time"] + self.key["validity_period"],
+        dateutil.tz.UTC)
     validity_period = expiration_time - creation_time
 
-    return ("GPG key '{}' created on '{:%Y-%m-%d %H:%M}' with validity period "
-        "'{}' expired on '{:%Y-%m-%d %H:%M}'.".format(self.key["keyid"],
-        creation_time, validity_period, expiration_time))
+    return ("GPG key '{}' created on '{:%Y-%m-%d %H:%M} UTC' with validity "
+        "period '{}' expired on '{:%Y-%m-%d %H:%M} UTC'.".format(
+        self.key["keyid"], creation_time, validity_period, expiration_time))
