@@ -49,7 +49,7 @@ from in_toto.gpg.constants import (SHA1, SHA256, SHA512,
     PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY)
 from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
-    KeyNotFoundError, CommandError)
+    KeyNotFoundError, CommandError, KeyExpirationError)
 from in_toto.gpg.formats import PUBKEY_SCHEMA
 
 import securesystemslib.formats
@@ -585,6 +585,27 @@ class TestGPGRSA(unittest.TestCase):
 
     expected = "returned non-zero exit status '2'"
     self.assertTrue(expected in str(ctx.exception), "{} not in {}".format(
+        expected, ctx.exception))
+
+
+  def test_gpg_verify_signature_with_expired_key(self):
+    """Test sig verification with expired key raises KeyExpirationError. """
+    signature = {
+      "keyid": self.expired_key_keyid,
+      "other_headers": "deadbeef",
+      "signature": "deadbeef",
+    }
+    content = b"livestock"
+    key = gpg_export_pubkey(self.expired_key_keyid,
+        homedir=self.gnupg_home)
+
+    with self.assertRaises(KeyExpirationError) as ctx:
+      gpg_verify_signature(signature, key, content)
+
+    expected = ("GPG key 'e8ac80c924116dabb51d4b987cb07d6d2c199c7c' "
+        "created on '2019-03-25 13:46' with validity period '1 day, 0:25:01' "
+        "expired on '2019-03-26 14:11'.")
+    self.assertTrue(expected == str(ctx.exception), "{} != {}".format(
         expected, ctx.exception))
 
 

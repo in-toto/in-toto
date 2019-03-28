@@ -16,7 +16,7 @@
   verifying signatures.
 """
 import logging
-import datetime
+import time
 
 import in_toto.gpg.common
 import in_toto.gpg.exceptions
@@ -171,8 +171,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
             The content to be verified. (bytes)
 
   <Exceptions>
-    ValueError:
-            if public key object has passed its official expiration date.
+    in_toto.exceptions.KeyExpirationError:
+            if the passed public key has expired
 
   <Side Effects>
     None.
@@ -194,15 +194,13 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   if sig_keyid in list(pubkey_info.get("subkeys", {}).keys()):
     verification_key = pubkey_info["subkeys"][sig_keyid]
 
-  # If the expiration date of the key has already passed, GPG signature
-  # being checked should fail the verification process and be rejected.
-  key_expiration = pubkey_info.get("expiration")
-  if key_expiration and key_expiration != 0:
-    expiration_datetime = datetime.datetime.fromtimestamp(key_expiration)
-    if expiration_datetime <= datetime.datetime.now():
-      raise ValueError("Key with keyid '{}' has passed its expiration date "
-              "'{}'. Signature is not valid and has been rejected.".
-              format(sig_keyid, key_expiration))
+
+  creation_time = verification_key.get("creation_time")
+  validity_period = verification_key.get("validity_period")
+
+  if creation_time and validity_period and \
+      creation_time + validity_period < time.time():
+    raise in_toto.gpg.exceptions.KeyExpirationError(verification_key)
 
   return handler.gpg_verify_signature(
       signature_object, verification_key, content, SHA256)
@@ -253,6 +251,8 @@ def gpg_export_pubkey(keyid, homedir=None):
   if homedir:
     homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
+  # TODO: Consider adopting command error handling from `gpg_sign_object`
+  # above, e.g. in a common 'run gpg command' utility function
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
     stderr=in_toto.process.PIPE)

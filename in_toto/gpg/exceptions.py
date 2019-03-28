@@ -18,6 +18,8 @@
   'Error' (except where there is a good reason not to).
 
 """
+import datetime
+
 class PacketParsingError(Exception):
   pass
 
@@ -32,3 +34,19 @@ class SignatureAlgorithmNotSupportedError(Exception):
 
 class CommandError(Exception):
   pass
+
+class KeyExpirationError(Exception):
+  def __init__(self, key):
+    super(KeyExpirationError, self).__init__()
+    self.key = key
+
+  def __str__(self):
+    creation_time = datetime.datetime.fromtimestamp(
+        self.key["creation_time"])
+    expiration_time = datetime.datetime.fromtimestamp(
+        self.key["creation_time"] + self.key["validity_period"])
+    validity_period = expiration_time - creation_time
+
+    return ("GPG key '{}' created on '{:%Y-%m-%d %H:%M}' with validity period "
+        "'{}' expired on '{:%Y-%m-%d %H:%M}'.".format(self.key["keyid"],
+        creation_time, validity_period, expiration_time))
