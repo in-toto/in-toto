@@ -24,22 +24,24 @@ import os
 import subprocess
 
 def check_usable_gpg():
-  """ Tries to execute gpg and figure out wether we can run tests that
-      require gpg to be installed
+  """Set `TEST_SKIP_GPG` environment variable if neither gpg2 nor gpg is
+  available.
+
   """
-  try:
-    # NOTE: We do have a custom in-toto process module but IIRC it is not a
-    # good idea to import anything from the module to be tested here, as
-    # it messes up the module cache when running the tests, eventually leading
-    # to unexpected code coverage results
-    with open(os.devnull, "w") as dev_null_fp:
-      subprocess.check_call(['gpg', '--version'], stdout=dev_null_fp)
+  os.environ["TEST_SKIP_GPG"] = "1"
+  for gpg in ["gpg2", "gpg"]:
+    try:
+      subprocess.check_call([gpg, "--version"])
 
-  except (WindowsError, FileNotFound) as e:
-    os.environ["TEST_SKIP_GPG"] = "1"
+    except OSError as e:
+      pass
 
+    else:
+      # If one of the two exists, we can unset the skip envvar and ...
+      os.environ.pop("TEST_SKIP_GPG", None)
+      # ... abort the availability check.:
+      break
 
-# set the test prerrequisites (so far, we only check if gpg is installed)
 check_usable_gpg()
 
 suite = defaultTestLoader.discover(start_dir=".")
