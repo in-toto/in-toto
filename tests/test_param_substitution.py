@@ -26,6 +26,8 @@ import copy
 import tempfile
 import unittest
 import glob
+import common
+
 from mock import patch
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -52,33 +54,33 @@ import securesystemslib.exceptions
 import in_toto.exceptions
 
 
-class Test_SubstituteArtifacts(unittest.TestCase):
+class Test_SubstituteArtifacts(common.TestCaseLib):
   """Test parameter substitution on artifact rules. """
 
   def setUp(self):
     self.layout = Layout.read({
-        "_type": "layout",
-        "inspect": [{
-          "name": "do-the-thing",
-          "expected_materials": [
-            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM", 
-              "{SOURCE_STEP}"]
-          ],
-          "expected_products": [
-            ["CREATE", "{NEW_THING}"]
-          ]
-        }],
-        "steps": [{
-          "name": "artifacts",
-          "expected_command": [],
-          "expected_materials": [
-            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM", 
-              "{SOURCE_STEP}"]
-          ],
-          "expected_products": [
-            ["CREATE", "{NEW_THING}"]
-          ]
-        }]
+      "_type": "layout",
+      "inspect": [{
+        "name": "do-the-thing",
+        "expected_materials": [
+          ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM",
+           "{SOURCE_STEP}"]
+        ],
+        "expected_products": [
+          ["CREATE", "{NEW_THING}"]
+        ]
+      }],
+      "steps": [{
+        "name": "artifacts",
+        "expected_command": [],
+        "expected_materials": [
+          ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM",
+           "{SOURCE_STEP}"]
+        ],
+        "expected_products": [
+          ["CREATE", "{NEW_THING}"]
+        ]
+      }]
     })
 
   def test_substitute(self):
@@ -100,7 +102,7 @@ class Test_SubstituteArtifacts(unittest.TestCase):
       substitute_parameters(self.layout, {})
 
 
-class Test_SubstituteRunField(unittest.TestCase):
+class Test_SubstituteRunField(common.TestCaseLib):
   """Test substitution on the run field of the layout"""
 
   def setUp(self):
@@ -110,13 +112,13 @@ class Test_SubstituteRunField(unittest.TestCase):
 
     # Create layout with one inspection
     self.layout = Layout.read({
-        "_type": "layout",
-        "steps": [],
-        "inspect": [{
-          "name": "run-command",
-          "run": ["{COMMAND}"],
-        }]
-      })
+      "_type": "layout",
+      "steps": [],
+      "inspect": [{
+        "name": "run-command",
+        "run": ["{COMMAND}"],
+      }]
+    })
 
   def test_substitute(self):
     """Check that the substitution is performed on the run field."""
@@ -131,18 +133,18 @@ class Test_SubstituteRunField(unittest.TestCase):
       substitute_parameters(self.layout, {})
 
 
-class Test_SubstituteExpectedCommand(unittest.TestCase):
+class Test_SubstituteExpectedCommand(common.TestCaseLib):
   """Test verifylib.verify_command_alignment(command, expected_command)"""
 
   def setUp(self):
     # Create layout with one inspection
     self.layout = Layout.read({
-        "_type": "layout",
-        "inspect": [],
-        "steps": [{
-          "name": "run-command",
-          "expected_command": ["{EDITOR}"],
-        }]})
+      "_type": "layout",
+      "inspect": [],
+      "steps": [{
+        "name": "run-command",
+        "expected_command": ["{EDITOR}"],
+      }]})
 
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""
@@ -157,45 +159,29 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
       substitute_parameters(self.layout, {"NOEDITOR": "vim"})
 
 
-class Test_SubstituteOnVerify(unittest.TestCase):
+class Test_SubstituteOnVerify(common.TestCaseLib):
   """Test verifylib.verify_command_alignment(command, expected_command)"""
+
+  extra_settings = "demo"
 
   @classmethod
   def setUpClass(self):
     # Create layout with one inspection
     self.layout = Layout.read({
-        "_type": "layout",
-        "inspect": [],
-        "steps": [{
-          "name": "run-command",
-          "expected_command": ["{EDITOR}"],
-        }]
-      })
+      "_type": "layout",
+      "inspect": [],
+      "steps": [{
+        "name": "run-command",
+        "expected_command": ["{EDITOR}"],
+      }]
+    })
 
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
-    # Find demo files
-    demo_files = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "demo_files")
-
-    # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
-
-    # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    super(Test_SubstituteOnVerify, self).setUpClass()
 
     # load alice's key
     self.alice = import_rsa_key_from_file("alice")
     self.alice_pub_dict = import_public_keys_from_files_as_dict(
-        ["alice.pub"])
-
-  @classmethod
-  def tearDownClass(self):
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+      ["alice.pub"])
 
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""

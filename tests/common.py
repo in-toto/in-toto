@@ -22,12 +22,108 @@
   `python tests/runtests.py`.
 
 """
+
 import os
 import sys
 import inspect
+import tempfile
+import shutil
+
+import in_toto.settings
+from in_toto.models.layout import Layout
+from in_toto.util import (generate_and_write_rsa_keypair,
+    prompt_import_rsa_key_from_file)
+from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 
 import unittest
 from mock import patch
+
+class TestCaseLib(unittest.TestCase):
+  """TestCase subclass providing standard methods that will centrally
+  integrate test script setup and teardown methods through overriding"""
+
+  # Dummy artifact hashes
+  sha256_foo = \
+      "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+  sha256_foobar = \
+      "155c693a6b7481f48626ebfc545f05236df679f0099225d6d0bc472e6dd21155"
+  sha256_bar = \
+      "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+  sha256_barfoo = \
+      "2036784917e49b7685c7c17e03ddcae4a063979aa296ee5090b5bb8f8aeafc5d"
+  sha256_foo_tar = \
+      "93c3c35a039a6a3d53e81c5dbee4ebb684de57b7c8be11b8739fd35804a0e918"
+  sha256_1 = \
+      "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+  sha256_2 = \
+      "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+
+
+  gnupg_home = None
+  working_dir = os.getcwd()
+  test_dir = os.path.realpath(tempfile.mkdtemp())
+
+  key = {}
+  key2 = None
+  key_path = "test_key"
+  key_path2 = "test-key2"
+  need_second = False
+
+  step_name = "test_step"
+  link_name_unfinished = None
+  artifact_exclude_orig = None
+  artifact_base_path_orig = None
+
+  need_key_pair = False
+  extra_settings = None
+  directory_str = None
+
+  @classmethod
+  def setUpClass(self):
+    # Backup original cwd
+    self.working_dir = os.getcwd()
+
+    # Find demo files
+    if self.extra_settings == "demo":
+      demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
+    # Create and change into temporary directory
+    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(self.test_dir)
+
+    if self.need_key_pair:
+      generate_and_write_rsa_keypair(self.key_path)
+      self.key = prompt_import_rsa_key_from_file(self.key_path)
+      if self.need_second:
+        generate_and_write_rsa_keypair(self.key_path2)
+        self.key2 = prompt_import_rsa_key_from_file(self.key_path2)
+      if self.extra_settings == "link":
+        self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+            step_name=self.step_name, keyid=self.key["keyid"])
+    elif self.extra_settings:
+      if self.extra_settings == "keyrings":
+        # Change into directory with gpg keychain
+        self.gnupg_home = os.path.join(self.test_dir, self.directory_str)
+
+        # Find keyrings
+        gpg_keyring_path = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)), "gpg_keyrings", self.directory_str)
+
+        shutil.copytree(gpg_keyring_path, self.gnupg_home)
+      elif self.extra_settings == "demo":
+        # Copy demo files to temporary dir
+        for file in os.listdir(demo_files):
+          shutil.copy(os.path.join(demo_files, file), self.test_dir)
+
+  @classmethod
+  def tearDownClass(self, set_artifacts=False):
+    """Change back to initial working dir and remove temp test directory. """
+    os.chdir(self.working_dir)
+    shutil.rmtree(self.test_dir)
+    if set_artifacts:
+      in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = self.artifact_exclude_orig
+      in_toto.settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
 
 def run_with_portable_scripts(decorated):
 
