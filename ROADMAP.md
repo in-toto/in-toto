@@ -9,17 +9,17 @@ for version 1.0!
 ## Strengthening the release process
 
 As a software supply chain security product, in-toto aims to be at the
-forefront of the best practices when it comes to developing the tool. As such,
-the in-toto has the following goals for this year
+forefront of best practices when it comes to developing the tool. As such,
+in-toto has the following goals for this year:
 
-### CII Silver Badge
+### CII Silver badge
 
 in-toto is already marked as "passing criteria" under the Core Infrastructure
 Initiative best practices badge. This year we aim to upgrade our rating to
 Silver. To work towards this goal, we'll review and comply with the few
 missing requirements for the silver badge.
 
-### Thorough Documentation of Release process with in-toto metadata
+### Thorough documentation of release process with in-toto metadata
 
 We plan on documenting our release process more thoroughly. For this, we also
 intend to add in-toto metadata to all of our releases to ensure that all the
@@ -37,8 +37,8 @@ release.
 
 A GitHub project will be announced with the tasks required for the 1.0
 milestone by the in-toto team leaders. This milestone will center towards the
-reaching 1) a stable API for the library and the CLI 2) a thorough
-documentation of such API 3) specification and ITE compliance.
+reaching of 1) a stable API for the library and the CLI, 2) a thorough
+documentation of such API, and 3) specification and ITE compliance.
 
 #### Stable API
 
@@ -67,13 +67,13 @@ spec-compliance and what are specification-specific extensions.
 
 As part of the 1.0 efforts, we intend to follow a more thorough release
 schedule. This includes a more formal Service Level Agreement considering a
-four month window between minor versions.
+four-month window between minor versions.
 
-- Months 1-2: Normal development, including new features, refactoring, and bugfixes.
-- Month 3: Feature freeze: only bugfixes and security vulnerabilities are allowed.
+- Months 1-2: Normal development. Including new features, refactoring, and bugfixes.
+- Month 3: Feature freeze. Only bugfixes and security vulnerabilities are allowed.
 - Month 4: Release candidate period. A new version is released by the end of
   the fourth month.
-  
+
 This schedule will roughly match the following months:
 
 - End of March
