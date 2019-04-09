@@ -36,9 +36,9 @@ from in_toto.models.layout import (Step, Inspection, Layout,
     SUBLAYOUT_LINK_DIR_FORMAT)
 from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     verify_modify_rule, verify_allow_rule, verify_disallow_rule,
-    verify_match_rule, verify_item_rules, verify_all_item_rules,
-    verify_command_alignment, run_all_inspections, in_toto_verify,
-    verify_sublayouts, get_summary_link, _raise_on_bad_retval,
+    verify_require_rule, verify_match_rule, verify_item_rules,
+    verify_all_item_rules, verify_command_alignment, run_all_inspections,
+    in_toto_verify, verify_sublayouts, get_summary_link, _raise_on_bad_retval,
     load_links_for_layout, verify_link_signature_thresholds,
     verify_threshold_constraints)
 from in_toto.exceptions import (RuleVerificationError,
@@ -321,6 +321,39 @@ class TestVerifyRule(unittest.TestCase):
           self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
+  def test_verify_disallow_rule(self):
+    """Test verifylib.verify_disallow_rule. """
+    test_data_keys = ["rule pattern", "artifact queue"]
+    test_cases = [
+      # Foo required, pass
+      ["foo", {"foo"}, False],
+      # Foo is required, but only bar there, blow up
+      ["foo", {"bar"}, True],
+      # A pattern is passed, which should be interpreted *literally*
+      ["*", {"*"}, False],
+      ["*", {"foo"}, True]
+      #
+    ]
+
+    for i, test_data in enumerate(test_cases):
+      pattern, queue, should_raise = test_data
+
+      msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+      exception = None
+
+      try:
+        verify_require_rule(pattern, queue)
+      except RuleVerificationError as e:
+        exception = e
+
+      if should_raise and not exception:
+         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+
+      if exception and not should_raise:
+          self.fail("Unexpected {}\n{}".format(exception, msg))
+
+
+
 class TestVerifyMatchRule(unittest.TestCase):
   """Test verifylib.verify_match_rule(rule, artifact_queue, artifacts, links) """
 
@@ -510,6 +543,7 @@ class TestVerifyItemRules(unittest.TestCase):
     """Pass with list of rules of each rule type. """
     rules = [
       ["DELETE", "foobar"],
+      ["REQUIRE", "foobarbaz"],
       ["CREATE", "baz"],
       ["MODIFY", "bar"],
       ["MATCH", "foo", "WITH", "MATERIALS", "FROM", "item"], # match with self
@@ -577,6 +611,7 @@ class TestVerifyAllItemRules(unittest.TestCase):
     self.inspections = [
         Inspection(name="untar",
             expected_materials=[
+                ["REQUIRE", "foo.tar.gz"],
                 ["MATCH", "foo.tar.gz", "WITH", "PRODUCTS", "FROM", "package"]
             ],
             expected_products=[
