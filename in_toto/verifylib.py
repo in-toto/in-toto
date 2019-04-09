@@ -891,6 +891,38 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
       _get_artifact_rule_traceback()))
 
 
+def verify_require_rule(filename, artifacts_queue):
+  """
+  <Purpose>
+    Raises RuleVerificationError if the filename provided does not exist in the
+    artifacts_queue
+
+  <Arguments>
+    filename:
+            A single filename (see issues #193 and #152). We will ignore the
+            artifact rule pattern because it's ambigous and intead treat it
+            as a literal file name.
+
+    artifacts_queue:
+            Not yet consumed artifacts (paths only).
+
+  <Exceptions>
+    RuleVerificationError
+        if the rule pattern filters artifacts in the artifact queue.
+
+  <Side Effects>
+    None.
+
+  <Returns>
+    None.
+
+  """
+  if filename not in artifacts_queue:
+    raise RuleVerificationError("'REQUIRE {filename}' did not find {filename}"
+      "in: {queue}\n{traceback}".format(filename=filename,
+        queue=artifacts_queue, traceback=_get_artifact_rule_traceback()))
+
+
 def _get_artifact_rule_traceback():
   """Build and return string form global `RULE_TRACE` which may be used as
   error message for RuleVerificationError.
@@ -1026,10 +1058,14 @@ def verify_item_rules(source_name, source_type, rules, links):
     elif _type == "allow":
       consumed = verify_allow_rule(_pattern, artifacts_queue)
 
-    # It's up to the "disallow" rule to raise an error if artifacts were not
-    # consumed as intended
+    # It's up to the "disallow" and "require" rule to raise an error if
+    # artifacts were not consumed as intended
     elif _type == "disallow":
       verify_disallow_rule(_pattern, artifacts_queue)
+
+    elif _type == "require":
+      verify_require_rule(_pattern, artifacts_queue)
+      consumed = artifacts_queue
 
     else: # pragma: no cover (unreachable)
       raise securesystemslib.exceptions.FormatError(

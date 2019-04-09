@@ -21,7 +21,7 @@ import in_toto.formats
 import securesystemslib.exceptions
 import securesystemslib.formats
 
-GENERIC_RULES = {"create", "modify", "delete", "allow", "disallow",}
+GENERIC_RULES = {"create", "modify", "delete", "allow", "disallow", "require",}
 COMPLEX_RULES = {"match",}
 ALL_RULES = GENERIC_RULES | COMPLEX_RULES
 
@@ -39,7 +39,8 @@ def unpack_rule(rule):
         DELETE <pattern>,
         MODIFY <pattern>,
         ALLOW <pattern>,
-        DISALLOW <pattern>
+        DISALLOW <pattern>,
+        REQUIRE <not-a-pattern>
 
   <Exceptions>
     raises FormatError, if the rule does not comply with any of the formats.
@@ -96,6 +97,7 @@ def unpack_rule(rule):
         "DELETE <pattern>\n\t"
         "ALLOW <pattern>\n\t"
         "DISALLOW <pattern>\n"
+        "REQUIRE <file>\n"
         "Got:\n\t{}".format(rule))
     else:
       return {
@@ -174,8 +176,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
 
   <Arguments>
     rule_type:
-            One of "MATCH", "CREATE", "DELETE", MODIFY, ALLOW, DISALLOW
-            (case insensitive).
+            One of "MATCH", "CREATE", "DELETE", MODIFY, ALLOW, DISALLOW,
+            REQUIRE (case insensitive).
 
     pattern:
             A glob pattern to match artifact paths.
@@ -211,7 +213,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
       DELETE <pattern>,
       MODIFY <pattern>,
       ALLOW <pattern>,
-      DISALLOW <pattern>
+      DISALLOW <pattern>,
+      REQUIRE <file>
 
   """
   in_toto.formats.ANY_STRING_SCHEMA.check_match(rule_type)
@@ -285,3 +288,7 @@ def pack_allow_rule(pattern):
 def pack_disallow_rule(pattern):
   """Shortcut for 'pack_rule' to pack a DISALLOW rule. """
   return pack_rule("DISALLOW", pattern)
+
+def pack_require_rule(pattern):
+  """Shortcut for 'pack_rule' to pack a REQUIRE rule. """
+  return pack_rule("REQUIRE", pattern)
