@@ -403,7 +403,7 @@ class TestCommon(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestGPGRSA(common.TestCaseLib):
+class TestGPGRSA(common.SetupTestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
   default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
@@ -411,8 +411,16 @@ class TestGPGRSA(common.TestCaseLib):
   encryption_subkey_keyid = "6A112FD3390B2E53AFC2E57F8FC8E12099AECEEA"
   unsupported_subkey_keyid = "611A9B648E16F54E8A7FAD5DA51E8CDF3B06524F"
 
-  extra_settings = "keyrings"
-  directory_str = "rsa"
+  @classmethod
+  def setUpClass(self):
+    super(TestGPGRSA, self).setUpClass()
+
+    # Find demo files
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
 
   def test_gpg_export_pubkey(self):
     """ export a public key and make sure the parameters are the right ones:
@@ -501,14 +509,23 @@ class TestGPGRSA(common.TestCaseLib):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestGPGDSA(common.TestCaseLib):
+class TestGPGDSA(common.SetupTestCase):
   """ Test signature creation, verification and key export from the gpg
   module """
 
   default_keyid = "C242A830DAAF1C2BEF604A9EF033A3A3E267B3B1"
 
-  extra_settings = "keyrings"
-  directory_str = "dsa"
+  @classmethod
+  def setUpClass(self):
+    super(TestGPGDSA, self).setUpClass()
+
+    self.gnupg_home = os.path.join(self.test_dir, "dsa")
+
+    # Find keyrings
+    keyrings = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "dsa")
+
+    shutil.copytree(keyrings, self.gnupg_home)
 
   def test_gpg_export_pubkey(self):
     """ export a public key and make sure the parameters are the right ones:

@@ -87,7 +87,7 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     self.assertListEqual(result, expected)
 
 
-class TestRecordArtifactsAsDict(common.TestCaseLib):
+class TestRecordArtifactsAsDict(common.SetupTestCase):
   """Test record_artifacts_as_dict(artifacts). """
 
   @classmethod
@@ -119,7 +119,14 @@ class TestRecordArtifactsAsDict(common.TestCaseLib):
     for path in self.full_file_path_list:
       with open(path, "w") as fp:
         fp.write(path)
-        
+
+  @classmethod
+  def tearDownClass(self):
+    super(TestRecordArtifactsAsDict, self).tearDownClass()
+
+    in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = self.artifact_exclude_orig
+    in_toto.settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
+
   def tearDown(self):
     """Clear the ARTIFACT_EXLCUDES after every test. """
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
@@ -421,7 +428,7 @@ class TestRecordArtifactsAsDict(common.TestCaseLib):
     self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
 
 
-class TestInTotoRun(common.TestCaseLib):
+class TestInTotoRun(common.SetupTestCase):
   """"
   Tests runlib.in_toto_run() with different arguments
 
@@ -433,14 +440,17 @@ class TestInTotoRun(common.TestCaseLib):
 
   """
 
-  need_key_pair = True
-
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
     material, read key pair. """
 
     super(TestInTotoRun, self).setUpClass()
+
+    self.step_name = "test_step"
+    self.key_path = "test_key"
+    generate_and_write_rsa_keypair(self.key_path)
+    self.key = prompt_import_rsa_key_from_file(self.key_path)
     self.key_pub = prompt_import_rsa_key_from_file(self.key_path + ".pub")
 
     self.test_artifact = "test_artifact"
@@ -543,17 +553,22 @@ class TestInTotoRun(common.TestCaseLib):
           ["python", "--version"], True, self.key_pub)
 
 
-class TestInTotoRecordStart(common.TestCaseLib):
+class TestInTotoRecordStart(common.SetupTestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
-
-  need_key_pair = True
-  extra_settings = "link"
 
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
     material, read key pair. """
     super(TestInTotoRecordStart, self).setUpClass()
+
+    self.key_path = "test_key"
+    generate_and_write_rsa_keypair(self.key_path)
+    self.key = prompt_import_rsa_key_from_file(self.key_path)
+
+    self.step_name = "test_step"
+    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_material = "test_material"
     open(self.test_material, "w").close()
@@ -586,14 +601,8 @@ class TestInTotoRecordStart(common.TestCaseLib):
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
 
-class TestInTotoRecordStop(common.TestCaseLib):
+class TestInTotoRecordStop(common.SetupTestCase):
   """"Test in_toto_record_stop(step_name, key, product_list). """
-
-  need_key_pair = True
-  extra_settings = "link"
-  key_path = "test-key"
-  step_name = "test-step"
-  need_second = True
 
   @classmethod
   def setUpClass(self):
@@ -601,7 +610,17 @@ class TestInTotoRecordStop(common.TestCaseLib):
     and dummy product. """
     super(TestInTotoRecordStop, self).setUpClass()
 
+    self.key_path = "test-key"
+    self.key_path2 = "test-key2"
+    generate_and_write_rsa_keypair(self.key_path)
+    generate_and_write_rsa_keypair(self.key_path2)
+    self.key = prompt_import_rsa_key_from_file(self.key_path)
+    self.key2 = prompt_import_rsa_key_from_file(self.key_path2)
+
+    self.step_name = "test-step"
     self.link_name = "{}.{:.8}.link".format(self.step_name, self.key["keyid"])
+    self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_product = "test_product"
     open(self.test_product, "w").close()

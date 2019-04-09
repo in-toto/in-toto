@@ -78,9 +78,9 @@ class Test_RaiseOnBadRetval(unittest.TestCase):
       _raise_on_bad_retval(-1, "bad command")
 
 
-class TestRunAllInspections(common.TestCaseLib):
+class TestRunAllInspections(common.SetupTestCase):
   """Test verifylib.run_all_inspections(layout)"""
-  
+
   @classmethod
   def setUpClass(self):
     """
@@ -93,13 +93,13 @@ class TestRunAllInspections(common.TestCaseLib):
 
     # Create layout with one inspection
     self.layout = Layout.read({
-      "_type": "layout",
-      "steps": [],
-      "inspect": [{
-        "name": "touch-bar",
-        "run": ["python", os.path.join(scripts_directory, "touch"), "bar"],
-      }]
-    })
+        "_type": "layout",
+        "steps": [],
+        "inspect": [{
+          "name": "touch-bar",
+          "run": ["python", os.path.join(scripts_directory, "touch"), "bar"],
+        }]
+      })
 
     # Create directory where the verification will take place
     super(TestRunAllInspections, self).setUpClass()
@@ -315,11 +315,21 @@ class TestVerifyRule(unittest.TestCase):
           self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
-class TestVerifyMatchRule(common.TestCaseLib):
+class TestVerifyMatchRule(unittest.TestCase):
   """Test verifylib.verify_match_rule(rule, artifact_queue, artifacts, links) """
 
   def setUp(self):
     """Setup artifact queues, artifacts dictionary and Link dictionary. """
+
+    # Dummy artifact hashes
+    self.sha256_foo = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_foobar = \
+        "155c693a6b7481f48626ebfc545f05236df679f0099225d6d0bc472e6dd21155"
+    self.sha256_bar = \
+        "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
+    self.sha256_barfoo = \
+        "2036784917e49b7685c7c17e03ddcae4a063979aa296ee5090b5bb8f8aeafc5d"
 
     # Link dictionary containing dummy artifacts related to Steps the rule is
     # matched with (match destination).
@@ -462,11 +472,15 @@ class TestVerifyMatchRule(common.TestCaseLib):
 
 
 
-class TestVerifyItemRules(common.TestCaseLib):
+class TestVerifyItemRules(unittest.TestCase):
   """Test verifylib.verify_item_rules(source_name, source_type, rules, links)"""
 
   def setUp(self):
     self.item_name = "item"
+    self.sha256_1 = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_2 = \
+        "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
 
     self.links = {
       "item": Metablock(signed=Link(name="item",
@@ -517,9 +531,9 @@ class TestVerifyItemRules(common.TestCaseLib):
     verify_item_rules(self.item_name, "materials", [], self.links)
 
 
-class TestVerifyAllItemRules(common.TestCaseLib):
+class TestVerifyAllItemRules(unittest.TestCase):
   """Test verifylib.verify_all_item_rules(items, links). """
-  
+
   def setUp(self):
     """Create a dummy supply chain with two steps one inspection and the
     according link metadata:
@@ -531,6 +545,11 @@ class TestVerifyAllItemRules(common.TestCaseLib):
     'untar' untars foo.tar.gz which results in foo.tar.gz and foo
 
     """
+
+    self.sha256_foo = \
+        "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3"
+    self.sha256_foo_tar = \
+        "93c3c35a039a6a3d53e81c5dbee4ebb684de57b7c8be11b8739fd35804a0e918"
 
     self.steps = [
         Step(name="write-code",
@@ -604,7 +623,7 @@ class TestVerifyAllItemRules(common.TestCaseLib):
     verify_all_item_rules(self.inspections, self.links)
 
 
-class TestInTotoVerify(common.TestCaseLib):
+class TestInTotoVerify(common.SetupTestCase):
   """
   Tests verifylib.in_toto_verify(layout_path, layout_key_paths).
 
@@ -632,12 +651,20 @@ class TestInTotoVerify(common.TestCaseLib):
 
     ...and dumps various layouts for different test scenarios
     """
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
     # find where the scripts directory is located.
     scripts_directory = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "scripts")
 
     # Find and copy demo files to temp dir
     super(TestInTotoVerify, self).setUpClass()
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # copy scripts over
     shutil.copytree(scripts_directory, "scripts")
@@ -1040,7 +1067,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestInTotoVerifyThresholdsGpgSubkeys(common.TestCaseLib):
+class TestInTotoVerifyThresholdsGpgSubkeys(common.SetupTestCase):
   """
   Test the following 8 scenarios for combinations of link authorization,
   where a link is either signed by a master or subkey (SIG), and the
@@ -1069,32 +1096,38 @@ class TestInTotoVerifyThresholdsGpgSubkeys(common.TestCaseLib):
   Plus additional gpg subkey related threshold tests.
 
   """
-  extra_settings = "keyrings"
-  directory_str = "rsa"
-  step_name = "name"
 
   @classmethod
   def setUpClass(self):
     super(TestInTotoVerifyThresholdsGpgSubkeys, self).setUpClass()
 
+    # Find demo files
+    gpg_keyring_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
+    self.gnupg_home = os.path.join(self.test_dir, "rsa")
+    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+
     self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
 
     master_key = in_toto.gpg.functions.gpg_export_pubkey(
-      self.master, self.gnupg_home)
+        self.master, self.gnupg_home)
     sub_key = master_key["subkeys"][self.sub]
 
     # We need a gpg key without subkeys to test the normal scenario (M M M),
     # because keys with signing subkeys always use that subkey for signing.
     self.master2 = "7B3ABB26B97B655AB9296BD15B0BD02E1C768C43"
     master_key2 = in_toto.gpg.functions.gpg_export_pubkey(
-      self.master2, self.gnupg_home)
+        self.master2, self.gnupg_home)
 
     self.pub_key_dict = {
       self.master: master_key,
       self.sub: sub_key,
       self.master2: master_key2
     }
+
+    self.step_name = "name"
 
 
   def _verify_link_signature_tresholds(self, sig_id, auth_id, key_id):
@@ -1205,11 +1238,9 @@ class TestInTotoVerifyThresholdsGpgSubkeys(common.TestCaseLib):
 
 
 
-class TestVerifySublayouts(common.TestCaseLib):
+class TestVerifySublayouts(common.SetupTestCase):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
   Call with one-step super layout that has a sublayout (demo layout). """
-
-  extra_settings = "demo"
 
   @classmethod
   def setUpClass(self):
@@ -1217,11 +1248,19 @@ class TestVerifySublayouts(common.TestCaseLib):
     The superlayout, which has one step and its sublayout, which is the usual
     demo layout (write code, package, inspect tar). """
 
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
     # find where the scripts directory is located.
     scripts_directory = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "scripts")
 
-    super(self, TestVerifySublayouts).setUpClass()
+    super(TestVerifySublayouts, self).setUpClass()
+
+    # Copy demo files to temp dir	
+    for file in os.listdir(demo_files):	
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # copy portable scripts over
     shutil.copytree(scripts_directory, 'scripts')
@@ -1237,7 +1276,7 @@ class TestVerifySublayouts(common.TestCaseLib):
     # Sublayout links are expected in a directory relative to the superlayout's
     # link directory
     sub_layout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
-      name=sub_layout_name, keyid=alice["keyid"])
+        name=sub_layout_name, keyid=alice["keyid"])
 
     for sublayout_link_name in glob.glob("*.link"):
       dest_path = os.path.join(sub_layout_link_dir, sublayout_link_name)
@@ -1247,7 +1286,7 @@ class TestVerifySublayouts(common.TestCaseLib):
     layout_template = Metablock.load("demo.layout.template")
     sub_layout = copy.deepcopy(layout_template)
     sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
-      keyid=alice_pub["keyid"])
+        keyid=alice_pub["keyid"])
     sub_layout.sign(alice)
     sub_layout.dump(sub_layout_path)
 
@@ -1255,9 +1294,9 @@ class TestVerifySublayouts(common.TestCaseLib):
     self.super_layout = Layout()
     self.super_layout.keys[alice_pub["keyid"]] = alice_pub
     sub_layout_step = Step(
-      name=sub_layout_name,
-      pubkeys=[alice_pub["keyid"]]
-    )
+        name=sub_layout_name,
+        pubkeys=[alice_pub["keyid"]]
+      )
     self.super_layout.steps.append(sub_layout_step)
 
     # Load the super layout links (i.e. the sublayout)
@@ -1466,12 +1505,11 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase):
 
 
 
-class TestGetSummaryLink(common.TestCaseLib):
+class TestGetSummaryLink(common.SetupTestCase):
   """Tests verifylib.get_summary_link(layout, reduced_chain_link_dict).
   Pass two step demo layout and according link files and verify the
   returned summary link.
   """
-  extra_settings = "demo"
 
   @classmethod
   def setUpClass(self):
@@ -1479,15 +1517,23 @@ class TestGetSummaryLink(common.TestCaseLib):
     The superlayout, which has one step and its sublayout, which is the usual
     demo layout (write code, package, inspect tar). """
 
+    # Find demo files
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "demo_files")
+
     super(TestGetSummaryLink, self).setUpClass()
+
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     self.demo_layout = Metablock.load("demo.layout.template")
     self.code_link = Metablock.load("package.2f89b927.link")
     self.package_link = Metablock.load("write-code.776a00e2.link")
     self.demo_links = {
-      "write-code": self.code_link,
-      "package": self.package_link
-    }
+        "write-code": self.code_link,
+        "package": self.package_link
+      }
 
   def test_get_summary_link_from_demo_layout(self):
     """Create summary link from demo link files and compare properties. """
