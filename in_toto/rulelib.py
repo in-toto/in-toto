@@ -40,7 +40,10 @@ def unpack_rule(rule):
         MODIFY <pattern>,
         ALLOW <pattern>,
         DISALLOW <pattern>,
-        REQUIRE <not-a-pattern>
+        REQUIRE <file>
+
+  Note that REQUIRE is somewhat of a weird animal that does not use patterns
+  but rather single filenames (for now).
 
   <Exceptions>
     raises FormatError, if the rule does not comply with any of the formats.
@@ -216,6 +219,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
       DISALLOW <pattern>,
       REQUIRE <file>
 
+    Note that REQUIRE is somewhat of a weird animal that does not use patterns
+    but rather single filenames (for now).
   """
   in_toto.formats.ANY_STRING_SCHEMA.check_match(rule_type)
   in_toto.formats.ANY_STRING_SCHEMA.check_match(pattern)
@@ -289,6 +294,10 @@ def pack_disallow_rule(pattern):
   """Shortcut for 'pack_rule' to pack a DISALLOW rule. """
   return pack_rule("DISALLOW", pattern)
 
-def pack_require_rule(pattern):
-  """Shortcut for 'pack_rule' to pack a REQUIRE rule. """
-  return pack_rule("REQUIRE", pattern)
+def pack_require_rule(filename):
+  """
+  Shortcut for 'pack_rule' to pack a REQUIRE rule:
+  note that REQUIRE is somewhat of a weird animal that does not use patterns
+  but rather single filenames (for now).
+  """
+  return pack_rule("REQUIRE", filename)

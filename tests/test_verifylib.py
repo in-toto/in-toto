@@ -321,8 +321,8 @@ class TestVerifyRule(unittest.TestCase):
           self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
-  def test_verify_disallow_rule(self):
-    """Test verifylib.verify_disallow_rule. """
+  def test_verify_require_rule(self):
+    """Test verifylib.verify_require_rule. """
     test_data_keys = ["rule pattern", "artifact queue"]
     test_cases = [
       # Foo required, pass

@@ -900,15 +900,15 @@ def verify_require_rule(filename, artifacts_queue):
   <Arguments>
     filename:
             A single filename (see issues #193 and #152). We will ignore the
-            artifact rule pattern because it's ambigous and intead treat it
+            artifact rule pattern because it's ambiguous and instead treat it
             as a literal file name.
 
     artifacts_queue:
             Not yet consumed artifacts (paths only).
 
   <Exceptions>
-    RuleVerificationError
-        if the rule pattern filters artifacts in the artifact queue.
+    RuleVerificationError:
+      if the filename is not present in the artifacts queue
 
   <Side Effects>
     None.
@@ -918,8 +918,8 @@ def verify_require_rule(filename, artifacts_queue):
 
   """
   if filename not in artifacts_queue:
-    raise RuleVerificationError("'REQUIRE {filename}' did not find {filename}"
-      "in: {queue}\n{traceback}".format(filename=filename,
+    raise RuleVerificationError("'REQUIRE {filename}' did not find {filename} "
+        "in: {queue}\n{traceback}".format(filename=filename,
         queue=artifacts_queue, traceback=_get_artifact_rule_traceback()))
 
 
