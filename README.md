@@ -57,6 +57,7 @@ Note that it is up to you to properly secure your supply chain, by authorizing, 
 - `MODIFY <pattern>`
 - `ALLOW <pattern>`
 - `DISALLOW <pattern>`
+- `REQUIRE <file>`
 - `MATCH <pattern> [IN <source-path-prefix>] WITH (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>`
 
 *Rule arguments specified as `<pattern>` allow for Unix shell-style wildcards as implemented by Python's [`fnmatch`](https://docs.python.org/2/library/fnmatch.html).*
