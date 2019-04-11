@@ -22,8 +22,9 @@ guidelines](https://github.com/secure-systems-lab/code-style-guidelines), and
 must unit test any new software feature or change.  Submitted pull requests
 undergo review and automated testing, including, but not limited to:
 
-* Unit and build testing via [Travis CI](https://travis-ci.org/) and
-[Tox](https://tox.readthedocs.io/en/latest/)
+* Unit and build testing via [Tox](https://tox.readthedocs.io/en/latest/) on
+[Travis CI](https://travis-ci.org/in-toto/in-toto) and
+[AppVeyor](https://ci.appveyor.com/project/in-toto/in-toto)
 * Static code analysis via [Pylint](https://www.pylint.org/) and
 [Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
 * Review by one or more maintainers
