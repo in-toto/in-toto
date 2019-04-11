@@ -19,11 +19,6 @@ Maintainers:
     GitHub username: @SantiagoTorres
     PGP fingerprint: 903B AB73 640E B6D6 5533  EFF3 468F 122C E816 2295
 
-  Vladimir Diaz
-    Email: vladimir.diaz@nyu.edu
-    GitHub username: @vladimir-v-diaz
-    PGP fingerprint: 3E87 BB33 9378 BC7B 3DD0  E5B2 5DEE 9B97 B0E2 289A
-
   Sebastien Awwad
     Email: sebastien.awwad@nyu.edu
     GitHub username: @awwad
