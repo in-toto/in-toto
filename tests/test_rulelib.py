@@ -21,7 +21,7 @@
 import unittest
 from in_toto.rulelib import (unpack_rule, pack_rule, pack_rule_data,
     pack_create_rule, pack_delete_rule, pack_modify_rule, pack_allow_rule,
-    pack_disallow_rule)
+    pack_disallow_rule, pack_require_rule)
 import securesystemslib.exceptions
 
 
@@ -110,6 +110,15 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule, pack_rule_data(rule_data))
     self.assertEquals(rule, pack_disallow_rule("foo"))
 
+    rule = ["REQUIRE", "foo"]
+    rule_data = unpack_rule(rule)
+    self.assertEquals(len(list(rule_data.keys())), 2)
+    self.assertEquals(rule_data["rule_type"], "require")
+    self.assertEquals(rule_data["pattern"], "foo")
+
+    self.assertEquals(rule, pack_rule_data(rule_data))
+    self.assertEquals(rule, pack_require_rule("foo"))
+
 
   def test_unpack_and_pack_match_rule(self):
     """Check match rule proper packing and unpacking. """
@@ -176,7 +185,6 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     self.assertEquals(rule, pack_rule_data(rule_data))
     self.assertEquals(rule, pack_rule("MATCH", "foo",
         dest_type="PRODUCTS", dest_name="step-name"))
-
 
   def test_pack_rule_wrong_types(self):
     """Test argument validation for pack_rule. """
