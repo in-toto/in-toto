@@ -37,15 +37,9 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 import unittest
 from mock import patch
 
-class SetupTestCase(unittest.TestCase):
+class TempDirTestCase(unittest.TestCase):
   """TestCase subclass providing template superclass methods that centrally
-  integrate test script setup and teardown through directory environment setup
-  and flags which dictate execution of specialized code blocks.
-
-  Supports setup for key pair generation, demo supply chain link metadata,
-  key pair dummy material generation, and GPG keyring verification. Supports
-  teardown of temporary test directories and artifact pattern settings.
-  """
+  integrate setup and teardown of temporary test directories in test scripts."""
   @classmethod
   def setUpClass(self):
     # Backup original cwd

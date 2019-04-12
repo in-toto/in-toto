@@ -26,7 +26,7 @@ import copy
 import tempfile
 import unittest
 import glob
-import common
+import tests.common
 
 from mock import patch
 from datetime import datetime
@@ -159,7 +159,7 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
       substitute_parameters(self.layout, {"NOEDITOR": "vim"})
 
 
-class Test_SubstituteOnVerify(common.SetupTestCase):
+class Test_SubstituteOnVerify(tests.common.TempDirTestCase):
   """Test verifylib.verify_command_alignment(command, expected_command)"""
 
   @classmethod

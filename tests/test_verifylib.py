@@ -25,7 +25,7 @@ import tempfile
 import unittest
 import glob
 import shlex
-import common
+import tests.common
 
 from mock import patch
 from datetime import datetime
@@ -78,7 +78,7 @@ class Test_RaiseOnBadRetval(unittest.TestCase):
       _raise_on_bad_retval(-1, "bad command")
 
 
-class TestRunAllInspections(common.SetupTestCase):
+class TestRunAllInspections(tests.common.TempDirTestCase):
   """Test verifylib.run_all_inspections(layout)"""
 
   @classmethod
@@ -623,7 +623,7 @@ class TestVerifyAllItemRules(unittest.TestCase):
     verify_all_item_rules(self.inspections, self.links)
 
 
-class TestInTotoVerify(common.SetupTestCase):
+class TestInTotoVerify(tests.common.TempDirTestCase):
   """
   Tests verifylib.in_toto_verify(layout_path, layout_key_paths).
 
@@ -638,8 +638,6 @@ class TestInTotoVerify(common.SetupTestCase):
     - layout with failing step rule
 
   """
-  extra_settings = "demo"
-
   @classmethod
   def setUpClass(self):
     """Creates and changes into temporary directory.
@@ -1067,7 +1065,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestInTotoVerifyThresholdsGpgSubkeys(common.SetupTestCase):
+class TestInTotoVerifyThresholdsGpgSubkeys(tests.common.TempDirTestCase):
   """
   Test the following 8 scenarios for combinations of link authorization,
   where a link is either signed by a master or subkey (SIG), and the
@@ -1157,7 +1155,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(common.SetupTestCase):
   def test_verify_link_signature_thresholds__M_M_M(self):
     """Normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-         self.master2, self.master2, self.master2)
+        self.master2, self.master2, self.master2)
 
     #print("path: {}".format(os.environ['PATH']))
     verify_link_signature_thresholds(layout, chain_link_dict)
@@ -1171,7 +1169,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(common.SetupTestCase):
     # Even if gpg would use the masterkey, these scenarios are not allowed,
     # see table in docstring of testcase
     signature = in_toto.gpg.functions.gpg_sign_object(
-         b"data", self.master, self.gnupg_home)
+        b"data", self.master, self.gnupg_home)
 
     self.assertTrue(signature["keyid"] == self.sub)
 
@@ -1238,7 +1236,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(common.SetupTestCase):
 
 
 
-class TestVerifySublayouts(common.SetupTestCase):
+class TestVerifySublayouts(tests.common.TempDirTestCase):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
   Call with one-step super layout that has a sublayout (demo layout). """
 
@@ -1258,8 +1256,8 @@ class TestVerifySublayouts(common.SetupTestCase):
 
     super(TestVerifySublayouts, self).setUpClass()
 
-    # Copy demo files to temp dir	
-    for file in os.listdir(demo_files):	
+    # Copy demo files to temp dir
+    for file in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file), self.test_dir)
 
     # copy portable scripts over
@@ -1505,7 +1503,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase):
 
 
 
-class TestGetSummaryLink(common.SetupTestCase):
+class TestGetSummaryLink(tests.common.TempDirTestCase):
   """Tests verifylib.get_summary_link(layout, reduced_chain_link_dict).
   Pass two step demo layout and according link files and verify the
   returned summary link.

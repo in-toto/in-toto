@@ -24,7 +24,7 @@ import os
 import unittest
 import shutil
 import tempfile
-import common
+import tests.common
 
 import in_toto.settings
 import in_toto.exceptions
@@ -87,7 +87,7 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     self.assertListEqual(result, expected)
 
 
-class TestRecordArtifactsAsDict(common.SetupTestCase):
+class TestRecordArtifactsAsDict(tests.common.TempDirTestCase):
   """Test record_artifacts_as_dict(artifacts). """
 
   @classmethod
@@ -428,7 +428,7 @@ class TestRecordArtifactsAsDict(common.SetupTestCase):
     self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
 
 
-class TestInTotoRun(common.SetupTestCase):
+class TestInTotoRun(tests.common.TempDirTestCase):
   """"
   Tests runlib.in_toto_run() with different arguments
 
@@ -553,7 +553,7 @@ class TestInTotoRun(common.SetupTestCase):
           ["python", "--version"], True, self.key_pub)
 
 
-class TestInTotoRecordStart(common.SetupTestCase):
+class TestInTotoRecordStart(tests.common.TempDirTestCase):
   """"Test in_toto_record_start(step_name, key, material_list). """
 
   @classmethod
@@ -601,7 +601,7 @@ class TestInTotoRecordStart(common.SetupTestCase):
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
 
-class TestInTotoRecordStop(common.SetupTestCase):
+class TestInTotoRecordStop(tests.common.TempDirTestCase):
   """"Test in_toto_record_stop(step_name, key, product_list). """
 
   @classmethod

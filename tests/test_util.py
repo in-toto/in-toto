@@ -23,6 +23,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import tests.common
 
 # Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
@@ -51,29 +52,20 @@ import securesystemslib.exceptions
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
     import_ed25519_publickey_from_file)
 
-class TestUtil(unittest.TestCase):
+class TestUtil(tests.common.TempDirTestCase):
   """Test various util functions. Mostly related to RSA key creation or
   loading."""
 
   @classmethod
   def setUpClass(self):
     # Create directory where the verification will take place
-    self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    super(TestUtil, self).setUpClass()
 
     # Copy gpg keyring
     gpg_keyring_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
-
-    os.chdir(self.test_dir)
-
-  @classmethod
-  def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
 
   def test_unrecognized_key_type(self):
     """Create and read the wrong key type. """

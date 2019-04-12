@@ -17,6 +17,7 @@ import unittest
 import argparse
 import shutil
 import tempfile
+import tests.common
 from mock import patch
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
 from in_toto.util import (generate_and_write_rsa_keypair,
@@ -30,22 +31,9 @@ from securesystemslib.keys import generate_rsa_key
 
 WORKING_DIR = os.getcwd()
 
-class TestInTotoKeyGenTool(unittest.TestCase):
+class TestInTotoKeyGenTool(tests.common.TempDirTestCase):
   """Test in_toto_keygen's main() - requires sys.argv patching; error
   logs/exits on Exception. """
-
-  @classmethod
-  def setUpClass(self):
-    # Create directory where the verification will take place
-    self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
-
-  @classmethod
-  def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
 
   def test_main_required_args(self):
     """Test in-toto-keygen CLI tool with required arguments. """

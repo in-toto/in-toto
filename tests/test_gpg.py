@@ -24,7 +24,7 @@ import shutil
 import tempfile
 import unittest
 from mock import patch
-import common
+import tests.common
 from six import string_types
 from copy import deepcopy
 
@@ -403,7 +403,7 @@ class TestCommon(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestGPGRSA(common.SetupTestCase):
+class TestGPGRSA(tests.common.TempDirTestCase):
   """Test signature creation, verification and key export from the gpg
   module"""
   default_keyid = "8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17"
@@ -509,7 +509,7 @@ class TestGPGRSA(common.SetupTestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestGPGDSA(common.SetupTestCase):
+class TestGPGDSA(tests.common.TempDirTestCase):
   """ Test signature creation, verification and key export from the gpg
   module """
 
