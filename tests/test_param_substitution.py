@@ -85,12 +85,12 @@ class Test_SubstituteArtifacts(unittest.TestCase):
     """Do a simple substitution on the expected_command field"""
     substitute_parameters(self.layout, {"SOURCE_THING": "vim",
       "SOURCE_STEP": "source_step", "NEW_THING": "new_thing"})
-    self.assertEquals(self.layout.steps[0].expected_materials[0][1], "vim")
-    self.assertEquals(self.layout.steps[0].expected_materials[0][5], "source_step")
-    self.assertEquals(self.layout.steps[0].expected_products[0][1], "new_thing")
-    self.assertEquals(self.layout.inspect[0].expected_materials[0][1], "vim")
-    self.assertEquals(self.layout.inspect[0].expected_materials[0][5], "source_step")
-    self.assertEquals(self.layout.inspect[0].expected_products[0][1], "new_thing")
+    self.assertEqual(self.layout.steps[0].expected_materials[0][1], "vim")
+    self.assertEqual(self.layout.steps[0].expected_materials[0][5], "source_step")
+    self.assertEqual(self.layout.steps[0].expected_products[0][1], "new_thing")
+    self.assertEqual(self.layout.inspect[0].expected_materials[0][1], "vim")
+    self.assertEqual(self.layout.inspect[0].expected_materials[0][5], "source_step")
+    self.assertEqual(self.layout.inspect[0].expected_products[0][1], "new_thing")
 
 
 
@@ -121,7 +121,7 @@ class Test_SubstituteRunField(unittest.TestCase):
   def test_substitute(self):
     """Check that the substitution is performed on the run field."""
     substitute_parameters(self.layout, {"COMMAND": "touch"})
-    self.assertEquals(self.layout.inspect[0].run[0], "touch")
+    self.assertEqual(self.layout.inspect[0].run[0], "touch")
 
 
   def test_inspection_fail_with_non_zero_retval(self):
@@ -147,7 +147,7 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""
     substitute_parameters(self.layout, {"EDITOR": "vim"})
-    self.assertEquals(self.layout.steps[0].expected_command[0], "vim")
+    self.assertEqual(self.layout.steps[0].expected_command[0], "vim")
 
 
   def test_substitute_no_var(self):
@@ -208,7 +208,7 @@ class Test_SubstituteOnVerify(unittest.TestCase):
       in_toto_verify(signed_layout, self.alice_pub_dict,
           substitution_parameters={"EDITOR":"vim"})
 
-    self.assertEquals(self.layout.steps[0].expected_command[0], "vim")
+    self.assertEqual(self.layout.steps[0].expected_command[0], "vim")
 
 
 if __name__ == "__main__":

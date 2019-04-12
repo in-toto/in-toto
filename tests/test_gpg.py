@@ -515,9 +515,9 @@ class TestGPGRSA(unittest.TestCase):
     ssh_key = serialization.load_ssh_public_key(keydata,
         backends.default_backend())
 
-    self.assertEquals(ssh_key.public_numbers().n,
+    self.assertEqual(ssh_key.public_numbers().n,
         our_exported_key.public_numbers().n)
-    self.assertEquals(ssh_key.public_numbers().e,
+    self.assertEqual(ssh_key.public_numbers().e,
         our_exported_key.public_numbers().e)
 
     subkey_keyids = list(key_data["subkeys"].keys())
@@ -660,13 +660,13 @@ class TestGPGDSA(unittest.TestCase):
     ssh_key = serialization.load_ssh_public_key(keydata,
         backends.default_backend())
 
-    self.assertEquals(ssh_key.public_numbers().y,
+    self.assertEqual(ssh_key.public_numbers().y,
         our_exported_key.public_numbers().y)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.g,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.g,
         our_exported_key.public_numbers().parameter_numbers.g)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.q,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.q,
         our_exported_key.public_numbers().parameter_numbers.q)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.p,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.p,
         our_exported_key.public_numbers().parameter_numbers.p)
 
   def test_gpg_sign_and_verify_object_with_default_key(self):
