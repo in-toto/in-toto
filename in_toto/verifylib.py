@@ -1455,7 +1455,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
             Default is the current working directory.
 
     substitution_parameters: (optional)
-            a dictionary containing key-value pairs for substituting in the 
+            a dictionary containing key-value pairs for substituting in the
             following metadata fields:
 
               - artifact rules in step and inspection definitions in the layout
