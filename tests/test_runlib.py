@@ -519,7 +519,7 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify cwd. """
     link = in_toto_run(self.step_name, [], [], ["python", "--version"],
         record_environment=True)
-    self.assertEqual(link.signed.environment["workdir"], 
+    self.assertEqual(link.signed.environment["workdir"],
         os.getcwd().replace("\\", "/"))
 
   def test_normalize_line_endings(self):
@@ -664,7 +664,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key, record_environment=True)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
-    self.assertEqual(link.signed.environment["workdir"], 
+    self.assertEqual(link.signed.environment["workdir"],
         os.getcwd().replace('\\', '/'))
     os.remove(self.link_name)
 

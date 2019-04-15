@@ -44,7 +44,7 @@ class Test_SubstituteArtifacts(unittest.TestCase):
         "inspect": [{
           "name": "do-the-thing",
           "expected_materials": [
-            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM", 
+            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM",
               "{SOURCE_STEP}"]
           ],
           "expected_products": [
@@ -55,7 +55,7 @@ class Test_SubstituteArtifacts(unittest.TestCase):
           "name": "artifacts",
           "expected_command": [],
           "expected_materials": [
-            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM", 
+            ["MATCH", "{SOURCE_THING}", "WITH", "MATERIALS", "FROM",
               "{SOURCE_STEP}"]
           ],
           "expected_products": [
