@@ -20,16 +20,8 @@
 
 import os
 import shutil
-import sys
 import tempfile
 import unittest
-
-# Use external backport 'mock' on versions under 3.3
-if sys.version_info >= (3, 3):
-  import unittest.mock as mock
-
-else:
-  import mock
 
 from mock import patch
 
@@ -46,6 +38,7 @@ from in_toto.util import (
     prompt_import_rsa_key_from_file,
     import_gpg_public_keys_from_keyring_as_dict)
 
+from in_toto.exceptions import UnsupportedKeyTypeError
 import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
@@ -76,14 +69,9 @@ class TestUtil(unittest.TestCase):
     shutil.rmtree(self.test_dir)
 
   def test_unrecognized_key_type(self):
-    """Create and read the wrong key type. """
-    wrong_key_type = "wrong_key_type"
-    open(wrong_key_type, "w").write(wrong_key_type)
-
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
-      with self.assertRaises(TypeError):
-        import_private_key_from_file(wrong_key_type)
+    """Trigger UnsupportedKeyTypeError. """
+    with self.assertRaises(UnsupportedKeyTypeError):
+      import_private_key_from_file("ignored_key_path", "wrong_key_type")
 
   def test_create_and_import_rsa(self):
     """Create RS key and import private and public key separately. """
