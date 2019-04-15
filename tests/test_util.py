@@ -118,7 +118,8 @@ class TestUtil(unittest.TestCase):
   def test_import_rsa_wrong_format(self):
     """Try import wrongly formatted RSA key, raises exception. """
     not_an_rsa = "not_an_rsa"
-    open(not_an_rsa, "w").write(not_an_rsa)
+    with open(not_an_rsa, "w") as f:
+      f.write(not_an_rsa)
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       import_rsa_key_from_file(not_an_rsa)
 
@@ -136,7 +137,8 @@ class TestUtil(unittest.TestCase):
 
     # Import wrongly formatted key raises an exception
     not_an_rsa = "not_an_rsa"
-    open(not_an_rsa, "w").write(not_an_rsa)
+    with open(not_an_rsa, "w") as f:
+      f.write(not_an_rsa)
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       import_public_keys_from_files_as_dict([name1 + ".pub", not_an_rsa])
@@ -203,7 +205,8 @@ class TestUtil(unittest.TestCase):
 
     # Import wrongly formatted key raises an exception
     not_an_ed25519 = "not_an_ed25519"
-    open(not_an_ed25519, "w").write(not_an_ed25519)
+    with open(not_an_ed25519, "w") as f:
+      f.write(not_an_ed25519)
 
     with self.assertRaises(securesystemslib.exceptions.Error):
       import_public_keys_from_files_as_dict([name1 + ".pub",

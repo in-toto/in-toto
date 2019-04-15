@@ -682,7 +682,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
       open(self.link_name_unfinished, "r")
-    open(self.link_name, "r")
+    self.assertTrue(os.path.isfile(self.link_name))
     os.remove(self.link_name)
 
   def test_missing_unfinished_file(self):

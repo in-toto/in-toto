@@ -103,7 +103,8 @@ class TestRunAllInspections(unittest.TestCase):
     self.working_dir = os.getcwd()
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
-    open("foo", "w").write("foo")
+    with open("foo", "w") as f:
+      f.write("foo")
 
   @classmethod
   def tearDownClass(self):
@@ -115,7 +116,8 @@ class TestRunAllInspections(unittest.TestCase):
     """Create new dummy test dir and set as base path, must ignore. """
     ignore_dir = os.path.realpath(tempfile.mkdtemp())
     ignore_foo = os.path.join(ignore_dir, "ignore_foo")
-    open(ignore_foo, "w").write("ignore foo")
+    with open(ignore_foo, "w") as f:
+      f.write("ignore foo")
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
     run_all_inspections(self.layout)
