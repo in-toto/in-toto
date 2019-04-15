@@ -259,6 +259,8 @@ class TestCommon(unittest.TestCase):
     # Parse corresponding raw packet for comparison
     _, header_len, _, _ = parse_packet_header(
         self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"])
+
+    # pylint: disable=unsubscriptable-object
     parsed_raw_packet = parse_pubkey_payload(bytearray(
           self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"][header_len:]))
 
