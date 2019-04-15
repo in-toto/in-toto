@@ -708,8 +708,8 @@ class TestInTotoVerify(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # copy scripts over
     shutil.copytree(scripts_directory, "scripts")
@@ -1363,8 +1363,8 @@ class TestVerifySublayouts(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # copy portable scripts over
     shutil.copytree(scripts_directory, 'scripts')
@@ -1639,8 +1639,8 @@ class TestGetSummaryLink(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     self.demo_layout = Metablock.load("demo.layout.template")
     self.code_link = Metablock.load("package.2f89b927.link")

@@ -167,8 +167,8 @@ class Test_SubstituteOnVerify(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # load alice's key
     self.alice = import_rsa_key_from_file("alice")
