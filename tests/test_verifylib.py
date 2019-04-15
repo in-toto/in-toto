@@ -315,10 +315,10 @@ class TestVerifyRule(unittest.TestCase):
         exception = e
 
       if should_raise and not exception:
-         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+        self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
 
       if exception and not should_raise:
-          self.fail("Unexpected {}\n{}".format(exception, msg))
+        self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
   def test_verify_require_rule(self):
@@ -347,10 +347,10 @@ class TestVerifyRule(unittest.TestCase):
         exception = e
 
       if should_raise and not exception:
-         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+        self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
 
       if exception and not should_raise:
-          self.fail("Unexpected {}\n{}".format(exception, msg))
+        self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
 
