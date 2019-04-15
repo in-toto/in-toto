@@ -20,7 +20,6 @@ import os
 import tempfile
 import unittest
 import shlex
-import mock
 import io
 import sys
 import in_toto.process

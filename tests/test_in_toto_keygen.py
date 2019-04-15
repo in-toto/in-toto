@@ -14,19 +14,17 @@
 import os
 import sys
 import unittest
-import argparse
 import shutil
 import tempfile
 from mock import patch
+
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_generate_and_write_rsa_keypair, prompt_password,
     generate_and_write_ed25519_keypair,
-    prompt_generate_and_write_ed25519_keypair,
-    import_rsa_key_from_file, prompt_import_rsa_key_from_file)
-from in_toto import exceptions
+    prompt_generate_and_write_ed25519_keypair, import_rsa_key_from_file)
+
 import securesystemslib
-from securesystemslib.keys import generate_rsa_key
 
 WORKING_DIR = os.getcwd()
 

@@ -18,10 +18,7 @@
 import six
 
 import os
-import sys
 import unittest
-import shutil
-import tempfile
 import in_toto.settings
 import in_toto.user_settings
 

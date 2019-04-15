@@ -22,33 +22,16 @@
 
 import os
 import shutil
-import copy
 import tempfile
 import unittest
-import glob
-from mock import patch
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 import in_toto.settings
 from in_toto.models.metadata import Metablock
-from in_toto.models.link import Link, FILENAME_FORMAT
-from in_toto.models.layout import (Step, Inspection, Layout,
-    SUBLAYOUT_LINK_DIR_FORMAT)
-from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
-    verify_modify_rule, verify_allow_rule, verify_disallow_rule,
-    verify_match_rule, verify_item_rules, verify_all_item_rules,
-    verify_command_alignment, run_all_inspections, in_toto_verify,
-    verify_sublayouts, get_summary_link, _raise_on_bad_retval,
-    load_links_for_layout, verify_link_signature_thresholds,
-    verify_threshold_constraints, substitute_parameters)
-from in_toto.exceptions import (RuleVerificationError,
-    SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
-    ThresholdVerificationError)
-from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
-import in_toto.gpg.functions
+from in_toto.models.layout import  Layout
+from in_toto.verifylib import in_toto_verify, substitute_parameters
+from in_toto.util import (import_rsa_key_from_file,
+    import_public_keys_from_files_as_dict)
 
-import securesystemslib.exceptions
 import in_toto.exceptions
 
 

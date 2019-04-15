@@ -34,8 +34,7 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     _hash_artifact)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
+from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
 import securesystemslib.formats
 import securesystemslib.exceptions

@@ -19,18 +19,12 @@
 """
 
 import os
-import sys
 import unittest
-import argparse
 import shutil
 import tempfile
-from mock import patch
 
-from in_toto.models.link import Link
-from in_toto.models.layout import Layout
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
-from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
 from securesystemslib.interface import import_ed25519_privatekey_from_file
 

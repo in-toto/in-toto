@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import argparse
 import shutil
 import glob
 import tempfile
@@ -33,18 +32,14 @@ if sys.version_info >= (3, 3):
 else:
   import mock
 
-from mock import patch
-
 from in_toto.util import (generate_and_write_rsa_keypair,
     generate_and_write_ed25519_keypair, import_private_key_from_file,
     KEY_TYPE_RSA, KEY_TYPE_ED25519)
 
-from in_toto.models.link import Link
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
-import in_toto.gpg.util
 import tests.common
 
 

@@ -35,7 +35,7 @@ from mock import patch
 
 import in_toto.formats
 from in_toto.util import (
-    KEY_TYPE_ED25519, KEY_TYPE_RSA,
+    KEY_TYPE_ED25519,
     generate_and_write_rsa_keypair,
     generate_and_write_ed25519_keypair,
     import_rsa_key_from_file,

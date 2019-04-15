@@ -14,15 +14,10 @@
 """
 
 import os
-import sys
 import json
 import shutil
 import tempfile
 import unittest
-
-from mock import patch
-from in_toto import exceptions
-import in_toto.gpg.util
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 

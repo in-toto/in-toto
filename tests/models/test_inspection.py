@@ -18,7 +18,7 @@
 """
 
 import unittest
-from in_toto.models.layout import Layout, Inspection
+from in_toto.models.layout import Inspection
 import securesystemslib.exceptions
 
 class TestInspectionValidator(unittest.TestCase):

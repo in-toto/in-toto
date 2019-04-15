@@ -17,13 +17,10 @@
 
 """
 import os
-import sys
 import unittest
-import argparse
 import shutil
 import tempfile
 import logging
-from mock import patch
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
 

@@ -18,7 +18,6 @@
 """
 
 import unittest
-import datetime
 from in_toto.models.layout import Step
 import securesystemslib.keys
 import securesystemslib.exceptions

@@ -52,9 +52,6 @@ from in_toto.gpg.exceptions import (PacketParsingError,
     KeyNotFoundError, CommandError, KeyExpirationError)
 from in_toto.gpg.formats import PUBKEY_SCHEMA
 
-import securesystemslib.formats
-import securesystemslib.exceptions
-
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
 class TestUtil(unittest.TestCase):
