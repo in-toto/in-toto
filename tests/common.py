@@ -86,6 +86,6 @@ class CliTestCase(unittest.TestCase):
     """
     with patch.object(sys, "argv", [self.file_name]
         + cli_args), self.assertRaises(SystemExit) as raise_ctx:
-      self.cli_main_func()
+      self.cli_main_func() # pylint: disable=not-callable
 
     self.assertEqual(raise_ctx.exception.code, status)
