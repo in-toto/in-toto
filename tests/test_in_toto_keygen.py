@@ -16,7 +16,10 @@ import sys
 import unittest
 import shutil
 import tempfile
-from mock import patch
+if sys.version_info >= (3, 3):
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
+else:
+  from mock import patch # pylint: disable=import-error
 
 from in_toto.in_toto_keygen import main as in_toto_keygen_main
 from in_toto.util import (generate_and_write_rsa_keypair,

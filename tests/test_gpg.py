@@ -20,12 +20,16 @@
 """
 
 import os
+import sys
 import shutil
 import tempfile
 import unittest
-from mock import patch
-import time
-import datetime
+
+if sys.version_info >= (3, 3):
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
+else:
+  from mock import patch # pylint: disable=import-error
+
 from six import string_types
 from copy import deepcopy
 from collections import OrderedDict

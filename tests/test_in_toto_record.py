@@ -24,13 +24,10 @@ import unittest
 import shutil
 import tempfile
 
-# Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
-  import unittest.mock as mock
-
+  import unittest.mock as mock # pylint: disable=no-name-in-module,import-error
 else:
-  import mock
-
+  import mock # pylint: disable=import-error
 
 import in_toto.util
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
