@@ -118,9 +118,9 @@ class TestUtil(unittest.TestCase):
     bits = 3072
     generate_and_write_rsa_keypair(name, bits, password)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_rsa_key_from_file(name)
+      import_rsa_key_from_file(name)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_rsa_key_from_file(name, "wrong-password")
+      import_rsa_key_from_file(name, "wrong-password")
 
   def test_import_non_existing_rsa(self):
     """Try import non-existing RSA key, raises exception. """
@@ -190,9 +190,9 @@ class TestUtil(unittest.TestCase):
     password = "123456"
     generate_and_write_ed25519_keypair(name, password)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_ed25519_privatekey_from_file(name)
+      import_ed25519_privatekey_from_file(name)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_ed25519_privatekey_from_file(name, "wrong-password")
+      import_ed25519_privatekey_from_file(name, "wrong-password")
 
   def test_import_ed25519_public_keys_from_files_as_dict(self):
     """Create and import multiple Ed25519 public keys and return KEYDICT. """

@@ -33,7 +33,7 @@ def check_usable_gpg():
     try:
       subprocess.check_call([gpg, "--version"])
 
-    except OSError as e:
+    except OSError:
       pass
 
     else:

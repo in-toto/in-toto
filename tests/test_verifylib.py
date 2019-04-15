@@ -1455,7 +1455,6 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase):
         keys["alice_pub"]["keyid"]: keys["alice_pub"]
       }
 
-    root_layout_name = "root.layout"
     root_layout_step_name = "delegated-to-bob"
 
     root_layout = Metablock(signed=Layout(

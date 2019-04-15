@@ -18,8 +18,6 @@
   Test runlib functions.
 
 """
-import six
-
 import os
 import unittest
 import shutil
@@ -149,10 +147,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
       with self.assertRaises(ValueError):
         record_artifacts_as_dict(["."], base_path=base_path)
 
-    def tearDown(self):
-      """ change back to the test dir, in case any tests fail """
-      os.chdir(self.test_dir)
-
 
   def test_base_path_is_child_dir(self):
     """Test path of recorded artifacts and cd back with child as base."""
@@ -280,7 +274,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Traverse dir and subdirs. Record three files. """
     artifacts_dict = record_artifacts_as_dict(["."])
 
-    for key, val in six.iteritems(artifacts_dict):
+    for val in list(artifacts_dict.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
@@ -386,7 +380,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Explicitly record files and subdirs. """
     artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
-    for key, val in six.iteritems(artifacts_dict):
+    for val in list(artifacts_dict.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
