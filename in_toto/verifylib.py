@@ -1062,11 +1062,11 @@ def verify_item_rules(source_name, source_type, rules, links):
     # artifacts were not consumed as intended
     elif _type == "disallow":
       verify_disallow_rule(_pattern, artifacts_queue)
-      consumed = artifacts_queue
+      consumed = set()
 
     elif _type == "require":
       verify_require_rule(_pattern, artifacts_queue)
-      consumed = artifacts_queue
+      consumed = set()
 
     else: # pragma: no cover (unreachable)
       raise securesystemslib.exceptions.FormatError(
