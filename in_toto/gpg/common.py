@@ -317,7 +317,9 @@ def _assign_certified_key_info(bundle):
         # (see parse_signature_packet for more information about keyids)
         signature["keyid"] = signature["keyid"] or signature["short_keyid"]
 
-      # TODO: Revise exception taxonomy
+      # TODO: Revise exception taxonomy:
+      # It's okay to ignore some exceptions (unsupported algorithms etc.) but
+      # we should blow up if a signature is malformed (missing subpackets).
       except Exception as e:
         log.info(e)
         continue
@@ -358,14 +360,8 @@ def _assign_certified_key_info(bundle):
       if tmp_validity_period == None:
         continue
 
-      tmp_sig_creation_time = \
-          signature["info"]["subpackets"].get(SIG_CREATION_SUBPACKET)
-
-      # No signature creation time, no way to resolve potential ambiguities,
-      # go to next certificate
-      # TODO: As per the spec this cannot not happen, should we blow up?
-      if tmp_sig_creation_time == None: # pragma: no cover
-        continue
+      # Create shortcut to mandatory pre-parsed creation time subpacket
+      tmp_sig_creation_time = signature["info"]["creation_time"]
 
       tmp_is_primary_user = \
           signature["info"]["subpackets"].get(PRIMARY_USERID_SUBPACKET)
@@ -378,7 +374,6 @@ def _assign_certified_key_info(bundle):
       if is_primary_user and not tmp_is_primary_user:
         continue
 
-      tmp_sig_creation_time = struct.unpack(">I", tmp_sig_creation_time)[0]
       if not sig_creation_time or sig_creation_time < tmp_sig_creation_time:
         # This is the most recent certificate that has a validity_period and
         # doesn't have lower priority in regard to the primary user id flag. We
@@ -386,7 +381,7 @@ def _assign_certified_key_info(bundle):
         # a certificate with higher priority.
         validity_period = struct.unpack(">I", tmp_validity_period)[0]
         # We also keep track of the used certificate's primary user id flag and
-        # the signature creation time, for priorization.
+        # the signature creation time, for prioritization.
         is_primary_user = tmp_is_primary_user
         sig_creation_time = tmp_sig_creation_time
 
@@ -699,6 +694,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   info = {
     "signature_type": signature_type,
     "hash_algorithm": hash_algorithm,
+    "creation_time": None,
     "subpackets": {},
   }
 
@@ -731,6 +727,9 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
+    if subpacket_type == SIG_CREATION_SUBPACKET:
+      info["creation_time"] = struct.unpack(">I", subpacket_data)[0]
+
     info["subpackets"][subpacket_type] = subpacket_data
 
   # Fail if there is no keyid at all (this should not happen)
@@ -746,6 +745,11 @@ def parse_signature_packet(data, supported_signature_types=None,
         "fingerprint '{}' of the 'Issuer Fingerprint' subpacket (see RFC4880 "
         "and rfc4880bis-06 5.2.3.28. Issuer Fingerprint).".format(
         short_keyid, keyid))
+
+  if not info["creation_time"]: # pragma: no cover
+    raise ValueError("This signature packet seems to be corrupted. It does "
+        "not have a 'Signature Creation Time' subpacket (see RFC4880 5.2.3.4 "
+        "Signature Creation Time).")
 
   # Uncomment this variable to obtain the left-hash-bits information (used for
   # early rejection)
