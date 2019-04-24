@@ -16,6 +16,7 @@
   verifying signatures.
 """
 import logging
+import time
 
 import in_toto.gpg.common
 import in_toto.gpg.exceptions
@@ -67,7 +68,10 @@ def gpg_sign_object(content, keyid=None, homedir=None):
     OSError:
             If the gpg command is not present or non-executable.
 
-    in_toto.gpg.execeptions.KeyNotFoundError:
+    in_toto.gpg.exceptions.CommandError:
+            If the gpg command returned a non-zero exit code
+
+    in_toto.gpg.exceptions.KeyNotFoundError:
             If the used gpg version is not fully supported
             and no public key can be found for short keyid.
 
@@ -81,18 +85,27 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   keyarg = ""
   if keyid:
     securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-    keyarg = "--default-key {}".format(keyid)
+    keyarg = "--local-user {}".format(keyid)
 
   homearg = ""
   if homedir:
     homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
   command = GPG_SIGN_COMMAND.format(keyarg=keyarg, homearg=homearg)
-  process = in_toto.process.run(command, input=content,
-    stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
+  process = in_toto.process.run(command, input=content, check=False,
+      stdout=in_toto.process.PIPE, stderr=in_toto.process.PIPE)
+
+  # TODO: It's suggested to take a look at `--status-fd` for proper error
+  # reporting, as there is no clear distinction between the return codes
+  # https://lists.gnupg.org/pipermail/gnupg-devel/2005-December/022559.html
+  if process.returncode is not 0:
+    raise in_toto.gpg.exceptions.CommandError("Command '{}' returned non-zero "
+        "exit status '{}', stderr was:\n{}.".format(process.args,
+        process.returncode, process.stderr.decode()))
 
   signature_data = process.stdout
   signature = in_toto.gpg.common.parse_signature_packet(signature_data)
+
 
   # On GPG < 2.1 we cannot derive the full keyid from the signature data.
   # Instead we try to compute the keyid from the public part of the signing
@@ -158,7 +171,8 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
             The content to be verified. (bytes)
 
   <Exceptions>
-    None.
+    in_toto.gpg.exceptions.KeyExpirationError:
+            if the passed public key has expired
 
   <Side Effects>
     None.
@@ -179,6 +193,14 @@ def gpg_verify_signature(signature_object, pubkey_info, content):
   # we use that subkey for verification instead of the master key.
   if sig_keyid in list(pubkey_info.get("subkeys", {}).keys()):
     verification_key = pubkey_info["subkeys"][sig_keyid]
+
+
+  creation_time = verification_key.get("creation_time")
+  validity_period = verification_key.get("validity_period")
+
+  if creation_time and validity_period and \
+      creation_time + validity_period < time.time():
+    raise in_toto.gpg.exceptions.KeyExpirationError(verification_key)
 
   return handler.gpg_verify_signature(
       signature_object, verification_key, content, SHA256)
@@ -205,10 +227,10 @@ def gpg_export_pubkey(keyid, homedir=None):
             Path to the gpg keyring. If not passed the default keyring is used.
 
   <Exceptions>
-    ValueError
+    ValueError:
             if the keyid does not match the required format.
 
-    in_toto.gpg.execeptions.KeyNotFoundError
+    in_toto.gpg.execeptions.KeyNotFoundError:
             if no key or subkey was found for that keyid.
 
 
@@ -229,6 +251,8 @@ def gpg_export_pubkey(keyid, homedir=None):
   if homedir:
     homearg = "--homedir {}".format(homedir).replace("\\", "/")
 
+  # TODO: Consider adopting command error handling from `gpg_sign_object`
+  # above, e.g. in a common 'run gpg command' utility function
   command = GPG_EXPORT_PUBKEY_COMMAND.format(keyid=keyid, homearg=homearg)
   process = in_toto.process.run(command, stdout=in_toto.process.PIPE,
     stderr=in_toto.process.PIPE)

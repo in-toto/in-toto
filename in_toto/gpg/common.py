@@ -32,8 +32,9 @@ from in_toto.gpg.constants import (
     SUPPORTED_PUBKEY_PACKET_VERSIONS, SIGNATURE_TYPE_BINARY,
     SIGNATURE_TYPE_CERTIFICATES, SIGNATURE_TYPE_SUB_KEY_BINDING,
     SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
-    SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET, SHA1,
-    SHA256, SHA512)
+    SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET,
+    SHA1,SHA256, SHA512, KEY_EXPIRATION_SUBPACKET, PRIMARY_USERID_SUBPACKET,
+    SIG_CREATION_SUBPACKET)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 
@@ -93,7 +94,7 @@ def parse_pubkey_payload(data):
         version_number, SUPPORTED_PUBKEY_PACKET_VERSIONS))
 
   # NOTE: Uncomment this line to decode the time of creation
-  # time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
+  time_of_creation = struct.unpack(">I", data[ptr:ptr + 4])
   ptr += 4
 
   algorithm = data[ptr]
@@ -126,6 +127,7 @@ def parse_pubkey_payload(data):
     "method": keyinfo['method'],
     "type": keyinfo['type'],
     "hashes": [GPG_HASH_ALGORITHM_STRING],
+    "creation_time": time_of_creation[0],
     "keyid": keyinfo['keyid'],
     "keyval" : {
       "private": "",
@@ -154,7 +156,6 @@ def parse_pubkey_bundle(data):
     in_toto.gpg.exceptions.PacketParsingError
           If data is empty.
           If data cannot be parsed.
-
 
   <Side Effects>
     None.
@@ -273,9 +274,6 @@ def _assign_certified_key_info(bundle):
     master key, in order to enrich the master key with additional information
     (e.g. expiration dates). The enriched master key is returned.
 
-    TODO: Do extract the information and address ambiguity (see inline TODO
-    below).
-
     NOTE: Currently we only consider User ID certificates. We can do the same
     for User Attribute certificates by iterating over
     bundle[PACKET_TYPE_USER_ATTR] instead of bundle[PACKET_TYPE_USER_ID], and
@@ -298,6 +296,11 @@ def _assign_certified_key_info(bundle):
   """
   # Create handler shortcut
   handler = SIGNATURE_HANDLERS[bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["type"]]
+
+  is_primary_user = False
+  validity_period = None
+  sig_creation_time = None
+
   # Verify User ID signatures to gather information about primary key
   # (see Notes about certification signatures in RFC 4880 5.2.3.3.)
   for user_id_packet, packet_data in bundle[PACKET_TYPE_USER_ID].items():
@@ -314,7 +317,9 @@ def _assign_certified_key_info(bundle):
         # (see parse_signature_packet for more information about keyids)
         signature["keyid"] = signature["keyid"] or signature["short_keyid"]
 
-      # TODO: Revise exception taxonomy
+      # TODO: Revise exception taxonomy:
+      # It's okay to ignore some exceptions (unsupported algorithms etc.) but
+      # we should blow up if a signature is malformed (missing subpackets).
       except Exception as e:
         log.info(e)
         continue
@@ -334,11 +339,54 @@ def _assign_certified_key_info(bundle):
             "by '{}'.".format(signature["keyid"]))
         continue
 
-      # TODO: If the signature is valid, extract relevant information from
-      # its "info" field and assign to master key (e.g. expiration) here
-      # NOTE: Beware of conflicting information. There might be multiple User
-      # IDs per primary key and multiple signatures per User ID. See RFC4880
-      # 5.2.3.19. and last paragraph of 5.2.3.3. for more info about ambiguity.
+      # If the signature is valid, we try to extract subpackets relevant to
+      # the primary key, i.e. expiration time.
+      # NOTE: There might be multiple User IDs per primary key and multiple
+      # certificates per User ID. RFC4880 5.2.3.19. and last paragraph of
+      # 5.2.3.3. provides some suggestions about ambiguity, but delegates the
+      # responsibility to the implementer.
+
+      # Ambiguity resolution scheme:
+      # We take the key expiration time from the most recent certificate, i.e.
+      # the certificate with the highest signature creation time. Additionally,
+      # we prioritize certificates with primary user id flag set True. Note
+      # that, if the ultimately prioritized certificate does not have a key
+      # expiration time subpacket, we don't assign one, even if there were
+      # certificates of lower priority carrying that subpacket.
+      tmp_validity_period = \
+          signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
+
+      # No key expiration time, go to next certificate
+      if tmp_validity_period == None:
+        continue
+
+      # Create shortcut to mandatory pre-parsed creation time subpacket
+      tmp_sig_creation_time = signature["info"]["creation_time"]
+
+      tmp_is_primary_user = \
+          signature["info"]["subpackets"].get(PRIMARY_USERID_SUBPACKET)
+
+      if tmp_is_primary_user != None:
+        tmp_is_primary_user = bool(tmp_is_primary_user[0])
+
+      # If we already have a primary user certified expiration date and this
+      # is none, we don't consider it, and go to next certificate
+      if is_primary_user and not tmp_is_primary_user:
+        continue
+
+      if not sig_creation_time or sig_creation_time < tmp_sig_creation_time:
+        # This is the most recent certificate that has a validity_period and
+        # doesn't have lower priority in regard to the primary user id flag. We
+        # accept it the keys validty_period, until we get a newer value from
+        # a certificate with higher priority.
+        validity_period = struct.unpack(">I", tmp_validity_period)[0]
+        # We also keep track of the used certificate's primary user id flag and
+        # the signature creation time, for prioritization.
+        is_primary_user = tmp_is_primary_user
+        sig_creation_time = tmp_sig_creation_time
+
+  if validity_period != None:
+    bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["validity_period"] = validity_period
 
   return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
 
@@ -347,12 +395,10 @@ def _get_verified_subkeys(bundle):
   """
   <Purpose>
     Helper function to verify the subkey binding signature for all subkeys in
-    the passed bundle. Only valid (i.e. parsable) subkeys that are verifiably
-    bound to the the master key of the bundle are returned. All other subkeys
-    are discarded.
-
-    TODO: Extract additional information about subkeys from the signatures
-    (see inline TODO below).
+    the passed bundle in order to enrich subkeys with additional information
+    (e.g. expiration dates). Only valid (i.e. parsable) subkeys that are
+    verifiably bound to the the master key of the bundle are returned. All
+    other subkeys are discarded.
 
   <Arguments>
     bundle:
@@ -365,8 +411,8 @@ def _get_verified_subkeys(bundle):
     None.
 
   <Returns>
-    A list of public keys, each in the format
-    in_toto.gpg.formats.PUBKEY_SCHEMA.
+    A dictionary of public keys in the format
+    in_toto.gpg.formats.PUBKEY_SCHEMA, with keyids as dict keys.
 
   """
   # Create handler shortcut
@@ -431,9 +477,13 @@ def _get_verified_subkeys(bundle):
           .format(subkey["keyid"]))
       continue
 
-    # TODO: If the signature is valid, we may also extract relevant information
-    # from its "info" field (e.g. subkey expiration date) and assign to it to
-    # the subkey here
+    # If the signature is valid, we may also extract relevant information from
+    # its "info" field (e.g. subkey expiration date) and assign to it to the
+    # subkey here
+    validity_period = \
+        signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
+    if validity_period != None:
+      subkey["validity_period"] = struct.unpack(">I", validity_period)[0]
 
     verified_subkeys[subkey["keyid"]] = subkey
 
@@ -638,10 +688,14 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   ptr += unhashed_octet_count
 
+  # Use the info dict to return further signature information that may be
+  # needed for intermediate processing, but does not have to be on the eventual
+  # signature datastructure
   info = {
     "signature_type": signature_type,
     "hash_algorithm": hash_algorithm,
-    "subpackets": [],
+    "creation_time": None,
+    "subpackets": {},
   }
 
   keyid = ""
@@ -660,6 +714,7 @@ def parse_signature_packet(data, supported_signature_types=None,
   # conflict resolution scheme that makes more sense.
   # (see RFC4880 5.2.4.1.)
   # Below we only consider the last and favor hashed over unhashed subpackets
+  # TODO: Should we warn if a we use an unhashed subpacket?
   for subpacket_type, subpacket_data in \
       unhashed_subpacket_info + hashed_subpacket_info:
     if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover
@@ -672,11 +727,10 @@ def parse_signature_packet(data, supported_signature_types=None,
     if subpacket_type == PARTIAL_KEYID_SUBPACKET:
       short_keyid = binascii.hexlify(subpacket_data).decode("ascii")
 
-    # TODO: Use this to add subpackets for further processing, e.g. extracting
-    # key expiration date. Remove if not needed in in-toto/in-toto#245.
-    # info["subpackets"].append((
-    #   subpacket_type,
-    #   binascii.hexlify(subpacket_data).decode("ascii")))
+    if subpacket_type == SIG_CREATION_SUBPACKET:
+      info["creation_time"] = struct.unpack(">I", subpacket_data)[0]
+
+    info["subpackets"][subpacket_type] = subpacket_data
 
   # Fail if there is no keyid at all (this should not happen)
   if not (keyid or short_keyid): # pragma: no cover
@@ -691,6 +745,11 @@ def parse_signature_packet(data, supported_signature_types=None,
         "fingerprint '{}' of the 'Issuer Fingerprint' subpacket (see RFC4880 "
         "and rfc4880bis-06 5.2.3.28. Issuer Fingerprint).".format(
         short_keyid, keyid))
+
+  if not info["creation_time"]: # pragma: no cover
+    raise ValueError("This signature packet seems to be corrupted. It does "
+        "not have a 'Signature Creation Time' subpacket (see RFC4880 5.2.3.4 "
+        "Signature Creation Time).")
 
   # Uncomment this variable to obtain the left-hash-bits information (used for
   # early rejection)
