@@ -199,14 +199,18 @@ Please do not use the GitHub issue tracker to submit vulnerability reports. The
 issue tracker is intended for bug reports and to make feature requests.
 
 ## Instructions for Contributors
-Note: Development of in-toto occurs on the "develop" branch of this repository.
-
-Contributions can be made by submitting GitHub pull requests. Take a look at
+Development of in-toto occurs on the "develop" branch of this repository.
+Contributions can be made by submitting GitHub *Pull Requests*. Take a look at
 our [development
 guidelines](https://github.com/secure-systems-lab/lab-guidelines/blob/master/dev-workflow.md)
-for detailed instructions. Submitted code should follow our [code style
-guidelines](https://github.com/secure-systems-lab/code-style-guidelines),
-which provide examples of what to do (or not to do) when writing Python code.
+for detailed instructions. Submitted code should follow our [style
+guidelines](https://github.com/secure-systems-lab/code-style-guidelines) and
+must be unit tested.
+
+Contributors must also indicate acceptance of the [Developer Certificate of
+Origin (DCO)](https://developercertificate.org/) by appending a `Signed-off-by:
+Your Name <example@domain.com>` to each git commit message (see [`git commit
+--signoff`](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff)).
 
 
 ## Acknowledgments
