@@ -14,21 +14,25 @@ contributors.  The project's Consensus Builder (CB) is
 Justin Cappos <jcappos@nyu.edu, @JustinCappos>.
 
 ## Contributions
-A contributor can [submit GitHub pull
-requests](https://github.com/in-toto/in-toto#instructions-for-contributors)
-to the project's repositories.  They must follow the project's [code of
-conduct](CODE-OF-CONDUCT.md), the [code style
+A contributor can submit GitHub pull requests to the project's repositories.
+They must follow the project's [code of
+conduct](CODE-OF-CONDUCT.md), the [Developer Certificate of
+Origin (DCO)](https://developercertificate.org/) and the [code style
 guidelines](https://github.com/secure-systems-lab/code-style-guidelines), and
-must unit test any new software feature or change.  Submitted pull requests
-undergo review and automated testing, including, but not limited to:
+they must unit test any new software feature or change.  Submitted pull
+requests undergo review and automated testing, including, but not limited to:
 
 * Unit and build testing via [Tox](https://tox.readthedocs.io/en/latest/) on
 [Travis CI](https://travis-ci.org/in-toto/in-toto) and
 [AppVeyor](https://ci.appveyor.com/project/in-toto/in-toto)
 * Static code analysis via [Pylint](https://www.pylint.org/) and
 [Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
-* Review by one or more maintainers
+* Checks for *Signed-off-by* commits via [Probot: DCO](https://probot.github.io/apps/dco/)
+* Review by one or more [maintainers](MAINTAINERS.txt)
 
+See [*Instructions for
+Contributors*](https://github.com/in-toto/in-toto#instructions-for-contributors)
+for help.
 
 ## Changes in maintainership
 
