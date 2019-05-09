@@ -498,8 +498,10 @@ class TestInTotoRun(unittest.TestCase):
     # this or clause may seem weird, but given that python 2 prints its version
     # to stderr while python3 prints it to stdout we check on both (or add a
     # more verbose if clause)
-    self.assertTrue("Python" in link.signed.byproducts.get("stdout") or
-        "Python" in link.signed.byproducts.get("stderr"))
+    stderr_contents = link.signed.byproducts.get("stderr")
+    stdout_contents = link.signed.byproducts.get("stdout")
+    self.assertTrue("Python" in stderr_contents or "Python" in stdout_contents,
+        msg="\nSTDERR:\n{}\nSTDOUT:\n{}".format(stderr_contents, stdout_contents))
 
   def test_in_toto_run_without_byproduct(self):
     """Successfully run, verify byproduct is not recorded. """
