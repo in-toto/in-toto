@@ -958,13 +958,15 @@ def verify_item_rules(source_name, source_type, rules, links):
     The mode of operation is similar to that of a firewall:
     In the beginning all materials or products of the step or inspection are
     placed into an artifact queue. The rules are then applied sequentially,
-    consuming artifacts in the queue, i.e. removing them from the queue, on
-    success.
-    The only exception is the "DISALLOW" rule. It does not consume artifacts
-    but instead raises a RuleVerificationError if its pattern matches any
-    artifacts in the queue.
-    Thus, each set of rules should have a terminal "DISALLOW" rule in order
-    to be effective.
+    consuming artifacts in the queue, i.e. removing them from the queue upon
+    successful application.
+
+    The consumption of artifacts by itself has no effects on the verification.
+    Only through a subsequent "DISALLOW" rule, that finds unconsumed artifacts,
+    is an exception raised. Similarly does the "REQUIRE" rule raise exception,
+    if it does not find the artifact it requires, because it has falsely been
+    consumed or was not there from the beginning.
+
 
 
   <Arguments>
@@ -994,8 +996,8 @@ def verify_item_rules(source_name, source_type, rules, links):
         format.
 
     RuleVerificationError
-        if a DISALLOW rule matches any artifacts in the corresponding artifact
-        queue.
+        if a DISALLOW rule matches disallowed artifacts, or
+        if a REQUIRE rule does not find a required artifact.
 
   <Side Effects>
     Clears and populates the global RULE_TRACE data structure.
