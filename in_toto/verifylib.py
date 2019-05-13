@@ -1038,7 +1038,11 @@ def verify_item_rules(source_name, source_type, rules, links):
     _type = rule_data["rule_type"]
     _pattern = rule_data["pattern"]
 
-    # All rules except "disallow" consume artifacts in the queue
+
+    # Initialize empty consumed set as fallback for rules that do not consume
+    # artifacts. All rules except "disallow" and "require" consume artifacts.
+    consumed = set()
+
     if _type == "match":
       consumed = verify_match_rule(
           rule_data, artifacts_queue, artifacts, links)
@@ -1062,11 +1066,9 @@ def verify_item_rules(source_name, source_type, rules, links):
     # artifacts were not consumed as intended
     elif _type == "disallow":
       verify_disallow_rule(_pattern, artifacts_queue)
-      consumed = set()
 
     elif _type == "require":
       verify_require_rule(_pattern, artifacts_queue)
-      consumed = set()
 
     else: # pragma: no cover (unreachable)
       raise securesystemslib.exceptions.FormatError(
