@@ -21,30 +21,24 @@
 import os
 import sys
 import unittest
-import argparse
 import shutil
 import glob
 import tempfile
 
 # Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
-  import unittest.mock as mock
-
+  import unittest.mock as mock # pylint: disable=no-name-in-module,import-error
 else:
-  import mock
-
-from mock import patch
+  import mock # pylint: disable=import-error
 
 from in_toto.util import (generate_and_write_rsa_keypair,
     generate_and_write_ed25519_keypair, import_private_key_from_file,
     KEY_TYPE_RSA, KEY_TYPE_ED25519)
 
-from in_toto.models.link import Link
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
-import in_toto.gpg.util
 import tests.common
 
 

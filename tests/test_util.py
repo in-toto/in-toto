@@ -19,23 +19,19 @@
 """
 
 import os
-import shutil
 import sys
+import shutil
 import tempfile
 import unittest
 
-# Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
-  import unittest.mock as mock
-
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
 else:
-  import mock
-
-from mock import patch
+  from mock import patch # pylint: disable=import-error
 
 import in_toto.formats
 from in_toto.util import (
-    KEY_TYPE_ED25519, KEY_TYPE_RSA,
+    KEY_TYPE_ED25519,
     generate_and_write_rsa_keypair,
     generate_and_write_ed25519_keypair,
     import_rsa_key_from_file,
@@ -46,6 +42,7 @@ from in_toto.util import (
     prompt_import_rsa_key_from_file,
     import_gpg_public_keys_from_keyring_as_dict)
 
+from in_toto.exceptions import UnsupportedKeyTypeError
 import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
@@ -76,14 +73,9 @@ class TestUtil(unittest.TestCase):
     shutil.rmtree(self.test_dir)
 
   def test_unrecognized_key_type(self):
-    """Create and read the wrong key type. """
-    wrong_key_type = "wrong_key_type"
-    open(wrong_key_type, "w").write(wrong_key_type)
-
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
-      with self.assertRaises(TypeError):
-        import_private_key_from_file(wrong_key_type)
+    """Trigger UnsupportedKeyTypeError. """
+    with self.assertRaises(UnsupportedKeyTypeError):
+      import_private_key_from_file("ignored_key_path", "wrong_key_type")
 
   def test_create_and_import_rsa(self):
     """Create RS key and import private and public key separately. """
@@ -118,9 +110,9 @@ class TestUtil(unittest.TestCase):
     bits = 3072
     generate_and_write_rsa_keypair(name, bits, password)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_rsa_key_from_file(name)
+      import_rsa_key_from_file(name)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_rsa_key_from_file(name, "wrong-password")
+      import_rsa_key_from_file(name, "wrong-password")
 
   def test_import_non_existing_rsa(self):
     """Try import non-existing RSA key, raises exception. """
@@ -130,7 +122,8 @@ class TestUtil(unittest.TestCase):
   def test_import_rsa_wrong_format(self):
     """Try import wrongly formatted RSA key, raises exception. """
     not_an_rsa = "not_an_rsa"
-    open(not_an_rsa, "w").write(not_an_rsa)
+    with open(not_an_rsa, "w") as f:
+      f.write(not_an_rsa)
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       import_rsa_key_from_file(not_an_rsa)
 
@@ -148,7 +141,8 @@ class TestUtil(unittest.TestCase):
 
     # Import wrongly formatted key raises an exception
     not_an_rsa = "not_an_rsa"
-    open(not_an_rsa, "w").write(not_an_rsa)
+    with open(not_an_rsa, "w") as f:
+      f.write(not_an_rsa)
 
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       import_public_keys_from_files_as_dict([name1 + ".pub", not_an_rsa])
@@ -190,9 +184,9 @@ class TestUtil(unittest.TestCase):
     password = "123456"
     generate_and_write_ed25519_keypair(name, password)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_ed25519_privatekey_from_file(name)
+      import_ed25519_privatekey_from_file(name)
     with self.assertRaises(securesystemslib.exceptions.CryptoError):
-      private_key = import_ed25519_privatekey_from_file(name, "wrong-password")
+      import_ed25519_privatekey_from_file(name, "wrong-password")
 
   def test_import_ed25519_public_keys_from_files_as_dict(self):
     """Create and import multiple Ed25519 public keys and return KEYDICT. """
@@ -215,7 +209,8 @@ class TestUtil(unittest.TestCase):
 
     # Import wrongly formatted key raises an exception
     not_an_ed25519 = "not_an_ed25519"
-    open(not_an_ed25519, "w").write(not_an_ed25519)
+    with open(not_an_ed25519, "w") as f:
+      f.write(not_an_ed25519)
 
     with self.assertRaises(securesystemslib.exceptions.Error):
       import_public_keys_from_files_as_dict([name1 + ".pub",

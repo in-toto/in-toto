@@ -27,7 +27,11 @@ import sys
 import inspect
 
 import unittest
-from mock import patch
+if sys.version_info >= (3, 3):
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
+else:
+  from mock import patch # pylint: disable=import-error
+
 
 def run_with_portable_scripts(decorated):
 
@@ -86,6 +90,6 @@ class CliTestCase(unittest.TestCase):
     """
     with patch.object(sys, "argv", [self.file_name]
         + cli_args), self.assertRaises(SystemExit) as raise_ctx:
-      self.cli_main_func()
+      self.cli_main_func() # pylint: disable=not-callable
 
     self.assertEqual(raise_ctx.exception.code, status)

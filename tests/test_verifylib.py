@@ -19,13 +19,19 @@
 """
 
 import os
+import sys
 import shutil
 import copy
 import tempfile
 import unittest
 import glob
 import shlex
-from mock import patch
+
+if sys.version_info >= (3, 3):
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
+else:
+  from mock import patch # pylint: disable=import-error
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -103,7 +109,8 @@ class TestRunAllInspections(unittest.TestCase):
     self.working_dir = os.getcwd()
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     os.chdir(self.test_dir)
-    open("foo", "w").write("foo")
+    with open("foo", "w") as f:
+      f.write("foo")
 
   @classmethod
   def tearDownClass(self):
@@ -115,7 +122,8 @@ class TestRunAllInspections(unittest.TestCase):
     """Create new dummy test dir and set as base path, must ignore. """
     ignore_dir = os.path.realpath(tempfile.mkdtemp())
     ignore_foo = os.path.join(ignore_dir, "ignore_foo")
-    open(ignore_foo, "w").write("ignore foo")
+    with open(ignore_foo, "w") as f:
+      f.write("ignore foo")
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
     run_all_inspections(self.layout)
@@ -315,10 +323,10 @@ class TestVerifyRule(unittest.TestCase):
         exception = e
 
       if should_raise and not exception:
-         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+        self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
 
       if exception and not should_raise:
-          self.fail("Unexpected {}\n{}".format(exception, msg))
+        self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
   def test_verify_require_rule(self):
@@ -347,10 +355,10 @@ class TestVerifyRule(unittest.TestCase):
         exception = e
 
       if should_raise and not exception:
-         self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+        self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
 
       if exception and not should_raise:
-          self.fail("Unexpected {}\n{}".format(exception, msg))
+        self.fail("Unexpected {}\n{}".format(exception, msg))
 
 
 
@@ -706,8 +714,8 @@ class TestInTotoVerify(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # copy scripts over
     shutil.copytree(scripts_directory, "scripts")
@@ -1361,8 +1369,8 @@ class TestVerifySublayouts(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # copy portable scripts over
     shutil.copytree(scripts_directory, 'scripts')
@@ -1455,7 +1463,6 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase):
         keys["alice_pub"]["keyid"]: keys["alice_pub"]
       }
 
-    root_layout_name = "root.layout"
     root_layout_step_name = "delegated-to-bob"
 
     root_layout = Metablock(signed=Layout(
@@ -1638,8 +1645,8 @@ class TestGetSummaryLink(unittest.TestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     self.demo_layout = Metablock.load("demo.layout.template")
     self.code_link = Metablock.load("package.2f89b927.link")
@@ -1659,14 +1666,14 @@ class TestGetSummaryLink(unittest.TestCase):
     """Create summary link from demo link files and compare properties. """
     sum_link = get_summary_link(self.demo_layout.signed, self.demo_links, "")
 
-    self.assertEquals(sum_link.signed._type, self.code_link.signed._type)
-    self.assertEquals(sum_link.signed.name, "")
-    self.assertEquals(sum_link.signed.materials, self.code_link.signed.materials)
+    self.assertEqual(sum_link.signed._type, self.code_link.signed._type)
+    self.assertEqual(sum_link.signed.name, "")
+    self.assertEqual(sum_link.signed.materials, self.code_link.signed.materials)
 
-    self.assertEquals(sum_link.signed.products, self.package_link.signed.products)
-    self.assertEquals(sum_link.signed.command, self.package_link.signed.command)
-    self.assertEquals(sum_link.signed.byproducts, self.package_link.signed.byproducts)
-    self.assertEquals(sum_link.signed.byproducts.get("return-value"),
+    self.assertEqual(sum_link.signed.products, self.package_link.signed.products)
+    self.assertEqual(sum_link.signed.command, self.package_link.signed.command)
+    self.assertEqual(sum_link.signed.byproducts, self.package_link.signed.byproducts)
+    self.assertEqual(sum_link.signed.byproducts.get("return-value"),
         self.package_link.signed.byproducts.get("return-value"))
 
 

@@ -18,10 +18,7 @@
 import six
 
 import os
-import sys
 import unittest
-import shutil
-import tempfile
 import in_toto.settings
 import in_toto.user_settings
 
@@ -71,8 +68,8 @@ class TestUserSettings(unittest.TestCase):
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDE_PATTERNS"], ["r", "c", "file"])
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
-    self.assertEquals(rc_dict["artifact_base_path"], "r/c/file")
-    self.assertEquals(rc_dict["new_rc_setting"], "new rc setting")
+    self.assertEqual(rc_dict["artifact_base_path"], "r/c/file")
+    self.assertEqual(rc_dict["new_rc_setting"], "new rc setting")
 
 
   def test_get_env(self):
@@ -80,14 +77,14 @@ class TestUserSettings(unittest.TestCase):
     env_dict = in_toto.user_settings.get_env()
 
     # Parsed and used by `set_settings` to monkeypatch settings
-    self.assertEquals(env_dict["ARTIFACT_BASE_PATH"], "e/n/v")
+    self.assertEqual(env_dict["ARTIFACT_BASE_PATH"], "e/n/v")
 
     # Parsed (and split) but overriden by rcfile setting in `set_settings`
     self.assertListEqual(env_dict["ARTIFACT_EXCLUDE_PATTERNS"],
         ["e", "n", "v"])
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
-    self.assertEquals(env_dict["NOT_WHITELISTED"], "parsed")
+    self.assertEqual(env_dict["NOT_WHITELISTED"], "parsed")
 
     # Not parsed because of missing prefix
     self.assertFalse("NOT_PARSED" in env_dict)
@@ -98,7 +95,7 @@ class TestUserSettings(unittest.TestCase):
     in_toto.user_settings.set_settings()
 
     # From envvar IN_TOTO_ARTIFACT_BASE_PATH
-    self.assertEquals(in_toto.settings.ARTIFACT_BASE_PATH, "e/n/v")
+    self.assertEqual(in_toto.settings.ARTIFACT_BASE_PATH, "e/n/v")
 
     # From RCfile setting (has precedence over envvar setting)
     self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS,

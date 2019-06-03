@@ -63,61 +63,61 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     """Test generic rule proper packing and unpacking. """
     rule = ["CREATE", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "create")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "create")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_create_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_create_rule("foo"))
 
 
     rule = ["DELETE", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "delete")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "delete")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_delete_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_delete_rule("foo"))
 
 
     rule = ["MODIFY", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "modify")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "modify")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_modify_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_modify_rule("foo"))
 
 
     rule = ["ALLOW", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "allow")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "allow")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_allow_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_allow_rule("foo"))
 
 
     rule = ["DISALLOW", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "disallow")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "disallow")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_disallow_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_disallow_rule("foo"))
 
     rule = ["REQUIRE", "foo"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 2)
-    self.assertEquals(rule_data["rule_type"], "require")
-    self.assertEquals(rule_data["pattern"], "foo")
+    self.assertEqual(len(list(rule_data.keys())), 2)
+    self.assertEqual(rule_data["rule_type"], "require")
+    self.assertEqual(rule_data["pattern"], "foo")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_require_rule("foo"))
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_require_rule("foo"))
 
 
   def test_unpack_and_pack_match_rule(self):
@@ -126,16 +126,16 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     rule = ["MATCH", "foo", "IN", "source-path", "WITH",
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["rule_type"], "match")
-    self.assertEquals(rule_data["pattern"], "foo")
-    self.assertEquals(rule_data["source_prefix"], "source-path")
-    self.assertEquals(rule_data["dest_prefix"], "dest-path")
-    self.assertEquals(rule_data["dest_type"], "products")
-    self.assertEquals(rule_data["dest_name"], "step-name")
+    self.assertEqual(len(list(rule_data.keys())), 6)
+    self.assertEqual(rule_data["rule_type"], "match")
+    self.assertEqual(rule_data["pattern"], "foo")
+    self.assertEqual(rule_data["source_prefix"], "source-path")
+    self.assertEqual(rule_data["dest_prefix"], "dest-path")
+    self.assertEqual(rule_data["dest_type"], "products")
+    self.assertEqual(rule_data["dest_name"], "step-name")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_rule("MATCH", "foo",
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_rule("MATCH", "foo",
         source_prefix="source-path", dest_type="PRODUCTS",
         dest_prefix="dest-path", dest_name="step-name"))
 
@@ -143,16 +143,16 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     rule = ["MATCH", "foo", "IN", "source-path", "WITH",
         "MATERIALS", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["rule_type"], "match")
-    self.assertEquals(rule_data["pattern"], "foo")
-    self.assertEquals(rule_data["source_prefix"], "source-path")
-    self.assertEquals(rule_data["dest_prefix"], "")
-    self.assertEquals(rule_data["dest_type"], "materials")
-    self.assertEquals(rule_data["dest_name"], "step-name")
+    self.assertEqual(len(list(rule_data.keys())), 6)
+    self.assertEqual(rule_data["rule_type"], "match")
+    self.assertEqual(rule_data["pattern"], "foo")
+    self.assertEqual(rule_data["source_prefix"], "source-path")
+    self.assertEqual(rule_data["dest_prefix"], "")
+    self.assertEqual(rule_data["dest_type"], "materials")
+    self.assertEqual(rule_data["dest_name"], "step-name")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_rule("MATCH", "foo",
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_rule("MATCH", "foo",
         source_prefix="source-path", dest_type="MATERIALS",
         dest_name="step-name"))
 
@@ -160,30 +160,30 @@ class TestArtifactRuleUnpack(unittest.TestCase):
     rule = ["MATCH", "foo", "WITH",
         "PRODUCTS", "IN", "dest-path", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["rule_type"], "match")
-    self.assertEquals(rule_data["pattern"], "foo")
-    self.assertEquals(rule_data["source_prefix"], "")
-    self.assertEquals(rule_data["dest_prefix"], "dest-path")
-    self.assertEquals(rule_data["dest_type"], "products")
-    self.assertEquals(rule_data["dest_name"], "step-name")
+    self.assertEqual(len(list(rule_data.keys())), 6)
+    self.assertEqual(rule_data["rule_type"], "match")
+    self.assertEqual(rule_data["pattern"], "foo")
+    self.assertEqual(rule_data["source_prefix"], "")
+    self.assertEqual(rule_data["dest_prefix"], "dest-path")
+    self.assertEqual(rule_data["dest_type"], "products")
+    self.assertEqual(rule_data["dest_name"], "step-name")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_rule("MATCH", "foo",
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_rule("MATCH", "foo",
         dest_type="PRODUCTS", dest_prefix="dest-path", dest_name="step-name"))
 
     rule = ["MATCH", "foo", "WITH", "PRODUCTS", "FROM", "step-name"]
     rule_data = unpack_rule(rule)
-    self.assertEquals(len(list(rule_data.keys())), 6)
-    self.assertEquals(rule_data["rule_type"], "match")
-    self.assertEquals(rule_data["pattern"], "foo")
-    self.assertEquals(rule_data["source_prefix"], "")
-    self.assertEquals(rule_data["dest_prefix"], "")
-    self.assertEquals(rule_data["dest_type"], "products")
-    self.assertEquals(rule_data["dest_name"], "step-name")
+    self.assertEqual(len(list(rule_data.keys())), 6)
+    self.assertEqual(rule_data["rule_type"], "match")
+    self.assertEqual(rule_data["pattern"], "foo")
+    self.assertEqual(rule_data["source_prefix"], "")
+    self.assertEqual(rule_data["dest_prefix"], "")
+    self.assertEqual(rule_data["dest_type"], "products")
+    self.assertEqual(rule_data["dest_name"], "step-name")
 
-    self.assertEquals(rule, pack_rule_data(rule_data))
-    self.assertEquals(rule, pack_rule("MATCH", "foo",
+    self.assertEqual(rule, pack_rule_data(rule_data))
+    self.assertEqual(rule, pack_rule("MATCH", "foo",
         dest_type="PRODUCTS", dest_name="step-name"))
 
   def test_pack_rule_wrong_types(self):

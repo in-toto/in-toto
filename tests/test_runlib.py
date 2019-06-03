@@ -18,8 +18,6 @@
   Test runlib functions.
 
 """
-import six
-
 import os
 import unittest
 import shutil
@@ -34,8 +32,7 @@ from in_toto.runlib import (in_toto_run, in_toto_record_start,
     _hash_artifact)
 from in_toto.util import (generate_and_write_rsa_keypair,
     prompt_import_rsa_key_from_file)
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT)
+from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -149,10 +146,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
       with self.assertRaises(ValueError):
         record_artifacts_as_dict(["."], base_path=base_path)
-
-    def tearDown(self):
-      """ change back to the test dir, in case any tests fail """
-      os.chdir(self.test_dir)
 
 
   def test_base_path_is_child_dir(self):
@@ -281,7 +274,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Traverse dir and subdirs. Record three files. """
     artifacts_dict = record_artifacts_as_dict(["."])
 
-    for key, val in six.iteritems(artifacts_dict):
+    for val in list(artifacts_dict.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
@@ -387,7 +380,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
     """Explicitly record files and subdirs. """
     artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
-    for key, val in six.iteritems(artifacts_dict):
+    for val in list(artifacts_dict.values()):
       securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
 
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
@@ -515,7 +508,7 @@ class TestInTotoRun(unittest.TestCase):
         [self.test_artifact], ["python", "--version"], True, self.key)
     link_dump = Metablock.load(
         FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
-    self.assertEquals(repr(link), repr(link_dump))
+    self.assertEqual(repr(link), repr(link_dump))
 
   def test_in_toto_run_verify_recorded_artifacts(self):
     """Successfully run, verify properly recorded artifacts. """
@@ -528,7 +521,7 @@ class TestInTotoRun(unittest.TestCase):
     """Successfully run, verify cwd. """
     link = in_toto_run(self.step_name, [], [], ["python", "--version"],
         record_environment=True)
-    self.assertEquals(link.signed.environment["workdir"], 
+    self.assertEqual(link.signed.environment["workdir"],
         os.getcwd().replace("\\", "/"))
 
   def test_normalize_line_endings(self):
@@ -609,7 +602,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
     link = Metablock.load(self.link_name_unfinished)
-    self.assertEquals(list(link.signed.materials.keys()), [self.test_material])
+    self.assertEqual(list(link.signed.materials.keys()), [self.test_material])
     os.remove(self.link_name_unfinished)
 
   def test_create_unfininished_metadata_verify_signature(self):
@@ -665,7 +658,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
-    self.assertEquals(list(link.signed.products.keys()), [self.test_product])
+    self.assertEqual(list(link.signed.products.keys()), [self.test_product])
     os.remove(self.link_name)
 
   def test_create_metadata_with_expected_cwd(self):
@@ -673,7 +666,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_start(self.step_name, [], self.key, record_environment=True)
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
     link = Metablock.load(self.link_name)
-    self.assertEquals(link.signed.environment["workdir"], 
+    self.assertEqual(link.signed.environment["workdir"],
         os.getcwd().replace('\\', '/'))
     os.remove(self.link_name)
 
@@ -691,7 +684,7 @@ class TestInTotoRecordStop(unittest.TestCase):
     in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
       open(self.link_name_unfinished, "r")
-    open(self.link_name, "r")
+    self.assertTrue(os.path.isfile(self.link_name))
     os.remove(self.link_name)
 
   def test_missing_unfinished_file(self):

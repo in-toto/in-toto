@@ -56,7 +56,7 @@ disable=parameter-unpacking, unpacking-in-except, long-suffix, old-ne-operator, 
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=
+enable=trailing-whitespace
 
 
 [REPORTS]

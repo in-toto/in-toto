@@ -20,12 +20,16 @@
 """
 
 import os
+import sys
 import shutil
 import tempfile
 import unittest
-from mock import patch
-import time
-import datetime
+
+if sys.version_info >= (3, 3):
+  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
+else:
+  from mock import patch # pylint: disable=import-error
+
 from six import string_types
 from copy import deepcopy
 from collections import OrderedDict
@@ -51,9 +55,6 @@ from in_toto.gpg.exceptions import (PacketParsingError,
     PacketVersionNotSupportedError, SignatureAlgorithmNotSupportedError,
     KeyNotFoundError, CommandError, KeyExpirationError)
 from in_toto.gpg.formats import PUBKEY_SCHEMA
-
-import securesystemslib.formats
-import securesystemslib.exceptions
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
@@ -258,6 +259,8 @@ class TestCommon(unittest.TestCase):
     # Parse corresponding raw packet for comparison
     _, header_len, _, _ = parse_packet_header(
         self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"])
+
+    # pylint: disable=unsubscriptable-object
     parsed_raw_packet = parse_pubkey_payload(bytearray(
           self.raw_key_bundle[PACKET_TYPE_PRIMARY_KEY]["packet"][header_len:]))
 
@@ -515,9 +518,9 @@ class TestGPGRSA(unittest.TestCase):
     ssh_key = serialization.load_ssh_public_key(keydata,
         backends.default_backend())
 
-    self.assertEquals(ssh_key.public_numbers().n,
+    self.assertEqual(ssh_key.public_numbers().n,
         our_exported_key.public_numbers().n)
-    self.assertEquals(ssh_key.public_numbers().e,
+    self.assertEqual(ssh_key.public_numbers().e,
         our_exported_key.public_numbers().e)
 
     subkey_keyids = list(key_data["subkeys"].keys())
@@ -660,13 +663,13 @@ class TestGPGDSA(unittest.TestCase):
     ssh_key = serialization.load_ssh_public_key(keydata,
         backends.default_backend())
 
-    self.assertEquals(ssh_key.public_numbers().y,
+    self.assertEqual(ssh_key.public_numbers().y,
         our_exported_key.public_numbers().y)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.g,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.g,
         our_exported_key.public_numbers().parameter_numbers.g)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.q,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.q,
         our_exported_key.public_numbers().parameter_numbers.q)
-    self.assertEquals(ssh_key.public_numbers().parameter_numbers.p,
+    self.assertEqual(ssh_key.public_numbers().parameter_numbers.p,
         our_exported_key.public_numbers().parameter_numbers.p)
 
   def test_gpg_sign_and_verify_object_with_default_key(self):

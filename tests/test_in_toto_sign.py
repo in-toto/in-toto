@@ -14,15 +14,10 @@
 """
 
 import os
-import sys
 import json
 import shutil
 import tempfile
 import unittest
-
-from mock import patch
-from in_toto import exceptions
-import in_toto.gpg.util
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
@@ -309,7 +304,9 @@ class TestInTotoSignTool(tests.common.CliTestCase):
         ], 2)
 
     # Valid JSON but not valid Link or Layout
-    open("tmp.json", "wb").write(json.dumps({}).encode("utf-8"))
+    with open("tmp.json", "wb") as f:
+      f.write(json.dumps({}).encode("utf-8"))
+
     self.assert_cli_sys_exit([
         "-f", "tmp.json",
         "-k", "key-not-used",

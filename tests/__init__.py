@@ -14,7 +14,6 @@ class CapturableStreamHandler(logging.StreamHandler):
   @stream.setter
   def stream(self, value):
     """Disable setting stream. """
-    pass
 
 # Python `unittest` is configured to buffer output to `sys.stdout/sys.stderr`
 # (see `TextTestRunner` in `tests/runtests.py`) and only show it in case a test

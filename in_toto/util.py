@@ -211,9 +211,8 @@ def import_private_key_from_file(filepath, key_type):
     filepath:
       <filepath> file, a private key file
 
-    key_type: (optional)
-      Type of the private key being imported. If not
-      specified, the key is assumed to be RSA.
+    key_type:
+      Type of the private key being imported.
 
   <Exceptions>
     UnsupportedKeyTypeError, if the key_type specified is unsupported.
@@ -228,9 +227,7 @@ def import_private_key_from_file(filepath, key_type):
     key = prompt_import_ed25519_privatekey_from_file(filepath)
   elif key_type == KEY_TYPE_RSA:
     key = prompt_import_rsa_key_from_file(filepath)
-  else:  # pragma: no cover
-    # This branch is never possible as argparse already checks valid keys
-    # via the choices parameter.
+  else:
     raise UnsupportedKeyTypeError('Unsupported keytype: ' + key_type)
 
   return key

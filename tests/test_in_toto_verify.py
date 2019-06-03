@@ -19,18 +19,12 @@
 """
 
 import os
-import sys
 import unittest
-import argparse
 import shutil
 import tempfile
-from mock import patch
 
-from in_toto.models.link import Link
-from in_toto.models.layout import Layout
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
-from in_toto import exceptions
 from in_toto.util import import_rsa_key_from_file
 from securesystemslib.interface import import_ed25519_privatekey_from_file
 
@@ -82,8 +76,9 @@ class TestInTotoVerifyTool(tests.common.CliTestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+
     shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
@@ -193,8 +188,8 @@ class TestInTotoVerifyToolMixedKeys(tests.common.CliTestCase):
     os.chdir(self.test_dir)
 
     # Copy demo files to temp dir
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     shutil.copytree(scripts_directory, 'scripts')
 
@@ -262,9 +257,8 @@ class TestInTotoVerifyToolGPG(tests.common.CliTestCase):
     scripts_directory = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "scripts")
 
-
-    for file in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, file), self.test_dir)
+    for fn in os.listdir(demo_files):
+      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # Change into test dir
     os.chdir(self.test_dir)

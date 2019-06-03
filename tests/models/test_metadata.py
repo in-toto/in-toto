@@ -20,7 +20,6 @@
 import os
 import unittest
 
-import in_toto.util
 from in_toto.models.metadata import Metablock
 from in_toto.models.layout import Layout
 from in_toto.models.link import Link
