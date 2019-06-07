@@ -1,10 +1,9 @@
 #!/usr/bin/make -f
 
-export PATH := $(CURDIR)/bin:$(PATH)
-export PYBUILD_DESTDIR = debian/in-toto
-export PYBUILD_SYSTEM = distutils
-export PYBUILD_TEST_ARGS = test 
+#export DH_VERBOSE = 1
+# TODO: Enable running unittests
+export DEB_BUILD_OPTIONS = nocheck
 export PYBUILD_NAME = in_toto
 
 %:
-	dh $@ --with python2  --buildsystem=pybuild
+	dh $@ --with python3  --buildsystem=pybuild

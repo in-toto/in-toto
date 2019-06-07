@@ -1,5 +1,5 @@
-in-toto (0.2.0) unstable; urgency=low
+in-toto (0.3.0) unstable; urgency=low
 
   * Initial Debian release.
 
- -- Santiago Torres-Arias <santiago@nyu.edu>  Tue, 16 Jan 2018 12:10:59 -0500
+ -- Lukas Puehringer <luk.puehringer@nyu.edu>  Fri, 07 Jun 2019 10:50:40 -0400
