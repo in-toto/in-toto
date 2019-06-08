@@ -74,6 +74,7 @@ setup(
                     "python-dateutil", "iso8601", "pathspec",
                     "subprocess32; python_version < '3'"],
   test_suite="tests.runtests",
+  tests_require=["mock"],
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-mock = in_toto.in_toto_mock:main",
