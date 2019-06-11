@@ -454,7 +454,6 @@ def _get_verified_subkeys(bundle):
       except Exception as e:
         log.info(e)
         continue
-
     # NOTE: As per the V4 key structure diagram in RFC4880 section 12.1., a
     # subkey must be followed by exactly one Primary-Key-Binding-Signature.
     # Based on inspection of real-world keys and other parts of the RFC (e.g.
@@ -467,7 +466,6 @@ def _get_verified_subkeys(bundle):
           "signatures ({}), must be exactly 1.".format(subkey["keyid"],
           len(key_binding_signatures)))
       continue
-
     is_valid = handler.gpg_verify_signature(signature,
         bundle[PACKET_TYPE_PRIMARY_KEY]["key"], signed_content,
         signature["info"]["hash_algorithm"])
@@ -714,9 +712,18 @@ def parse_signature_packet(data, supported_signature_types=None,
   # conflict resolution scheme that makes more sense.
   # (see RFC4880 5.2.4.1.)
   # Below we only consider the last and favor hashed over unhashed subpackets
-  # TODO: Should we warn if a we use an unhashed subpacket?
-  for subpacket_type, subpacket_data in \
-      unhashed_subpacket_info + hashed_subpacket_info:
+  for idx, subpacket_tuple in \
+      enumerate(unhashed_subpacket_info + hashed_subpacket_info):
+
+    is_hashed = (idx >= len(unhashed_subpacket_info))
+    subpacket_type, subpacket_data = subpacket_tuple
+
+    # Warn if expiration subpacket is not hashed
+    if subpacket_type == KEY_EXPIRATION_SUBPACKET:
+      if not is_hashed:
+        log.warning("Expiration subpacket not hashed, gpg client possibly "
+            "exporting a weakly configured key.")
+
     if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover
       # Exclude from coverage for consistent results across test envs
       # NOTE: The first byte of the subpacket payload is a version number
