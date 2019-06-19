@@ -1,4 +1,4 @@
-Source: in-toto
+Source: python-in-toto
 Section: devel
 Priority: optional
 Maintainer: in-toto developers <in-toto-dev@googlegroups.com>
@@ -9,16 +9,17 @@ Uploaders:
  Justin Cappos <jcappos@nyu.edu>,
 Build-Depends:
  dh-python,
- debhelper (>= 11~),
+ debhelper (>= 12~),
  python3-all,
  python3-setuptools,
- python3-securesystemslib (>= 0.11.3),
  python3-attr,
  python3-dateutil,
  python3-six,
  python3-iso8601,
  python3-pathspec,
  python3-mock,
+ python3-securesystemslib (>= 0.11.3),
+Standards-Version: 4.3.0
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
 Vcs-Browser: https://github.com/in-toto/in-toto
@@ -30,6 +31,9 @@ Depends:
   ${misc:Depends},
 Recommends:
  gpg,
-Description: in-toto is a software supply chain security framework. It enables
- developers to authenticate operations in the supply chain and verify the
- authentication trail when releasing or installing a software product.
+Description: software supply chain security framework
+ in-toto provides tools both for software developers to authenticate operations
+ in the supply chain, as well as for end-users to verify the authentication
+ trail when installing a software product.
+ .
+ in-toto is developed at the Secure Systems Lab of NYU.
