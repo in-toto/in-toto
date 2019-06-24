@@ -35,6 +35,9 @@ from setuptools import setup, find_packages
 
 version = "0.3.0"
 
+with open("README.md") as f:
+  long_description = f.read()
+
 setup(
   name="in-toto",
   version=version,
@@ -43,10 +46,8 @@ setup(
   url="https://in-toto.io",
   description=("A framework to define and secure the integrity of "
     "software supply chains"),
-  long_description=("To learn more about in-toto visit our source code "
-    "`repository on GitHub "
-    "<https://github.com/in-toto/in-toto/tree/{version}>`__."
-    .format(version=version)),
+  long_description_content_type="text/markdown",
+  long_description=long_description,
   license="Apache-2.0",
   keywords="software supply chain security",
   classifiers = [
