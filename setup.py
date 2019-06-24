@@ -35,6 +35,9 @@ from setuptools import setup, find_packages
 
 version = "0.3.0"
 
+with open("README.md") as f:
+  long_description = f.read()
+
 setup(
   name="in-toto",
   version=version,
@@ -43,10 +46,8 @@ setup(
   url="https://in-toto.io",
   description=("A framework to define and secure the integrity of "
     "software supply chains"),
-  long_description=("To learn more about in-toto visit our source code "
-    "`repository on GitHub "
-    "<https://github.com/in-toto/in-toto/tree/{version}>`__."
-    .format(version=version)),
+  long_description_content_type="text/markdown",
+  long_description=long_description,
   license="Apache-2.0",
   keywords="software supply chain security",
   classifiers = [
@@ -68,12 +69,14 @@ setup(
     'Topic :: Security',
     'Topic :: Software Development'
   ],
+  python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
   install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
                     "python-dateutil", "iso8601", "pathspec",
                     "subprocess32; python_version < '3'"],
   test_suite="tests.runtests",
+  tests_require=["mock"],
   entry_points={
     "console_scripts": ["in-toto-run = in_toto.in_toto_run:main",
                         "in-toto-mock = in_toto.in_toto_mock:main",
@@ -81,5 +84,9 @@ setup(
                         "in-toto-verify = in_toto.in_toto_verify:main",
                         "in-toto-sign = in_toto.in_toto_sign:main",
                         "in-toto-keygen = in_toto.in_toto_keygen:main"]
+  },
+  project_urls={
+    "Source": "https://github.com/in-toto/in-toto",
+    "Bug Reports": "https://github.com/in-toto/in-toto/issues",
   },
 )
