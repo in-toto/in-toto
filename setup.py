@@ -85,4 +85,8 @@ setup(
                         "in-toto-sign = in_toto.in_toto_sign:main",
                         "in-toto-keygen = in_toto.in_toto_keygen:main"]
   },
+  project_urls={
+    "Source": "https://github.com/in-toto/in-toto",
+    "Bug Reports": "https://github.com/in-toto/in-toto/issues",
+  },
 )
