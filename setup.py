@@ -69,6 +69,7 @@ setup(
     'Topic :: Security',
     'Topic :: Software Development'
   ],
+  python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
   install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
