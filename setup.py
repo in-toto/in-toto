@@ -72,9 +72,18 @@ setup(
   python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "securesystemslib[crypto,pynacl]>=0.11.3", "attrs",
+  install_requires=["six", "securesystemslib[crypto]>=0.11.3", "attrs",
                     "python-dateutil", "iso8601", "pathspec",
                     "subprocess32; python_version < '3'"],
+  extras_require={
+    # Install pynacl as optional dependency to use with securesystemslib, as a
+    # workaround for `"ssl-pynacl": ["securesystemslib[pynacl]>=0.11.3"]`,
+    # which currently is not supported in "extra_require" (see pypa/pip#4957).
+    # TODO: Keep track of changes (version, additional requirements) under the
+    # "pynacl" key in securesystemslib's setup.py.
+    # https://github.com/secure-systems-lab/securesystemslib/blob/master/setup.py#L101
+    "pynacl": ["pynacl>1.2.0"]
+  },
   test_suite="tests.runtests",
   tests_require=["mock"],
   entry_points={

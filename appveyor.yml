@@ -24,6 +24,8 @@ install:
   - python -m pip install -U pip
   # Install mock, coverage, and pytest, which are needed for unit testing.
   - pip install -r requirements-ci.txt
+  # Ensure securesystemslib[pynacl] is available as it's required for tests
+  - pip install -r requirements.txt
   - pip install -e .
 
 build: false
