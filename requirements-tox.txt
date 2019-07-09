@@ -1,0 +1,10 @@
+# in-toto runtime dependencies
+-r requirements-pinned.txt
+
+# in-toto test suite runtime dependencies
+-r requirements-test.txt
+
+# Test tools for linting and test coverage measurement
+pylint
+bandit
+coverage
