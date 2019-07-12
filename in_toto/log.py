@@ -93,7 +93,8 @@ class InTotoLogger(_logger_class):
         sys.exc_info() != (None, None, None))
     return super(InTotoLogger, self).error(msg, exc_info=show_stacktrace)
 
-  def setLevelVerboseOrQuiet(self, verbose, quiet):
+  # Allow non snake_case function name for consistency with logging library
+  def setLevelVerboseOrQuiet(self, verbose, quiet): # pylint: disable=invalid-name
     """Convenience method to set the logger's verbosity level based on the
     passed booleans verbose and quiet (useful for cli tools). """
     if verbose:
