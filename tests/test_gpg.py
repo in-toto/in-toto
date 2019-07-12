@@ -434,7 +434,7 @@ class TestCommon(unittest.TestCase):
 
     # Test subkey  without validity period, i.e. it does not expire
     self.assertTrue(subkeys["70cfabf1e2f1dc60ac5c7bca10cd20d3d5bcb6ef"].get(
-        "validity_period") == None)
+        "validity_period") is None)
 
 
   def test_get_pubkey_bundle_errors(self):

@@ -206,7 +206,7 @@ examples:
 
   # For verifying at least one of --layout-keys or --gpg must be specified
   # Note: Passing both at the same time is possible.
-  if (args.layout_keys == None) and (args.gpg == None):
+  if (args.layout_keys is None) and (args.gpg is None):
     parser.print_help()
     parser.error("wrong arguments: specify at least one of"
         " `--layout-keys path [path ...]` or `--gpg id [id ...]`")
@@ -216,13 +216,13 @@ examples:
     layout = Metablock.load(args.layout)
 
     layout_key_dict = {}
-    if args.layout_keys != None:
+    if args.layout_keys is not None:
       LOG.info("Loading layout key(s)...")
       layout_key_dict.update(
           in_toto.util.import_public_keys_from_files_as_dict(
             args.layout_keys, args.key_types))
 
-    if args.gpg != None:
+    if args.gpg is not None:
       LOG.info("Loading layout gpg key(s)...")
       layout_key_dict.update(
           in_toto.util.import_gpg_public_keys_from_keyring_as_dict(

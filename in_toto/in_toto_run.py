@@ -231,17 +231,17 @@ examples:
   in_toto.user_settings.set_settings()
 
   # Regular signing and GPG signing are mutually exclusive
-  if (args.key == None) == (args.gpg == None):
+  if (args.key is None) == (args.gpg is None):
     parser.print_usage()
     parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
-  gpg_use_default = (args.gpg == True)
+  gpg_use_default = (args.gpg is True)
 
   # Otherwise we interpret it as actual keyid
   gpg_keyid = None
-  if args.gpg != True:
+  if args.gpg is not True:
     gpg_keyid = args.gpg
 
   # If no_command is specified run in_toto_run without executing a command

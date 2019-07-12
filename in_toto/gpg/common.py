@@ -358,7 +358,7 @@ def _assign_certified_key_info(bundle):
           signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
 
       # No key expiration time, go to next certificate
-      if tmp_validity_period == None:
+      if tmp_validity_period is None:
         continue
 
       # Create shortcut to mandatory pre-parsed creation time subpacket
@@ -367,7 +367,7 @@ def _assign_certified_key_info(bundle):
       tmp_is_primary_user = \
           signature["info"]["subpackets"].get(PRIMARY_USERID_SUBPACKET)
 
-      if tmp_is_primary_user != None:
+      if tmp_is_primary_user is not None:
         tmp_is_primary_user = bool(tmp_is_primary_user[0])
 
       # If we already have a primary user certified expiration date and this
@@ -386,7 +386,7 @@ def _assign_certified_key_info(bundle):
         is_primary_user = tmp_is_primary_user
         sig_creation_time = tmp_sig_creation_time
 
-  if validity_period != None:
+  if validity_period is not None:
     bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["validity_period"] = validity_period
 
   return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
@@ -481,7 +481,7 @@ def _get_verified_subkeys(bundle):
     # subkey here
     validity_period = \
         signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
-    if validity_period != None:
+    if validity_period is not None:
       subkey["validity_period"] = struct.unpack(">I", validity_period)[0]
 
     verified_subkeys[subkey["keyid"]] = subkey

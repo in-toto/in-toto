@@ -249,7 +249,7 @@ examples:
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
-  gpg_use_default = (args.gpg == True)
+  gpg_use_default = (args.gpg is True)
 
   # Otherwise gpg_keyid stays either None or gets the passed argument assigned
   gpg_keyid = None

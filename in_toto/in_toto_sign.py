@@ -143,7 +143,7 @@ def _sign_and_dump_metadata(metadata, args):
     # a list (not None) and we will try to sign with gpg.
     # If `--gpg-home` was not set, args.gpg_home is None and the signer tries
     # to use the default gpg keyring.
-    if args.gpg != None:
+    if args.gpg is not None:
       # If `--gpg` was passed without argument we sign with the default key
       # Excluded so that coverage does not vary in different test environments
       if len(args.gpg) == 0: # pragma: no cover
@@ -156,7 +156,7 @@ def _sign_and_dump_metadata(metadata, args):
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH ...`
     # load the corresponding key from disk and sign with it
-    elif args.key != None: # pragma: no branch
+    elif args.key is not None: # pragma: no branch
 
       if args.key_type is None:
         args.key_type = [util.KEY_TYPE_RSA] * len(args.key)
@@ -217,12 +217,12 @@ def _verify_metadata(metadata, args):
   """
   try:
     # Load pubkeys from disk ....
-    if args.key != None:
+    if args.key is not None:
       pub_key_dict = util.import_public_keys_from_files_as_dict(args.key,
           args.key_type)
 
     # ... or from gpg keyring
-    elif args.gpg != None: # pragma: no branch
+    elif args.gpg is not None: # pragma: no branch
       pub_key_dict = util.import_gpg_public_keys_from_keyring_as_dict(
           args.gpg, args.gpg_home)
 
@@ -386,13 +386,13 @@ examples:
         " 'append' or 'output' when verifying signatures")
 
   # Regular signing and GPG signing are mutually exclusive
-  if (args.key == None) == (args.gpg == None):
+  if (args.key is None) == (args.gpg is None):
     parser.print_help()
     parser.error("wrong arguments: specify either `--key PATH [PATH ...]`"
       " or `--gpg [KEYID [KEYID ...]]`")
 
   # For gpg verification we must specify a keyid (no default key is loaded)
-  if args.verify and args.gpg != None and len(args.gpg) < 1:
+  if args.verify and args.gpg is not None and len(args.gpg) < 1:
     parser.print_help()
     parser.error("missing arguments: specify at least one keyid for GPG"
       " signature verification (`--gpg KEYID ...`)")
@@ -408,8 +408,8 @@ examples:
         " single functionary and is usually namespaced accordingly:"
         " '<name>.<keyid>.link'.")
 
-    if ((args.key != None and len(args.key) > 1) or
-        (args.gpg != None and len(args.gpg) > 1)):
+    if ((args.key is not None and len(args.key) > 1) or
+        (args.gpg is not None and len(args.gpg) > 1)):
       parser.print_help()
       parser.error("too many arguments: {} Hence signing Link metadata"
           " with multiple keys is not allowed.".format(link_error_message))
