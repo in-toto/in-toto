@@ -577,7 +577,7 @@ class Layout(Signable):
     """Private method to verify that the list of steps and inspections are
     correctly formed."""
     names_seen = set()
-    if type(self.steps) != list:
+    if not isinstance(self.steps, list):
       raise securesystemslib.exceptions.FormatError(
           "The steps field should be a list!")
 
@@ -594,7 +594,7 @@ class Layout(Signable):
             " unique within a layout.".format(step.name))
       names_seen.add(step.name)
 
-    if type(self.inspect) != list:
+    if not isinstance(self.inspect, list):
       raise securesystemslib.exceptions.FormatError(
           "The inspect field should a be a list!")
 
@@ -707,7 +707,7 @@ class SupplyChainItem(ValidationMixin):
 
   def _validate_expected_materials(self):
     """Private method to check that material rules are correctly formed."""
-    if type(self.expected_materials) != list:
+    if not isinstance(self.expected_materials, list):
       raise securesystemslib.exceptions.FormatError(
           "Material rules should be a list!")
 
@@ -717,7 +717,7 @@ class SupplyChainItem(ValidationMixin):
 
   def _validate_expected_products(self):
     """Private method to check that product rules are correctly formed."""
-    if type(self.expected_products) != list:
+    if not isinstance(self.expected_products, list):
       raise securesystemslib.exceptions.FormatError(
           "Product rules should be a list!")
 
@@ -829,7 +829,7 @@ class Step(SupplyChainItem):
 
   def _validate_threshold(self):
     """Private method to check that the threshold field is set to an int."""
-    if type(self.threshold) != int:
+    if not isinstance(self.threshold, int):
       raise securesystemslib.exceptions.FormatError(
           "Invalid threshold '{}', value must be an int."
           .format(self.threshold))
@@ -837,7 +837,7 @@ class Step(SupplyChainItem):
 
   def _validate_pubkeys(self):
     """Private method to check that the pubkeys is a list of keyids."""
-    if type(self.pubkeys) != list:
+    if not isinstance(self.pubkeys, list):
       raise securesystemslib.exceptions.FormatError(
           "The pubkeys field should be a list!")
 
@@ -847,7 +847,7 @@ class Step(SupplyChainItem):
 
   def _validate_expected_command(self):
     """Private method to check that the expected_command is proper."""
-    if type(self.expected_command) != list:
+    if not isinstance(self.expected_command, list):
       raise securesystemslib.exceptions.FormatError(
           "The expected command field is malformed!")
 
@@ -944,6 +944,6 @@ class Inspection(SupplyChainItem):
 
   def _validate_run(self):
     """Private method to check that the expected command is correct."""
-    if type(self.run) != list:
+    if not isinstance(self.run, list):
       raise securesystemslib.exceptions.FormatError(
           "The run field is malformed!")
