@@ -154,7 +154,7 @@ def unpack_rule(rule):
           " (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>.\n"
           "Got: \n\t{}".format(rule))
 
-    if dest_type != "materials" and dest_type != "products":
+    if dest_type not in {"materials", "products"}:
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
           " match rules must have either MATERIALS or PRODUCTS (case"
           " insensitive) as destination.\n"
