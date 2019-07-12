@@ -195,6 +195,7 @@ def parse_pubkey_bundle(data):
       # - there must be least one User ID packet, or
       # - order and type of signatures, or
       # - disallow duplicate packets
+      # pylint: disable=no-else-raise
       if packet_type != PACKET_TYPE_PRIMARY_KEY and \
           not key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
         raise PacketParsingError("First packet must be a primary key ('{}'), "

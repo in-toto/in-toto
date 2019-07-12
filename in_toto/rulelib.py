@@ -92,6 +92,7 @@ def unpack_rule(rule):
 
   # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
   if rule_type in GENERIC_RULES:
+    # pylint: disable=no-else-raise
     if rule_len != 2:
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
         " generic rules must have one of the formats:\n\t"
