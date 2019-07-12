@@ -92,6 +92,7 @@ max-nested-blocks=5
 
 
 [BASIC]
+good-names=e, fn, fp
 
 # Naming hint for argument names
 argument-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
