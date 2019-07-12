@@ -1,3 +1,5 @@
+# TODO: Add module docstring and remove pylint exemption in in-toto/in-toto#80
+# pylint: disable=missing-docstring
 import sys
 import getpass
 
