@@ -98,7 +98,7 @@ from in_toto import verifylib
 from in_toto.models.metadata import Metablock
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 
@@ -202,7 +202,7 @@ examples:
 
   args = parser.parse_args()
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # For verifying at least one of --layout-keys or --gpg must be specified
   # Note: Passing both at the same time is possible.
@@ -212,18 +212,18 @@ examples:
         " `--layout-keys path [path ...]` or `--gpg id [id ...]`")
 
   try:
-    log.info("Loading layout...")
+    LOG.info("Loading layout...")
     layout = Metablock.load(args.layout)
 
     layout_key_dict = {}
     if args.layout_keys != None:
-      log.info("Loading layout key(s)...")
+      LOG.info("Loading layout key(s)...")
       layout_key_dict.update(
           in_toto.util.import_public_keys_from_files_as_dict(
             args.layout_keys, args.key_types))
 
     if args.gpg != None:
-      log.info("Loading layout gpg key(s)...")
+      LOG.info("Loading layout gpg key(s)...")
       layout_key_dict.update(
           in_toto.util.import_gpg_public_keys_from_keyring_as_dict(
           args.gpg, gpg_home=args.gpg_home))
@@ -231,7 +231,7 @@ examples:
     verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 
   except Exception as e:
-    log.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))
+    LOG.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

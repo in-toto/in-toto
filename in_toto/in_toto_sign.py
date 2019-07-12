@@ -114,7 +114,7 @@ import securesystemslib.formats
 
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 def _sign_and_dump_metadata(metadata, args):
@@ -187,13 +187,13 @@ def _sign_and_dump_metadata(metadata, args):
     elif metadata.type_ == "layout": # pragma: no branch
       out_path = args.file
 
-    log.info("Dumping {0} to '{1}'...".format(metadata.type_, out_path))
+    LOG.info("Dumping {0} to '{1}'...".format(metadata.type_, out_path))
 
     metadata.dump(out_path)
     sys.exit(0)
 
   except Exception as e:
-    log.error("The following error occurred while signing: "
+    LOG.error("The following error occurred while signing: "
         "{}".format(e))
     sys.exit(2)
 
@@ -229,17 +229,17 @@ def _verify_metadata(metadata, args):
 
     for keyid, verification_key in six.iteritems(pub_key_dict):
       metadata.verify_signature(verification_key)
-      log.info("Signature verification passed for keyid '{}'"
+      LOG.info("Signature verification passed for keyid '{}'"
           .format(keyid))
 
     sys.exit(0)
 
   except exceptions.SignatureVerificationError as e:
-    log.error("Signature verification failed: {}".format(e))
+    LOG.error("Signature verification failed: {}".format(e))
     sys.exit(1)
 
   except Exception as e:
-    log.error("The following error occurred while verifying signatures: "
+    LOG.error("The following error occurred while verifying signatures: "
         "{}".format(e))
     sys.exit(2)
 
@@ -264,7 +264,7 @@ def _load_metadata(file_path):
     return Metablock.load(file_path)
 
   except Exception as e:
-    log.error("The following error occurred while loading the file '{}': "
+    LOG.error("The following error occurred while loading the file '{}': "
         "{}".format(file_path, e))
     sys.exit(2)
 
@@ -375,7 +375,7 @@ examples:
 
   args = parser.parse_args()
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Additional argparse sanitization
   # NOTE: This tool is starting to have many inter-dependent argument

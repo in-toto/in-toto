@@ -40,11 +40,11 @@
 
   ```
   import logging
-  log = logging.getLogger("in_toto")
+  LOG = logging.getLogger("in_toto")
 
   # parse args ...
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # call library function ...
   ```
@@ -54,13 +54,13 @@
 
   ```
   import logging
-  log = logging.getLogger(__name__)
+  LOG = logging.getLogger(__name__)
 
-  log.warning("Shown per default.")
+  LOG.warning("Shown per default.")
 
-  log.info("Only shown if, log level was set to <= logging.INFO, e.g. in cli.")
+  LOG.info("Only shown if, log level was set to <= logging.INFO, e.g. in cli.")
 
-  log.info("In debug mode it looks something like this)
+  LOG.info("In debug mode it looks something like this)
   # in_toto.runlib:400:INFO:In debug mode it looks something like this
 
   ```

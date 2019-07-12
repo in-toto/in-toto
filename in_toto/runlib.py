@@ -45,7 +45,7 @@ from in_toto.models.metadata import Metablock
 
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 
@@ -197,7 +197,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     return artifacts_dict
 
   if base_path:
-    log.info("Overriding setting ARTIFACT_BASE_PATH with passed"
+    LOG.info("Overriding setting ARTIFACT_BASE_PATH with passed"
         " base path.")
   else:
     base_path = in_toto.settings.ARTIFACT_BASE_PATH
@@ -220,7 +220,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   # Passed exclude patterns take precedence over exclude pattern settings
   if exclude_patterns:
-    log.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
+    LOG.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
         " exclude patterns.")
   else:
     # TODO: Do we want to keep the exclude pattern setting?
@@ -288,7 +288,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             filepaths.append(norm_filepath)
 
           else:
-            log.info("File '{}' appears to be a broken symlink. Skipping..."
+            LOG.info("File '{}' appears to be a broken symlink. Skipping..."
                 .format(norm_filepath))
 
         # Apply exlcude patterns on the normalized file paths returned by walk
@@ -305,7 +305,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
     # Path is no file and no directory
     else:
-      log.info("path: {} does not exist, skipping..".format(artifact))
+      LOG.info("path: {} does not exist, skipping..".format(artifact))
 
 
   # Change back to where original current working dir
@@ -392,7 +392,7 @@ def in_toto_mock(name, link_cmd_args):
       record_streams=True)
 
   filename = FILENAME_FORMAT_SHORT.format(step_name=name)
-  log.info("Storing unsigned link metadata to '{}'...".format(filename))
+  LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
   link_metadata.dump(filename)
   return link_metadata
 
@@ -498,7 +498,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     Newly created Metablock object containing a Link object
 
   """
-  log.info("Running '{}'...".format(name))
+  LOG.info("Running '{}'...".format(name))
 
   # Check key formats to fail early
   if signing_key:
@@ -513,7 +513,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
   if material_list:
-    log.info("Recording materials '{}'...".format(", ".join(material_list)))
+    LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
@@ -521,21 +521,21 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       lstrip_paths=lstrip_paths)
 
   if link_cmd_args:
-    log.info("Running command '{}'...".format(" ".join(link_cmd_args)))
+    LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
     byproducts = execute_link(link_cmd_args, record_streams)
   else:
     byproducts = {}
 
   if product_list:
     securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
-    log.info("Recording products '{}'...".format(", ".join(product_list)))
+    LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
   products_dict = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
 
-  log.info("Creating link metadata...")
+  LOG.info("Creating link metadata...")
   environment = {}
   if record_environment:
     environment['workdir'] = os.getcwd().replace('\\','/')
@@ -548,22 +548,22 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   signature = None
   if signing_key:
-    log.info("Signing link metadata using passed key...")
+    LOG.info("Signing link metadata using passed key...")
     signature = link_metadata.sign(signing_key)
 
   elif gpg_keyid:
-    log.info("Signing link metadata using passed GPG keyid...")
+    LOG.info("Signing link metadata using passed GPG keyid...")
     signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
 
   elif gpg_use_default:
-    log.info("Signing link metadata using default GPG key ...")
+    LOG.info("Signing link metadata using default GPG key ...")
     signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
 
   # We need the signature's keyid to write the link to keyid infix'ed filename
   if signature:
     signing_keyid = signature["keyid"]
     filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
-    log.info("Storing link metadata to '{}'...".format(filename))
+    LOG.info("Storing link metadata to '{}'...".format(filename))
     link_metadata.dump(filename)
 
   return link_metadata
@@ -640,7 +640,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     None.
 
   """
-  log.info("Start recording '{}'...".format(step_name))
+  LOG.info("Start recording '{}'...".format(step_name))
 
   # Fail if there is no signing key arg at all
   if not signing_key and not gpg_keyid and not gpg_use_default:
@@ -660,14 +660,14 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
   if material_list:
-    log.info("Recording materials '{}'...".format(", ".join(material_list)))
+    LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
 
   materials_dict = record_artifacts_as_dict(material_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
 
-  log.info("Creating preliminary link metadata...")
+  LOG.info("Creating preliminary link metadata...")
   environment = {}
   if record_environment:
     environment['workdir'] = os.getcwd().replace('\\', '/')
@@ -679,15 +679,15 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   link_metadata = Metablock(signed=link)
 
   if signing_key:
-    log.info("Signing link metadata using passed key...")
+    LOG.info("Signing link metadata using passed key...")
     signature = link_metadata.sign(signing_key)
 
   elif gpg_keyid:
-    log.info("Signing link metadata using passed GPG keyid...")
+    LOG.info("Signing link metadata using passed GPG keyid...")
     signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
 
   else:  # (gpg_use_default)
-    log.info("Signing link metadata using default GPG key ...")
+    LOG.info("Signing link metadata using default GPG key ...")
     signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
 
   # We need the signature's keyid to write the link to keyid infix'ed filename
@@ -696,7 +696,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
     keyid=signing_keyid)
 
-  log.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
+  LOG.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link_metadata.dump(unfinished_fn)
 
 
@@ -783,7 +783,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     None.
 
   """
-  log.info("Stop recording '{}'...".format(step_name))
+  LOG.info("Stop recording '{}'...".format(step_name))
 
   # Check that we have something to sign and if the formats are right
   if not signing_key and not gpg_keyid and not gpg_use_default:
@@ -827,18 +827,18 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     unfinished_fn = unfinished_fn_list[0]
 
-  log.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
+  LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
   link_metadata = Metablock.load(unfinished_fn)
 
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
   if signing_key:
-    log.info("Verifying preliminary link signature using passed signing key...")
+    LOG.info("Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
     verification_key = signing_key
 
   elif gpg_keyid:
-    log.info("Verifying preliminary link signature using passed gpg key...")
+    LOG.info("Verifying preliminary link signature using passed gpg key...")
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
     verification_key = gpg_pubkey
@@ -850,7 +850,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     # keyring. We do this even if a gpg_keyid was specified, because gpg
     # accepts many different ids (mail, name, parts of an id, ...) but we
     # need a specific format.
-    log.info("Verifying preliminary link signature using default gpg key...")
+    LOG.info("Verifying preliminary link signature using default gpg key...")
     keyid = link_metadata.signatures[0]["keyid"]
     gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
     verification_key = gpg_pubkey
@@ -859,7 +859,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   # Record products if a product path list was passed
   if product_list:
-    log.info("Recording products '{}'...".format(", ".join(product_list)))
+    LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
   link_metadata.signed.products = record_artifacts_as_dict(product_list,
       exclude_patterns=exclude_patterns, base_path=base_path,
@@ -867,18 +867,18 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   link_metadata.signatures = []
   if signing_key:
-    log.info("Updating signature with key '{:.8}...'...".format(keyid))
+    LOG.info("Updating signature with key '{:.8}...'...".format(keyid))
     link_metadata.sign(signing_key)
 
   else: # gpg_keyid or gpg_use_default
     # In both cases we use the keyid we got from verifying the preliminary
     # link signature above.
-    log.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
+    LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
     link_metadata.sign_gpg(keyid, gpg_home)
 
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
-  log.info("Storing link metadata to '{}'...".format(fn))
+  LOG.info("Storing link metadata to '{}'...".format(fn))
   link_metadata.dump(fn)
 
-  log.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
+  LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)

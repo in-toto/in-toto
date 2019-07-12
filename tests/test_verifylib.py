@@ -163,7 +163,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ slightly. """
     expected_command = ["/usr/bin/vi", "file1", "file2"]
 
-    with patch("in_toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.LOG") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
@@ -173,7 +173,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ completely. """
     expected_command = ["make install"]
 
-    with patch("in_toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.LOG") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
@@ -1335,7 +1335,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     )
 
     with self.assertRaises(ThresholdVerificationError), \
-        patch("in_toto.verifylib.log") as mock_log:
+        patch("in_toto.verifylib.LOG") as mock_log:
       verify_link_signature_thresholds(layout, chain_link_dict)
 
     msg = mock_log.info.call_args[0][0]

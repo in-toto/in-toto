@@ -41,7 +41,7 @@ from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 import securesystemslib.formats
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def parse_pubkey_payload(data):
@@ -251,7 +251,7 @@ def parse_pubkey_bundle(data):
           key_bundle[PACKET_TYPE_PRIMARY_KEY]["signatures"].append(packet)
 
       else:
-        log.info("Ignoring gpg key packet '{}', we only handle packets of "
+        LOG.info("Ignoring gpg key packet '{}', we only handle packets of "
             "types '{}' (see RFC4880 4.3. Packet Tags).".format(packet_type,
             [PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
             PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY,
@@ -322,12 +322,12 @@ def _assign_certified_key_info(bundle):
       # It's okay to ignore some exceptions (unsupported algorithms etc.) but
       # we should blow up if a signature is malformed (missing subpackets).
       except Exception as e:
-        log.info(e)
+        LOG.info(e)
         continue
 
       if not bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["keyid"].endswith(
           signature["keyid"]):
-        log.info("Ignoring User ID certificate issued by '{}'.".format(
+        LOG.info("Ignoring User ID certificate issued by '{}'.".format(
             signature["keyid"]))
         continue
 
@@ -336,7 +336,7 @@ def _assign_certified_key_info(bundle):
           signature["info"]["hash_algorithm"])
 
       if not is_valid:
-        log.info("Ignoring invalid User ID self-certificate issued "
+        LOG.info("Ignoring invalid User ID self-certificate issued "
             "by '{}'.".format(signature["keyid"]))
         continue
 
@@ -430,7 +430,7 @@ def _get_verified_subkeys(bundle):
 
     # TODO: Revise exception taxonomy
     except Exception as e:
-      log.info(e)
+      LOG.info(e)
       continue
 
     # Construct signed content (see RFC4880 section 5.2.4. paragraph 3)
@@ -453,7 +453,7 @@ def _get_verified_subkeys(bundle):
 
       # TODO: Revise exception taxonomy
       except Exception as e:
-        log.info(e)
+        LOG.info(e)
         continue
     # NOTE: As per the V4 key structure diagram in RFC4880 section 12.1., a
     # subkey must be followed by exactly one Primary-Key-Binding-Signature.
@@ -463,7 +463,7 @@ def _get_verified_subkeys(bundle):
     # *subkey binding signature*, which in case of a signing subkey, must have
     # an *embedded primary key binding signature*.
     if len(key_binding_signatures) != 1:
-      log.info("Ignoring subkey '{}' due to wrong amount of key binding "
+      LOG.info("Ignoring subkey '{}' due to wrong amount of key binding "
           "signatures ({}), must be exactly 1.".format(subkey["keyid"],
           len(key_binding_signatures)))
       continue
@@ -472,7 +472,7 @@ def _get_verified_subkeys(bundle):
         signature["info"]["hash_algorithm"])
 
     if not is_valid:
-      log.info("Ignoring subkey '{}' due to invalid key binding signature."
+      LOG.info("Ignoring subkey '{}' due to invalid key binding signature."
           .format(subkey["keyid"]))
       continue
 
@@ -551,7 +551,7 @@ def get_pubkey_bundle(data, keyid):
       [master_public_key] + list(sub_public_keys.values())):
     if public_key and public_key["keyid"].endswith(keyid.lower()):
       if idx > 1:
-        log.warning("Exporting master key '{}' including subkeys '{}' for"
+        LOG.warning("Exporting master key '{}' including subkeys '{}' for"
             " passed keyid '{}'.".format(master_public_key["keyid"],
             ", ".join(list(sub_public_keys.keys())), keyid))
       break
@@ -722,7 +722,7 @@ def parse_signature_packet(data, supported_signature_types=None,
     # Warn if expiration subpacket is not hashed
     if subpacket_type == KEY_EXPIRATION_SUBPACKET:
       if not is_hashed:
-        log.warning("Expiration subpacket not hashed, gpg client possibly "
+        LOG.warning("Expiration subpacket not hashed, gpg client possibly "
             "exporting a weakly configured key.")
 
     if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover

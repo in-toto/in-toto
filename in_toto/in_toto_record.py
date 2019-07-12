@@ -126,7 +126,7 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 def main():
@@ -242,7 +242,7 @@ examples:
 
   args = parser.parse_args()
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
@@ -279,7 +279,7 @@ examples:
           lstrip_paths=args.lstrip_paths)
 
   except Exception as e:
-    log.error("(in-toto-record {0}) {1}: {2}"
+    LOG.error("(in-toto-record {0}) {1}: {2}"
         .format(args.command, type(e).__name__, e))
     sys.exit(1)
 

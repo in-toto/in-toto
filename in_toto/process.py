@@ -46,7 +46,7 @@ PIPE = subprocess.PIPE
 
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def run(cmd, check=True, timeout=SUBPROCESS_TIMEOUT, **kwargs):
@@ -117,7 +117,7 @@ def run(cmd, check=True, timeout=SUBPROCESS_TIMEOUT, **kwargs):
   # don't pass on `stdin` if the user passes `input` and `stdin`
   # https://github.com/python/cpython/blob/3.5/Lib/subprocess.py#L378-L381
   if kwargs.get("input") is not None and "stdin" in kwargs:
-    log.debug("stdin and input arguments may not both be used. "
+    LOG.debug("stdin and input arguments may not both be used. "
         "Ignoring passed stdin: " + str(kwargs["stdin"]))
     del kwargs["stdin"]
 

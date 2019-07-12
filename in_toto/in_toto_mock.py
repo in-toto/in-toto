@@ -56,7 +56,7 @@ import logging
 import in_toto.runlib
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 
@@ -102,13 +102,13 @@ examples:
 
   # in-toto-mock should not be used to secure the supply chain but only to try
   # out in-toto-run with max. user feedback, hence we set a verbose log level
-  log.setLevel(logging.INFO)
+  LOG.setLevel(logging.INFO)
 
   try:
     in_toto.runlib.in_toto_mock(args.name, args.link_cmd)
 
   except Exception as e:
-    log.error("(in-toto-mock) {0}: {1}".format(type(e).__name__, e))
+    LOG.error("(in-toto-mock) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

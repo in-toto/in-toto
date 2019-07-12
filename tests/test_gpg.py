@@ -238,7 +238,7 @@ class TestCommon(unittest.TestCase):
     # Create empty packet of unsupported type 66 (bit 0-5) and length 0 and
     # pass as second packet to provoke skipping of unsupported packet
     unsupported_packet = bytearray([0b01111111, 0])
-    with patch("in_toto.gpg.common.log") as mock_log:
+    with patch("in_toto.gpg.common.LOG") as mock_log:
       parse_pubkey_bundle(primary_key_packet + unsupported_packet)
       self.assertTrue("Ignoring gpg key packet '63'" in
           mock_log.info.call_args[0][0])
@@ -321,7 +321,7 @@ class TestCommon(unittest.TestCase):
     ]
 
     for bundle, expected_msg in test_data:
-      with patch("in_toto.gpg.common.log") as mock_log:
+      with patch("in_toto.gpg.common.LOG") as mock_log:
         _assign_certified_key_info(bundle)
         msg = str(mock_log.info.call_args[0][0])
         self.assertTrue(expected_msg in msg,
@@ -417,7 +417,7 @@ class TestCommon(unittest.TestCase):
     ]
 
     for bundle, expected_msg in test_data:
-      with patch("in_toto.gpg.common.log") as mock_log:
+      with patch("in_toto.gpg.common.LOG") as mock_log:
         _get_verified_subkeys(bundle)
         msg = str(mock_log.info.call_args[0][0])
         self.assertTrue(expected_msg in msg,
