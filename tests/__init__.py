@@ -22,7 +22,7 @@ class CapturableStreamHandler(logging.StreamHandler):
 # which we do by using a custom StreamHandler.
 handler = CapturableStreamHandler()
 # We also use a verbose logging level and format
-formatter = logging.Formatter(in_toto.log._FORMAT_DEBUG)
+formatter = logging.Formatter(in_toto.log.FORMAT_DEBUG)
 handler.setFormatter(formatter)
-in_toto.log.logger.handlers = [handler]
-in_toto.log.logger.setLevel(logging.DEBUG)
+in_toto.log.LOGGER.handlers = [handler]
+in_toto.log.LOGGER.setLevel(logging.DEBUG)
