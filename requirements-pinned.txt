@@ -1,0 +1,41 @@
+# These pinned requirements are the combined results of `pip-compile` over
+# "requirements.txt" in each supported Python version.
+#
+# - Below script may be used (copy-paste to bash removing leading '#') to
+#   re-generate this file, e.g. if `requirements.txt` is updated.
+#
+# - Version updates should be handled by a GitHub-integrated dependency monitor
+#   (e.g. Dependabot) that regularly scans PyPI for updates, patches this file,
+#   and submits a PR, which tirggers CI/CD builds and should catch breaking
+#   updates.
+#
+# # Gather pip-compile results for each supported Python version
+# for v in 2.7 3.5 3.6 3.7; do
+#   mkvirtualenv in-toto-env-${v} -p python${v};
+#   pip install pip-tools;
+#   pip-compile requirements.txt -n | grep -v "^#" >> requirements-pinned.combined;
+#   deactivate;
+#   rmvirtualenv in-toto-env-${v};
+# done;
+#
+# # Create pinned requirements file retaining this doc header
+# cat requirements-pinned.txt | grep "^#" > requirements-pinned.tmp;
+# mv requirements-pinned.tmp requirements-pinned.txt
+# cat requirements-pinned.combined | sort -u >> requirements-pinned.txt
+# rm requirements-pinned.combined
+#
+asn1crypto==0.24.0        # via cryptography
+attrs==19.1.0
+cffi==1.12.3              # via cryptography, pynacl
+colorama==0.4.1           # via securesystemslib
+cryptography==2.7         # via securesystemslib
+enum34==1.1.6             # via cryptography
+ipaddress==1.0.22         # via cryptography
+iso8601==0.1.12
+pathspec==0.5.9
+pycparser==2.19           # via cffi
+pynacl==1.3.0             # via securesystemslib
+python-dateutil==2.8.0
+securesystemslib[crypto,pynacl]==0.11.3
+six==1.12.0
+subprocess32==3.5.4 ; python_version < "3"
