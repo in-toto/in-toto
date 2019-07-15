@@ -61,7 +61,7 @@ def _create_pubkey_with_subkey_schema(pubkey_schema):
   """Helper method to extend the passed public key schema with an optional
   dictionary of sub public keys "subkeys" with the same schema."""
   schema = pubkey_schema
-  subkey_schema_tuple =  ("subkeys", ssl_schema.Optional(
+  subkey_schema_tuple = ("subkeys", ssl_schema.Optional(
         ssl_schema.DictOf(
           key_schema=ssl_formats.KEYID_SCHEMA,
           value_schema=pubkey_schema
@@ -74,6 +74,8 @@ def _create_pubkey_with_subkey_schema(pubkey_schema):
   # TODO: Find a way that does not require to access a protected member
   schema._required.append(subkey_schema_tuple) # pylint: disable=protected-access
   return schema
+
+# pylint: disable=bad-whitespace
 
 GPG_HASH_ALGORITHM_STRING = "pgp+SHA2"
 PGP_RSA_PUBKEY_METHOD_STRING = "pgp+rsa-pkcsv1.5"

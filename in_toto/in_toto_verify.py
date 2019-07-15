@@ -157,7 +157,7 @@ examples:
   named_args.add_argument("-l", "--layout", type=str, required=True,
       metavar="<path>", help=(
       "Path to root layout specifying the software supply chain to be"
-      " verified." ))
+      " verified."))
 
   named_args.add_argument("-k", "--layout-keys", type=str, metavar="<path>",
       nargs="+", help=(

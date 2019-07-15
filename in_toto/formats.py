@@ -30,6 +30,8 @@ import in_toto.gpg.formats as gpg_formats
 import securesystemslib.schema as ssl_schema
 import securesystemslib.formats as ssl_formats
 
+# pylint: disable=bad-whitespace
+
 # Note: Verification keys can have private portions but in case of GPG we
 # only have a PUBKEY_SCHEMA (because we never export private gpg keys from
 # the gpg keyring)

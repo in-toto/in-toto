@@ -218,7 +218,7 @@ class TestVerifyRule(unittest.TestCase):
       # Consume created artifact
       ["foo", {"foo"}, set(), {"foo"}, {"foo"}],
       # Consume multiple created artifacts with wildcard
-      ["*", {"foo", "bar"},  set(), {"foo", "bar"}, {"foo", "bar"}],
+      ["*", {"foo", "bar"}, set(), {"foo", "bar"}, {"foo", "bar"}],
       # Don't consume deleted artifact (in materials only)
       ["foo", {"foo"}, {"foo"}, set(), set()],
       # Don't consume artifact that's not in materials or products
@@ -784,7 +784,7 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
-    layout.signed.inspect[0].run = ["python", "./scripts/expr",  "1", "/", "0"]
+    layout.signed.inspect[0].run = ["python", "./scripts/expr", "1", "/", "0"]
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
@@ -1070,7 +1070,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )
@@ -1099,7 +1099,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )
@@ -1107,7 +1107,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )

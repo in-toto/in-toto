@@ -583,7 +583,7 @@ class TestInTotoRecordStart(unittest.TestCase):
     self.step_name = "test_step"
     self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"])
 
-    self.test_material= "test_material"
+    self.test_material = "test_material"
     open(self.test_material, "w").close()
 
   @classmethod

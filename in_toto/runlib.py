@@ -538,7 +538,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   LOG.info("Creating link metadata...")
   environment = {}
   if record_environment:
-    environment['workdir'] = os.getcwd().replace('\\','/')
+    environment['workdir'] = os.getcwd().replace('\\', '/')
 
   link = in_toto.models.link.Link(name=name,
       materials=materials_dict, products=products_dict, command=link_cmd_args,

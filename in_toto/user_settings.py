@@ -45,7 +45,7 @@ ENV_PREFIX = "IN_TOTO_"
 RC_PATHS = [
   os.path.join("/etc", "in_toto", "config"),
   os.path.join("/etc", "in_totorc"),
-  os.path.join(USER_PATH,  ".config", "in_toto", "config"),
+  os.path.join(USER_PATH, ".config", "in_toto", "config"),
   os.path.join(USER_PATH, ".config", "in_toto"),
   os.path.join(USER_PATH, ".in_toto", "config"),
   os.path.join(USER_PATH, ".in_totorc"),
