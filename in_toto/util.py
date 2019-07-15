@@ -248,8 +248,8 @@ def prompt_import_ed25519_privatekey_from_file(filepath):
 
 
 def prompt_import_rsa_key_from_file(filepath):
-  """Tries to load an RSA key without password. If a CryptoError occurs, prompts
-  the user for a password and tries to load the key again. """
+  """Tries to load an RSA key without password. If a CryptoError occurs,
+  prompts the user for a password and tries to load the key again. """
   password = None
   try:
     import_rsa_key_from_file(filepath, password)

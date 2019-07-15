@@ -246,8 +246,9 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Iterate over remaining normalized artifact paths
   for artifact in norm_artifacts:
     if os.path.isfile(artifact):
-      # FIXME: this is necessary to provide consisency between windows filepaths and
-      # *nix filepaths. A better solution may be in order though...
+      # FIXME: this is necessary to provide consisency between windows
+      # filepaths and *nix filepaths. A better solution may be in order
+      # though...
       artifact = artifact.replace('\\', '/')
       key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
       artifacts_dict[key] = _hash_artifact(artifact,
@@ -296,10 +297,12 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
           filepaths = _apply_exclude_patterns(filepaths, exclude_filter)
 
         for filepath in filepaths:
-          # FIXME: this is necessary to provide consisency between windows filepaths and
-          # *nix filepaths. A better solution may be in order though...
+          # FIXME: this is necessary to provide consisency between windows
+          # filepaths and *nix filepaths. A better solution may be in order
+          # though...
           normalized_filepath = filepath.replace("\\", "/")
-          key = _apply_left_strip(normalized_filepath, artifacts_dict, lstrip_paths)
+          key = _apply_left_strip(
+              normalized_filepath, artifacts_dict, lstrip_paths)
           artifacts_dict[key] = _hash_artifact(filepath,
               normalize_line_endings=normalize_line_endings)
 
@@ -696,7 +699,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
     keyid=signing_keyid)
 
-  LOG.info("Storing preliminary link metadata to '{}'...".format(unfinished_fn))
+  LOG.info(
+      "Storing preliminary link metadata to '{}'...".format(unfinished_fn))
   link_metadata.dump(unfinished_fn)
 
 
@@ -724,7 +728,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
             A unique name to relate link metadata with a step defined in the
             layout.
     product_list:
-            List of file or directory paths that should be recorded as products.
+            List of file or directory paths that should be recorded as
+            products.
     signing_key: (optional)
             If not None, link metadata is signed with this key.
             Format is securesystemslib.formats.KEY_SCHEMA
@@ -833,7 +838,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
   if signing_key:
-    LOG.info("Verifying preliminary link signature using passed signing key...")
+    LOG.info(
+        "Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
     verification_key = signing_key
 
@@ -861,9 +867,10 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   if product_list:
     LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
-  link_metadata.signed.products = record_artifacts_as_dict(product_list,
-      exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings, lstrip_paths=lstrip_paths)
+  link_metadata.signed.products = record_artifacts_as_dict(
+      product_list, exclude_patterns=exclude_patterns, base_path=base_path,
+      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
+      lstrip_paths=lstrip_paths)
 
   link_metadata.signatures = []
   if signing_key:

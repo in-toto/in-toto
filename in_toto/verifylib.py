@@ -214,7 +214,9 @@ def run_all_inspections(layout):
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
         product_list, inspection.run)
 
-    _raise_on_bad_retval(link.signed.byproducts.get("return-value"), inspection.run)
+    _raise_on_bad_retval(
+        link.signed.byproducts.get("return-value"),
+        inspection.run)
 
     inspection_links_dict[inspection.name] = link
 

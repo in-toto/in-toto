@@ -22,8 +22,8 @@
       steps and inspections
 
   Step:
-      represents one step of the software supply chain, performed by one or many
-      functionaries, who are identified by a key also stored to the layout
+      represents one step of the software supply chain, performed by one or
+      many functionaries, who are identified by a key also stored to the layout
 
   Inspection:
       represents a hook that is run at verification

@@ -227,8 +227,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
   in_toto.formats.ANY_STRING_SCHEMA.check_match(pattern)
 
   if rule_type.lower() not in ALL_RULES:
-    raise securesystemslib.exceptions.FormatError("'{0}' is not a valid 'type'."
-        " Rule type must be one of:  {1} (case insensitive)."
+    raise securesystemslib.exceptions.FormatError("'{0}' is not a valid "
+        "'type'.  Rule type must be one of:  {1} (case insensitive)."
         .format(rule_type, ", ".join(ALL_RULES)))
 
   if rule_type.upper() == "MATCH":
@@ -239,7 +239,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
           " either 'MATERIALS' or 'PRODUCTS' (case insensitive)."
           .format(dest_type))
 
-    if not (in_toto.formats.ANY_STRING_SCHEMA.matches(dest_name) and dest_name):
+    if not (in_toto.formats.ANY_STRING_SCHEMA.matches(dest_name) and
+        dest_name):
       raise securesystemslib.exceptions.FormatError("'{}' is not a valid"
           " 'dest_name'. Rules of type 'MATCH' require a step name as a"
           " destination name.".format(dest_name))

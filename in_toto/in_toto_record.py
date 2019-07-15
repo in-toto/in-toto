@@ -35,7 +35,7 @@ positional arguments:
                 of the passed materials and signs it with the passed
                 functionary's key. The resulting link file is stored as
                 '.<name>.<keyid prefix>.link-unfinished'.
-    stop        Expects a preliminary link file '.<name>.<keyid prefix>.link-
+    stop        Expects preliminary link file '.<name>.<keyid prefix>.link-
                 unfinished' in the CWD, signed by the passed functionary's
                 key. If found, it records and adds the paths and hashes of the
                 passed products to the link metadata file, updates the
@@ -222,7 +222,7 @@ examples:
 
   subparser_stop = subparsers.add_parser("stop", parents=[parent_parser],
       help=(
-      "Expects a preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
+      "Expects preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
       " in the CWD, signed by the passed functionary's key. If found, it"
       " records and adds the paths and hashes of the passed products to the"
       " link metadata file, updates the signature and renames the file to"

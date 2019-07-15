@@ -768,7 +768,8 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature_data = {
     'keyid': "{}".format(keyid),
-    'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
+    'other_headers': binascii.hexlify(
+        data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
 

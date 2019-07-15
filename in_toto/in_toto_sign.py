@@ -154,8 +154,8 @@ def _sign_and_dump_metadata(metadata, args):
         securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
         signature = metadata.sign_gpg(gpg_keyid=keyid, gpg_home=args.gpg_home)
 
-    # Alternatively we iterate over passed private key paths `--key KEYPATH ...`
-    # load the corresponding key from disk and sign with it
+    # Alternatively we iterate over passed private key paths `--key KEYPATH
+    # ...` load the corresponding key from disk and sign with it
     elif args.key is not None: # pragma: no branch
 
       if args.key_type is None:

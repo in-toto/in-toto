@@ -113,7 +113,8 @@ def main():
       elif args.type == in_toto.util.KEY_TYPE_ED25519:
         in_toto.util.prompt_generate_and_write_ed25519_keypair(args.name)
       else:  # pragma: no cover
-        LOG.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        LOG.error(
+            "(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
         sys.exit(1)
       sys.exit(0)
     else:
@@ -122,7 +123,8 @@ def main():
       elif args.type == in_toto.util.KEY_TYPE_ED25519:
         in_toto.util.generate_and_write_ed25519_keypair(args.name)
       else:  # pragma: no cover
-        LOG.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        LOG.error(
+            "(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
         sys.exit(1)
       sys.exit(0)
 
