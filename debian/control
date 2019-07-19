@@ -19,7 +19,7 @@ Build-Depends:
  python3-pathspec,
  python3-mock,
  python3-securesystemslib (>= 0.11.3),
-Standards-Version: 4.3.0
+Standards-Version: 4.4.0
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
 Vcs-Browser: https://github.com/in-toto/in-toto
