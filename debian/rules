@@ -5,3 +5,6 @@ export PYBUILD_NAME = in_toto
 
 %:
 	dh $@ --with python3  --buildsystem=pybuild
+
+override_dh_auto_test:
+	:
