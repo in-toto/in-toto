@@ -1,9 +1,12 @@
 dist: xenial
 language: python
 
+
+# Run each tox environment (see tox.ini) in a separate travis environment that
+# has the required Python version. Unit tests are run in all supported Python
+# versions, pylint and bandit only in the latest.
 matrix:
     include:
-        # Run each tox env in a travis env that sure has the required Python
         - python: "2.7"
           env: TOXENV=py27
         - python: "3.5"
