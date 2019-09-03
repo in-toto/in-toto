@@ -40,11 +40,11 @@
 
   ```
   import logging
-  log = logging.getLogger("in_toto")
+  LOG = logging.getLogger("in_toto")
 
   # parse args ...
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # call library function ...
   ```
@@ -54,13 +54,13 @@
 
   ```
   import logging
-  log = logging.getLogger(__name__)
+  LOG = logging.getLogger(__name__)
 
-  log.warning("Shown per default.")
+  LOG.warning("Shown per default.")
 
-  log.info("Only shown if, log level was set to <= logging.INFO, e.g. in cli.")
+  LOG.info("Only shown if, log level was set to <= logging.INFO, e.g. in cli.")
 
-  log.info("In debug mode it looks something like this)
+  LOG.info("In debug mode it looks something like this)
   # in_toto.runlib:400:INFO:In debug mode it looks something like this
 
   ```
@@ -70,17 +70,15 @@ import sys
 import logging
 import in_toto.settings
 
-
-
 # Different log message formats for different log levels
-_FORMAT_MESSAGE = "%(message)s"
-_FORMAT_DEBUG = "%(name)s:%(lineno)d:%(levelname)s:%(message)s"
+FORMAT_MESSAGE = "%(message)s"
+FORMAT_DEBUG = "%(name)s:%(lineno)d:%(levelname)s:%(message)s"
 
 # Cache default logger class, should be logging.Logger if not changed elsewhere
-_logger_class = logging.getLoggerClass()
+_LOGGER_CLASS = logging.getLoggerClass()
 
 # Create logger subclass
-class InTotoLogger(_logger_class):
+class InTotoLogger(_LOGGER_CLASS):
   """logger.Logging subclass, using providing custom error method and
   convenience method for log levels. """
 
@@ -93,7 +91,8 @@ class InTotoLogger(_logger_class):
         sys.exc_info() != (None, None, None))
     return super(InTotoLogger, self).error(msg, exc_info=show_stacktrace)
 
-  def setLevelVerboseOrQuiet(self, verbose, quiet):
+  # Allow non snake_case function name for consistency with logging library
+  def setLevelVerboseOrQuiet(self, verbose, quiet): # pylint: disable=invalid-name
     """Convenience method to set the logger's verbosity level based on the
     passed booleans verbose and quiet (useful for cli tools). """
     if verbose:
@@ -107,23 +106,23 @@ class InTotoLogger(_logger_class):
 
 # Temporarily change logger default class to instantiate an in-toto base logger
 logging.setLoggerClass(InTotoLogger)
-logger = logging.getLogger("in_toto")
-logging.setLoggerClass(_logger_class)
+LOGGER = logging.getLogger("in_toto")
+logging.setLoggerClass(_LOGGER_CLASS)
 
 # In DEBUG mode we log all log types and add additional information,
 # otherwise we only log warning, error and critical and only the message.
 if in_toto.settings.DEBUG: # pragma: no cover
-  level = logging.DEBUG
-  format_string = _FORMAT_DEBUG
+  LEVEL = logging.DEBUG
+  FORMAT_STRING = FORMAT_DEBUG
 
 else:
-  level = logging.WARNING
-  format_string = _FORMAT_MESSAGE
+  LEVEL = logging.WARNING
+  FORMAT_STRING = FORMAT_MESSAGE
 
 # Add a StreamHandler with the chosen format to in-toto's base logger,
 # which will write log messages to `sys.stderr`.
-formatter = logging.Formatter(format_string)
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(level)
+FORMATTER = logging.Formatter(FORMAT_STRING)
+HANDLER = logging.StreamHandler()
+HANDLER.setFormatter(FORMATTER)
+LOGGER.addHandler(HANDLER)
+LOGGER.setLevel(LEVEL)

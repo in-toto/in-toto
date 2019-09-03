@@ -88,7 +88,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
       ["in_toto_keygen.py"],
       ["in_toto_keygen.py", "-r"],
       ["in_toto_keygen.py", "-p", "-b", "1024", "bob"]]
-    password="123456"
+    password = "123456"
 
     for wrong_args in wrong_args_list:
       with patch.object(sys, 'argv', wrong_args), patch("getpass.getpass",
@@ -129,7 +129,7 @@ class TestInTotoKeyGenTool(unittest.TestCase):
     """Create ecrypted RSA key and import private and public key separately."""
     name = "key_encrypted"
     password = "123456"
-    bits= 3072
+    bits = 3072
     generate_and_write_rsa_keypair(name, bits, password)
     private_key = import_rsa_key_from_file(name, password)
     public_key = import_rsa_key_from_file(name + ".pub")

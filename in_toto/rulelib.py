@@ -92,6 +92,7 @@ def unpack_rule(rule):
 
   # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
   if rule_type in GENERIC_RULES:
+    # pylint: disable=no-else-raise
     if rule_len != 2:
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
         " generic rules must have one of the formats:\n\t"
@@ -153,7 +154,7 @@ def unpack_rule(rule):
           " (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>.\n"
           "Got: \n\t{}".format(rule))
 
-    if dest_type != "materials" and dest_type != "products":
+    if dest_type not in {"materials", "products"}:
       raise securesystemslib.exceptions.FormatError("Wrong rule format,"
           " match rules must have either MATERIALS or PRODUCTS (case"
           " insensitive) as destination.\n"
@@ -226,8 +227,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
   in_toto.formats.ANY_STRING_SCHEMA.check_match(pattern)
 
   if rule_type.lower() not in ALL_RULES:
-    raise securesystemslib.exceptions.FormatError("'{0}' is not a valid 'type'."
-        " Rule type must be one of:  {1} (case insensitive)."
+    raise securesystemslib.exceptions.FormatError("'{0}' is not a valid "
+        "'type'.  Rule type must be one of:  {1} (case insensitive)."
         .format(rule_type, ", ".join(ALL_RULES)))
 
   if rule_type.upper() == "MATCH":
@@ -238,7 +239,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
           " either 'MATERIALS' or 'PRODUCTS' (case insensitive)."
           .format(dest_type))
 
-    if not (in_toto.formats.ANY_STRING_SCHEMA.matches(dest_name) and dest_name):
+    if not (in_toto.formats.ANY_STRING_SCHEMA.matches(dest_name) and
+        dest_name):
       raise securesystemslib.exceptions.FormatError("'{}' is not a valid"
           " 'dest_name'. Rules of type 'MATCH' require a step name as a"
           " destination name.".format(dest_name))

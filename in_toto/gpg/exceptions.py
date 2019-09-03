@@ -21,6 +21,8 @@
 import datetime
 import dateutil.tz
 
+# TODO: Add class docstrings and remove pylint exemption in in-toto/in-toto#126
+# pylint: disable=missing-docstring
 
 class PacketParsingError(Exception):
   pass

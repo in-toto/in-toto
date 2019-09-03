@@ -35,7 +35,7 @@ positional arguments:
                 of the passed materials and signs it with the passed
                 functionary's key. The resulting link file is stored as
                 '.<name>.<keyid prefix>.link-unfinished'.
-    stop        Expects a preliminary link file '.<name>.<keyid prefix>.link-
+    stop        Expects preliminary link file '.<name>.<keyid prefix>.link-
                 unfinished' in the CWD, signed by the passed functionary's
                 key. If found, it records and adds the paths and hashes of the
                 passed products to the link metadata file, updates the
@@ -126,7 +126,7 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 def main():
@@ -222,7 +222,7 @@ examples:
 
   subparser_stop = subparsers.add_parser("stop", parents=[parent_parser],
       help=(
-      "Expects a preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
+      "Expects preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
       " in the CWD, signed by the passed functionary's key. If found, it"
       " records and adds the paths and hashes of the passed products to the"
       " link metadata file, updates the signature and renames the file to"
@@ -242,14 +242,14 @@ examples:
 
   args = parser.parse_args()
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
-  gpg_use_default = (args.gpg == True)
+  gpg_use_default = (args.gpg is True)
 
   # Otherwise gpg_keyid stays either None or gets the passed argument assigned
   gpg_keyid = None
@@ -279,7 +279,7 @@ examples:
           lstrip_paths=args.lstrip_paths)
 
   except Exception as e:
-    log.error("(in-toto-record {0}) {1}: {2}"
+    LOG.error("(in-toto-record {0}) {1}: {2}"
         .format(args.command, type(e).__name__, e))
     sys.exit(1)
 

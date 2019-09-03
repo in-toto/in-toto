@@ -1,12 +1,12 @@
-dist: trusty
+dist: xenial
 language: python
 
+
+# Run each tox environment (see tox.ini) in a separate travis environment that
+# has the required Python version. Unit tests are run in all supported Python
+# versions, pylint and bandit only in the latest.
 matrix:
     include:
-        # Explicitly tell Travis which Python version to use for which
-        # tox environment, instead of using one Python version in Travis and
-        # hoping that tox and pyenv run the tests in the desired versions.
-        # https://github.com/travis-ci/travis-ci/issues/8363#issuecomment-355090242
         - python: "2.7"
           env: TOXENV=py27
         - python: "3.5"
@@ -15,9 +15,8 @@ matrix:
           env: TOXENV=py36
         - python: "3.7"
           env: TOXENV=py37
-          # NOTE: temporary workaround; see https://github.com/travis-ci/travis-ci/issues/9815#issue-336465122
-          dist: xenial
-          sudo: true
+        - python: "3.7"
+          env: TOXENV=lint
 
 install:
     - pip install -U tox

@@ -116,7 +116,7 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     LSTRIP_PATHS_KWARGS)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 def main():
@@ -225,23 +225,23 @@ examples:
 
   args = parser.parse_args()
 
-  log.setLevelVerboseOrQuiet(args.verbose, args.quiet)
+  LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
 
   # Regular signing and GPG signing are mutually exclusive
-  if (args.key == None) == (args.gpg == None):
+  if (args.key is None) == (args.gpg is None):
     parser.print_usage()
     parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
-  gpg_use_default = (args.gpg == True)
+  gpg_use_default = (args.gpg is True)
 
   # Otherwise we interpret it as actual keyid
   gpg_keyid = None
-  if args.gpg != True:
+  if args.gpg is not True:
     gpg_keyid = args.gpg
 
   # If no_command is specified run in_toto_run without executing a command
@@ -260,12 +260,14 @@ examples:
     if args.key:
       key = util.import_private_key_from_file(args.key, args.key_type)
 
-    runlib.in_toto_run(args.step_name, args.materials, args.products,
+    runlib.in_toto_run(
+        args.step_name, args.materials, args.products,
         args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home, args.exclude_patterns, args.base_path, args.lstrip_paths)
+        args.gpg_home, args.exclude_patterns, args.base_path,
+        args.lstrip_paths)
 
   except Exception as e:
-    log.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
+    LOG.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
   sys.exit(0)

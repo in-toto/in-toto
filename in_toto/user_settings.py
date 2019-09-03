@@ -31,7 +31,7 @@ except ImportError: # pragma: no cover
   import ConfigParser as configparser
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 USER_PATH = os.path.expanduser("~")
@@ -45,7 +45,7 @@ ENV_PREFIX = "IN_TOTO_"
 RC_PATHS = [
   os.path.join("/etc", "in_toto", "config"),
   os.path.join("/etc", "in_totorc"),
-  os.path.join(USER_PATH,  ".config", "in_toto", "config"),
+  os.path.join(USER_PATH, ".config", "in_toto", "config"),
   os.path.join(USER_PATH, ".config", "in_toto"),
   os.path.join(USER_PATH, ".in_toto", "config"),
   os.path.join(USER_PATH, ".in_totorc"),
@@ -209,11 +209,11 @@ def set_settings():
   for setting in IN_TOTO_SETTINGS:
     user_setting = user_settings.get(setting)
     if user_setting:
-      log.info("Setting (user): {0}={1}".format(
+      LOG.info("Setting (user): {0}={1}".format(
           setting, user_setting))
       setattr(in_toto.settings, setting, user_setting)
 
     else:
       default_setting = getattr(in_toto.settings, setting)
-      log.info("Setting (default): {0}={1}".format(
+      LOG.info("Setting (default): {0}={1}".format(
           setting, default_setting))

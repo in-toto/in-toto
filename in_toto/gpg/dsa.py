@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """
 <Module Name>
   dsa.py

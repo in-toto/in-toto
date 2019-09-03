@@ -29,7 +29,7 @@ import in_toto.process
 import securesystemslib.formats
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def gpg_sign_object(content, keyid=None, homedir=None):
@@ -115,7 +115,7 @@ def gpg_sign_object(content, keyid=None, homedir=None):
   # Exclude the following code from coverage for consistent coverage across
   # test environments.
   if not signature["keyid"]: # pragma: no cover
-    log.warning("The created signature does not include the hashed subpacket"
+    LOG.warning("The created signature does not include the hashed subpacket"
         " '33' (full keyid). You probably have a gpg version <{}."
         " We will export the public keys associated with the short keyid to"
         " compute the full keyid.".format(FULLY_SUPPORTED_MIN_VERSION))

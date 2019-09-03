@@ -163,7 +163,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ slightly. """
     expected_command = ["/usr/bin/vi", "file1", "file2"]
 
-    with patch("in_toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.LOG") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
@@ -173,7 +173,7 @@ class TestVerifyCommandAlignment(unittest.TestCase):
     """Cmd and expected cmd differ completely. """
     expected_command = ["make install"]
 
-    with patch("in_toto.verifylib.log") as mock_logging:
+    with patch("in_toto.verifylib.LOG") as mock_logging:
       verify_command_alignment(self.command, expected_command)
       mock_logging.warning.assert_called_with("Run command '{0}'"
           " differs from expected command '{1}'"
@@ -218,7 +218,7 @@ class TestVerifyRule(unittest.TestCase):
       # Consume created artifact
       ["foo", {"foo"}, set(), {"foo"}, {"foo"}],
       # Consume multiple created artifacts with wildcard
-      ["*", {"foo", "bar"},  set(), {"foo", "bar"}, {"foo", "bar"}],
+      ["*", {"foo", "bar"}, set(), {"foo", "bar"}, {"foo", "bar"}],
       # Don't consume deleted artifact (in materials only)
       ["foo", {"foo"}, {"foo"}, set(), set()],
       # Don't consume artifact that's not in materials or products
@@ -784,7 +784,7 @@ class TestInTotoVerify(unittest.TestCase):
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
-    layout.signed.inspect[0].run = ["python", "./scripts/expr",  "1", "/", "0"]
+    layout.signed.inspect[0].run = ["python", "./scripts/expr", "1", "/", "0"]
     layout.sign(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
@@ -1070,7 +1070,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )
@@ -1099,7 +1099,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )
@@ -1107,7 +1107,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
         signed=Link(
           name=self.name,
           materials={
-            "foo": { "sha256": self.foo_hash}
+            "foo": {"sha256": self.foo_hash}
           }
         )
       )
@@ -1335,7 +1335,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     )
 
     with self.assertRaises(ThresholdVerificationError), \
-        patch("in_toto.verifylib.log") as mock_log:
+        patch("in_toto.verifylib.LOG") as mock_log:
       verify_link_signature_thresholds(layout, chain_link_dict)
 
     msg = mock_log.info.call_args[0][0]

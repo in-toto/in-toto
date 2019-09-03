@@ -1,3 +1,5 @@
+# TODO: Add module docstring and remove pylint exemption in in-toto/in-toto#126
+# pylint: disable=missing-docstring
 from securesystemslib.exceptions import Error
 
 class SignatureVerificationError(Error):

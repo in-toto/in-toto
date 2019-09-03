@@ -259,7 +259,7 @@ class TestUtil(unittest.TestCase):
     password = "123456"
     bits = 3072
     with patch("getpass.getpass", return_value=password):
-      prompt_generate_and_write_rsa_keypair(key,bits)
+      prompt_generate_and_write_rsa_keypair(key, bits)
       rsa_key = prompt_import_rsa_key_from_file(key)
       securesystemslib.formats.KEY_SCHEMA.check_match(rsa_key)
       self.assertTrue(rsa_key["keyval"].get("private"))

@@ -112,14 +112,14 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     named_args = ["--step-name", self.test_step, "--key",
         self.rsa_key_path, "--materials", self.test_artifact, "--products",
         self.test_artifact, "--record-streams"]
-    positional_args =  ["--", "python", "--version"]
+    positional_args = ["--", "python", "--version"]
 
     # Give wrong password whenever prompted.
     with mock.patch('in_toto.util.prompt_password', return_value='x'):
 
       # Test and assert recorded artifacts
       args1 = named_args + positional_args
-      self.assert_cli_sys_exit(args1 , 0)
+      self.assert_cli_sys_exit(args1, 0)
       link_metadata = Metablock.load(self.test_link_rsa)
       self.assertTrue(self.test_artifact in
           list(link_metadata.signed.materials.keys()))
@@ -212,7 +212,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def test_main_no_command_arg(self):
     """Test CLI command with --no-command argument. """
 
-    args = [ "in_toto_run.py", "--step-name", self.test_step, "--key",
+    args = ["in_toto_run.py", "--step-name", self.test_step, "--key",
         self.rsa_key_path, "--no-command"]
 
     # Give wrong password whenever prompted.

@@ -29,7 +29,7 @@ import in_toto.process
 import in_toto.gpg.constants
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def get_mpi_length(data):
@@ -184,12 +184,12 @@ def parse_packet_header(data, expected_type=None):
       # Unreachable: bits 1-0 must be one of 0 to 3
       raise in_toto.gpg.exceptions.PacketParsingError("Invalid old length")
 
-  if header_len == None or body_len == None: # pragma: no cover
+  if header_len is None or body_len is None: # pragma: no cover
     # Unreachable: One of above must have assigned lengths or raised error
     raise in_toto.gpg.exceptions.PacketParsingError("Could not determine "
         "packet length")
 
-  if expected_type != None and packet_type != expected_type:
+  if expected_type is not None and packet_type != expected_type:
     raise in_toto.gpg.exceptions.PacketParsingError("Expected packet {}, "
         "but got {} instead!".format(expected_type, packet_type))
 
@@ -317,12 +317,8 @@ def is_version_fully_supported():
 
   installed_version = get_version()
   # Excluded so that coverage does not vary in different test environments
-  if (StrictVersion(installed_version) >=
-      StrictVersion(in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION)): # pragma: no cover
-    return True
-
-  else: # pragma: no cover
-    return False
+  return (StrictVersion(installed_version) >=
+      StrictVersion(in_toto.gpg.constants.FULLY_SUPPORTED_MIN_VERSION))
 
 
 def get_hashing_class(hash_algorithm_id):

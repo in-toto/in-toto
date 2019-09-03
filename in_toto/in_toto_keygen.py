@@ -48,7 +48,7 @@ import logging
 import in_toto.util
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger("in_toto")
+LOG = logging.getLogger("in_toto")
 
 
 def parse_args():
@@ -113,7 +113,8 @@ def main():
       elif args.type == in_toto.util.KEY_TYPE_ED25519:
         in_toto.util.prompt_generate_and_write_ed25519_keypair(args.name)
       else:  # pragma: no cover
-        log.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        LOG.error(
+            "(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
         sys.exit(1)
       sys.exit(0)
     else:
@@ -122,12 +123,13 @@ def main():
       elif args.type == in_toto.util.KEY_TYPE_ED25519:
         in_toto.util.generate_and_write_ed25519_keypair(args.name)
       else:  # pragma: no cover
-        log.error("(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
+        LOG.error(
+            "(in-toto-keygen) Unsupported keytype: {0}".format(str(args.type)))
         sys.exit(1)
       sys.exit(0)
 
   except Exception as e:
-    log.error("(in-toto-keygen) {0}: {1}".format(type(e).__name__, e))
+    LOG.error("(in-toto-keygen) {0}: {1}".format(type(e).__name__, e))
     sys.exit(1)
 
 if __name__ == "__main__":

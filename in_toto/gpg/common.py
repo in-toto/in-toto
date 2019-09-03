@@ -33,7 +33,7 @@ from in_toto.gpg.constants import (
     SIGNATURE_TYPE_CERTIFICATES, SIGNATURE_TYPE_SUB_KEY_BINDING,
     SUPPORTED_SIGNATURE_PACKET_VERSIONS, SUPPORTED_SIGNATURE_ALGORITHMS,
     SIGNATURE_HANDLERS, FULL_KEYID_SUBPACKET, PARTIAL_KEYID_SUBPACKET,
-    SHA1,SHA256, SHA512, KEY_EXPIRATION_SUBPACKET, PRIMARY_USERID_SUBPACKET,
+    SHA1, SHA256, SHA512, KEY_EXPIRATION_SUBPACKET, PRIMARY_USERID_SUBPACKET,
     SIG_CREATION_SUBPACKET)
 
 from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
@@ -41,7 +41,7 @@ from in_toto.gpg.formats import GPG_HASH_ALGORITHM_STRING
 import securesystemslib.formats
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 def parse_pubkey_payload(data):
@@ -195,6 +195,7 @@ def parse_pubkey_bundle(data):
       # - there must be least one User ID packet, or
       # - order and type of signatures, or
       # - disallow duplicate packets
+      # pylint: disable=no-else-raise
       if packet_type != PACKET_TYPE_PRIMARY_KEY and \
           not key_bundle[PACKET_TYPE_PRIMARY_KEY]["key"]:
         raise PacketParsingError("First packet must be a primary key ('{}'), "
@@ -250,7 +251,7 @@ def parse_pubkey_bundle(data):
           key_bundle[PACKET_TYPE_PRIMARY_KEY]["signatures"].append(packet)
 
       else:
-        log.info("Ignoring gpg key packet '{}', we only handle packets of "
+        LOG.info("Ignoring gpg key packet '{}', we only handle packets of "
             "types '{}' (see RFC4880 4.3. Packet Tags).".format(packet_type,
             [PACKET_TYPE_PRIMARY_KEY, PACKET_TYPE_USER_ID,
             PACKET_TYPE_USER_ATTR, PACKET_TYPE_SUB_KEY,
@@ -321,12 +322,12 @@ def _assign_certified_key_info(bundle):
       # It's okay to ignore some exceptions (unsupported algorithms etc.) but
       # we should blow up if a signature is malformed (missing subpackets).
       except Exception as e:
-        log.info(e)
+        LOG.info(e)
         continue
 
       if not bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["keyid"].endswith(
           signature["keyid"]):
-        log.info("Ignoring User ID certificate issued by '{}'.".format(
+        LOG.info("Ignoring User ID certificate issued by '{}'.".format(
             signature["keyid"]))
         continue
 
@@ -335,7 +336,7 @@ def _assign_certified_key_info(bundle):
           signature["info"]["hash_algorithm"])
 
       if not is_valid:
-        log.info("Ignoring invalid User ID self-certificate issued "
+        LOG.info("Ignoring invalid User ID self-certificate issued "
             "by '{}'.".format(signature["keyid"]))
         continue
 
@@ -357,7 +358,7 @@ def _assign_certified_key_info(bundle):
           signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
 
       # No key expiration time, go to next certificate
-      if tmp_validity_period == None:
+      if tmp_validity_period is None:
         continue
 
       # Create shortcut to mandatory pre-parsed creation time subpacket
@@ -366,7 +367,7 @@ def _assign_certified_key_info(bundle):
       tmp_is_primary_user = \
           signature["info"]["subpackets"].get(PRIMARY_USERID_SUBPACKET)
 
-      if tmp_is_primary_user != None:
+      if tmp_is_primary_user is not None:
         tmp_is_primary_user = bool(tmp_is_primary_user[0])
 
       # If we already have a primary user certified expiration date and this
@@ -385,7 +386,7 @@ def _assign_certified_key_info(bundle):
         is_primary_user = tmp_is_primary_user
         sig_creation_time = tmp_sig_creation_time
 
-  if validity_period != None:
+  if validity_period is not None:
     bundle[PACKET_TYPE_PRIMARY_KEY]["key"]["validity_period"] = validity_period
 
   return bundle[PACKET_TYPE_PRIMARY_KEY]["key"]
@@ -429,7 +430,7 @@ def _get_verified_subkeys(bundle):
 
     # TODO: Revise exception taxonomy
     except Exception as e:
-      log.info(e)
+      LOG.info(e)
       continue
 
     # Construct signed content (see RFC4880 section 5.2.4. paragraph 3)
@@ -452,7 +453,7 @@ def _get_verified_subkeys(bundle):
 
       # TODO: Revise exception taxonomy
       except Exception as e:
-        log.info(e)
+        LOG.info(e)
         continue
     # NOTE: As per the V4 key structure diagram in RFC4880 section 12.1., a
     # subkey must be followed by exactly one Primary-Key-Binding-Signature.
@@ -462,7 +463,7 @@ def _get_verified_subkeys(bundle):
     # *subkey binding signature*, which in case of a signing subkey, must have
     # an *embedded primary key binding signature*.
     if len(key_binding_signatures) != 1:
-      log.info("Ignoring subkey '{}' due to wrong amount of key binding "
+      LOG.info("Ignoring subkey '{}' due to wrong amount of key binding "
           "signatures ({}), must be exactly 1.".format(subkey["keyid"],
           len(key_binding_signatures)))
       continue
@@ -471,7 +472,7 @@ def _get_verified_subkeys(bundle):
         signature["info"]["hash_algorithm"])
 
     if not is_valid:
-      log.info("Ignoring subkey '{}' due to invalid key binding signature."
+      LOG.info("Ignoring subkey '{}' due to invalid key binding signature."
           .format(subkey["keyid"]))
       continue
 
@@ -480,7 +481,7 @@ def _get_verified_subkeys(bundle):
     # subkey here
     validity_period = \
         signature["info"]["subpackets"].get(KEY_EXPIRATION_SUBPACKET)
-    if validity_period != None:
+    if validity_period is not None:
       subkey["validity_period"] = struct.unpack(">I", validity_period)[0]
 
     verified_subkeys[subkey["keyid"]] = subkey
@@ -550,7 +551,7 @@ def get_pubkey_bundle(data, keyid):
       [master_public_key] + list(sub_public_keys.values())):
     if public_key and public_key["keyid"].endswith(keyid.lower()):
       if idx > 1:
-        log.warning("Exporting master key '{}' including subkeys '{}' for"
+        LOG.warning("Exporting master key '{}' including subkeys '{}' for"
             " passed keyid '{}'.".format(master_public_key["keyid"],
             ", ".join(list(sub_public_keys.keys())), keyid))
       break
@@ -721,7 +722,7 @@ def parse_signature_packet(data, supported_signature_types=None,
     # Warn if expiration subpacket is not hashed
     if subpacket_type == KEY_EXPIRATION_SUBPACKET:
       if not is_hashed:
-        log.warning("Expiration subpacket not hashed, gpg client possibly "
+        LOG.warning("Expiration subpacket not hashed, gpg client possibly "
             "exporting a weakly configured key.")
 
     if subpacket_type == FULL_KEYID_SUBPACKET: # pragma: no cover
@@ -767,7 +768,8 @@ def parse_signature_packet(data, supported_signature_types=None,
 
   signature_data = {
     'keyid': "{}".format(keyid),
-    'other_headers': binascii.hexlify(data[:other_headers_ptr]).decode('ascii'),
+    'other_headers': binascii.hexlify(
+        data[:other_headers_ptr]).decode('ascii'),
     'signature': binascii.hexlify(signature).decode('ascii')
   }
 

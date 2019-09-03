@@ -23,7 +23,7 @@ import in_toto.gpg.dsa as dsa
 import in_toto.process as process
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 # By default, we assume and test that gpg2 exists. Otherwise, we assume gpg
 # exists.
@@ -33,8 +33,7 @@ GPG_VERSION_COMMAND = GPG_COMMAND + " --version"
 FULLY_SUPPORTED_MIN_VERSION = "2.1.0"
 
 try:
-  proc = process.run(GPG_VERSION_COMMAND, stdout=process.PIPE,
-    stderr=process.PIPE)
+  process.run(GPG_VERSION_COMMAND, stdout=process.PIPE, stderr=process.PIPE)
 
 except OSError: # pragma: no cover
   GPG_COMMAND = "gpg"

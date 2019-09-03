@@ -48,7 +48,7 @@ from in_toto.gpg.exceptions import KeyExpirationError
 import in_toto.rulelib
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 RULE_TRACE = {}
 
@@ -198,7 +198,7 @@ def run_all_inspections(layout):
   """
   inspection_links_dict = {}
   for inspection in layout.inspect:
-    log.info("Executing command for inspection '{}'...".format(
+    LOG.info("Executing command for inspection '{}'...".format(
         inspection.name))
 
     # FIXME: We don't want to use the base path for runlib so we patch this
@@ -214,7 +214,9 @@ def run_all_inspections(layout):
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
         product_list, inspection.run)
 
-    _raise_on_bad_retval(link.signed.byproducts.get("return-value"), inspection.run)
+    _raise_on_bad_retval(
+        link.signed.byproducts.get("return-value"),
+        inspection.run)
 
     inspection_links_dict[inspection.name] = link
 
@@ -463,7 +465,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
           break
 
       else:
-        log.info("Skipping link. Keyid '{0}' is not authorized to sign links"
+        LOG.info("Skipping link. Keyid '{0}' is not authorized to sign links"
             " for step '{1}'".format(link_keyid, step.name))
         continue
 
@@ -472,17 +474,17 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
         link.verify_signature(verification_key)
 
       except SignatureVerificationError:
-        log.info("Skipping link. Broken link signature with keyid '{0}'"
+        LOG.info("Skipping link. Broken link signature with keyid '{0}'"
             " for step '{1}'".format(link_keyid, step.name))
         continue
 
       except KeyExpirationError as e:
-        log.info("Skipping link. {}".format(e))
+        LOG.info("Skipping link. {}".format(e))
         continue
 
       # Warn if there are links signed by different subkeys of same main key
       if verification_key["keyid"] in used_main_keyids:
-        log.warning("Found links signed by different subkeys of the same main"
+        LOG.warning("Found links signed by different subkeys of the same main"
             " key '{}' for step '{}'. Only one of them is counted towards the"
             " step threshold.".format(verification_key["keyid"], step.name))
 
@@ -543,7 +545,7 @@ def verify_command_alignment(command, expected_command):
   # https://github.com/in-toto/in-toto/pull/47
   # We chose the simplest solution for now, i.e. Warn if they do not align.
   if command != expected_command:
-    log.warning("Run command '{0}' differs from expected command '{1}'"
+    LOG.warning("Run command '{0}' differs from expected command '{1}'"
         .format(command, expected_command))
 
 
@@ -583,7 +585,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
     # FIXME: I think we could do this for one link per step only
     # providing that we verify command alignment AFTER threshold equality
     for keyid, link in six.iteritems(key_link_dict):
-      log.info("Verifying command alignment for '{0}'...".format(
+      LOG.info("Verifying command alignment for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
 
@@ -1041,7 +1043,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   # Process rules and remove consumed items from queue in each iteration
   for rule in rules:
-    log.info("Verifying '{}'...".format(" ".join(rule)))
+    LOG.info("Verifying '{}'...".format(" ".join(rule)))
 
     # Parse the rule and create two shortcuts to contained rule data
     rule_data = in_toto.rulelib.unpack_rule(rule)
@@ -1118,10 +1120,10 @@ def verify_all_item_rules(items, links):
 
   """
   for item in items:
-    log.info("Verifying material rules for '{}'...".format(item.name))
+    LOG.info("Verifying material rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "materials", item.expected_materials, links)
 
-    log.info("Verifying product rules for '{}'...".format(item.name))
+    LOG.info("Verifying product rules for '{}'...".format(item.name))
     verify_item_rules(item.name, "products", item.expected_products, links)
 
 
@@ -1167,11 +1169,11 @@ def verify_threshold_constraints(layout, chain_link_dict):
   for step in layout.steps:
     # Skip steps that don't require multiple functionaries
     if step.threshold <= 1:
-      log.info("Skipping threshold verification for step '{0}' with"
+      LOG.info("Skipping threshold verification for step '{0}' with"
           " threshold '{1}'...".format(step.name, step.threshold))
       continue
 
-    log.info("Verifying threshold for step '{0}' with"
+    LOG.info("Verifying threshold for step '{0}' with"
         " threshold '{1}'...".format(step.name, step.threshold))
     # Extract the key_link_dict for this step from the passed chain_link_dict
     key_link_dict = chain_link_dict[step.name]
@@ -1298,7 +1300,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     for keyid, link in six.iteritems(key_link_dict):
 
       if link.type_ == "layout":
-        log.info("Verifying sublayout {}...".format(step_name))
+        LOG.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
         # Retrieve the entire key object for the keyid
@@ -1482,7 +1484,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     software supply chain (used by super-layout verification if any)
 
   """
-  log.info("Verifying layout signatures...")
+  LOG.info("Verifying layout signatures...")
   verify_layout_signatures(layout, layout_key_dict)
 
   # For the rest of the verification we only care about the layout payload
@@ -1490,37 +1492,37 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # container (Metablock) that also carries the signatures
   layout = layout.signed
 
-  log.info("Verifying layout expiration...")
+  LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
 
   # If there are parameters sent to the tanslation layer, substitute them
   if substitution_parameters is not None:
-    log.info('Performing parameter substitution...')
+    LOG.info('Performing parameter substitution...')
     substitute_parameters(layout, substitution_parameters)
 
-  log.info("Reading link metadata files...")
+  LOG.info("Reading link metadata files...")
   chain_link_dict = load_links_for_layout(layout, link_dir_path)
 
-  log.info("Verifying link metadata signatures...")
+  LOG.info("Verifying link metadata signatures...")
   chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 
-  log.info("Verifying sublayouts...")
+  LOG.info("Verifying sublayouts...")
   chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
 
-  log.info("Verifying alignment of reported commands...")
+  LOG.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
 
-  log.info("Verifying threshold constraints...")
+  LOG.info("Verifying threshold constraints...")
   verify_threshold_constraints(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
-  log.info("Verifying Step rules...")
+  LOG.info("Verifying Step rules...")
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
-  log.info("Executing Inspection commands...")
+  LOG.info("Executing Inspection commands...")
   inspection_link_dict = run_all_inspections(layout)
 
-  log.info("Verifying Inspection rules...")
+  LOG.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
   # Steps or Inspections, hence the concatenation of both collections of links
   combined_links = reduced_chain_link_dict.copy()
@@ -1528,7 +1530,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   verify_all_item_rules(layout.inspect, combined_links)
 
   # We made it this far without exception that means, verification passed
-  log.info("The software product passed all verification.")
+  LOG.info("The software product passed all verification.")
 
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded
