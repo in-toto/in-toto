@@ -158,7 +158,7 @@ class Metablock(ValidationMixin):
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key,
-        self.signed.signable_dict)
+        self.signed.signable_bytes)
 
     self.signatures.append(signature)
 
@@ -268,7 +268,7 @@ class Metablock(ValidationMixin):
 
     elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
       valid = securesystemslib.keys.verify_signature(
-          verification_key, signature, self.signed.signable_dict)
+          verification_key, signature, self.signed.signable_bytes)
 
     else:
       valid = False
