@@ -19,6 +19,10 @@ Maintainers:
     GitHub username: @SantiagoTorres
     PGP fingerprint: 903B AB73 640E B6D6 5533  EFF3 468F 122C E816 2295
 
+  Marina Moore
+    Email: mm9693@nyu.edu
+    GitHub username: @mnm678
+
   Sebastien Awwad
     Email: sebastien.awwad@nyu.edu
     GitHub username: @awwad
