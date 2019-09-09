@@ -1,5 +1,19 @@
 # Changelog
 
+## in-toto v0.4.0
+
+* Add REQUIRE artifact rule support (#269, #280)
+* Enhance OpenPGP key export and provide key expiration verification (#266, #288)
+* Make transitive dependency PyNaCl optional for in-toto (#291)
+* Improve automatic testing and code coverage measurement (#295) as well
+  as static analysis with pylint (#279, #296)
+* Update repository metadata
+  - Add initial 1-year roadmap (#268)
+  - Revise dependency handling for monitoring and library compatibility (#294)
+  - Update maintainers and contributor information (#283, #274, #297)
+  - Enhance source distribution configs and include tests and other metadata,
+    relevant to downstream packagers, with future source distributions (#290)
+
 ## in-toto v0.3.0
 
 * Re-factor rule verification engine and fix for a false-reject on very specific layouts (#262)

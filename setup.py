@@ -33,7 +33,7 @@
 """
 from setuptools import setup, find_packages
 
-version = "0.3.0"
+version = "0.4.0"
 
 with open("README.md") as f:
   long_description = f.read()
