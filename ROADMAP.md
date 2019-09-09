@@ -77,7 +77,7 @@ four-month window between minor versions.
 This schedule will roughly match the following months:
 
 - End of March
-- End of August
+- [End of August](roadmap-reviews/2020/first-quarter-update.md)
 - End of November
 
 These time windows will also be used to review and update all stakeholders with
