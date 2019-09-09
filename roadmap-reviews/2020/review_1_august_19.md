@@ -1,7 +1,8 @@
-# ROADMAP update (Q1)
+# ROADMAP review (End of August '19)
 
-We're past the first quarter of our [roadmap for 2020](https://github.com/in-toto/in-toto/blob/develop/ROADMAP.md
-) and it is time to do a review of how the in-toto reference implementation is
+We're past the first evaluation period of our [roadmap for
+2020](https://github.com/in-toto/in-toto/blob/develop/ROADMAP.md) and it is
+time to do a review of how the in-toto reference implementation is
 holding up to its goals for this year. In this document, we will cover the
 activities from May 2019 to August 2019 in the context of the goals for this
 ROADMAP as well as other newsworthy developments.
@@ -28,7 +29,7 @@ and usefulness. Thanks to everybody in the community for the feedback on this!
 
 ## CII silver badge
 
-We worked greatly to achieve our silver badge during this first quarter. This
+We worked greatly to achieve our silver badge during this first evaluation period. This
 required us to do a thorough review of our processes, as well as tightening
 parts of it so we met the criteria. To provide a better tracking, we created
 the ["CII Silver"](https://github.com/in-toto/in-toto/issues?utf8=%E2%9C%93&q=label%3A%22CII+silver%22+)-label
@@ -45,7 +46,7 @@ specification, documentation and spec + ITE compliance, among other issues.
 
 In order to track the progress towards 1.0, we created a GitHub milestone,
 reviewed all the existing tickets, and added some that were missing. Here's a
-quick rundown on how we did this quarter:
+quick rundown on how we did this evaluation period:
 
 - Created new and assigned existing issues: 15 open:
     - API Specification, 5 open issues
@@ -58,7 +59,7 @@ If you want more granular information, or if you are interested in helping in-to
 
 ## New release 0.4.0
 
-We are preparing this quarter's release, which includes:
+We are preparing this evaluation period's release, which includes:
 
 - Fully spec compliant artifact rule processing.
 - New features to the OpenPGP implementation.
@@ -69,7 +70,7 @@ Version 0.4.0 is being prepared in [in-toto/in-toto#300](https://github.com/in-t
 
 ## Hello CNCF!
 
-During this quarter we were accepted into the CNCF as a Sandbox Project. This
+During this evaluation period we were accepted into the CNCF as a Sandbox Project. This
 means that we will get more visibility in the cloud-native space. As part of
 this project, the CNCF SIG-Security group did a thorough [security
 assessment](https://github.com/cncf/sig-security/tree/master/assessments/projects/in-toto),
@@ -87,7 +88,7 @@ You can take a look at all its variants on [the CNCF website](https://github.com
 
 ## Closing remarks.
 
-This quarter was filled with exciting news and progress for the in-toto
+This evaluation period was filled with exciting news and progress for the in-toto
 project. We are very excited to increase industry collaboration to improve the
 security of the software supply chain. We are making strides towards the goals
 described on this year's ROADMAP.
