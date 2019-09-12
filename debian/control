@@ -18,6 +18,9 @@ Build-Depends:
  python3-iso8601,
  python3-pathspec,
  python3-mock,
+ python3-cryptography,
+ python3-nacl,
+ python3-colorama,
  python3-securesystemslib (>= 0.11.3),
 Standards-Version: 4.4.0
 Homepage: https://in-toto.io
@@ -27,6 +30,9 @@ Vcs-Browser: https://github.com/in-toto/in-toto
 Package: python3-in-toto
 Architecture: all
 Depends:
+  python3-cryptography,
+  python3-nacl,
+  python3-colorama,
   ${python3:Depends},
   ${misc:Depends},
 Recommends:
