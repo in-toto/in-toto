@@ -448,18 +448,18 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
         authorized_key = layout.keys.get(authorized_keyid)
         main_key_for_subkey = main_keys_for_subkeys.get(authorized_keyid)
 
-        # The signing key is authorized
+        # The signing key is authorized ...
         if authorized_key and link_keyid == authorized_keyid:
           verification_key = authorized_key
           break
 
-        # The signing key is an authorized subkey
-        elif main_key_for_subkey and link_keyid == authorized_keyid:
+        # ... or the signing key is an authorized subkey ...
+        if main_key_for_subkey and link_keyid == authorized_keyid:
           verification_key = main_key_for_subkey
           break
 
-        # The signing key is a subkey of an authorized key
-        elif (authorized_key and
+        # ... or the signing key is a subkey of an authorized key
+        if (authorized_key and
             link_keyid in authorized_key.get("subkeys", {}).keys()):
           verification_key = authorized_key
           break

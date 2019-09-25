@@ -254,7 +254,7 @@ class Metablock(ValidationMixin):
       if signature["keyid"] == verification_keyid:
         break
 
-      elif signature["keyid"] in list(
+      if signature["keyid"] in list(
           verification_key.get("subkeys", {}).keys()):
         break
 
