@@ -1,5 +1,5 @@
 Source: python-in-toto
-Section: devel
+Section: utils
 Priority: optional
 Maintainer: in-toto developers <in-toto-dev@googlegroups.com>
 Uploaders:
