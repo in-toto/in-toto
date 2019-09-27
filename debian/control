@@ -22,6 +22,7 @@ Build-Depends:
  python3-nacl,
  python3-colorama,
  python3-securesystemslib (>= 0.11.3),
+ gpg,
 Standards-Version: 4.4.0
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
