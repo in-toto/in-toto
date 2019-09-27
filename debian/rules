@@ -7,7 +7,7 @@ export PYBUILD_NAME = in_toto
 	dh $@ --with python3  --buildsystem=pybuild
 
 override_dh_auto_test:
-	# Run upstream test suite unless skipped via DEB_BUILD_OPTIONS
-	ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-		python3 tests/runtests.py
-	endif
+# Run upstream test suite unless skipped via DEB_BUILD_OPTIONS
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	python3 tests/runtests.py
+endif
