@@ -1,3 +1,12 @@
+Description: Use python3 in tests
+ Some upstream tests call the python interpreter in a subprocess, e.g. to test
+ the custom `process` module or to run simple in-toto step or inspection
+ commands. In debian, where we only build for python3, "python" is not
+ available during build and thus makes those tests fail. This patch replaces
+ "python" with "python3" where applicable.
+
+Origin: upstream, https://github.com/in-toto/in-toto/commit/a7f4baf8d0186fa4a6314264707f4d5d1b3cecdc
+
 diff --git a/tests/demo_files/demo.layout.template b/tests/demo_files/demo.layout.template
 index 64ca250..0ac7f7e 100644
 --- a/tests/demo_files/demo.layout.template
