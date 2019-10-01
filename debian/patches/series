@@ -1,1 +1,2 @@
 01_use_python3_interpreter_in_tests.diff
+02_fix_subprocess_stream_duplication.diff
