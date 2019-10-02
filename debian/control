@@ -1,5 +1,5 @@
-Source: python-in-toto
-Section: devel
+Source: in-toto
+Section: utils
 Priority: optional
 Maintainer: in-toto developers <in-toto-dev@googlegroups.com>
 Uploaders:
@@ -22,12 +22,13 @@ Build-Depends:
  python3-nacl,
  python3-colorama,
  python3-securesystemslib (>= 0.11.3),
+ gnupg2,
 Standards-Version: 4.4.0
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
 Vcs-Browser: https://github.com/in-toto/in-toto
 
-Package: python3-in-toto
+Package: in-toto
 Architecture: all
 Depends:
   python3-cryptography,
@@ -36,7 +37,7 @@ Depends:
   ${python3:Depends},
   ${misc:Depends},
 Recommends:
- gpg,
+ gnupg2,
 Description: software supply chain security framework
  in-toto provides tools both for software developers to authenticate operations
  in the supply chain, as well as for end-users to verify the authentication

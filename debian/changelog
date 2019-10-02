@@ -1,4 +1,4 @@
-python-in-toto (0.4.0-1) unstable; urgency=low
+in-toto (0.4.0-1) unstable; urgency=low
 
   * Initial Debian release. (Closes: #934142)
 
