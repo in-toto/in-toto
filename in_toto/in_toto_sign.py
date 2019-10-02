@@ -374,10 +374,9 @@ examples:
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
 
-  # version
   parser.add_argument('--version', action='version',
-                      version='{} version {}'.format(parser.prog, __version__))
-                      
+                      version='{} {}'.format(parser.prog, __version__))
+
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

@@ -241,10 +241,9 @@ examples:
       " resulting link metadata's product section when running the 'stop'"
       " subcommand. Symlinks are followed."))
 
-  # version
   parser.add_argument('--version', action='version',
-                      version='{} version {}'.format(parser.prog, __version__))
-                      
+                      version='{} {}'.format(parser.prog, __version__))
+
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

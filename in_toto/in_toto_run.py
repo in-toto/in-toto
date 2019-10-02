@@ -223,9 +223,8 @@ examples:
       "Command to be executed with options and arguments, separated from"
       " 'in-toto-run' options by double dash '--'."))
 
-  # version
   parser.add_argument('--version', action='version',
-                      version='{} version {}'.format(parser.prog, __version__))
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 
