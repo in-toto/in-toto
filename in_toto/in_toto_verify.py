@@ -96,6 +96,7 @@ import logging
 import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock
+from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -199,6 +200,10 @@ examples:
 
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
+
+  # version
+  parser.add_argument('--version', action='version',
+                      version='{} version {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

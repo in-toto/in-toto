@@ -109,6 +109,7 @@ from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 import in_toto.gpg.functions
+from in_toto import __version__
 
 import securesystemslib.formats
 
@@ -373,6 +374,10 @@ examples:
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
 
+  # version
+  parser.add_argument('--version', action='version',
+                      version='{} version {}'.format(parser.prog, __version__))
+                      
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

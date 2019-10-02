@@ -120,6 +120,7 @@ import logging
 import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
+from in_toto import __version__
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
@@ -240,6 +241,10 @@ examples:
       " resulting link metadata's product section when running the 'stop'"
       " subcommand. Symlinks are followed."))
 
+  # version
+  parser.add_argument('--version', action='version',
+                      version='{} version {}'.format(parser.prog, __version__))
+                      
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

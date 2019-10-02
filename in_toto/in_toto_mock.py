@@ -54,6 +54,7 @@ import sys
 import argparse
 import logging
 import in_toto.runlib
+from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -97,6 +98,10 @@ examples:
       help=(
       "Command to be executed with options and arguments, separated from"
       " 'in-toto-mock' options by double dash '--'."))
+
+  # version
+  parser.add_argument('--version', action='version',
+                      version='{} version {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 
