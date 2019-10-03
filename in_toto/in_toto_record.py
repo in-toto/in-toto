@@ -44,6 +44,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -k <path>, --key <path>
                         Path to a PEM formatted private key file used to sign
                         the resulting link metadata. (passing one of '--key'

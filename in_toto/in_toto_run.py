@@ -36,6 +36,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -m <path> [<path> ...], --materials <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata before the
