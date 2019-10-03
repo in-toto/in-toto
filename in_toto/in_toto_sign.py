@@ -39,6 +39,7 @@ Returns nonzero value on failure and zero otherwise.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -k <path> [<path> ...], --key <path> [<path> ...]
                         Path(s) to PEM formatted key file(s), used to sign the
                         passed link or layout metadata or to verify its

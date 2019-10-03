@@ -41,6 +41,7 @@ The command returns a nonzero value if verification fails and zero otherwise.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   --link-dir <path>     Path to directory where link metadata files for steps
                         defined in the root layout should be loaded from. If
                         not passed links are loaded from the current working
