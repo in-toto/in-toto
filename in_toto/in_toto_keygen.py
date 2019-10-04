@@ -46,6 +46,7 @@ import argparse
 import logging
 
 import in_toto.util
+from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -90,6 +91,9 @@ def parse_args():
   in_toto_args.add_argument("-b", "--bits", default=3072, type=int,
                             help="The key size, or key length, of the RSA "
                             "key.", metavar="<bits>")
+
+  parser.add_argument('--version', action='version',
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

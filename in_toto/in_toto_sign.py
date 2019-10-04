@@ -39,6 +39,7 @@ Returns nonzero value on failure and zero otherwise.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -k <path> [<path> ...], --key <path> [<path> ...]
                         Path(s) to PEM formatted key file(s), used to sign the
                         passed link or layout metadata or to verify its
@@ -109,6 +110,7 @@ from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 import in_toto.gpg.functions
+from in_toto import __version__
 
 import securesystemslib.formats
 
@@ -372,6 +374,9 @@ examples:
 
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
+
+  parser.add_argument('--version', action='version',
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

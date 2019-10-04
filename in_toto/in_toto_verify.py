@@ -41,6 +41,7 @@ The command returns a nonzero value if verification fails and zero otherwise.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   --link-dir <path>     Path to directory where link metadata files for steps
                         defined in the root layout should be loaded from. If
                         not passed links are loaded from the current working
@@ -96,6 +97,7 @@ import logging
 import in_toto.util
 from in_toto import verifylib
 from in_toto.models.metadata import Metablock
+from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -199,6 +201,9 @@ examples:
 
   verbosity_args.add_argument("-q", "--quiet", dest="quiet",
       help="Suppress all output.", action="store_true")
+
+  parser.add_argument('--version', action='version',
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

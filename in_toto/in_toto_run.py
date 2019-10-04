@@ -36,6 +36,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -m <path> [<path> ...], --materials <path> [<path> ...]
                         Paths to files or directories, whose paths and hashes
                         are stored in the resulting link metadata before the
@@ -109,7 +110,7 @@ import sys
 import argparse
 import logging
 import in_toto.user_settings
-from in_toto import (util, runlib)
+from in_toto import (util, runlib, __version__)
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
@@ -222,6 +223,9 @@ examples:
       help=(
       "Command to be executed with options and arguments, separated from"
       " 'in-toto-run' options by double dash '--'."))
+
+  parser.add_argument('--version', action='version',
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

@@ -44,6 +44,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             display version number and exit
   -k <path>, --key <path>
                         Path to a PEM formatted private key file used to sign
                         the resulting link metadata. (passing one of '--key'
@@ -120,6 +121,7 @@ import logging
 import in_toto.util
 import in_toto.user_settings
 import in_toto.runlib
+from in_toto import __version__
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
@@ -239,6 +241,9 @@ examples:
       "Paths to files or directories, whose paths and hashes are stored in the"
       " resulting link metadata's product section when running the 'stop'"
       " subcommand. Symlinks are followed."))
+
+  parser.add_argument('--version', action='version',
+                      version='{} {}'.format(parser.prog, __version__))
 
   args = parser.parse_args()
 

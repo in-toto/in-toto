@@ -31,16 +31,35 @@
     pip install git+https://github.com/in-toto/in-toto@develop
     ```
 """
+import io
+import os
+import re
+
 from setuptools import setup, find_packages
 
-version = "0.4.0"
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+def get_version(filename="in_toto/__init__.py"):
+  """
+  Gather version number from specified file.
+
+  This is done through regex processing, so the file is not imported or
+  otherwise executed.
+
+  No format verification of the resulting version number is done.
+  """
+  with io.open(os.path.join(base_dir, filename), encoding="utf-8") as initfile:
+    for line in initfile.readlines():
+      m = re.match("__version__ *= *['\"](.*)['\"]", line)
+      if m:
+        return m.group(1)
 
 with open("README.md") as f:
   long_description = f.read()
 
 setup(
   name="in-toto",
-  version=version,
   author="New York University: Secure Systems Lab",
   author_email="in-toto-dev@googlegroups.com",
   url="https://in-toto.io",
@@ -98,4 +117,5 @@ setup(
     "Source": "https://github.com/in-toto/in-toto",
     "Bug Reports": "https://github.com/in-toto/in-toto/issues",
   },
+  version=get_version(),
 )
