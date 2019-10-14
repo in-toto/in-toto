@@ -9,7 +9,7 @@ the library it provides.
    :maxdepth: 2
    :caption: Contents:
 
-
+   installing
 
 Indices and tables
 ==================
