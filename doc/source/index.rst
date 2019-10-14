@@ -1,10 +1,9 @@
-.. in-toto documentation master file, created by
-   sphinx-quickstart on Fri Jul 19 11:48:34 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to in-toto's documentation!
+Welcome to the in-toto documentation!
 ===================================
+
+in-toto is a framework for software supply chain security. This documentation
+covers the basics of how to use the python reference implementation, as well as
+the library it provides.
 
 .. toctree::
    :maxdepth: 2
