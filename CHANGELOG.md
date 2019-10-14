@@ -1,5 +1,12 @@
 # Changelog
 
+## in-toto v0.4.1
+
+* Update securesystemslib dependency to v0.12.0 (#299)
+* Add `--version` option to CLI tools (#310)
+* Address linter warnings (#308)
+* Update downstream debian metadata (#302, #305, #309)
+
 ## in-toto v0.4.0
 
 * Add REQUIRE artifact rule support (#269, #280)
