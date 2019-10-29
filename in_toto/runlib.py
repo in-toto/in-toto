@@ -40,6 +40,7 @@ from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
+import securesystemslib.gpg
 
 from in_toto.models.metadata import Metablock
 
@@ -845,7 +846,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   elif gpg_keyid:
     LOG.info("Verifying preliminary link signature using passed gpg key...")
-    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
+    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+        gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
     verification_key = gpg_pubkey
 
@@ -858,7 +860,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     # need a specific format.
     LOG.info("Verifying preliminary link signature using default gpg key...")
     keyid = link_metadata.signatures[0]["keyid"]
-    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
+    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+        keyid, gpg_home)
     verification_key = gpg_pubkey
 
   link_metadata.verify_signature(verification_key)

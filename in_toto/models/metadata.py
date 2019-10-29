@@ -25,7 +25,7 @@ import json
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
-import in_toto.gpg.functions
+import securesystemslib.gpg.functions
 
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
@@ -166,7 +166,7 @@ class Metablock(ValidationMixin):
     """
     <Purpose>
       Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
-      contained in `self.signed` using `gpg.functions.gpg_sign_object` and
+      contained in `self.signed` using `gpg.functions.create_signature` and
       appends the created signature to `self.signatures`.
 
     <Arguments>
@@ -187,7 +187,7 @@ class Metablock(ValidationMixin):
       The dictionary representation of the newly created signature.
 
     """
-    signature = in_toto.gpg.functions.gpg_sign_object(
+    signature = securesystemslib.gpg.functions.create_signature(
         self.signed.signable_bytes, gpg_keyid, gpg_home)
 
     self.signatures.append(signature)
@@ -204,10 +204,10 @@ class Metablock(ValidationMixin):
       encoded canonical JSON bytes of the Link or Layout object, contained in
       `self.signed`.
 
-      `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
       If the signature matches securesystemslib.formats.GPG_SIGNATURE_SCHEMA,
+      `securesystemslib.gpg.functions.verify_signature` is used,
       if the signature matches `securesystemslib.formats.SIGNATURE_SCHEMA`
-      `securesystemslib.keys.verify_signature` is used.
+      `securesystemslib.keys.verify_signature`.
 
       Note: In case of securesystemslib we actually pass the dictionary
       representation of the data to be verified and
@@ -261,8 +261,8 @@ class Metablock(ValidationMixin):
       raise SignatureVerificationError("No signature found for key '{}'"
           .format(verification_keyid))
 
-      valid = in_toto.gpg.functions.gpg_verify_signature(signature,
     if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
+      valid = securesystemslib.gpg.functions.verify_signature(signature,
           verification_key, self.signed.signable_bytes)
 
     elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):

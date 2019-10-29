@@ -3,13 +3,13 @@
 import sys
 import getpass
 
-import in_toto.gpg.functions
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.interface
 import securesystemslib.keys
 import securesystemslib.exceptions
+import securesystemslib.gpg.functions
 
 from in_toto.exceptions import UnsupportedKeyTypeError
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
@@ -190,7 +190,7 @@ def import_gpg_public_keys_from_keyring_as_dict(keyids, gpg_home=False):
   If `gpg_home` is False the default keyring is used. """
   key_dict = {}
   for gpg_keyid in keyids:
-    pub_key = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid,
+    pub_key = securesystemslib.gpg.functions.export_pubkey(gpg_keyid,
         homedir=gpg_home)
     securesystemslib.formats.GPG_PUBKEY_SCHEMA.check_match(pub_key)
     keyid = pub_key["keyid"]

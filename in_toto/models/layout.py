@@ -46,6 +46,7 @@ import securesystemslib.exceptions
 import securesystemslib.formats
 import securesystemslib.schema
 import securesystemslib.interface
+import securesystemslib.gpg.functions
 
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -458,7 +459,7 @@ class Layout(Signable):
     if gpg_home: # pragma: no branch
       securesystemslib.formats.PATH_SCHEMA.check_match(gpg_home)
 
-    key = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid,
+    key = securesystemslib.gpg.functions.export_pubkey(gpg_keyid,
         homedir=gpg_home)
     return self.add_functionary_key(key)
 

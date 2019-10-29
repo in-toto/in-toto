@@ -52,7 +52,7 @@ from in_toto.exceptions import (RuleVerificationError,
     ThresholdVerificationError)
 from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
 from in_toto.rulelib import unpack_rule
-import in_toto.gpg.functions
+import securesystemslib.gpg.functions
 
 import securesystemslib.exceptions
 import in_toto.exceptions
@@ -1170,14 +1170,14 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
 
-    master_key = in_toto.gpg.functions.gpg_export_pubkey(
+    master_key = securesystemslib.gpg.functions.export_pubkey(
         self.master, self.gnupg_home)
     sub_key = master_key["subkeys"][self.sub]
 
     # We need a gpg key without subkeys to test the normal scenario (M M M),
     # because keys with signing subkeys always use that subkey for signing.
     self.master2 = "7B3ABB26B97B655AB9296BD15B0BD02E1C768C43"
-    master_key2 = in_toto.gpg.functions.gpg_export_pubkey(
+    master_key2 = securesystemslib.gpg.functions.export_pubkey(
         self.master2, self.gnupg_home)
 
 
@@ -1238,7 +1238,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     # GPG will always use that subkey.
     # Even if gpg would use the masterkey, these scenarios are not allowed,
     # see table in docstring of testcase
-    signature = in_toto.gpg.functions.gpg_sign_object(
+    signature = securesystemslib.gpg.functions.create_signature(
         b"data", self.master, self.gnupg_home)
 
     self.assertTrue(signature["keyid"] == self.sub)
@@ -1297,7 +1297,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
           Step(name=self.step_name, pubkeys=[masterkey], threshold=2)
         ],
       keys={
-          masterkey: in_toto.gpg.functions.gpg_export_pubkey(
+          masterkey: securesystemslib.gpg.functions.export_pubkey(
               masterkey, self.gnupg_home)
         }
       )
@@ -1312,7 +1312,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
 
     """
     expired_key_id = "e8ac80c924116dabb51d4b987cb07d6d2c199c7c"
-    expired_key = in_toto.gpg.functions.gpg_export_pubkey(expired_key_id,
+    expired_key = securesystemslib.gpg.functions.export_pubkey(expired_key_id,
         self.gnupg_home)
 
     # Chain link dict containing a single link for a single step
