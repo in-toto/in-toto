@@ -33,13 +33,14 @@ from pathspec import PathSpec
 
 import in_toto.settings
 import in_toto.exceptions
-import in_toto.process
+
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
+import securesystemslib.process
 import securesystemslib.gpg
 
 from in_toto.models.metadata import Metablock
@@ -350,11 +351,12 @@ def execute_link(link_cmd_args, record_streams):
   """
   if record_streams:
     return_code, stdout_str, stderr_str = \
-        in_toto.process.run_duplicate_streams(link_cmd_args)
+        securesystemslib.process.run_duplicate_streams(link_cmd_args)
 
   else:
-    process = in_toto.process.run(link_cmd_args, check=False,
-      stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
+    process = securesystemslib.process.run(link_cmd_args, check=False,
+      stdout=securesystemslib.process.DEVNULL,
+      stderr=securesystemslib.process.DEVNULL)
     stdout_str = stderr_str = ""
     return_code = process.returncode
 
