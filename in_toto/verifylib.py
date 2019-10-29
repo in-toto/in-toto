@@ -44,7 +44,7 @@ from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
-from in_toto.gpg.exceptions import KeyExpirationError
+from securesystemslib.gpg.exceptions import KeyExpirationError
 import in_toto.rulelib
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
@@ -357,7 +357,7 @@ def verify_layout_signatures(layout_metablock, keys_dict):
       if an empty verification key dictionary was passed, or
       if any of the passed verification keys fails to verify a signature.
 
-    in_toto.gpg.exceptions.KeyExpirationError:
+    securesystemslib.gpg.exceptions.KeyExpirationError:
       if any of the passed verification keys is an expired gpg key
 
   """

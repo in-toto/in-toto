@@ -490,7 +490,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
         base_path is passed and does not match
         securesystemslib.formats.PATH_SCHEMA or is not a directory.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>
@@ -632,7 +632,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
         base_path is passed and does not match
         securesystemslib.formats.PATH_SCHEMA or is not a directory.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>
@@ -772,11 +772,11 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     SignatureVerificationError:
         If the signature of the preliminary link file is invalid.
 
-    in_toto.gpg.exceptions.KeyExpirationError:
+    securesystemslib.gpg.exceptions.KeyExpirationError:
         If the key used to verify the signature of the preliminary link file is
         an expired gpg key.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>

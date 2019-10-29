@@ -180,7 +180,7 @@ class Metablock(ValidationMixin):
               is used
 
     <Exceptions>
-      in_toto.gpg.exceptions.CommandError:
+      securesystemslib.gpg.exceptions.CommandError:
               If the gpg signing command returned a non-zero exit code, e.g.
               because the key has expired.
 
@@ -237,7 +237,7 @@ class Metablock(ValidationMixin):
 
             If the signature to be verified is malformed or invalid.
 
-      in_toto.gpg.exceptions.KeyExpirationError:
+      securesystemslib.gpg.exceptions.KeyExpirationError:
             if the passed verification key is an expired gpg key
 
     <Returns>

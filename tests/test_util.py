@@ -243,7 +243,7 @@ class TestUtil(unittest.TestCase):
           gpg_home=self.gnupg_home)
 
     # Try to import key that does not exist
-    with self.assertRaises(in_toto.gpg.exceptions.KeyNotFoundError):
+    with self.assertRaises(securesystemslib.gpg.exceptions.KeyNotFoundError):
       key_dict = import_gpg_public_keys_from_keyring_as_dict(["aaaa"],
             gpg_home=self.gnupg_home)
 
