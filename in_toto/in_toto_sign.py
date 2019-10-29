@@ -180,7 +180,7 @@ def _sign_and_dump_metadata(metadata, args):
     # Otherwise, in case of links, we build the filename using the link/step
     # name and the keyid of the created signature (there is only one for links)
     elif metadata.type_ == "link":
-      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
       keyid = signature["keyid"]
       out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
           keyid=keyid)

@@ -25,8 +25,6 @@ import json
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
-
-import in_toto.formats
 import in_toto.gpg.functions
 
 from in_toto.models.common import ValidationMixin
@@ -206,8 +204,8 @@ class Metablock(ValidationMixin):
       encoded canonical JSON bytes of the Link or Layout object, contained in
       `self.signed`.
 
-      If the signature matches `in_toto.gpg.formats.SIGNATURE_SCHEMA`,
       `in_toto.gpg.functions.gpg_verify_signature` is used for verification,
+      If the signature matches securesystemslib.formats.GPG_SIGNATURE_SCHEMA,
       if the signature matches `securesystemslib.formats.SIGNATURE_SCHEMA`
       `securesystemslib.keys.verify_signature` is used.
 
@@ -219,12 +217,12 @@ class Metablock(ValidationMixin):
     <Arguments>
       verification_key:
               Verifying key in the format:
-              in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA
+              securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA
 
     <Exceptions>
       FormatError
             If the passed key is not conformant with
-            `in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA`
+            securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA
 
       SignatureVerificationError
             If the Metablock does not carry a signature signed with the
@@ -233,7 +231,7 @@ class Metablock(ValidationMixin):
 
             If the signature corresponding to the passed verification key or
             one of its subkeys does not match securesystemslib's or
-            in_toto.gpg's signature schema.
+            securesystemslib.gpg's signature schema.
 
             If the signature to be verified is malformed or invalid.
 
@@ -244,7 +242,8 @@ class Metablock(ValidationMixin):
       None.
 
     """
-    in_toto.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(verification_key)
+    securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(
+        verification_key)
     verification_keyid = verification_key["keyid"]
 
     # Find a signature that corresponds to the keyid of the passed
@@ -262,8 +261,8 @@ class Metablock(ValidationMixin):
       raise SignatureVerificationError("No signature found for key '{}'"
           .format(verification_keyid))
 
-    if in_toto.gpg.formats.SIGNATURE_SCHEMA.matches(signature):
       valid = in_toto.gpg.functions.gpg_verify_signature(signature,
+    if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
           verification_key, self.signed.signable_bytes)
 
     elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
@@ -292,11 +291,12 @@ class Metablock(ValidationMixin):
 
   def _validate_signatures(self):
     """Private method to check that the 'signatures' attribute is a list of
-    signatures in the format 'in_toto.formats.ANY_SIGNATURE_SCHEMA'. """
+    signatures in the format 'securesystemslib.formats.ANY_SIGNATURE_SCHEMA'.
+    """
 
     if not isinstance(self.signatures, list):
       raise securesystemslib.exceptions.FormatError("The Metablock's"
         " 'signatures' property has to be of type 'list'.")
 
     for signature in self.signatures:
-      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)

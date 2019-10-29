@@ -4,7 +4,7 @@ import sys
 import getpass
 
 import in_toto.gpg.functions
-import in_toto.gpg.formats
+
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.interface
@@ -192,7 +192,7 @@ def import_gpg_public_keys_from_keyring_as_dict(keyids, gpg_home=False):
   for gpg_keyid in keyids:
     pub_key = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid,
         homedir=gpg_home)
-    in_toto.gpg.formats.PUBKEY_SCHEMA.check_match(pub_key)
+    securesystemslib.formats.GPG_PUBKEY_SCHEMA.check_match(pub_key)
     keyid = pub_key["keyid"]
     key_dict[keyid] = pub_key
   return key_dict

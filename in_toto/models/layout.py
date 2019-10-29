@@ -41,7 +41,6 @@ from dateutil.parser import parse
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.rulelib
 import in_toto.exceptions
-import in_toto.formats
 
 import securesystemslib.exceptions
 import securesystemslib.formats
@@ -378,18 +377,18 @@ class Layout(Signable):
     <Arguments>
       key:
               A functionary public key conformant with
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Exceptions>
       securesystemslib.exceptions.FormatError
               If the passed key does not match
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       The added functionary public key.
 
     """
-    in_toto.formats.ANY_PUBKEY_SCHEMA.check_match(key)
+    securesystemslib.formats.ANY_PUBKEY_SCHEMA.check_match(key)
     keyid = key["keyid"]
     self.keys[keyid] = key
     return key
@@ -449,7 +448,7 @@ class Layout(Signable):
               securesystemslib.formats.PATH_SCHEMA.
 
               If the key loaded from the GPG keychain does not match
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       The added functionary public key.
@@ -523,7 +522,7 @@ class Layout(Signable):
               securesystemslib.formats.PATH_SCHEMA.
 
               If any of the keys loaded from the GPG keychain does not
-              match in_toto.formats.ANY_PUBKEY_SCHEMA.
+              match securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       A dictionary of the added functionary public keys with the key's keyids
@@ -570,7 +569,7 @@ class Layout(Signable):
 
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
-    in_toto.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
+    securesystemslib.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
 
 
   def _validate_steps_and_inspections(self):
