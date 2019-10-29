@@ -109,7 +109,6 @@ import logging
 from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
-import in_toto.gpg.functions
 from in_toto import __version__
 
 import securesystemslib.formats
@@ -335,7 +334,7 @@ examples:
       " layout metadata or to verify its signatures."))
 
   parser.add_argument("-t", "--key-type", dest="key_type",
-      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      type=str, choices=util.SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "Specify the key-type of the keys specified by the '--key'"
       " option. Number of values should be the same as the number of keys"
