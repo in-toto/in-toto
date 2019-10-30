@@ -33,13 +33,15 @@ from pathspec import PathSpec
 
 import in_toto.settings
 import in_toto.exceptions
-import in_toto.process
+
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
+import securesystemslib.process
+import securesystemslib.gpg
 
 from in_toto.models.metadata import Metablock
 
@@ -349,11 +351,12 @@ def execute_link(link_cmd_args, record_streams):
   """
   if record_streams:
     return_code, stdout_str, stderr_str = \
-        in_toto.process.run_duplicate_streams(link_cmd_args)
+        securesystemslib.process.run_duplicate_streams(link_cmd_args)
 
   else:
-    process = in_toto.process.run(link_cmd_args, check=False,
-      stdout=in_toto.process.DEVNULL, stderr=in_toto.process.DEVNULL)
+    process = securesystemslib.process.run(link_cmd_args, check=False,
+      stdout=securesystemslib.process.DEVNULL,
+      stderr=securesystemslib.process.DEVNULL)
     stdout_str = stderr_str = ""
     return_code = process.returncode
 
@@ -490,7 +493,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
         base_path is passed and does not match
         securesystemslib.formats.PATH_SCHEMA or is not a directory.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>
@@ -632,7 +635,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
         base_path is passed and does not match
         securesystemslib.formats.PATH_SCHEMA or is not a directory.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>
@@ -772,11 +775,11 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     SignatureVerificationError:
         If the signature of the preliminary link file is invalid.
 
-    in_toto.gpg.exceptions.KeyExpirationError:
+    securesystemslib.gpg.exceptions.KeyExpirationError:
         If the key used to verify the signature of the preliminary link file is
         an expired gpg key.
 
-    in_toto.gpg.exceptions.CommandError:
+    securesystemslib.gpg.exceptions.CommandError:
         If gpg is used for signing and the command exits with a non-zero code.
 
   <Side Effects>
@@ -845,7 +848,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   elif gpg_keyid:
     LOG.info("Verifying preliminary link signature using passed gpg key...")
-    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid, gpg_home)
+    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+        gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
     verification_key = gpg_pubkey
 
@@ -858,7 +862,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     # need a specific format.
     LOG.info("Verifying preliminary link signature using default gpg key...")
     keyid = link_metadata.signatures[0]["keyid"]
-    gpg_pubkey = in_toto.gpg.functions.gpg_export_pubkey(keyid, gpg_home)
+    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+        keyid, gpg_home)
     verification_key = gpg_pubkey
 
   link_metadata.verify_signature(verification_key)

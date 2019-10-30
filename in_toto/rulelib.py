@@ -17,7 +17,6 @@
   syntax.
 
 """
-import in_toto.formats
 import securesystemslib.exceptions
 import securesystemslib.formats
 
@@ -70,7 +69,7 @@ def unpack_rule(rule):
     }
 
   """
-  in_toto.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(rule)
+  securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(rule)
 
   # Create all lower rule copy to case insensitively parse out tokens whose
   # position we don't know yet
@@ -223,8 +222,8 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
     Note that REQUIRE is somewhat of a weird animal that does not use patterns
     but rather single filenames (for now).
   """
-  in_toto.formats.ANY_STRING_SCHEMA.check_match(rule_type)
-  in_toto.formats.ANY_STRING_SCHEMA.check_match(pattern)
+  securesystemslib.formats.ANY_STRING_SCHEMA.check_match(rule_type)
+  securesystemslib.formats.ANY_STRING_SCHEMA.check_match(pattern)
 
   if rule_type.lower() not in ALL_RULES:
     raise securesystemslib.exceptions.FormatError("'{0}' is not a valid "
@@ -232,14 +231,15 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
         .format(rule_type, ", ".join(ALL_RULES)))
 
   if rule_type.upper() == "MATCH":
-    if (not in_toto.formats.ANY_STRING_SCHEMA.matches(dest_type) or not
-        (dest_type.lower() == "materials" or dest_type.lower() == "products")):
+    if (not securesystemslib.formats.ANY_STRING_SCHEMA.matches(dest_type) or
+        not (dest_type.lower() == "materials" or
+        dest_type.lower() == "products")):
       raise securesystemslib.exceptions.FormatError("'{}' is not a valid"
           " 'dest_type'. Rules of type 'MATCH' require a destination type of"
           " either 'MATERIALS' or 'PRODUCTS' (case insensitive)."
           .format(dest_type))
 
-    if not (in_toto.formats.ANY_STRING_SCHEMA.matches(dest_name) and
+    if not (securesystemslib.formats.ANY_STRING_SCHEMA.matches(dest_name) and
         dest_name):
       raise securesystemslib.exceptions.FormatError("'{}' is not a valid"
           " 'dest_name'. Rules of type 'MATCH' require a step name as a"
@@ -249,13 +249,13 @@ def pack_rule(rule_type, pattern, source_prefix=None, dest_type=None,
     rule = ["MATCH", pattern]
 
     if source_prefix:
-      in_toto.formats.ANY_STRING_SCHEMA.check_match(source_prefix)
+      securesystemslib.formats.ANY_STRING_SCHEMA.check_match(source_prefix)
       rule += ["IN", source_prefix]
 
     rule += ["WITH", dest_type.upper()]
 
     if dest_prefix:
-      in_toto.formats.ANY_STRING_SCHEMA.check_match(dest_prefix)
+      securesystemslib.formats.ANY_STRING_SCHEMA.check_match(dest_prefix)
       rule += ["IN", dest_prefix]
 
     rule += ["FROM", dest_name]

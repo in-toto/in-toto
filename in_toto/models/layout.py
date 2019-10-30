@@ -41,12 +41,12 @@ from dateutil.parser import parse
 from in_toto.models.common import Signable, ValidationMixin
 import in_toto.rulelib
 import in_toto.exceptions
-import in_toto.formats
 
 import securesystemslib.exceptions
 import securesystemslib.formats
 import securesystemslib.schema
 import securesystemslib.interface
+import securesystemslib.gpg.functions
 
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -378,18 +378,18 @@ class Layout(Signable):
     <Arguments>
       key:
               A functionary public key conformant with
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Exceptions>
       securesystemslib.exceptions.FormatError
               If the passed key does not match
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       The added functionary public key.
 
     """
-    in_toto.formats.ANY_PUBKEY_SCHEMA.check_match(key)
+    securesystemslib.formats.ANY_PUBKEY_SCHEMA.check_match(key)
     keyid = key["keyid"]
     self.keys[keyid] = key
     return key
@@ -449,7 +449,7 @@ class Layout(Signable):
               securesystemslib.formats.PATH_SCHEMA.
 
               If the key loaded from the GPG keychain does not match
-              in_toto.formats.ANY_PUBKEY_SCHEMA.
+              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       The added functionary public key.
@@ -459,7 +459,7 @@ class Layout(Signable):
     if gpg_home: # pragma: no branch
       securesystemslib.formats.PATH_SCHEMA.check_match(gpg_home)
 
-    key = in_toto.gpg.functions.gpg_export_pubkey(gpg_keyid,
+    key = securesystemslib.gpg.functions.export_pubkey(gpg_keyid,
         homedir=gpg_home)
     return self.add_functionary_key(key)
 
@@ -523,7 +523,7 @@ class Layout(Signable):
               securesystemslib.formats.PATH_SCHEMA.
 
               If any of the keys loaded from the GPG keychain does not
-              match in_toto.formats.ANY_PUBKEY_SCHEMA.
+              match securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
     <Returns>
       A dictionary of the added functionary public keys with the key's keyids
@@ -570,7 +570,7 @@ class Layout(Signable):
 
   def _validate_keys(self):
     """Private method to ensure that the keys contained are right."""
-    in_toto.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
+    securesystemslib.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
 
 
   def _validate_steps_and_inspections(self):

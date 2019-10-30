@@ -109,7 +109,6 @@ import logging
 from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
-import in_toto.gpg.functions
 from in_toto import __version__
 
 import securesystemslib.formats
@@ -180,7 +179,7 @@ def _sign_and_dump_metadata(metadata, args):
     # Otherwise, in case of links, we build the filename using the link/step
     # name and the keyid of the created signature (there is only one for links)
     elif metadata.type_ == "link":
-      in_toto.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
       keyid = signature["keyid"]
       out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
           keyid=keyid)
@@ -335,7 +334,7 @@ examples:
       " layout metadata or to verify its signatures."))
 
   parser.add_argument("-t", "--key-type", dest="key_type",
-      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      type=str, choices=util.SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "Specify the key-type of the keys specified by the '--key'"
       " option. Number of values should be the same as the number of keys"

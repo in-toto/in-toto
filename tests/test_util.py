@@ -29,7 +29,6 @@ if sys.version_info >= (3, 3):
 else:
   from mock import patch # pylint: disable=import-error
 
-import in_toto.formats
 from in_toto.util import (
     KEY_TYPE_ED25519,
     generate_and_write_rsa_keypair,
@@ -234,7 +233,7 @@ class TestUtil(unittest.TestCase):
     # Succefully import public keys from keychain as keydictionary
     key_dict = import_gpg_public_keys_from_keyring_as_dict(keyids,
         gpg_home=self.gnupg_home)
-    in_toto.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(key_dict)
+    securesystemslib.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(key_dict)
     self.assertListEqual(sorted(keyids), sorted(key_dict.keys()))
 
     # Try to import key with invalid keyid
@@ -243,7 +242,7 @@ class TestUtil(unittest.TestCase):
           gpg_home=self.gnupg_home)
 
     # Try to import key that does not exist
-    with self.assertRaises(in_toto.gpg.exceptions.KeyNotFoundError):
+    with self.assertRaises(securesystemslib.gpg.exceptions.KeyNotFoundError):
       key_dict = import_gpg_public_keys_from_keyring_as_dict(["aaaa"],
             gpg_home=self.gnupg_home)
 
