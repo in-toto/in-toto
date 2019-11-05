@@ -5,7 +5,7 @@ You can install in-toto using either pip, or your favorite package manager.
 
 .. note:: We strongly suggest you use a `virtual environment 
     <https://virtualenv.pypa.io/en/stable/>`_ if you are installing in_toto 
-    with pip from source
+    with pip or from source.
 
 On Debian
 ---------
@@ -15,7 +15,7 @@ You can install in-toto on Debian using apt/apt-get:
 
     apt install in-toto
 
-This should provide all dependencies you need to run in-toto
+This should provide all dependencies you need to run in-toto.
 
 
 On Arch Linux
@@ -38,9 +38,9 @@ To install using pip, simply run:
 You may also need to install some system dependencies (depending on your host).
 These are:
 
-- `OpenSSL <https://openssl.org>`_ used to generate and verify RSA signatures.
+- `OpenSSL <https://openssl.org>`_ used to generate and verify RSA signatures, and to export and verify signatures created with gpg.
 - `GPG <https://gnupg.org>`_ if you plan on generating gpg signatures (verifying
-  works without gpg)
+  works without gpg).
 
 Installing from Source
 ----------------------
