@@ -61,3 +61,13 @@ you trust and execute the following commands on a terminal:
 
     python setup.py build && python setup.py install
 
+Installing for Development
+--------------------------
+
+To install in-toto in editable mode, together with development dependencies,
+clone the `in-toto git repository <https://github.com/in-toto/in-toto>`_,
+change into the project root directory, and install with pip:
+
+ .. code-block:: sh
+
+    pip install -r requirements-dev.txt
