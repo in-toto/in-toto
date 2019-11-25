@@ -16,20 +16,9 @@
 <Purpose>
   setup.py script to install in-toto framework and in-toto scripts
 
-  # System Dependencies
-    - Python2.7 (www.python.org)
-    - OpenSSL (www.openssl.org)
+  See https://in-toto.readthedocs.io/en/latest/installing.html for installation
+  instructions.
 
-  # Recommended Tools
-    - git (git-scm.com)
-    - pip (pip.pypa.io)
-    - virtualenvs - optional but strongly recommended!
-      (http://docs.python-guide.org/en/latest/dev/virtualenvs/)
-
-  # Installation from GitHub
-    ```
-    pip install git+https://github.com/in-toto/in-toto@develop
-    ```
 """
 import io
 import os
