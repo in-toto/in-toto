@@ -12,14 +12,13 @@ The layout, signed by the project owners, together with the links, signed by the
 
 ## Getting Started
 
-### Install Dependencies
- - [Python](www.python.org) in version 2.7 - crypto libraries require header files
- - [OpenSSL](https://www.openssl.org/) - crypto libraries require header files
- - [git](https://git-scm.com/) - version control system
- - [pip](https://pip.pypa.io) - package installer tool
-
 ### Installation
-It is strongly recommended to install in-toto in an isolated Python environment. For easy setup instructions visit the docs for [`virtualenv`](https://virtualenv.pypa.io) and the convenient [`vitualenvwrapper`](https://virtualenvwrapper.readthedocs.io).
+
+in-toto is available on [PyPI](https://pypi.org/project/in-toto/) and can be
+installed via [`pip`](https://pypi.org/project/pip/). See
+[in-toto.readthedocs.io](https://in-toto.readthedocs.io/en/latest/installing.html)
+to learn about system dependencies and installation alternatives and
+recommendations.
 
 ```shell
 pip install in-toto
