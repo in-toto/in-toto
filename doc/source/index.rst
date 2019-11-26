@@ -6,7 +6,8 @@ covers the basics of how to use the python reference implementation, as well as
 the library it provides.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    installing
+   command-line-tools/index
