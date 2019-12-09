@@ -1,4 +1,4 @@
-Command line tools
+Command Line Tools
 ==================
 
 in-toto provides various command line tools that you can use to generate,

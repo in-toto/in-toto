@@ -2,7 +2,7 @@ in-toto-run
 ===========
 
 in-toto run is the main wrapper for in-toto to generate link metadata whlie
-carrying out a step. To do this, ir wraps any command passes and attempts to
+carrying out a step. To do this, it wraps any command passed and attempts to
 track all relevant information about the wrapped command's execution.
 
 

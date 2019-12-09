@@ -12,7 +12,7 @@ metadata/layout files, take a look at :doc:`in-toto-sign` instead.
 Basic Usage
 -----------
 
-in-toto-verify only accepts to paramters: the location of the layout file and
+in-toto-verify only accepts to parameters: the location of the layout file and
 the location of the project owner's public key. The rest of the information
 (such as which links to load) is derived from the Layout.
 
@@ -22,12 +22,12 @@ the location of the project owner's public key. The rest of the information
     in-toto-verify -k alice.pub -l root.layout
 
 This will use alice's public key to verify the integrity of the layout, and
-then continue veriication following the policy specified in the layout itself.
+then continue verification following the policy specified in the layout itself.
 
 Link file location
 ------------------
 
-Links need be in the current directory, and they must be named
+Links need to be in the current directory, and they must be named
 `stepname.keyidprefix.link` as defined in the specification. Both
 :doc:`in-toto-run` and :doc:`in-toto-record` will generate link metadata named
 like this. If you require special handling of the in-toto link metadata files,
@@ -38,6 +38,6 @@ Sublayouts
 ----------
 
 If your layout includes sublayouts, in-toto will recurse into a subdirectory
-named `stepname.keyidprefix`, where all the links relevants to that sublayout
-must exist. The sublayout itself will be contaiend where the link file usually
+named `stepname.keyidprefix`, where all the links relevant to that sublayout
+must exist. The sublayout itself will be contained where the link file usually
 is (i.e., `stepname.keyidprefix.link`)

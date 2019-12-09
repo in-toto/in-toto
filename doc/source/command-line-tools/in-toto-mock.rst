@@ -3,7 +3,7 @@ in-toto-mock
 
 in-toto-mock is a variant of :doc:`in-toto-run` that lets you generate unsigned
 link metadata. This is useful if you, for example, want to generate link
-metadata, inspect it and sign if afterwards.
+metadata, inspect it and sign it afterwards.
 
 
 Basic Usage
@@ -28,6 +28,6 @@ sign it afterwards:
     # inspect the link
     vi touch.link
 
-    # use in-toto sign to sign
+    # use in-toto-sign to sign
     in-toto-sign -k mykey -f touch.link
-    # link touch.xxxxxx.link is created hedre
+    # link touch.xxxxxx.link is created here
