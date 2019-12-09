@@ -27,7 +27,7 @@
 asn1crypto==1.2.0        # via cryptography
 attrs==19.3.0
 cffi==1.13.2              # via cryptography, pynacl
-colorama==0.4.1           # via securesystemslib
+colorama==0.4.3           # via securesystemslib
 cryptography==2.8         # via securesystemslib
 enum34==1.1.6             # via cryptography
 ipaddress==1.0.23         # via cryptography
