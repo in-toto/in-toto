@@ -1,3 +1,12 @@
+in-toto (0.4.0-2) unstable; urgency=medium
+
+  * Add missing dependency to fix cli entry point loading.
+  * Pin securesystemslib minor version.
+  * Bump Standards-Version to 4.4.1 in d/control.
+  * Set Rules-Requires-Root: no in d/control.
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Tue, 15 Oct 2019 15:06:25 +0100
+
 in-toto (0.4.0-1) unstable; urgency=low
 
   * Initial Debian release. (Closes: #934142)
