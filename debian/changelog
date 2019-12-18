@@ -1,3 +1,10 @@
+in-toto (0.4.1-1) unstable; urgency=medium
+
+  * See upstream changelog.
+    https://github.com/in-toto/in-toto/blob/develop/CHANGELOG.md
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Wed, 18 Dec 2019 13:42:05 +0100
+
 in-toto (0.4.0-2) unstable; urgency=medium
 
   * Add missing dependency to fix cli entry point loading.
