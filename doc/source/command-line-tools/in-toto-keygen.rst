@@ -4,7 +4,7 @@ in-toto-keygen
 in-toto-keygen is a tool to generate and manage keys to use with other in-toto
 tooling.
 
-Basic usage
+Basic Usage
 -----------
 
 At a minimum, in-toto-keygen will require a filename to generate a private and

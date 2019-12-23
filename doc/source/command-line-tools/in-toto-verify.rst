@@ -12,7 +12,7 @@ metadata/layout files, take a look at :doc:`in-toto-sign` instead.
 Basic Usage
 -----------
 
-in-toto-verify only accepts to parameters: the location of the layout file and
+in-toto-verify only accepts two parameters: the location of the layout file and
 the location of the project owner's public key. The rest of the information
 (such as which links to load) is derived from the Layout.
 

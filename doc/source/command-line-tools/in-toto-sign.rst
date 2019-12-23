@@ -36,7 +36,7 @@ Signing a layout:
 .. code-block:: sh
 
     # sign a layout under mylayout.layout
-    in-toto-sign -k mykey -f mylayout.layout
+    in-toto-sign -k mykey -f mylayout.layout -o root.layout
     # a signed root.layout is created
 
 Signing a link:

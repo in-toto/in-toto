@@ -3,14 +3,14 @@ in-toto-mock
 
 in-toto-mock is a variant of :doc:`in-toto-run` that lets you generate unsigned
 link metadata. This is useful if you, for example, want to generate link
-metadata, inspect it and sign it afterwards.
+metadata, inspect it and sign it afterwards, e.g., using :doc:`in-toto-sign`.
 
 
 Basic Usage
 -----------
 
 Given that no cryptographic signing is involved, in-toto-mock only requires you
-to pass a name paramter using ``--name`` or ``-n`` parameter. Other parameters
+to pass a name parameter using ``--name`` or ``-n`` parameter. Other parameters
 are shared from :doc:`in-toto-run` (e.g., ``-p`` for products and ``-m`` for
 materials)
 
