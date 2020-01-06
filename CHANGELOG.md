@@ -1,5 +1,17 @@
 # Changelog
 
+## in-toto v0.4.2
+
+* Drop custom OpenPGP subpackage and subprocess module and instead use the
+  ones provided by securesystemslib, which are based on the in-toto
+  implementation and receive continued support from a larger community (#325)
+  - A race condition that caused tests to sporadically fail was already fixed
+    in securesystemslib and is now also available to in-toto (#282,
+    secure-systems-lab/securesystemslib#186)
+* Add Sphinx boilerplate and update installation instructions (#298, #331)
+* Update misc dependencies (#317, #318, #319, #320, #322, #323, #324, #326, #327, #328, #333, #335, #329)
+* Update downstream debian metadata (#311, #334)
+
 ## in-toto v0.4.1
 
 * Update securesystemslib dependency to v0.12.0 (#299)
