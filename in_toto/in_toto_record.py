@@ -178,8 +178,8 @@ examples:
       " corresponding step defined in an in-toto layout."))
 
   # Either a key or a gpg key id have to be specified but not both
-  key_args_group = parent_parser.add_mutually_exclusive_group(required=True)
-  key_args_group.add_argument("-k", "--key", type=str, metavar="<path>", help=(
+  parent_named_args.add_argument("-k", "--key", type=str, metavar="<path>",
+      help=(
       "Path to a PEM formatted private key file used to sign the resulting"
       " link metadata."
       " (passing one of '--key' or '--gpg' is required)"))
@@ -190,7 +190,7 @@ examples:
       "Specify the key-type of the key specified by the '--key' option. If"
       " '--key-type' is not passed, default is \"rsa\"."))
 
-  key_args_group.add_argument("-g", "--gpg", nargs="?", const=True,
+  parent_named_args.add_argument("-g", "--gpg", nargs="?", const=True,
       metavar="<id>", help=(
       "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
       " passed without keyid, the keyring's default GPG key is used."
@@ -262,6 +262,11 @@ def main():
 
   # Override defaults in settings.py with environment variables and RCfiles
   in_toto.user_settings.set_settings()
+
+  # Regular signing and GPG signing are mutually exclusive
+  if (args.key is None) == (args.gpg is None):
+    parser.print_usage()
+    parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
