@@ -131,10 +131,8 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
 LOG = logging.getLogger("in_toto")
 
 
-def main():
-  """Parse arguments, load key from disk (if passed) and call
-  either runlib.in_toto_record_start or runlib.in_toto_record_stop depending
-  on the specified subcommand. """
+def create_parser():
+  """Create and return configured ArgumentParser instance. """
 
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -245,6 +243,16 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+
+  return parser
+
+
+def main():
+  """Parse arguments, load key from disk (if passed) and call
+  either runlib.in_toto_record_start or runlib.in_toto_record_stop depending
+  on the specified subcommand. """
+
+  parser = create_parser()
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

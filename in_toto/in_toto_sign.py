@@ -270,10 +270,8 @@ def _load_metadata(file_path):
     sys.exit(2)
 
 
-def main():
-  """Parse arguments, load link or layout metadata file and either sign
-  metadata file or verify its signatures. """
-
+def create_parser():
+  """Create and return configured ArgumentParser instance. """
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
@@ -377,6 +375,15 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+
+  return parser
+
+
+def main():
+  """Parse arguments, load link or layout metadata file and either sign
+  metadata file or verify its signatures. """
+
+  parser = create_parser()
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

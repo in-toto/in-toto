@@ -52,7 +52,7 @@ from in_toto import __version__
 LOG = logging.getLogger("in_toto")
 
 
-def parse_args():
+def create_parser():
   """
   <Purpose>
     A function which parses the user supplied arguments.
@@ -95,9 +95,9 @@ def parse_args():
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
-  args = parser.parse_args()
 
-  return args
+  return parser
+
 
 
 def main():
@@ -107,7 +107,8 @@ def main():
   depending upon the arguments. It then dumps the corresponding key files as:
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
-  args = parse_args()
+  parser = create_parser()
+  args = parser.parse_args()
 
   try:
     if args.prompt:

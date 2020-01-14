@@ -102,11 +102,8 @@ from in_toto import __version__
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
 
-
-
-def main():
-  """Parse arguments and call in_toto_verify. """
-
+def create_parser():
+  """Create and return configured ArgumentParser instance. """
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
@@ -205,6 +202,12 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+
+  return parser
+
+def main():
+  """Parse arguments and call in_toto_verify. """
+  parser = create_parser()
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
