@@ -60,3 +60,34 @@ LSTRIP_PATHS_KWARGS = {
            "then left stripped. All prefixes are checked to ensure none "
            "of them are a left substring of another.")
 }
+
+def title_case_action_groups(parser):
+  """Capitalize the first character of all words in the title of each action
+  group of the passed parser.
+
+  This is useful for consistency when using the sphinx argparse extension,
+  which title-cases default action groups only.
+
+  """
+  for action_group in parser._action_groups: # pylint: disable=protected-access
+    action_group.title = action_group.title.title()
+
+
+def sort_action_groups(parser, title_order=None):
+  """Sort action groups of passed parser by their titles according to the
+  passed (or a default) order.
+
+  """
+  if title_order is None:
+    title_order = ["Required Named Arguments", "Optional Arguments",
+        "Positional Arguments"]
+
+  action_group_dict = {}
+  for action_group in parser._action_groups: # pylint: disable=protected-access
+    action_group_dict[action_group.title] = action_group
+
+  ordered_action_groups = []
+  for title in title_order:
+    ordered_action_groups.append(action_group_dict[title])
+
+  parser._action_groups = ordered_action_groups # pylint: disable=protected-access
