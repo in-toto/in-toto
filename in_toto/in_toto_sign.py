@@ -109,6 +109,7 @@ import logging
 from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
+from in_toto.common_args import title_case_action_groups, sort_action_groups
 from in_toto import __version__
 
 import securesystemslib.formats
@@ -375,6 +376,8 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+  title_case_action_groups(parser)
+  sort_action_groups(parser)
 
   return parser
 

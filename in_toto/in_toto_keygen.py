@@ -46,6 +46,7 @@ import argparse
 import logging
 
 import in_toto.util
+from in_toto.common_args import title_case_action_groups
 from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -95,6 +96,7 @@ def create_parser():
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+  title_case_action_groups(parser)
 
   return parser
 

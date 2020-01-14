@@ -114,7 +114,7 @@ from in_toto import (util, runlib, __version__)
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
     BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
-    LSTRIP_PATHS_KWARGS)
+    LSTRIP_PATHS_KWARGS, sort_action_groups, title_case_action_groups)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -225,6 +225,8 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+  title_case_action_groups(parser)
+  sort_action_groups(parser)
 
   return parser
 
