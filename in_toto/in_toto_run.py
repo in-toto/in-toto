@@ -120,10 +120,8 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
 LOG = logging.getLogger("in_toto")
 
 
-def main():
-  """Parse arguments, load key from disk (prompts for password if key is
-  encrypted) and call in_toto_run. """
-
+def create_parser():
+  """Create and return configured ArgumentParser instance. """
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
@@ -227,6 +225,14 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+
+  return parser
+
+
+def main():
+  """Parse arguments, load key from disk (prompts for password if key is
+  encrypted) and call in_toto_run.  """
+  parser = create_parser()
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

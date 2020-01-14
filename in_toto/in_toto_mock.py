@@ -61,8 +61,7 @@ from in_toto import __version__
 LOG = logging.getLogger("in_toto")
 
 
-
-def main():
+def create_parser():
   """Parse arguments and call in_toto_mock. """
   parser = argparse.ArgumentParser(
      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -103,6 +102,13 @@ examples:
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+
+  return parser
+
+
+def main():
+  """Parse arguments and call in_toto_mock. """
+  parser = create_parser()
   args = parser.parse_args()
 
   # in-toto-mock should not be used to secure the supply chain but only to try
