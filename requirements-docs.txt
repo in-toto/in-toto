@@ -1,0 +1,6 @@
+# in-toto runtime dependencies required by sphinx
+-r requirements-pinned.txt
+
+# sphinx extensions
+sphinx-argparse
+
