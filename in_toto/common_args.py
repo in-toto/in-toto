@@ -25,6 +25,7 @@
   ```
 
 """
+from in_toto import util
 
 EXCLUDE_ARGS = ["--exclude"]
 EXCLUDE_KWARGS = {
@@ -32,10 +33,10 @@ EXCLUDE_KWARGS = {
   "required": False,
   "metavar": "<pattern>",
   "nargs": "+",
-  "help": ("Do not record 'materials/products' that match one of <pattern>."
-          " Passed exclude patterns override previously set patterns, using"
-          " e.g.: environment variables or RCfiles. See"
-          " ARTIFACT_EXCLUDE_PATTERNS documentation for additional info.")
+  "help": ("path patterns to match paths that should not be recorded as"
+           " 'materials' or 'products'. Passed patterns override patterns"
+           " defined in environment variables or config files. (see"
+           " 'ARTIFACT_EXCLUDE_PATTERNS' documentation for additional info)")
   }
 
 BASE_PATH_ARGS = ["--base-path"]
@@ -43,8 +44,10 @@ BASE_PATH_KWARGS = {
   "dest": "base_path",
   "required": False,
   "metavar": "<path>",
-  "help": ("Record 'materials/products' relative to <path>. If not set,"
-          " current working directory is used as base path.")
+  "help": ("base path for relative paths passed via '--materials' and"
+           " '--products'. It is used to locate and record artifacts, and is"
+           " not included in the resulting link metadata. Default is the"
+           " current working directory.")
   }
 
 LSTRIP_PATHS_ARGS = ["--lstrip-paths"]
@@ -53,13 +56,72 @@ LSTRIP_PATHS_KWARGS = {
   "required": False,
   "nargs": "+",
   "metavar": "<path>",
-  "help": ("Record the path of artifacts in link metadata after left"
-          " stripping the specified <path> from the full path. If"
-          " there are multiple prefixes specified, only a single "
-           "prefix can match the path of any artifact and that is "
-           "then left stripped. All prefixes are checked to ensure none "
-           "of them are a left substring of another.")
+  "help": ("path prefixes used to left-strip artifact paths before storing"
+           " them to the resulting link metadata. If multiple prefixes are"
+           " specified, only a single prefix can match the path of any"
+           " artifact and that is then left-stripped. All prefixes are checked"
+           " to ensure none of them are a left substring of another.")
 }
+
+KEY_ARGS = ["-k", "--key"]
+KEY_KWARGS = {
+ "type": str,
+ "metavar": "<path>",
+ "help": ("path to a private key file to sign the resulting link metadata."
+          " The keyid prefix is used as infix for the link metadata filename,"
+          " i.e. '<name>.<keyid prefix>.link'. See '--key-type' for available"
+          " formats. Passing one of '--key' or '--gpg' is required.")
+}
+
+KEY_TYPE_ARGS = ["-t", "--key-type"]
+KEY_TYPE_KWARGS = {
+  "dest": "key_type",
+  "type": str,
+  "choices": util.SUPPORTED_KEY_TYPES,
+  "default": util.KEY_TYPE_RSA,
+  "help": ("type of key specified by the '--key' option. '{rsa}' keys are"
+           " expected in 'PEM' format and '{ed25519}' in a custom"
+           " 'securesystemslib/json' format. Default is '{rsa}'.".format(
+           rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519))
+}
+
+
+GPG_ARGS = ["-g", "--gpg"]
+GPG_KWARGS = {
+  "nargs": "?",
+  "const": True,
+  "metavar": "<id>",
+  "help": ("GPG keyid to sign the resulting link metadata.  When '--gpg' is"
+           " passed without keyid, the default GPG key is used. The keyid"
+           " prefix is used as infix for the link metadata filename, i.e."
+           " '<name>.<keyid prefix>.link'. Passing one of '--key' or '--gpg'"
+           " is required.")
+}
+
+GPG_HOME_ARGS = ["--gpg-home"]
+GPG_HOME_KWARGS = {
+  "dest": "gpg_home",
+  "type": str,
+  "metavar": "<path>",
+  "help": ("path to GPG home directory to load GPG key identified by '--gpg'."
+           " If '--gpg-home' is not passed, the default GPG home directory is"
+           " used.")
+}
+
+VERBOSE_ARGS = ["-v", "--verbose"]
+VERBOSE_KWARGS = {
+  "dest": "verbose",
+  "action": "store_true",
+  "help": "show more output"
+}
+
+QUIET_ARGS = ["-q", "--quiet"]
+QUIET_KWARGS = {
+  "dest": "quiet",
+  "action": "store_true",
+  "help": "suppress all output"
+}
+
 
 def title_case_action_groups(parser):
   """Capitalize the first character of all words in the title of each action
