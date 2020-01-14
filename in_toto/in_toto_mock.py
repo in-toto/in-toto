@@ -67,20 +67,32 @@ def create_parser():
   parser = argparse.ArgumentParser(
      formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
-A stripped down variant of 'in-toto-run' that can be used to create unsigned
-link metadata for the passed command, recording all files in the current
-working directory as materials and products.
+in-toto-mock is a variant of 'in-toto-run' that can be used to create unsigned
+link metadata, using defaults for many of the 'in-toto-run' arguments.
+in-toto-mock verbosely executes the passed command, records all files in the
+current working directory as materials and products, and generates a link file
+under '<name>.link'.
 
-This command should not be used to secure the supply chain but only to try
-out the 'in-toto-run' command.""")
+This is useful to try out generating a link without the need for a key, or
+knowledge about all 'in-toto-run' arguments. It can also be used to quickly
+generate link metadata, inspect it and sign it retrospectively.
+
+""")
 
   parser.usage = "%(prog)s [-h] --name <name> -- <command> [args]"
 
-  parser.epilog = """
-examples:
-  Generate link metadata 'foo' for the activity of creating file 'bar'.
+  parser.epilog = """EXAMPLE USAGE
 
-    {prog} --name foo -- touch bar
+Generate unsigned link metadata 'foo.link' for the activity of creating file
+'bar', inspect it, and sign it with 'mykey'
+
+  # Generate unsigned link
+  {prog} --name foo -- touch bar
+  # Inspect and/or update unsigned link metadata
+  vi foo.link
+  # Sign the link, attesting to its validity, and write it to
+  # 'foo.<mykey keyid prefix>.link'.
+  in-toto-sign -k mykey -f foo.link
 
 """.format(prog=parser.prog)
 
@@ -90,15 +102,16 @@ examples:
   # FIXME: Do we limit the allowed characters for the name?
   named_args.add_argument("-n", "--name", type=str, required=True,
       metavar="<name>", help=(
-      "Name used to associate the resulting link metadata with the"
-      " corresponding step defined in an in-toto layout."))
+      "name for the resulting link metadata file, which is written to"
+      " '<name>.link'. It is also used to associate the link with a step"
+      " defined in an in-toto layout."))
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
   parser.add_argument("link_cmd", nargs="+", metavar="<command>",
       help=(
-      "Command to be executed with options and arguments, separated from"
-      " 'in-toto-mock' options by double dash '--'."))
+      "command to be executed. It is separated from named and optional"
+      " arguments by double dash '--'."))
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))

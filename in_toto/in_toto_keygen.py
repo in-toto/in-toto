@@ -68,30 +68,52 @@ def create_parser():
     Parsed arguments (args object)
   """
   parser = argparse.ArgumentParser(
-    description="in-toto-keygen : Generates the keys, stores them with the "
-                "supplied name (public key as: <name>.pub, private key as: "
-                "<name>), additionally prompts for a password when -p is "
-                "supplied and encrypts the private key with the same, "
-                "before storing")
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description="in-toto-keygen is a tool to generate, optionally encrypt, and"
+                " write cryptographic keys to disk. These keys may be used"
+                " with other in-toto tooling to e.g. sign or verify link or"
+                " layout metadata.")
 
-  in_toto_args = parser.add_argument_group("in-toto-keygen options")
+  parser.epilog = """EXAMPLE USAGE
 
-  in_toto_args.add_argument("-p", "--prompt", action="store_true",
-                            help="Prompts for a password and encrypts the "
-                            "private key with the same before storing")
+Generate RSA key pair of size 2048 bits, prompting for a password to encrypt
+the private key, and write 'alice' (private) and 'alice.pub' (public) as
+PEM-formatted key files to the current working directory.
 
-  in_toto_args.add_argument("-t", "--type", type=str,
+  in-toto-keygen -p -t rsa -b 2048 alice
+
+
+Generate unencrypted ed25519 key pair and write 'bob' (private) and 'bob.pub'
+(public) as securesystemslib/json-formatted key files to the current working
+directory.
+
+  in-toto-keygen -t ed25519 bob
+
+
+"""
+
+  parser.add_argument("-p", "--prompt", action="store_true",
+                            help="prompts for a password used to encrypt the"
+                            " private key before storing it")
+
+  parser.add_argument("-t", "--type", type=str,
                             choices=in_toto.util.SUPPORTED_KEY_TYPES,
                             default=in_toto.util.KEY_TYPE_RSA,
-                            help="Type of the key to be generated")
+                            help="type of the key to be generated. '{rsa}'"
+                            " keys are written in 'PEM' format and '{ed25519}'"
+                            " in a custom 'securesystemslib/json' format."
+                            " Default is '{rsa}'.".format(
+                            rsa=in_toto.util.KEY_TYPE_RSA,
+                            ed25519=in_toto.util.KEY_TYPE_ED25519))
 
-  in_toto_args.add_argument("name", type=str,
-                            help="The filename of the resulting key files",
-                            metavar="<filename>")
 
-  in_toto_args.add_argument("-b", "--bits", default=3072, type=int,
-                            help="The key size, or key length, of the RSA "
-                            "key.", metavar="<bits>")
+  parser.add_argument("name", type=str, metavar="<filename>",
+                            help="filename for the resulting key files, which"
+                            " are written to '<filename>' (private key) and"
+                            " '<filename>.pub' (public key).")
+
+  parser.add_argument("-b", "--bits", default=3072, type=int, metavar="<bits>",
+                            help="key size, or key length, of the RSA key")
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))

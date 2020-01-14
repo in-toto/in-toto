@@ -123,9 +123,12 @@ import in_toto.user_settings
 import in_toto.runlib
 from in_toto import __version__
 
-from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS,
-    BASE_PATH_ARGS, BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS,
-    LSTRIP_PATHS_KWARGS, title_case_action_groups, sort_action_groups)
+from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
+    BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS, LSTRIP_PATHS_KWARGS, KEY_ARGS,
+    KEY_KWARGS, KEY_TYPE_KWARGS, KEY_TYPE_ARGS, GPG_ARGS, GPG_KWARGS,
+    GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
+    QUIET_KWARGS, sort_action_groups, title_case_action_groups)
+
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -137,26 +140,26 @@ def create_parser():
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
-Creates a signed link metadata file in two steps, in order to provide evidence
-for supply chain steps that cannot be carried out by a single command (for
-which 'in-toto-run' should be used). Returns nonzero value on failure and zero
-otherwise.""")
+in-toto-record creates a signed link metadata file in two steps, in order to
+provide evidence for supply chain steps that cannot be carried out by a single
+command (for which 'in-toto-run' should be used). It returns a non-zero value
+on failure and zero otherwise.""")
 
-  parser.epilog = """
-examples:
-  Create link metadata file in two commands, signing it with the private key
-  loaded from 'key_file', recording all files in the CWD as materials (on
-  start), and as products (on stop).
+  parser.epilog = """EXAMPLE USAGE
 
-    {prog} start -n edit-files -k path/to/key_file -m .
-    {prog} stop -n edit-files -k path/to/key_file -p .
+Create link metadata file in two commands, signing it with the private key
+loaded from 'key_file', recording all files in the CWD as materials (on
+start), and as products (on stop).
+
+  {prog} start -n edit-files -k path/to/key_file -m .
+  {prog} stop -n edit-files -k path/to/key_file -p .
 
 
-  Create link metadata file signed with the default GPG key from the default
-  GPG keychain and record a file named 'foo' as material and product.
+Create link metadata file signed with the default GPG key from the default
+GPG home directory and record a file named 'foo' as material and product.
 
-    {prog} start -n edit-foo --gpg -m path/to/foo
-    {prog} stop -n edit-foo --gpg -p path/to/foo
+  {prog} start -n edit-foo --gpg -m path/to/foo
+  {prog} stop -n edit-foo --gpg -p path/to/foo
 
 """.format(prog=parser.prog)
 
@@ -174,55 +177,33 @@ examples:
   # FIXME: Do we limit the allowed characters for the name?
   parent_named_args.add_argument("-n", "--step-name", type=str, required=True,
       metavar="<name>", help=(
-      "Name used to associate the resulting link metadata with the"
-      " corresponding step defined in an in-toto layout."))
+      "name for the resulting link metadata file. It is also used to associate"
+      " the link with a step defined in an in-toto layout."))
 
-  # Either a key or a gpg key id have to be specified but not both
-  parent_named_args.add_argument("-k", "--key", type=str, metavar="<path>",
-      help=(
-      "Path to a PEM formatted private key file used to sign the resulting"
-      " link metadata."
-      " (passing one of '--key' or '--gpg' is required)"))
+  parent_named_args.add_argument(*KEY_ARGS, **KEY_KWARGS)
+  parent_parser.add_argument(*KEY_TYPE_ARGS, **KEY_TYPE_KWARGS)
 
-  parent_parser.add_argument("-t", "--key-type", dest="key_type",
-      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
-      default=in_toto.util.KEY_TYPE_RSA, help=(
-      "Specify the key-type of the key specified by the '--key' option. If"
-      " '--key-type' is not passed, default is \"rsa\"."))
-
-  parent_named_args.add_argument("-g", "--gpg", nargs="?", const=True,
-      metavar="<id>", help=(
-      "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
-      " passed without keyid, the keyring's default GPG key is used."
-      " (passing one of '--key' or '--gpg' is required)"))
-
-  parent_parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      metavar="<path>", help=(
-      "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
-      " '--gpg-home' is not passed, the default GPG keyring is used."))
+  parent_named_args.add_argument(*GPG_ARGS, **GPG_KWARGS)
+  parent_parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
 
   parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
   parent_parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
 
-
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
-  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", action="store_true")
-
-  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
-      help="Suppress all output.", action="store_true")
+  verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
+  verbosity_args.add_argument(*QUIET_ARGS, **QUIET_KWARGS)
 
   subparser_start = subparsers.add_parser("start", parents=[parent_parser],
       help=(
-      "Creates a preliminary link file recording the paths and hashes of"
+      "creates a preliminary link file recording the paths and hashes of"
       " the passed materials and signs it with the passed functionary's"
       " key. The resulting link file is stored as"
       " '.<name>.<keyid prefix>.link-unfinished'."))
 
   subparser_stop = subparsers.add_parser("stop", parents=[parent_parser],
       help=(
-      "Expects preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
+      "expects preliminary link file '.<name>.<keyid prefix>.link-unfinished'"
       " in the CWD, signed by the passed functionary's key. If found, it"
       " records and adds the paths and hashes of the passed products to the"
       " link metadata file, updates the signature and renames the file to"
@@ -230,15 +211,15 @@ examples:
 
   subparser_start.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', metavar="<path>", help=(
-      "Paths to files or directories, whose paths and hashes are stored in the"
+      "paths to files or directories, whose paths and hashes are stored in the"
       " resulting link metadata's material section when running the 'start'"
-      " subcommand. Symlinks are followed."))
+      " subcommand. Symlinks to files are followed."))
 
   subparser_stop.add_argument("-p", "--products", type=str, required=False,
       nargs='+', metavar="<path>", help=(
-      "Paths to files or directories, whose paths and hashes are stored in the"
+      "paths to files or directories, whose paths and hashes are stored in the"
       " resulting link metadata's product section when running the 'stop'"
-      " subcommand. Symlinks are followed."))
+      " subcommand. Symlinks to files are followed."))
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
@@ -266,7 +247,7 @@ def main():
   # Regular signing and GPG signing are mutually exclusive
   if (args.key is None) == (args.gpg is None):
     parser.print_usage()
-    parser.error("Specify either `--key <key path>` or `--gpg [<keyid>]`")
+    parser.error("Specify either '--key <key path>' or '--gpg [<keyid>]'")
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
