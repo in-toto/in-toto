@@ -19,22 +19,6 @@
   integer as an input, which specifies the length of the RSA key to be
   generated. By default it is set as 3072.
 
-  General Usage:
-  in-toto-keygen [-p] [-t {ed25519, rsa}] [--bits=<bits>] <filename>
-
-  Example Usage:
-  Suppose Bob wants to create the rsa keys of size 2048 bits and dump them with
-  file name "bob_keys" in the current directory. He also wants to encrypt the
-  so created private key with his choice of passphrase. The keys would then be
-  created, the private key would be encrypted and dumped as "./bob_keys" and
-  public key would be dumped as "./bob_keys.pub". Bob will use the following
-  command:
-
-  in-toto-keygen -p -t rsa -b 2048 bob_keys
-
-  in-toto-keygen -p -t ed25519 bob_keys
-
-
 <Return Codes>
   2 if an exception occurred during argument parsing
   1 if an exception occurred
