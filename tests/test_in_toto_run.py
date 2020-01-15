@@ -147,13 +147,14 @@ class TestInTotoRunTool(tests.common.CliTestCase):
       self.assert_cli_sys_exit(args4, 1)
 
       # Test with lstrip path
-      args5 = named_args + ["--lstrip-paths", self.test_dir] + positional_args
+      strip_prefix = self.test_artifact[:-1]
+      args5 = named_args + ["--lstrip-paths", strip_prefix] + positional_args
       self.assert_cli_sys_exit(args5, 0)
       link_metadata = Metablock.load(self.test_link_rsa)
       self.assertListEqual(list(link_metadata.signed.materials.keys()),
-          [self.test_artifact])
+          [self.test_artifact[len(strip_prefix):]])
       self.assertListEqual(list(link_metadata.signed.products.keys()),
-          [self.test_artifact])
+          [self.test_artifact[len(strip_prefix):]])
 
 
   def test_main_with_unencrypted_ed25519_key(self):
