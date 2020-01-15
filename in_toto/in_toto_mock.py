@@ -20,36 +20,6 @@
   1 if an exception occurred
   0 if no exception occurred
 
-<Help>
-usage: in-toto-mock [-h] --name <name> -- <command> [args]
-
-A stripped down variant of 'in-toto-run' that can be used to create unsigned
-link metadata for the passed command, recording all files in the current
-working directory as materials and products.
-
-This command should not be used to secure the supply chain but only to try
-out the 'in-toto-run' command.
-
-positional arguments:
-  <command>             Command to be executed with options and arguments,
-                        separated from 'in-toto-mock' options by double dash
-                        '--'.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --version             display version number and exit
-
-required named arguments:
-  -n <name>, --name <name>
-                        Name used to associate the resulting link metadata
-                        with the corresponding step defined in an in-toto
-                        layout.
-
-examples:
-  Generate link metadata 'foo' for the activity of creating file 'bar'.
-
-    in-toto-mock --name foo -- touch bar
-
 """
 import sys
 import argparse
