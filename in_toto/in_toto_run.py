@@ -185,13 +185,15 @@ examples:
   named_args.add_argument("-g", "--gpg", nargs="?", const=True, metavar="<id>",
       help=(
       "GPG keyid used to sign the resulting link metadata.  When '--gpg' is"
-      " passed without keyid, the keyring's default GPG key is used."
-      " (passing one of '--key' or '--gpg' is required)"))
+      " passed without keyid, the default GPG key is used. The keyid prefix"
+      " is used as infix for the link metadata filename, i.e."
+      " '<name>.<keyid prefix>.link'. (passing one of '--key' or '--gpg' is"
+      " required)"))
 
   parser.add_argument("--gpg-home", dest="gpg_home", type=str,
       metavar="<path>", help=(
-      "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
-      " '--gpg-home' is not passed, the default GPG keyring is used."))
+      "path to GPG home directory to load GPG key identified by '--gpg'.  If"
+      " '--gpg-home' is not passed, the default GPG home directory is used."))
 
   parser.add_argument("-s", "--record-streams", dest="record_streams",
       default=False, action="store_true", help=(
