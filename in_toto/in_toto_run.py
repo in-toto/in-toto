@@ -265,10 +265,11 @@ examples:
       key = util.import_private_key_from_file(args.key, args.key_type)
 
     runlib.in_toto_run(
-        args.step_name, args.materials, args.products,
-        args.link_cmd, args.record_streams, key, gpg_keyid, gpg_use_default,
-        args.gpg_home, args.exclude_patterns, args.base_path,
-        args.lstrip_paths)
+        args.step_name, args.materials, args.products, args.link_cmd,
+        record_streams=args.record_streams, signing_key=key,
+        gpg_keyid=gpg_keyid, gpg_use_default=gpg_use_default,
+        gpg_home=args.gpg_home, exclude_patterns=args.exclude_patterns,
+        base_path=args.base_path, lstrip_paths=args.lstrip_paths)
 
   except Exception as e:
     LOG.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
