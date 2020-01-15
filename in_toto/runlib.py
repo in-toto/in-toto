@@ -475,7 +475,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     gpg_use_default: (optional)
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
-            Path to GPG keyring (if not set the default keyring is used).
+            Path to GPG home directory (if not set the default gpg home
+            directory is used).
     exclude_patterns: (optional)
             Artifacts matched by the pattern are excluded from the materials
             and products sections in the resulting link.
@@ -617,7 +618,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_use_default: (optional)
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
-            Path to GPG keyring (if not set the default keyring is used).
+            Path to GPG home directory (if not set the default gpg home
+            directory is used).
     exclude_patterns: (optional)
             Artifacts matched by the pattern are excluded from the materials
             section in the resulting preliminary link.
@@ -754,7 +756,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_use_default: (optional)
             If True, link metadata is signed with default gpg key.
     gpg_home: (optional)
-            Path to GPG keyring (if not set the default keyring is used).
+            Path to GPG home directory (if not set the default gpg home
+            directory is used).
     exclude_patterns: (optional)
             Artifacts matched by the pattern are excluded from the products
             sections in the resulting link.
@@ -869,7 +872,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     # FIXME: Currently there is no way to know the default GPG key's keyid
     # before signing. As a workaround we extract the keyid of the preliminary
     # Link file's signature and try to export a pubkey from the gpg
-    # keyring. We do this even if a gpg_keyid was specified, because gpg
+    # home directory. We do this even if a gpg_keyid was specified, because gpg
     # accepts many different ids (mail, name, parts of an id, ...) but we
     # need a specific format.
     LOG.info("Verifying preliminary link signature using default gpg key...")
