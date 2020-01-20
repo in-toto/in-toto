@@ -131,9 +131,11 @@ GPG home directory and record a file named 'foo' as material and product.
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
-  for _parser in [subparser_start, subparser_stop]:
+  for _parser, _order in [
+      (parser, ["Positional Arguments", "Optional Arguments"]),
+      (subparser_start, None), (subparser_stop, None)]:
     title_case_action_groups(_parser)
-    sort_action_groups(_parser)
+    sort_action_groups(_parser, _order)
 
   return parser
 

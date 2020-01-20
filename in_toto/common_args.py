@@ -141,8 +141,8 @@ def sort_action_groups(parser, title_order=None):
 
   """
   if title_order is None:
-    title_order = ["Required Named Arguments", "Optional Arguments",
-        "Positional Arguments"]
+    title_order = ["Required Named Arguments", "Positional Arguments",
+        "Optional Arguments"]
 
   action_group_dict = {}
   for action_group in parser._action_groups: # pylint: disable=protected-access

@@ -65,8 +65,8 @@ class TestArgparseActionGroupHelpers(unittest.TestCase):
     # Test default custom order of action groups titles (which are title-cased)
     in_toto.common_args.title_case_action_groups(self.parser)
     in_toto.common_args.sort_action_groups(self.parser)
-    default_custom_order = ["Required Named Arguments", "Optional Arguments",
-        "Positional Arguments"]
+    default_custom_order = ["Required Named Arguments", "Positional Arguments",
+    "Optional Arguments"]
 
     # Assert successful(title-casing) re-ordering
     self.assertListEqual([group.title for group in self.parser._action_groups],
