@@ -68,9 +68,9 @@ KEY_KWARGS = {
  "type": str,
  "metavar": "<path>",
  "help": ("path to a private key file to sign the resulting link metadata."
-          " The keyid prefix is used as infix for the link metadata filename,"
-          " i.e. '<name>.<keyid prefix>.link'. See '--key-type' for available"
-          " formats. Passing one of '--key' or '--gpg' is required.")
+          " The keyid prefix is used as an infix for the link metadata"
+          " filename, i.e. '<name>.<keyid prefix>.link'. See '--key-type' for"
+          " available formats. Passing one of '--key' or '--gpg' is required.")
 }
 
 KEY_TYPE_ARGS = ["-t", "--key-type"]
@@ -80,7 +80,7 @@ KEY_TYPE_KWARGS = {
   "choices": util.SUPPORTED_KEY_TYPES,
   "default": util.KEY_TYPE_RSA,
   "help": ("type of key specified by the '--key' option. '{rsa}' keys are"
-           " expected in 'PEM' format and '{ed25519}' in a custom"
+           " expected in a 'PEM' format and '{ed25519}' in a custom"
            " 'securesystemslib/json' format. Default is '{rsa}'.".format(
            rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519))
 }
@@ -92,8 +92,8 @@ GPG_KWARGS = {
   "const": True,
   "metavar": "<id>",
   "help": ("GPG keyid to sign the resulting link metadata.  When '--gpg' is"
-           " passed without keyid, the default GPG key is used. The keyid"
-           " prefix is used as infix for the link metadata filename, i.e."
+           " passed without the keyid, the default GPG key is used. The keyid"
+           " prefix is used as an infix for the link metadata filename, i.e."
            " '<name>.<keyid prefix>.link'. Passing one of '--key' or '--gpg'"
            " is required.")
 }
@@ -103,9 +103,9 @@ GPG_HOME_KWARGS = {
   "dest": "gpg_home",
   "type": str,
   "metavar": "<path>",
-  "help": ("path to GPG home directory to load GPG key identified by '--gpg'."
-           " If '--gpg-home' is not passed, the default GPG home directory is"
-           " used.")
+  "help": ("path to a GPG home directory used to load a GPG key identified"
+           " by '--gpg'. If '--gpg-home' is not passed, the default GPG home"
+           " directory is used.")
 }
 
 VERBOSE_ARGS = ["-v", "--verbose"]

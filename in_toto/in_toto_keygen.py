@@ -60,9 +60,9 @@ def create_parser():
 
   parser.epilog = """EXAMPLE USAGE
 
-Generate RSA key pair of size 2048 bits, prompting for a password to encrypt
-the private key, and write 'alice' (private) and 'alice.pub' (public) as
-PEM-formatted key files to the current working directory.
+Generate RSA key pair of size 2048 bits, prompt for a password to encrypt
+the private key, and write 'alice' (private encrypted) and 'alice.pub' (public)
+as PEM-formatted key files to the current working directory.
 
   in-toto-keygen -p -t rsa -b 2048 alice
 
@@ -84,9 +84,9 @@ directory.
                             choices=in_toto.util.SUPPORTED_KEY_TYPES,
                             default=in_toto.util.KEY_TYPE_RSA,
                             help="type of the key to be generated. '{rsa}'"
-                            " keys are written in 'PEM' format and '{ed25519}'"
-                            " in a custom 'securesystemslib/json' format."
-                            " Default is '{rsa}'.".format(
+                            " keys are written in a 'PEM' format and"
+                            " '{ed25519}' in a custom 'securesystemslib/json'"
+                            " format. Default is '{rsa}'.".format(
                             rsa=in_toto.util.KEY_TYPE_RSA,
                             ed25519=in_toto.util.KEY_TYPE_ED25519))
 

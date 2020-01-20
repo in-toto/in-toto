@@ -261,7 +261,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
       type=str, choices=util.SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--key' option. '{rsa}' keys are"
-      " expected in 'PEM' format and '{ed25519}' in a custom"
+      " expected in a 'PEM' format and '{ed25519}' in a custom"
       " 'securesystemslib/json' format. If multiple keys are passed via"
       " '--key' the same amount of key types must be passed. Key"
       " types are then associated with keys by index. If '--key-type' is"
@@ -278,9 +278,9 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
   # Only when signing
   parser.add_argument("-o", "--output", type=str, metavar="<path>",
       help=(
-      "path to store metadata file to be signed. If not passed, layout"
-      " metadata is written to the path of the input file and link metadata is"
-      " written to '<name>.<keyid prefix>.link'"))
+      "path to location where the metadata file is stored after signing. If"
+      " not passed, layout metadata is written to the path of the input file"
+      " and link metadata is written to '<name>.<keyid prefix>.link'"))
 
   # Only when signing
   parser.add_argument("-a", "--append", action="store_true",
