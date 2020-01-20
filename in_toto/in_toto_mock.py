@@ -43,9 +43,9 @@ in-toto-mock verbosely executes the passed command, records all files in the
 current working directory as materials and products, and generates a link file
 under '<name>.link'.
 
-This is useful to try out generating a link without the need for a key, or
-knowledge about all 'in-toto-run' arguments. It can also be used to quickly
-generate link metadata, inspect it and sign it retrospectively.
+This is useful for trying out how to generate a link without the need for a
+key, or knowledge about all 'in-toto-run' arguments. It can also be used to
+quickly generate link metadata, inspect it and sign it retroactively.
 
 """)
 
@@ -81,7 +81,7 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
   parser.add_argument("link_cmd", nargs="+", metavar="<command>",
       help=(
       "command to be executed. It is separated from named and optional"
-      " arguments by double dash '--'."))
+      " arguments by a double dash '--'."))
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))

@@ -2,8 +2,8 @@ Command Line Tools
 ==================
 
 in-toto provides various command line tools that you can use to generate,
-consume, modify and verify in-toto metadata. Detailed usage instructions and
-examples are available for each tool below.
+consume, modify and verify in-toto metadata. Detailed usage instructions for
+each tool, along with examples, are provided below.
 
 
 Evidence Generation

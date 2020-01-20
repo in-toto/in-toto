@@ -43,7 +43,7 @@ def create_parser():
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
-in-toto-run is the main command line interface for in-toto to generate link
+in-toto-run is the main command line interface for generating link
 metadata while carrying out a supply chain step. To do this, it wraps the
 passed command, and attempts to track all relevant information about the
 wrapped command's execution. It records paths and hashes of 'materials' (files
@@ -63,24 +63,25 @@ file with the private key loaded from 'key_file'.
   {prog} -n tag -p . -k key_file -- git tag v1.0
 
 
-Create tarball, storing files in 'project' directory as materials and the
-tarball as product, signing the link file with GPG key '...7E0C8A17'.
+Create a tarball, storing files in 'project' directory as materials and the
+tarball as product, signing the link file with a GPG key '...7E0C8A17'.
 
   {prog} -n package -m project -p project.tar.gz \\
          -g 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
          -- tar czf project.tar.gz project
 
 
-Not all supply chain steps require a command to be executed. in-toto can still
-generate signed attestations, e.g. for review work. In that case, files may be
-marked as materials to the manual review process and a command is omitted.
+Not all supply chain steps require that a command be executed. in-toto can
+still generate signed attestations, e.g. for review work. In that case, files
+may be marked as materials for the manual review process and the command be
+omitted.
 
   {prog} -n review -k key_file -m document.pdf -x
 
 
 If an artifact that should be recorded is not in the current working directory
 (or one of its subdirectories) it can be located using the base path option.
-Note that only the relative path, 'document.pdf' in this example, is stored
+Note that in this example only the relative path, 'document.pdf' is stored
 along with its hash in the resulting link metadata file.
 
   {prog} -n review -k key_file -m document.pdf \\
@@ -110,14 +111,14 @@ e.g. 'document.pdf'.
 
   parser.add_argument("-m", "--materials", type=str, required=False,
       nargs='+', metavar="<path>", help=(
-      "paths to files or directories, whose paths and hashes are stored in the"
-      " resulting link metadata before the command is executed. Symlinks to"
-      " files are followed."))
+      "paths to files or directories, for which paths and hashes are stored in"
+      " the resulting link metadata before the command is executed. Symlinks"
+      " to files are followed."))
 
   parser.add_argument("-p", "--products", type=str, required=False,
       nargs='+', metavar="<path>", help=(
-      "paths to files or directories, whose paths and hashes are stored in the"
-      " resulting link metadata after the command is executed. Symlinks to"
+      "paths to files or directories, for which paths and hashes are stored in"
+      " the resulting link metadata after the command is executed. Symlinks to"
       " files are followed."))
 
   parser.add_argument("-s", "--record-streams", dest="record_streams",
@@ -151,7 +152,7 @@ e.g. 'document.pdf'.
   parser.add_argument("link_cmd", nargs="*", metavar="<command>",
       help=(
       "command to be executed. It is separated from named and optional"
-      " arguments by double dash '--'."))
+      " arguments by a double dash '--'."))
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))

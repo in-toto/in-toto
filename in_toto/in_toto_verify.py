@@ -47,9 +47,9 @@ as defined in the passed in-toto supply chain layout. Evidence for supply chain
 steps must be available in the form of link metadata files named
 '<step name>.<functionary keyid prefix>.link'.
 
-Both 'in-toto-run' and 'in-toto-record' generate link metadata named like this.
-If you require special handling of the in-toto link metadata files, please take
-a look at the library api to modify this behavior.
+Both 'in-toto-run' and 'in-toto-record' generate link metadata named in this
+manner. If you require special handling of the in-toto link metadata files,
+please take a look at the library api to modify this behavior.
 
 The verification includes the following checks:
   * the layout is signed with the passed keys,
@@ -64,8 +64,9 @@ sequentially, followed by processing the inspections' artifact rules.
 
 If the layout includes sublayouts, the verification routine will recurse into a
 subdirectory named '<step name>.<keyid prefix>', where all the links relevant
-to that sublayout must exist. The sublayout itself will be contained where the
-link file usually is (i.e. '<step name>.<keyid prefix>.link')
+to that sublayout must exist. The sublayout itself must be in the same
+directory as the other links of the superlayout. (i.e. '<step name>.<keyid
+prefix>.link')
 
 The command returns 2 if it is called with wrong arguments, 1 if in-toto
 verification fails and 0 if verification passes. """)
@@ -80,7 +81,7 @@ Verify supply chain in 'root.layout', signed with private part of
   {prog} --layout root.layout --layout-keys key_file.pub
 
 
-Verify supply chain like above but load links corresponding to steps of
+Verify supply chain as above but load links corresponding to steps of
 'root.layout' from 'link_dir'.
 
   {prog} --layout root.layout --layout-keys key_file.pub \\
@@ -88,10 +89,11 @@ Verify supply chain like above but load links corresponding to steps of
 
 
 Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
-whose public part can be found in the GPG keyring at '~/.gnupg'.
+for which the public part can be found in the GPG keyring at '~/.gnupg'.
 
   {prog} --layout root.layout \\
-      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 --gpg-home ~/.gnupg
+      --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
+      --gpg-home ~/.gnupg
 
 
 """.format(prog=parser.prog)
@@ -115,7 +117,7 @@ whose public part can be found in the GPG keyring at '~/.gnupg'.
       type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--layout-keys' option. '{rsa}' keys are"
-      " expected in 'PEM' format and '{ed25519}' in a custom"
+      " expected in a 'PEM' format and '{ed25519}' in a custom"
       " 'securesystemslib/json' format. If multiple keys are passed via"
       " '--layout-keys' the same amount of key types must be passed. Key"
       " types are then associated with keys by index. If '--key-types' is"
@@ -124,7 +126,7 @@ whose public part can be found in the GPG keyring at '~/.gnupg'.
 
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
       help=(
-      "GPG keyid, identifying a public key in the GPG keyring, used to verify"
+      "GPG keyid, identifying a public key in the GPG keyring used to verify"
       " the passed root layout's signatures."
       " Passing at least one key using '--layout-keys' and/or '--gpg' is"
       " required. For each passed key the layout must carry a valid"
@@ -132,8 +134,8 @@ whose public part can be found in the GPG keyring at '~/.gnupg'.
 
   parser.add_argument("--link-dir", dest="link_dir", type=str,
       metavar="<path>", default=".", help=(
-          "path to directory where link metadata files for steps defined in"
-          " the root layout should be loaded from. If not passed, links are"
+          "path to directory from which link metadata files for steps defined"
+          " in the root layout should be loaded. If not passed, links are"
           " loaded from the current working directory."))
 
   parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
