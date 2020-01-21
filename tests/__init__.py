@@ -1,5 +1,16 @@
 import sys
 import logging
+
+# Increase timeout to accommodate tests on AppVeyor, which seems to have
+# troubles finishing gpg operations within the securesystemslib default of 3s.
+# NOTE: This must be done before importing in_toto, because in_toto
+# transitively imports 'securesystemslib.process', which locks the default
+# timeout arguments in its functions. Also note that this only works if in_toto
+# tests are invoked as modules, e.g. via 'runtests.py' or 'python -m ...'.
+# TODO: This needs to be fixed in securesystemslib
+import securesystemslib.settings
+securesystemslib.settings.SUBPROCESS_TIMEOUT = 100
+
 import in_toto
 
 class CapturableStreamHandler(logging.StreamHandler):
