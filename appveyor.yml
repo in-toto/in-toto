@@ -28,5 +28,8 @@ install:
 
 build: false
 
+before_test:
+  - gpg-agent --daemon
+
 test_script:
   - python tests/runtests.py
