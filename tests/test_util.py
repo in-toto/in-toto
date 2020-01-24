@@ -62,6 +62,7 @@ class TestUtil(unittest.TestCase):
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.gnupg_home = "rsa"
 
     os.chdir(self.test_dir)
 

@@ -51,6 +51,7 @@ class TestLayoutMethods(unittest.TestCase):
     shutil.copytree(
         os.path.join(tests_dir, "gpg_keyrings", "rsa"),
         self.gnupg_home)
+    self.gnupg_home = "rsa"
 
     # Copy keys to temp test dir
     key_names = ["bob", "bob.pub", "carl.pub"]

@@ -56,6 +56,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     # Copy gpg keyring to temp dir
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.gnupg_home = "rsa"
 
     self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"

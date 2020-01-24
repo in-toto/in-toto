@@ -1166,6 +1166,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     self.test_dir = os.path.realpath(tempfile.mkdtemp())
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.gnupg_home = "rsa"
 
     self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"

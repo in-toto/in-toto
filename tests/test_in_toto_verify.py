@@ -246,6 +246,7 @@ class TestInTotoVerifyToolGPG(tests.common.CliTestCase):
 
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.gnupg_home = "rsa"
 
     self.owner_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
 
