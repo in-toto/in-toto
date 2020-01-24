@@ -4,17 +4,17 @@ environment:
       PYTHON_VERSION: 3.7
       PYTHON_ARCH: 32
 
-    - PYTHON: "C:\\Python36"
-      PYTHON_VERSION: 3.6
-      PYTHON_ARCH: 32
+    # - PYTHON: "C:\\Python36"
+    #   PYTHON_VERSION: 3.6
+    #   PYTHON_ARCH: 32
 
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: 3.5
-      PYTHON_ARCH: 32
+    # - PYTHON: "C:\\Python35"
+    #   PYTHON_VERSION: 3.5
+    #   PYTHON_ARCH: 32
 
-    - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: 2.7
-      PYTHON_ARCH: 32
+    # - PYTHON: "C:\\Python27"
+    #   PYTHON_VERSION: 2.7
+    #   PYTHON_ARCH: 32
 
 init:
   - ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%
@@ -28,8 +28,11 @@ install:
 
 build: false
 
-before_test:
-  - gpg-agent --daemon
+# before_test:
+#   - gpg-agent --daemon
 
 test_script:
   - python tests/runtests.py
+
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
