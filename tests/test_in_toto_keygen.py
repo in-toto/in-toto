@@ -9,12 +9,10 @@
   See LICENSE for licensing information.
 <Purpose>
   Test in_toto_keygen command line tool.
-"""
 
-import os
+"""
 import sys
 import unittest
-import shutil
 if sys.version_info >= (3, 3):
   from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
 else:
