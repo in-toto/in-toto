@@ -16,27 +16,21 @@
 import os
 import json
 import shutil
-import tempfile
 import unittest
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
-import tests.common
-
-WORKING_DIR = os.getcwd()
+from tests.common import CliTestCase, TmpDirMixin
 
 
 
-class TestInTotoSignTool(tests.common.CliTestCase):
+class TestInTotoSignTool(CliTestCase, TmpDirMixin):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
   cli_main_func = staticmethod(in_toto_sign_main)
 
   @classmethod
   def setUpClass(self):
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
@@ -46,8 +40,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
         os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
 
     # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Copy demo files to temp dir
     for file_path in os.listdir(demo_files):
@@ -74,9 +67,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp dir. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
 
   def test_sign_and_verify(self):

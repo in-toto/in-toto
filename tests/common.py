@@ -25,6 +25,7 @@
 import os
 import sys
 import inspect
+import tempfile
 
 import unittest
 if sys.version_info >= (3, 3):
@@ -43,6 +44,25 @@ def run_with_portable_scripts(decorated):
     pass
 
   return Patched
+
+
+class TmpDirMixin():
+  """Mixin with classmethods to create and change into a temporary directory,
+  and to change back to the original CWD and remove the temporary directory.
+
+  """
+  @classmethod
+  def set_up_test_dir(cls):
+    """Back up CWD, and create and change into temporary directory. """
+    cls.original_cwd = os.getcwd()
+    cls.test_dir = os.path.realpath(tempfile.mkdtemp())
+    os.chdir(cls.test_dir)
+
+  @classmethod
+  def tear_down_test_dir(cls):
+    """Change back to original CWD and remove temporary directory. """
+    os.chdir(cls.original_cwd)
+    shutil.rmtree(cls.test_dir)
 
 
 
