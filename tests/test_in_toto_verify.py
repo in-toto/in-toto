@@ -232,8 +232,6 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.set_up_test_dir()
     self.set_up_gpg_keys()
 
-    self.owner_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-
     for fn in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
@@ -244,7 +242,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
     layout_template = Metablock.load("demo.layout.template")
 
     self.layout_path = "gpg_signed.layout"
-    layout_template.sign_gpg(self.owner_gpg_keyid, self.gnupg_home)
+    layout_template.sign_gpg(self.gpg_key_0C8A17, self.gnupg_home)
     layout_template.dump(self.layout_path)
 
 
@@ -256,7 +254,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
     """ Successfully test demo supply chain where the layout lists gpg keys
     as functionary keys and is signed with a gpg key. """
     args = ["--layout", self.layout_path,
-            "--gpg", self.owner_gpg_keyid, "--gpg-home", self.gnupg_home]
+            "--gpg", self.gpg_key_0C8A17, "--gpg-home", self.gnupg_home]
 
     self.assert_cli_sys_exit(args, 0)
 

@@ -43,8 +43,6 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     self.set_up_test_dir()
     self.set_up_gpg_keys()
 
-    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
 
     # Copy keys to temp test dir
     key_names = ["bob", "bob.pub", "carl.pub"]
@@ -164,8 +162,8 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     layout.add_functionary_keys_from_paths([self.pubkey_path1,
         self.pubkey_path2])
 
-    layout.add_functionary_keys_from_gpg_keyids([self.gpg_keyid1,
-        self.gpg_keyid2], gpg_home=self.gnupg_home)
+    layout.add_functionary_keys_from_gpg_keyids([self.gpg_key_768C43,
+        self.gpg_key_85DA58], gpg_home=self.gnupg_home)
 
     layout._validate_keys()
 

@@ -1153,24 +1153,20 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
     self.set_up_test_dir()
     self.set_up_gpg_keys()
 
-    self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
-
     master_key = securesystemslib.gpg.functions.export_pubkey(
-        self.master, self.gnupg_home)
-    sub_key = master_key["subkeys"][self.sub]
+        self.gpg_key_0C8A17, self.gnupg_home)
+    sub_key = master_key["subkeys"][self.gpg_key_D924E9]
 
     # We need a gpg key without subkeys to test the normal scenario (M M M),
     # because keys with signing subkeys always use that subkey for signing.
-    self.master2 = "7B3ABB26B97B655AB9296BD15B0BD02E1C768C43"
     master_key2 = securesystemslib.gpg.functions.export_pubkey(
-        self.master2, self.gnupg_home)
+        self.gpg_key_768C43, self.gnupg_home)
 
 
     self.pub_key_dict = {
-      self.master: master_key,
-      self.sub: sub_key,
-      self.master2: master_key2
+      self.gpg_key_0C8A17: master_key,
+      self.gpg_key_D924E9: sub_key,
+      self.gpg_key_768C43: master_key2
     }
 
     self.step_name = "name"
@@ -1207,7 +1203,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
   def test_verify_link_signature_thresholds__M_M_M(self):
     """Normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master2, self.master2, self.master2)
+        self.gpg_key_768C43, self.gpg_key_768C43, self.gpg_key_768C43)
 
     #print("path: {}".format(os.environ['PATH']))
     verify_link_signature_thresholds(layout, chain_link_dict)
@@ -1221,22 +1217,22 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
     # Even if gpg would use the masterkey, these scenarios are not allowed,
     # see table in docstring of testcase
     signature = securesystemslib.gpg.functions.create_signature(
-        b"data", self.master, self.gnupg_home)
+        b"data", self.gpg_key_0C8A17, self.gnupg_home)
 
-    self.assertTrue(signature["keyid"] == self.sub)
+    self.assertTrue(signature["keyid"] == self.gpg_key_D924E9)
 
 
   def test_verify_link_signature_thresholds__S_M_M(self):
     """Allowed trust delegation. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.master, self.master)
+        self.gpg_key_D924E9, self.gpg_key_0C8A17, self.gpg_key_0C8A17)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
   def test_verify_link_signature_thresholds__S_M_S(self):
     """Cannot associate keys. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.master, self.sub)
+        self.gpg_key_D924E9, self.gpg_key_0C8A17, self.gpg_key_D924E9)
     with self.assertRaises(ThresholdVerificationError):
       verify_link_signature_thresholds(layout, chain_link_dict)
 
@@ -1244,14 +1240,14 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
   def test_verify_link_signature_thresholds__S_S_M(self):
     """No trust delegation and can find key in key store. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.sub, self.master)
+        self.gpg_key_D924E9, self.gpg_key_D924E9, self.gpg_key_0C8A17)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
   def test_verify_link_signature_thresholds__S_S_S(self):
     """Generalizes to normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.sub, self.sub)
+        self.gpg_key_D924E9, self.gpg_key_D924E9, self.gpg_key_D924E9)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 

@@ -53,11 +53,6 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.set_up_test_dir()
     self.set_up_gpg_keys()
 
-    # Copy gpg keyring
-    self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.default_gpg_subkeyid = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
-    self.non_default_gpg_keyid = "8288ef560ed3795f9df2c0db56193089b285da58"
-
     self.rsa_key_path = "test_key_rsa"
     generate_and_write_rsa_keypair(self.rsa_key_path)
     self.rsa_key = import_private_key_from_file(self.rsa_key_path,
@@ -176,12 +171,12 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
   def test_main_with_specified_gpg_key(self):
     """Test CLI command with specified gpg key. """
     args = ["-n", self.test_step,
-            "--gpg", self.non_default_gpg_keyid,
+            "--gpg", self.gpg_key_85DA58,
             "--gpg-home", self.gnupg_home, "--", "python", "--version"]
 
     self.assert_cli_sys_exit(args, 0)
     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.non_default_gpg_keyid)
+        keyid=self.gpg_key_85DA58)
 
     self.assertTrue(os.path.exists(link_filename))
 
@@ -194,7 +189,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.assert_cli_sys_exit(args, 0)
 
     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.default_gpg_subkeyid)
+        keyid=self.gpg_key_D924E9)
 
     self.assertTrue(os.path.exists(link_filename))
 
