@@ -68,10 +68,14 @@ class TmpDirMixin():
 
 class GPGKeysMixin():
   """Mixin with classmethod to copy GPG rsa test keyring to a subdir 'rsa' in
-  the the CWD.
+  the CWD.
 
   """
   gnupg_home = "rsa"
+  gpg_key_768C43 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
+  gpg_key_85DA58 = "8288ef560ed3795f9df2c0db56193089b285da58"
+  gpg_key_0C8A17 = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
+  gpg_key_D924E9 = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
 
   @classmethod
   def set_up_gpg_keys(cls):

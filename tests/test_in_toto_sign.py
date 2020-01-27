@@ -43,10 +43,6 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     for file_path in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
 
-    self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
-
     self.layout_path = "demo.layout.template"
     self.link_path = "package.2f89b927.link"
     self.alice_path = "alice"
@@ -151,7 +147,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     # Verify Layout signed with default gpg key
     self.assert_cli_sys_exit([
         "-f", "tmp_gpg.layout",
-        "-g", self.default_gpg_keyid,
+        "-g", self.gpg_key_0C8A17,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 0)
@@ -159,13 +155,13 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     # Sign Layout with two gpg keys
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         "-o", "tmp_gpg.layout",
         "--gpg-home", self.gnupg_home
         ], 0)
     self.assert_cli_sys_exit([
         "-f", "tmp_gpg.layout",
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 0)
@@ -198,7 +194,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     # Fail with wrong gpg keyid (not used for signing)
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
-        "-g", self.default_gpg_keyid,
+        "-g", self.gpg_key_0C8A17,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 1)
@@ -256,7 +252,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     # Wrong multiple gpg keys for Link metadata
     self.assert_cli_sys_exit([
         "-f", self.link_path,
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         ], 2)
 
     # Only one of gpg or regular key can be passed

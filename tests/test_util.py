@@ -216,11 +216,7 @@ class TestUtil(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   def test_import_gpg_public_keys_from_keyring_as_dict(self):
     """Import gpg public keys from keyring and return KEYDICT. """
 
-    keyids = [
-      "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17",
-      "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
-      "8288ef560ed3795f9df2c0db56193089b285da58"
-    ]
+    keyids = [self.gpg_key_0C8A17, self.gpg_key_768C43, self.gpg_key_85DA58]
 
     # Succefully import public keys from keychain as keydictionary
     key_dict = import_gpg_public_keys_from_keyring_as_dict(keyids,

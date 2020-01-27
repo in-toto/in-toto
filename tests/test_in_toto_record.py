@@ -49,8 +49,6 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.set_up_test_dir()
     self.set_up_gpg_keys()
 
-    self.gpg_keyid = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-
     self.rsa_key_path = "test_key_rsa"
     in_toto.util.generate_and_write_rsa_keypair(self.rsa_key_path)
 
@@ -139,7 +137,7 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
           self.test_artifact2, self.test_artifact2], 0)
 
       # Start/stop sign with specified gpg keyid
-      args = ["--step-name", "test7", "--gpg", self.gpg_keyid, "--gpg-home",
+      args = ["--step-name", "test7", "--gpg", self.gpg_key_768C43, "--gpg-home",
           self.gnupg_home]
       self.assert_cli_sys_exit(["start"] + args, 0)
       self.assert_cli_sys_exit(["stop"] + args, 0)
@@ -153,7 +151,7 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
 
   def test_glob_no_unfinished_files(self):
     """Test record stop with missing unfinished files when globbing (gpg). """
-    args = ["--step-name", "test-no-glob", "--gpg", self.gpg_keyid,
+    args = ["--step-name", "test-no-glob", "--gpg", self.gpg_key_768C43,
         "--gpg-home", self.gnupg_home]
     self.assert_cli_sys_exit(["stop"] + args, 1)
 
@@ -164,7 +162,7 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     fn2 = UNFINISHED_FILENAME_FORMAT.format(step_name=name, keyid="b12345678")
     open(fn1, "w").close()
     open(fn2, "w").close()
-    args = ["--step-name", name, "--gpg", self.gpg_keyid,
+    args = ["--step-name", name, "--gpg", self.gpg_key_768C43,
         "--gpg-home", self.gnupg_home]
     self.assert_cli_sys_exit(["stop"] + args, 1)
 
