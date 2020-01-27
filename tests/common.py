@@ -25,6 +25,7 @@
 import os
 import sys
 import inspect
+import shutil
 import tempfile
 
 import unittest
@@ -63,6 +64,21 @@ class TmpDirMixin():
     """Change back to original CWD and remove temporary directory. """
     os.chdir(cls.original_cwd)
     shutil.rmtree(cls.test_dir)
+
+
+class GPGKeysMixin():
+  """Mixin with classmethod to copy GPG rsa test keyring to a subdir 'rsa' in
+  the the CWD.
+
+  """
+  gnupg_home = "rsa"
+
+  @classmethod
+  def set_up_gpg_keys(cls):
+    gpg_keys = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
+
+    shutil.copytree(gpg_keys, os.path.join(os.getcwd(), cls.gnupg_home))
 
 
 

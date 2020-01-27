@@ -46,22 +46,16 @@ import securesystemslib.exceptions
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
     import_ed25519_publickey_from_file)
 
-from tests.common import TmpDirMixin
+from tests.common import TmpDirMixin, GPGKeysMixin
 
-class TestUtil(unittest.TestCase, TmpDirMixin):
+class TestUtil(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """Test various util functions. Mostly related to RSA key creation or
   loading."""
 
   @classmethod
   def setUpClass(self):
-    # Copy gpg keyring
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     self.set_up_test_dir()
-
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.set_up_gpg_keys()
 
 
   @classmethod

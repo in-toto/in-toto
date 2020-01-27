@@ -27,7 +27,7 @@ from in_toto.in_toto_verify import main as in_toto_verify_main
 from in_toto.util import import_rsa_key_from_file
 from securesystemslib.interface import import_ed25519_privatekey_from_file
 
-from tests.common import CliTestCase, TmpDirMixin
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
 
 
@@ -211,7 +211,7 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin):
+class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """ Tests in-toto-verify like TestInTotoVerifyTool but with
   gpg project owner and functionary keys. """
   cli_main_func = staticmethod(in_toto_verify_main)
@@ -221,10 +221,6 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin):
   def setUpClass(self):
     """Copy test gpg rsa keyring, gpg demo metadata files and demo final
     product to tmp test dir. """
-    # Copy gpg keyring
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     # Copy gpg demo metadata files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files_gpg")
@@ -234,9 +230,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin):
         os.path.dirname(os.path.realpath(__file__)), "scripts")
 
     self.set_up_test_dir()
-
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.set_up_gpg_keys()
 
     self.owner_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
 
