@@ -19,7 +19,6 @@
 
 import os
 import unittest
-import tempfile
 import shutil
 
 from in_toto.models.layout import Layout, Step, Inspection
@@ -29,8 +28,9 @@ import in_toto.exceptions
 import in_toto.verifylib
 import securesystemslib.exceptions
 
+from tests.common import TmpDirMixin
 
-class TestLayoutMethods(unittest.TestCase):
+class TestLayoutMethods(unittest.TestCase, TmpDirMixin):
   """Test Layout methods. """
 
   @classmethod
@@ -39,13 +39,11 @@ class TestLayoutMethods(unittest.TestCase):
     demo files. """
     self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
     self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-
-    # Create directory to run the tests without having everything blow up
-    self.working_dir = os.getcwd()
 
     # Copy GPG keyring to temp test dir
     tests_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+
+    self.set_up_test_dir()
 
     self.gnupg_home = os.path.join(self.test_dir, "rsa")
     shutil.copytree(
@@ -63,15 +61,10 @@ class TestLayoutMethods(unittest.TestCase):
     self.pubkey_path1 = os.path.join(self.test_dir, "bob.pub")
     self.pubkey_path2 = os.path.join(self.test_dir, "carl.pub")
 
-    os.chdir(self.test_dir)
-
-
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
 
   def test_set_relative_expiration(self):

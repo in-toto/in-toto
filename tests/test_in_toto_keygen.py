@@ -15,7 +15,6 @@ import os
 import sys
 import unittest
 import shutil
-import tempfile
 if sys.version_info >= (3, 3):
   from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
 else:
@@ -29,24 +28,20 @@ from in_toto.util import (generate_and_write_rsa_keypair,
 
 import securesystemslib
 
-WORKING_DIR = os.getcwd()
+from tests.common import TmpDirMixin
 
-class TestInTotoKeyGenTool(unittest.TestCase):
+
+class TestInTotoKeyGenTool(unittest.TestCase, TmpDirMixin):
   """Test in_toto_keygen's main() - requires sys.argv patching; error
   logs/exits on Exception. """
 
   @classmethod
   def setUpClass(self):
-    # Create directory where the verification will take place
-    self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_main_required_args(self):
     """Test in-toto-keygen CLI tool with required arguments. """

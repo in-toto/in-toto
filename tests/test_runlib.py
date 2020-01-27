@@ -37,6 +37,9 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 import securesystemslib.formats
 import securesystemslib.exceptions
 
+from tests.common import TmpDirMixin
+
+
 class Test_ApplyExcludePatterns(unittest.TestCase):
   """Test _apply_exclude_patterns(names, exclude_patterns) """
 
@@ -83,7 +86,7 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
     self.assertListEqual(result, expected)
 
 
-class TestRecordArtifactsAsDict(unittest.TestCase):
+class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
   """Test record_artifacts_as_dict(artifacts). """
 
   @classmethod
@@ -98,18 +101,13 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
             `-- foosubsub
     """
 
-    self.working_dir = os.getcwd()
-
     # Backup and clear user set exclude patterns and base path
     self.artifact_exclude_orig = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
     self.artifact_base_path_orig = in_toto.settings.ARTIFACT_BASE_PATH
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
     in_toto.settings.ARTIFACT_BASE_PATH = None
 
-    # mkdtemp uses $TMPDIR, which might contain a symlink
-    # but we want the absolute location instead
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Create files on 3 levels
     os.mkdir("subdir")
@@ -126,8 +124,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
   @classmethod
   def tearDownClass(self):
     """Change back to working dir, remove temp directory, restore settings. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
     in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = self.artifact_exclude_orig
     in_toto.settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
 
@@ -424,11 +421,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase):
 
   def test_hash_artifact_passing_algorithm(self):
     """Test _hash_artifact passing hash algorithm. """
-    os.chdir(self.test_dir)
     self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
 
 
-class TestInTotoRun(unittest.TestCase):
+class TestInTotoRun(unittest.TestCase, TmpDirMixin):
   """"
   Tests runlib.in_toto_run() with different arguments
 
@@ -444,11 +440,7 @@ class TestInTotoRun(unittest.TestCase):
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
     material, read key pair. """
-
-    self.working_dir = os.getcwd()
-
-    self.test_dir = tempfile.mkdtemp()
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     self.step_name = "test_step"
     self.key_path = "test_key"
@@ -461,9 +453,8 @@ class TestInTotoRun(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
+
 
   def tearDown(self):
     """Remove link file if it was created. """
@@ -564,17 +555,14 @@ class TestInTotoRun(unittest.TestCase):
           ["python", "--version"], True, self.key_pub)
 
 
-class TestInTotoRecordStart(unittest.TestCase):
+class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
   """"Test in_toto_record_start(step_name, key, material_list). """
 
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory, generate key pair and dummy
     material, read key pair. """
-    self.working_dir = os.getcwd()
-
-    self.test_dir = tempfile.mkdtemp()
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     self.key_path = "test_key"
     generate_and_write_rsa_keypair(self.key_path)
@@ -588,9 +576,7 @@ class TestInTotoRecordStart(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_UNFINISHED_FILENAME_FORMAT(self):
     """Test if the unfinished filname format. """
@@ -620,17 +606,14 @@ class TestInTotoRecordStart(unittest.TestCase):
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
 
-class TestInTotoRecordStop(unittest.TestCase):
+class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
   """"Test in_toto_record_stop(step_name, key, product_list). """
 
   @classmethod
   def setUpClass(self):
     """Create and change into temporary directory, generate two key pairs
     and dummy product. """
-    self.working_dir = os.getcwd()
-
-    self.test_dir = tempfile.mkdtemp()
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     self.key_path = "test-key"
     self.key_path2 = "test-key2"
@@ -649,9 +632,7 @@ class TestInTotoRecordStop(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_create_metadata_with_expected_product(self):
     """Test record stop records expected product. """
