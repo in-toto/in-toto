@@ -28,34 +28,28 @@ import in_toto.exceptions
 import in_toto.verifylib
 import securesystemslib.exceptions
 
-from tests.common import TmpDirMixin
+from tests.common import TmpDirMixin, GPGKeysMixin
 
-class TestLayoutMethods(unittest.TestCase, TmpDirMixin):
+class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """Test Layout methods. """
 
   @classmethod
   def setUpClass(self):
     """Create temporary test directory and copy gpg keychain, and rsa keys from
     demo files. """
-    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
-
-    # Copy GPG keyring to temp test dir
-    tests_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "..", "demo_files")
 
     self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(
-        os.path.join(tests_dir, "gpg_keyrings", "rsa"),
-        self.gnupg_home)
+    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
+    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
 
     # Copy keys to temp test dir
     key_names = ["bob", "bob.pub", "carl.pub"]
     for name in key_names:
-      shutil.copy(
-        os.path.join(tests_dir, "demo_files", name),
-        os.path.join(self.test_dir, name))
+      shutil.copy(os.path.join(demo_files, name), name)
 
     self.key_path = os.path.join(self.test_dir, "bob")
     self.pubkey_path1 = os.path.join(self.test_dir, "bob.pub")

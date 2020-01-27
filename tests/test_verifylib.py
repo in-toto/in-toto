@@ -57,7 +57,7 @@ import securesystemslib.gpg.functions
 import securesystemslib.exceptions
 import in_toto.exceptions
 
-from tests.common import TmpDirMixin
+from tests.common import TmpDirMixin, GPGKeysMixin
 
 
 class Test_RaiseOnBadRetval(unittest.TestCase):
@@ -1117,7 +1117,8 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase, TmpDirMixin):
+class TestInTotoVerifyThresholdsGpgSubkeys(
+    unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """
   Test the following 8 scenarios for combinations of link authorization,
   where a link is either signed by a master or subkey (SIG), and the
@@ -1149,15 +1150,8 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase, TmpDirMixin):
 
   @classmethod
   def setUpClass(self):
-
-    # Find demo files
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     self.set_up_test_dir()
-
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
+    self.set_up_gpg_keys()
 
     self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"

@@ -32,11 +32,11 @@ import in_toto.util
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from in_toto.in_toto_record import main as in_toto_record_main
 
-from tests.common import CliTestCase, TmpDirMixin
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
 
 
-class TestInTotoRecordTool(CliTestCase, TmpDirMixin):
+class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """Test in_toto_record's main() - requires sys.argv patching; and
   in_toto_record_start/in_toto_record_stop - calls runlib and error logs/exits
   on Exception. """
@@ -46,16 +46,9 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin):
   def setUpClass(self):
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
-
-    # Find gpg keyring
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
-    # Copy gpg keyring to temp dir
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
     self.gpg_keyid = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
 
     self.rsa_key_path = "test_key_rsa"

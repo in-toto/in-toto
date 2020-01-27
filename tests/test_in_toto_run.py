@@ -38,10 +38,10 @@ from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
-from tests.common import CliTestCase, TmpDirMixin
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
 
-class TestInTotoRunTool(CliTestCase, TmpDirMixin):
+class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
   cli_main_func = staticmethod(in_toto_run_main)
@@ -50,19 +50,13 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin):
   def setUpClass(self):
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
-
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
     # Copy gpg keyring
     self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
     self.default_gpg_subkeyid = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
     self.non_default_gpg_keyid = "8288ef560ed3795f9df2c0db56193089b285da58"
-
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
 
     self.rsa_key_path = "test_key_rsa"
     generate_and_write_rsa_keypair(self.rsa_key_path)
