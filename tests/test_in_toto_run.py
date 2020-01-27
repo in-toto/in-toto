@@ -21,7 +21,6 @@
 import os
 import sys
 import unittest
-import shutil
 import glob
 
 # Use external backport 'mock' on versions under 3.3

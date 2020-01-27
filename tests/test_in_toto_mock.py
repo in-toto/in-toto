@@ -18,7 +18,6 @@
 """
 import os
 import unittest
-import shutil
 import logging
 
 from in_toto.in_toto_mock import main as in_toto_mock_main

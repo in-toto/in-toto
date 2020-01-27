@@ -17,10 +17,7 @@
   Test util functions.
 
 """
-
-import os
 import sys
-import shutil
 import unittest
 
 if sys.version_info >= (3, 3):
