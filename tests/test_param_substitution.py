@@ -22,7 +22,6 @@
 
 import os
 import shutil
-import tempfile
 import unittest
 
 import in_toto.settings
@@ -34,6 +33,7 @@ from in_toto.util import (import_rsa_key_from_file,
 
 import in_toto.exceptions
 
+from tests.common import TmpDirMixin
 
 class Test_SubstituteArtifacts(unittest.TestCase):
   """Test parameter substitution on artifact rules. """
@@ -140,7 +140,7 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
       substitute_parameters(self.layout, {"NOEDITOR": "vim"})
 
 
-class Test_SubstituteOnVerify(unittest.TestCase):
+class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
   """Test verifylib.verify_command_alignment(command, expected_command)"""
 
   @classmethod
@@ -155,16 +155,11 @@ class Test_SubstituteOnVerify(unittest.TestCase):
         }]
       })
 
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
-    # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Copy demo files to temp dir
     for fn in os.listdir(demo_files):
@@ -177,8 +172,7 @@ class Test_SubstituteOnVerify(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""

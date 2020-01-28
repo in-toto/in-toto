@@ -16,50 +16,32 @@
 import os
 import json
 import shutil
-import tempfile
 import unittest
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
-import tests.common
-
-WORKING_DIR = os.getcwd()
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
 
 
-class TestInTotoSignTool(tests.common.CliTestCase):
+class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
   cli_main_func = staticmethod(in_toto_sign_main)
 
   @classmethod
   def setUpClass(self):
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
-    # Find gpg keyring
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
     # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
     # Copy demo files to temp dir
     for file_path in os.listdir(demo_files):
       shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
-
-    # Copy gpg keyring to temp dir
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
-
-    self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
 
     self.layout_path = "demo.layout.template"
     self.link_path = "package.2f89b927.link"
@@ -74,9 +56,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp dir. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
 
   def test_sign_and_verify(self):
@@ -167,7 +147,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     # Verify Layout signed with default gpg key
     self.assert_cli_sys_exit([
         "-f", "tmp_gpg.layout",
-        "-g", self.default_gpg_keyid,
+        "-g", self.gpg_key_0C8A17,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 0)
@@ -175,13 +155,13 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     # Sign Layout with two gpg keys
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         "-o", "tmp_gpg.layout",
         "--gpg-home", self.gnupg_home
         ], 0)
     self.assert_cli_sys_exit([
         "-f", "tmp_gpg.layout",
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 0)
@@ -214,7 +194,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     # Fail with wrong gpg keyid (not used for signing)
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
-        "-g", self.default_gpg_keyid,
+        "-g", self.gpg_key_0C8A17,
         "--gpg-home", self.gnupg_home,
         "--verify"
         ], 1)
@@ -272,7 +252,7 @@ class TestInTotoSignTool(tests.common.CliTestCase):
     # Wrong multiple gpg keys for Link metadata
     self.assert_cli_sys_exit([
         "-f", self.link_path,
-        "-g", self.gpg_keyid1, self.gpg_keyid2,
+        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
         ], 2)
 
     # Only one of gpg or regular key can be passed

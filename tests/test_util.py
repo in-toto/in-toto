@@ -17,11 +17,7 @@
   Test util functions.
 
 """
-
-import os
 import sys
-import shutil
-import tempfile
 import unittest
 
 if sys.version_info >= (3, 3):
@@ -47,29 +43,22 @@ import securesystemslib.exceptions
 from securesystemslib.interface import (import_ed25519_privatekey_from_file,
     import_ed25519_publickey_from_file)
 
-class TestUtil(unittest.TestCase):
+from tests.common import TmpDirMixin, GPGKeysMixin
+
+class TestUtil(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """Test various util functions. Mostly related to RSA key creation or
   loading."""
 
   @classmethod
   def setUpClass(self):
-    # Create directory where the verification will take place
-    self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
-    # Copy gpg keyring
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
-
-    os.chdir(self.test_dir)
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
+
 
   def test_unrecognized_key_type(self):
     """Trigger UnsupportedKeyTypeError. """
@@ -224,11 +213,7 @@ class TestUtil(unittest.TestCase):
   def test_import_gpg_public_keys_from_keyring_as_dict(self):
     """Import gpg public keys from keyring and return KEYDICT. """
 
-    keyids = [
-      "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17",
-      "7b3abb26b97b655ab9296bd15b0bd02e1c768c43",
-      "8288ef560ed3795f9df2c0db56193089b285da58"
-    ]
+    keyids = [self.gpg_key_0C8A17, self.gpg_key_768C43, self.gpg_key_85DA58]
 
     # Succefully import public keys from keychain as keydictionary
     key_dict = import_gpg_public_keys_from_keyring_as_dict(keyids,

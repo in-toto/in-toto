@@ -21,9 +21,7 @@
 import os
 import sys
 import unittest
-import shutil
 import glob
-import tempfile
 
 # Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
@@ -39,10 +37,10 @@ from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
-import tests.common
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
 
-class TestInTotoRunTool(tests.common.CliTestCase):
+class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
   cli_main_func = staticmethod(in_toto_run_main)
@@ -51,21 +49,8 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def setUpClass(self):
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
-
-    self.working_dir = os.getcwd()
-
-    self.test_dir = tempfile.mkdtemp()
-
-    # Copy gpg keyring
-    self.default_gpg_keyid = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.default_gpg_subkeyid = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
-    self.non_default_gpg_keyid = "8288ef560ed3795f9df2c0db56193089b285da58"
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
-
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
     self.rsa_key_path = "test_key_rsa"
     generate_and_write_rsa_keypair(self.rsa_key_path)
@@ -85,9 +70,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def tearDown(self):
     for link in glob.glob("*.link"):
@@ -187,12 +170,12 @@ class TestInTotoRunTool(tests.common.CliTestCase):
   def test_main_with_specified_gpg_key(self):
     """Test CLI command with specified gpg key. """
     args = ["-n", self.test_step,
-            "--gpg", self.non_default_gpg_keyid,
+            "--gpg", self.gpg_key_85DA58,
             "--gpg-home", self.gnupg_home, "--", "python", "--version"]
 
     self.assert_cli_sys_exit(args, 0)
     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.non_default_gpg_keyid)
+        keyid=self.gpg_key_85DA58)
 
     self.assertTrue(os.path.exists(link_filename))
 
@@ -205,7 +188,7 @@ class TestInTotoRunTool(tests.common.CliTestCase):
     self.assert_cli_sys_exit(args, 0)
 
     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.default_gpg_subkeyid)
+        keyid=self.gpg_key_D924E9)
 
     self.assertTrue(os.path.exists(link_filename))
 

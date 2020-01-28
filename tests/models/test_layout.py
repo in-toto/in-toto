@@ -19,7 +19,6 @@
 
 import os
 import unittest
-import tempfile
 import shutil
 
 from in_toto.models.layout import Layout, Step, Inspection
@@ -29,49 +28,35 @@ import in_toto.exceptions
 import in_toto.verifylib
 import securesystemslib.exceptions
 
+from tests.common import TmpDirMixin, GPGKeysMixin
 
-class TestLayoutMethods(unittest.TestCase):
+class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """Test Layout methods. """
 
   @classmethod
   def setUpClass(self):
     """Create temporary test directory and copy gpg keychain, and rsa keys from
     demo files. """
-    self.gpg_keyid1 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    self.gpg_keyid2 = "8288ef560ed3795f9df2c0db56193089b285da58"
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
+    demo_files = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "..", "demo_files")
 
-    # Create directory to run the tests without having everything blow up
-    self.working_dir = os.getcwd()
+    self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
-    # Copy GPG keyring to temp test dir
-    tests_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(
-        os.path.join(tests_dir, "gpg_keyrings", "rsa"),
-        self.gnupg_home)
 
     # Copy keys to temp test dir
     key_names = ["bob", "bob.pub", "carl.pub"]
     for name in key_names:
-      shutil.copy(
-        os.path.join(tests_dir, "demo_files", name),
-        os.path.join(self.test_dir, name))
+      shutil.copy(os.path.join(demo_files, name), name)
 
     self.key_path = os.path.join(self.test_dir, "bob")
     self.pubkey_path1 = os.path.join(self.test_dir, "bob.pub")
     self.pubkey_path2 = os.path.join(self.test_dir, "carl.pub")
 
-    os.chdir(self.test_dir)
-
-
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
 
   def test_set_relative_expiration(self):
@@ -177,8 +162,8 @@ class TestLayoutMethods(unittest.TestCase):
     layout.add_functionary_keys_from_paths([self.pubkey_path1,
         self.pubkey_path2])
 
-    layout.add_functionary_keys_from_gpg_keyids([self.gpg_keyid1,
-        self.gpg_keyid2], gpg_home=self.gnupg_home)
+    layout.add_functionary_keys_from_gpg_keyids([self.gpg_key_768C43,
+        self.gpg_key_85DA58], gpg_home=self.gnupg_home)
 
     layout._validate_keys()
 

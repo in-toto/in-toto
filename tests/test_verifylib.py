@@ -57,6 +57,8 @@ import securesystemslib.gpg.functions
 import securesystemslib.exceptions
 import in_toto.exceptions
 
+from tests.common import TmpDirMixin, GPGKeysMixin
+
 
 class Test_RaiseOnBadRetval(unittest.TestCase):
   """Tests internal function that raises an exception if the passed
@@ -82,7 +84,7 @@ class Test_RaiseOnBadRetval(unittest.TestCase):
       _raise_on_bad_retval(-1, "bad command")
 
 
-class TestRunAllInspections(unittest.TestCase):
+class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
   """Test verifylib.run_all_inspections(layout)"""
 
   @classmethod
@@ -106,17 +108,13 @@ class TestRunAllInspections(unittest.TestCase):
       })
 
     # Create directory where the verification will take place
-    self.working_dir = os.getcwd()
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
     with open("foo", "w") as f:
       f.write("foo")
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
     """Create new dummy test dir and set as base path, must ignore. """
@@ -672,7 +670,7 @@ class TestVerifyAllItemRules(unittest.TestCase):
     verify_all_item_rules(self.inspections, self.links)
 
 
-class TestInTotoVerify(unittest.TestCase):
+class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   """
   Tests verifylib.in_toto_verify(layout_path, layout_key_paths).
 
@@ -698,8 +696,6 @@ class TestInTotoVerify(unittest.TestCase):
 
     ...and dumps various layouts for different test scenarios
     """
-    # Backup original cwd
-    self.working_dir = os.getcwd()
 
     # Find demo files
     demo_files = os.path.join(
@@ -710,8 +706,7 @@ class TestInTotoVerify(unittest.TestCase):
         os.path.dirname(os.path.realpath(__file__)), "scripts")
 
     # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Copy demo files to temp dir
     for fn in os.listdir(demo_files):
@@ -732,7 +727,6 @@ class TestInTotoVerify(unittest.TestCase):
     self.layout_failing_inspection_rule_path = "failing-inspection-rule.layout"
     self.layout_failing_inspection_retval = "failing-inspection-retval.layout"
     self.layout_no_steps_no_inspections = "no_steps_no_inspections.layout"
-
 
     # Import layout signing keys
     alice = import_rsa_key_from_file("alice")
@@ -796,9 +790,8 @@ class TestInTotoVerify(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp dir. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
+
 
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
@@ -1124,7 +1117,8 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 @unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
-class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
+class TestInTotoVerifyThresholdsGpgSubkeys(
+    unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """
   Test the following 8 scenarios for combinations of link authorization,
   where a link is either signed by a master or subkey (SIG), and the
@@ -1156,47 +1150,31 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
 
   @classmethod
   def setUpClass(self):
-    # Create directory to run the tests without having everything blow up
-    self.working_dir = os.getcwd()
-
-    # Find demo files
-    gpg_keyring_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "gpg_keyrings", "rsa")
-
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    self.gnupg_home = os.path.join(self.test_dir, "rsa")
-    shutil.copytree(gpg_keyring_path, self.gnupg_home)
-
-    self.master = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    self.sub = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
+    self.set_up_test_dir()
+    self.set_up_gpg_keys()
 
     master_key = securesystemslib.gpg.functions.export_pubkey(
-        self.master, self.gnupg_home)
-    sub_key = master_key["subkeys"][self.sub]
+        self.gpg_key_0C8A17, self.gnupg_home)
+    sub_key = master_key["subkeys"][self.gpg_key_D924E9]
 
     # We need a gpg key without subkeys to test the normal scenario (M M M),
     # because keys with signing subkeys always use that subkey for signing.
-    self.master2 = "7B3ABB26B97B655AB9296BD15B0BD02E1C768C43"
     master_key2 = securesystemslib.gpg.functions.export_pubkey(
-        self.master2, self.gnupg_home)
+        self.gpg_key_768C43, self.gnupg_home)
 
 
     self.pub_key_dict = {
-      self.master: master_key,
-      self.sub: sub_key,
-      self.master2: master_key2
+      self.gpg_key_0C8A17: master_key,
+      self.gpg_key_D924E9: sub_key,
+      self.gpg_key_768C43: master_key2
     }
 
     self.step_name = "name"
 
-    os.chdir(self.test_dir)
-
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp test directory. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def _verify_link_signature_tresholds(self, sig_id, auth_id, key_id):
     metablock = Metablock(signed=Link(name=self.step_name))
@@ -1225,7 +1203,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
   def test_verify_link_signature_thresholds__M_M_M(self):
     """Normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.master2, self.master2, self.master2)
+        self.gpg_key_768C43, self.gpg_key_768C43, self.gpg_key_768C43)
 
     #print("path: {}".format(os.environ['PATH']))
     verify_link_signature_thresholds(layout, chain_link_dict)
@@ -1239,22 +1217,22 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
     # Even if gpg would use the masterkey, these scenarios are not allowed,
     # see table in docstring of testcase
     signature = securesystemslib.gpg.functions.create_signature(
-        b"data", self.master, self.gnupg_home)
+        b"data", self.gpg_key_0C8A17, self.gnupg_home)
 
-    self.assertTrue(signature["keyid"] == self.sub)
+    self.assertTrue(signature["keyid"] == self.gpg_key_D924E9)
 
 
   def test_verify_link_signature_thresholds__S_M_M(self):
     """Allowed trust delegation. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.master, self.master)
+        self.gpg_key_D924E9, self.gpg_key_0C8A17, self.gpg_key_0C8A17)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
   def test_verify_link_signature_thresholds__S_M_S(self):
     """Cannot associate keys. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.master, self.sub)
+        self.gpg_key_D924E9, self.gpg_key_0C8A17, self.gpg_key_D924E9)
     with self.assertRaises(ThresholdVerificationError):
       verify_link_signature_thresholds(layout, chain_link_dict)
 
@@ -1262,14 +1240,14 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
   def test_verify_link_signature_thresholds__S_S_M(self):
     """No trust delegation and can find key in key store. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.sub, self.master)
+        self.gpg_key_D924E9, self.gpg_key_D924E9, self.gpg_key_0C8A17)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
   def test_verify_link_signature_thresholds__S_S_S(self):
     """Generalizes to normal scenario. """
     layout, chain_link_dict = self._verify_link_signature_tresholds(
-        self.sub, self.sub, self.sub)
+        self.gpg_key_D924E9, self.gpg_key_D924E9, self.gpg_key_D924E9)
     verify_link_signature_thresholds(layout, chain_link_dict)
 
 
@@ -1343,7 +1321,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(unittest.TestCase):
         "Unexpected log message: {}".format(msg))
 
 
-class TestVerifySublayouts(unittest.TestCase):
+class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
   """Tests verifylib.verify_sublayouts(layout, reduced_chain_link_dict).
   Call with one-step super layout that has a sublayout (demo layout). """
 
@@ -1352,10 +1330,6 @@ class TestVerifySublayouts(unittest.TestCase):
     """Creates and changes into temporary directory and prepares two layouts.
     The superlayout, which has one step and its sublayout, which is the usual
     demo layout (write code, package, inspect tar). """
-
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
@@ -1365,8 +1339,7 @@ class TestVerifySublayouts(unittest.TestCase):
         os.path.dirname(os.path.realpath(__file__)), "scripts")
 
     # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Copy demo files to temp dir
     for fn in os.listdir(demo_files):
@@ -1415,9 +1388,8 @@ class TestVerifySublayouts(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp dir. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
+
 
   def test_verify_demo_as_sublayout(self):
     """Test super layout's passing sublayout verification. """
@@ -1428,20 +1400,16 @@ class TestVerifySublayouts(unittest.TestCase):
 
 
 
-class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase):
+class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
   """Test verifylib.in_toto_verify with multiple levels of sublayouts. """
 
   def test_verify_multi_level_sublayout(self):
-    # Backup original cwd
-    working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
     # Create and change into temporary directory
-    test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(test_dir)
+    self.set_up_test_dir()
 
     # We don't need to copy the demo files, we just load the keys
     keys = {}
@@ -1529,19 +1497,14 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase):
 
     in_toto_verify(root_layout, root_layout_pub_key_dict)
 
-    os.chdir(working_dir)
-    shutil.rmtree(test_dir)
+    self.tear_down_test_dir()
 
 
-class TestSublayoutVerificationMatchRule(unittest.TestCase):
+class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
   """Tests a sublayout and checks if a MATCH rule is successful after sublayout
   is resolved into a summary link."""
 
   def test_verify_sublayout_match_rule(self):
-
-    # Backup original cwd
-    working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
       os.path.dirname(os.path.realpath(__file__)), "demo_files")
@@ -1550,8 +1513,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase):
       os.path.dirname(os.path.realpath(__file__)), "scripts")
 
     # Create and change into temporary directory
-    test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(test_dir)
+    self.set_up_test_dir()
 
     # We don't need to copy the demo files, we just load the keys
     keys = {}
@@ -1616,12 +1578,11 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase):
 
     in_toto_verify(root_layout, root_layout_pub_key_dict)
 
-    os.chdir(working_dir)
-    shutil.rmtree(test_dir)
+    self.tear_down_test_dir()
 
 
 
-class TestGetSummaryLink(unittest.TestCase):
+class TestGetSummaryLink(unittest.TestCase, TmpDirMixin):
   """Tests verifylib.get_summary_link(layout, reduced_chain_link_dict).
   Pass two step demo layout and according link files and verify the
   returned summary link.
@@ -1633,16 +1594,12 @@ class TestGetSummaryLink(unittest.TestCase):
     The superlayout, which has one step and its sublayout, which is the usual
     demo layout (write code, package, inspect tar). """
 
-    # Backup original cwd
-    self.working_dir = os.getcwd()
-
     # Find demo files
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
     # Create and change into temporary directory
-    self.test_dir = os.path.realpath(tempfile.mkdtemp())
-    os.chdir(self.test_dir)
+    self.set_up_test_dir()
 
     # Copy demo files to temp dir
     for fn in os.listdir(demo_files):
@@ -1658,9 +1615,7 @@ class TestGetSummaryLink(unittest.TestCase):
 
   @classmethod
   def tearDownClass(self):
-    """Change back to initial working dir and remove temp dir. """
-    os.chdir(self.working_dir)
-    shutil.rmtree(self.test_dir)
+    self.tear_down_test_dir()
 
   def test_get_summary_link_from_demo_layout(self):
     """Create summary link from demo link files and compare properties. """
