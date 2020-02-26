@@ -39,14 +39,14 @@ You may also need to install some system dependencies (depending on your host).
 These are:
 
 - `OpenSSL <https://openssl.org>`_ used to generate and verify RSA signatures, and to export and verify signatures created with GPG.
-- `GPG <https://gnupg.org>`_ if you plan on generating GPG signatures (verifying
-  works without GPG).
+- `GPG <https://gnupg.org>`_ if you plan on generating PGP signatures
+  (verification works without GPG).
 
 Installing from Source
 ----------------------
 
-If your system doesn't yet provide in-toto, you can also install it from the
-source. To do so, you will need the following dependencies:
+If your system doesn't provide in-toto, you can install it from the source. To
+do so, you will need the following dependencies:
 
 - `OpenSSL <https://openssl.org>`_
 - `python-cryptography <https://cryptography.readthedocs.io>`_
