@@ -20,67 +20,49 @@
   1 if an exception occurred
   0 if no exception occurred
 
-<Help>
-usage: in-toto-mock [-h] --name <name> -- <command> [args]
-
-A stripped down variant of 'in-toto-run' that can be used to create unsigned
-link metadata for the passed command, recording all files in the current
-working directory as materials and products.
-
-This command should not be used to secure the supply chain but only to try
-out the 'in-toto-run' command.
-
-positional arguments:
-  <command>             Command to be executed with options and arguments,
-                        separated from 'in-toto-mock' options by double dash
-                        '--'.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --version             display version number and exit
-
-required named arguments:
-  -n <name>, --name <name>
-                        Name used to associate the resulting link metadata
-                        with the corresponding step defined in an in-toto
-                        layout.
-
-examples:
-  Generate link metadata 'foo' for the activity of creating file 'bar'.
-
-    in-toto-mock --name foo -- touch bar
-
 """
 import sys
 import argparse
 import logging
 import in_toto.runlib
+from in_toto.common_args import title_case_action_groups, sort_action_groups
 from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
 
 
-
-def main():
+def create_parser():
   """Parse arguments and call in_toto_mock. """
   parser = argparse.ArgumentParser(
      formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
-A stripped down variant of 'in-toto-run' that can be used to create unsigned
-link metadata for the passed command, recording all files in the current
-working directory as materials and products.
+in-toto-mock is a variant of 'in-toto-run' that can be used to create unsigned
+link metadata, using defaults for many of the 'in-toto-run' arguments.
+in-toto-mock verbosely executes the passed command, records all files in the
+current working directory as materials and products, and generates a link file
+under '<name>.link'.
 
-This command should not be used to secure the supply chain but only to try
-out the 'in-toto-run' command.""")
+This is useful for trying out how to generate a link without the need for a
+key, or knowledge about all 'in-toto-run' arguments. It can also be used to
+quickly generate link metadata, inspect it and sign it retroactively.
+
+""")
 
   parser.usage = "%(prog)s [-h] --name <name> -- <command> [args]"
 
-  parser.epilog = """
-examples:
-  Generate link metadata 'foo' for the activity of creating file 'bar'.
+  parser.epilog = """EXAMPLE USAGE
 
-    {prog} --name foo -- touch bar
+Generate unsigned link metadata 'foo.link' for the activity of creating file
+'bar', inspect it, and sign it with 'mykey'
+
+  # Generate unsigned link
+  {prog} --name foo -- touch bar
+  # Inspect and/or update unsigned link metadata
+  vi foo.link
+  # Sign the link, attesting to its validity, and write it to
+  # 'foo.<mykey keyid prefix>.link'.
+  in-toto-sign -k mykey -f foo.link
 
 """.format(prog=parser.prog)
 
@@ -90,19 +72,29 @@ examples:
   # FIXME: Do we limit the allowed characters for the name?
   named_args.add_argument("-n", "--name", type=str, required=True,
       metavar="<name>", help=(
-      "Name used to associate the resulting link metadata with the"
-      " corresponding step defined in an in-toto layout."))
+      "name for the resulting link metadata file, which is written to"
+      " '<name>.link'. It is also used to associate the link with a step"
+      " defined in an in-toto layout."))
 
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
   parser.add_argument("link_cmd", nargs="+", metavar="<command>",
       help=(
-      "Command to be executed with options and arguments, separated from"
-      " 'in-toto-mock' options by double dash '--'."))
+      "command to be executed. It is separated from named and optional"
+      " arguments by a double dash '--'."))
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+  title_case_action_groups(parser)
+  sort_action_groups(parser)
+
+  return parser
+
+
+def main():
+  """Parse arguments and call in_toto_mock. """
+  parser = create_parser()
   args = parser.parse_args()
 
   # in-toto-mock should not be used to secure the supply chain but only to try

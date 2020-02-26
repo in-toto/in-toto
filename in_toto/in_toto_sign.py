@@ -17,89 +17,6 @@
   Provides command line interface to sign in-toto link or layout metadata
   or to verify its signatures.
 
-<Help>
-usage: in-toto-sign [-h] -f <path> [-k <path> [<path> ...]]
-                    [-t <key_type> [<key_type> ...]] [-g [<id> [<id> ...]]]
-                    [--gpg-home <path>] [-o <path>] [-a] [--verify] [-v | -q]
-
-Provides command line interface to sign in-toto link or layout metadata or
-verify its signatures, with options to:
-
-  * replace (default) or add signature(s):
-    + layout metadata can be signed by multiple keys at once,
-    + link metadata can only be signed by one key at a time.
-
-  * write signed metadata to a specified path. If no output path is specified,
-    + layout metadata is written to the path of the input file,
-    + link metadata is written to '<name>.<keyid prefix>.link'.
-
-  * verify signatures
-
-Returns nonzero value on failure and zero otherwise.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --version             display version number and exit
-  -k <path> [<path> ...], --key <path> [<path> ...]
-                        Path(s) to PEM formatted key file(s), used to sign the
-                        passed link or layout metadata or to verify its
-                        signatures.
-  -t <key_type> [<key_type> ...], --key-type <key_type> [<key_type> ...]
-                        Specify the key-type of the keys specified by the
-                        '--key' option. Number of values should be the same as
-                        the number of keys specified by the '--key' option. If
-                        '--key-type' is not passed, default key_type of all
-                        keys is assumed to be \"rsa\".
-  -g [<id> [<id> ...]], --gpg [<id> [<id> ...]]
-                        GPG keyid used to sign the passed link or layout
-                        metadata or to verify its signatures. If passed
-                        without keyid, the default GPG key is used.
-  --gpg-home <path>     Path to GPG keyring to load GPG key identified by '--
-                        gpg' option. If '--gpg-home' is not passed, the
-                        default GPG keyring is used.
-  -o <path>, --output <path>
-                        Path to store metadata file to be signed. If not
-                        passed, layout metadata is written to the path of the
-                        input file and link metadata is written to '<step
-                        name>.<keyid prefix>.link'
-  -a, --append          If passed, signatures are added rather than replacing
-                        existing signatures. This option is only availabe for
-                        layout metdata.
-  --verify              Verify signature(s) of passed link or layout metadata.
-  -v, --verbose         Verbose execution.
-  -q, --quiet           Suppress all output.
-
-required named arguments:
-  -f <path>, --file <path>
-                        Path to link or layout file to be signed or verified.
-
-examples:
-  Append two signatures to 'unsigned.layout' file and write to 'root.layout'.
-
-      in-toto-sign -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
-
-
-  Replace signature in link file. And write to default filename, i.e.
-  'package.<priv_key's keyid prefix>.link'.
-
-      in-toto-sign -f package.2f89b927.link -k priv_key
-
-
-  Verify layout signed with 3 keys.
-
-      in-toto-sign -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
-
-
-  Sign layout with default gpg key in default gpg keyring.
-
-      in-toto-sign -f root.layout --gpg
-
-
-  Verify layout with a gpg key identified by keyid '...439F3C2'.
-
-      in-toto-sign -f root.layout --verify \
-      --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
-
 """
 import sys
 import six
@@ -109,6 +26,9 @@ import logging
 from in_toto import exceptions, util
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
+from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
+    VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
+    sort_action_groups)
 from in_toto import __version__
 
 import securesystemslib.formats
@@ -270,54 +190,58 @@ def _load_metadata(file_path):
     sys.exit(2)
 
 
-def main():
-  """Parse arguments, load link or layout metadata file and either sign
-  metadata file or verify its signatures. """
-
+def create_parser():
+  """Create and return configured ArgumentParser instance. """
   parser = argparse.ArgumentParser(
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description="""
-Provides command line interface to sign in-toto link or layout metadata or
-verify its signatures, with options to:
+in-toto-sign provides a command line interface to sign in-toto link or layout
+metadata or verify their signatures, with options to:
 
-  * replace (default) or add signature(s):
+  * replace (default) or add signatures:
+
     + layout metadata can be signed by multiple keys at once,
     + link metadata can only be signed by one key at a time.
 
   * write signed metadata to a specified path. If no output path is specified,
+
     + layout metadata is written to the path of the input file,
     + link metadata is written to '<name>.<keyid prefix>.link'.
 
   * verify signatures
 
-Returns nonzero value on failure and zero otherwise.""")
+in-toto-sign is useful to re-sign metadata (e.g. when changing keys), or to
+sign unsigned links (e.g. generated with 'in-toto-mock'). For layouts, it is
+useful to append signatures in case threshold signing of layouts is necessary.
 
-  parser.epilog = """
-examples:
-  Append two signatures to 'unsigned.layout' file and write to 'root.layout'.
+It returns a non-zero value on failure and zero otherwise.""")
 
-      {prog} -f unsigned.layout -k priv_key1 priv_key2 -o root.layout -a
+  parser.epilog = """EXAMPLE USAGE
 
+Sign 'unsigned.layout' with two keys and write it to 'root.layout'.
 
-  Replace signature in link file. And write to default filename, i.e.
-  'package.<priv_key's keyid prefix>.link'.
-
-      {prog} -f package.2f89b927.link -k priv_key
+  {prog} -f unsigned.layout -k priv_key1 priv_key2 -o root.layout
 
 
-  Verify layout signed with 3 keys.
+Replace signature in link file and write to default filename, i.e.
+'package.<priv_key keyid prefix>.link'.
 
-      {prog} -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
-
-
-  Sign layout with default gpg key in default gpg keyring.
-
-      {prog} -f root.layout --gpg
+  {prog} -f package.2f89b927.link -k priv_key
 
 
-  Verify layout with a gpg key identified by keyid '...439F3C2'.
+Verify layout signed with 3 keys.
 
-      {prog} -f root.layout --verify \\
+  {prog} -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
+
+
+Sign layout with default gpg key in default gpg keyring.
+
+  {prog} -f root.layout --gpg
+
+
+Verify layout with a gpg key identified by keyid '...439F3C2'.
+
+  {prog} -f root.layout --verify \\
       --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
 
 """.format(prog=parser.prog)
@@ -327,56 +251,65 @@ examples:
 
   named_args.add_argument("-f", "--file", type=str, required=True,
       metavar="<path>", help=(
-        "Path to link or layout file to be signed or verified."))
+        "path to link or layout file to be signed or verified."))
 
   parser.add_argument("-k", "--key", nargs="+", metavar="<path>", help=(
-      "Path(s) to PEM formatted key file(s), used to sign the passed link or"
-      " layout metadata or to verify its signatures."))
+      "paths to key files, used to sign the passed link or layout metadata"
+      " or to verify its signatures. See '--key-type' for available formats."))
 
   parser.add_argument("-t", "--key-type", dest="key_type",
       type=str, choices=util.SUPPORTED_KEY_TYPES,
       nargs="+", help=(
-      "Specify the key-type of the keys specified by the '--key'"
-      " option. Number of values should be the same as the number of keys"
-      " specified by the '--key' option. If '--key-type' is not passed,"
-      " default key_type of all keys is assumed to be \"rsa\"."))
+      "types of keys specified by the '--key' option. '{rsa}' keys are"
+      " expected in a 'PEM' format and '{ed25519}' in a custom"
+      " 'securesystemslib/json' format. If multiple keys are passed via"
+      " '--key' the same amount of key types must be passed. Key"
+      " types are then associated with keys by index. If '--key-type' is"
+      " omitted, the default of '{rsa}' is used for all keys.".format(
+      rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519)))
 
   parser.add_argument("-g", "--gpg", nargs="*", metavar="<id>", help=(
-      "GPG keyid used to sign the passed link or layout metadata or to verify"
-      " its signatures. If passed without keyid, the default GPG key is"
+      "GPG keyids used to sign the passed link or layout metadata or to verify"
+      " its signatures. If passed without keyids, the default GPG key is"
       " used."))
 
-  parser.add_argument("--gpg-home", dest="gpg_home", type=str,
-      metavar="<path>", help=(
-      "Path to GPG keyring to load GPG key identified by '--gpg' option.  If"
-      " '--gpg-home' is not passed, the default GPG keyring is used."))
+  parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
 
   # Only when signing
   parser.add_argument("-o", "--output", type=str, metavar="<path>",
       help=(
-      "Path to store metadata file to be signed. If not passed, layout"
-      " metadata is written to the path of the input file and link metadata is"
-      " written to '<step name>.<keyid prefix>.link'"))
+      "path to location where the metadata file is stored after signing. If"
+      " not passed, layout metadata is written to the path of the input file"
+      " and link metadata is written to '<name>.<keyid prefix>.link'"))
 
   # Only when signing
   parser.add_argument("-a", "--append", action="store_true",
       help=(
-      "If passed, signatures are added rather than replacing existing"
-      " signatures. This option is only availabe for layout metdata."))
+      "add signatures rather than replacing existing signatures. This option"
+      " is only availabe for layout metdata."))
 
   parser.add_argument("--verify", action="store_true",
-      help="Verify signature(s) of passed link or layout metadata.")
+      help="verify signatures of passed link or layout metadata using the"
+      " public keys passed via '--key' and/or '--gpg' options.")
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
-  verbosity_args.add_argument("-v", "--verbose", dest="verbose",
-      help="Verbose execution.", action="store_true")
-
-  verbosity_args.add_argument("-q", "--quiet", dest="quiet",
-      help="Suppress all output.", action="store_true")
+  verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
+  verbosity_args.add_argument(*QUIET_ARGS, **QUIET_KWARGS)
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
+  title_case_action_groups(parser)
+  sort_action_groups(parser)
+
+  return parser
+
+
+def main():
+  """Parse arguments, load link or layout metadata file and either sign
+  metadata file or verify its signatures. """
+
+  parser = create_parser()
   args = parser.parse_args()
 
   LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
@@ -392,14 +325,14 @@ examples:
   # Regular signing and GPG signing are mutually exclusive
   if (args.key is None) == (args.gpg is None):
     parser.print_help()
-    parser.error("wrong arguments: specify either `--key PATH [PATH ...]`"
-      " or `--gpg [KEYID [KEYID ...]]`")
+    parser.error("wrong arguments: specify either '--key PATH [PATH ...]'"
+      " or '--gpg [KEYID [KEYID ...]]'")
 
   # For gpg verification we must specify a keyid (no default key is loaded)
   if args.verify and args.gpg is not None and len(args.gpg) < 1:
     parser.print_help()
     parser.error("missing arguments: specify at least one keyid for GPG"
-      " signature verification (`--gpg KEYID ...`)")
+      " signature verification ('--gpg KEYID ...')")
 
   metadata = _load_metadata(args.file)
 
@@ -408,9 +341,9 @@ examples:
     # Above we check that it's either `--key ...` or `--gpg ...`
     # Here we check that it is not more than one in each case when dealing
     # with links
-    link_error_message = ("Link metadata is associated with a"
+    link_error_message = ("link metadata is associated with a"
         " single functionary and is usually namespaced accordingly:"
-        " '<name>.<keyid>.link'.")
+        " '<name>.<keyid prefix>.link'.")
 
     if ((args.key is not None and len(args.key) > 1) or
         (args.gpg is not None and len(args.gpg) > 1)):
@@ -421,7 +354,7 @@ examples:
     if args.append:
       parser.print_help()
       parser.error("wrong arguments: {}. Hence adding signatures to"
-          " existing signatures on Link metadata is not allowed."
+          " existing signatures on link metadata is not allowed."
           .format(link_error_message))
 
 

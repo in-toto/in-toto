@@ -174,8 +174,8 @@ class Metablock(ValidationMixin):
               A gpg keyid, if omitted the default signing key is used
 
       gpg_home: (optional)
-              The path to the gpg keyring, if omitted the default gpg keyring
-              is used
+              The path to the gpg home directory, if omitted the default gpg
+              home directory is used
 
     <Exceptions>
       securesystemslib.gpg.exceptions.CommandError:

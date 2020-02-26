@@ -19,22 +19,6 @@
   integer as an input, which specifies the length of the RSA key to be
   generated. By default it is set as 3072.
 
-  General Usage:
-  in-toto-keygen [-p] [-t {ed25519, rsa}] [--bits=<bits>] <filename>
-
-  Example Usage:
-  Suppose Bob wants to create the rsa keys of size 2048 bits and dump them with
-  file name "bob_keys" in the current directory. He also wants to encrypt the
-  so created private key with his choice of passphrase. The keys would then be
-  created, the private key would be encrypted and dumped as "./bob_keys" and
-  public key would be dumped as "./bob_keys.pub". Bob will use the following
-  command:
-
-  in-toto-keygen -p -t rsa -b 2048 bob_keys
-
-  in-toto-keygen -p -t ed25519 bob_keys
-
-
 <Return Codes>
   2 if an exception occurred during argument parsing
   1 if an exception occurred
@@ -46,13 +30,14 @@ import argparse
 import logging
 
 import in_toto.util
+from in_toto.common_args import title_case_action_groups
 from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
 
 
-def parse_args():
+def create_parser():
   """
   <Purpose>
     A function which parses the user supplied arguments.
@@ -67,37 +52,60 @@ def parse_args():
     Parsed arguments (args object)
   """
   parser = argparse.ArgumentParser(
-    description="in-toto-keygen : Generates the keys, stores them with the "
-                "supplied name (public key as: <name>.pub, private key as: "
-                "<name>), additionally prompts for a password when -p is "
-                "supplied and encrypts the private key with the same, "
-                "before storing")
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description="in-toto-keygen is a tool to generate, optionally encrypt, and"
+                " write cryptographic keys to disk. These keys may be used"
+                " with other in-toto tooling to e.g. sign or verify link or"
+                " layout metadata.")
 
-  in_toto_args = parser.add_argument_group("in-toto-keygen options")
+  parser.epilog = """EXAMPLE USAGE
 
-  in_toto_args.add_argument("-p", "--prompt", action="store_true",
-                            help="Prompts for a password and encrypts the "
-                            "private key with the same before storing")
+Generate RSA key pair of size 2048 bits, prompt for a password to encrypt
+the private key, and write 'alice' (private encrypted) and 'alice.pub' (public)
+as PEM-formatted key files to the current working directory.
 
-  in_toto_args.add_argument("-t", "--type", type=str,
+  in-toto-keygen -p -t rsa -b 2048 alice
+
+
+Generate unencrypted ed25519 key pair and write 'bob' (private) and 'bob.pub'
+(public) as securesystemslib/json-formatted key files to the current working
+directory.
+
+  in-toto-keygen -t ed25519 bob
+
+
+"""
+
+  parser.add_argument("-p", "--prompt", action="store_true",
+                            help="prompts for a password used to encrypt the"
+                            " private key before storing it")
+
+  parser.add_argument("-t", "--type", type=str,
                             choices=in_toto.util.SUPPORTED_KEY_TYPES,
                             default=in_toto.util.KEY_TYPE_RSA,
-                            help="Type of the key to be generated")
+                            help="type of the key to be generated. '{rsa}'"
+                            " keys are written in a 'PEM' format and"
+                            " '{ed25519}' in a custom 'securesystemslib/json'"
+                            " format. Default is '{rsa}'.".format(
+                            rsa=in_toto.util.KEY_TYPE_RSA,
+                            ed25519=in_toto.util.KEY_TYPE_ED25519))
 
-  in_toto_args.add_argument("name", type=str,
-                            help="The filename of the resulting key files",
-                            metavar="<filename>")
 
-  in_toto_args.add_argument("-b", "--bits", default=3072, type=int,
-                            help="The key size, or key length, of the RSA "
-                            "key.", metavar="<bits>")
+  parser.add_argument("name", type=str, metavar="<filename>",
+                            help="filename for the resulting key files, which"
+                            " are written to '<filename>' (private key) and"
+                            " '<filename>.pub' (public key).")
+
+  parser.add_argument("-b", "--bits", default=3072, type=int, metavar="<bits>",
+                            help="key size, or key length, of the RSA key")
 
   parser.add_argument('--version', action='version',
                       version='{} {}'.format(parser.prog, __version__))
 
-  args = parser.parse_args()
+  title_case_action_groups(parser)
 
-  return args
+  return parser
+
 
 
 def main():
@@ -107,7 +115,8 @@ def main():
   depending upon the arguments. It then dumps the corresponding key files as:
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
-  args = parse_args()
+  parser = create_parser()
+  args = parser.parse_args()
 
   try:
     if args.prompt:

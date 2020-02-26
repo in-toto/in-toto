@@ -186,8 +186,8 @@ def import_public_keys_from_files_as_dict(filepaths, key_types=None):
 
 def import_gpg_public_keys_from_keyring_as_dict(keyids, gpg_home=False):
   """Creates a dictionary of gpg public keys retrieving gpg public keys
-  identified by the list of passed `keyids` from the gpg keyring at `gpg_home`.
-  If `gpg_home` is False the default keyring is used. """
+  identified by the list of passed `keyids` from a gpg keyring in `gpg_home`.
+  If `gpg_home` is False the default gpg home directory is used. """
   key_dict = {}
   for gpg_keyid in keyids:
     pub_key = securesystemslib.gpg.functions.export_pubkey(gpg_keyid,
