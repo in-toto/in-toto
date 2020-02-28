@@ -53,6 +53,7 @@ from in_toto.exceptions import (RuleVerificationError,
 from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
 from in_toto.rulelib import unpack_rule
 import securesystemslib.gpg.functions
+from securesystemslib.gpg.constants import HAVE_GPG
 
 import securesystemslib.exceptions
 import in_toto.exceptions
@@ -1116,7 +1117,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 
-@unittest.skipIf(os.getenv("TEST_SKIP_GPG"), "gpg not found")
+@unittest.skipIf(not HAVE_GPG, "gpg not found")
 class TestInTotoVerifyThresholdsGpgSubkeys(
     unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """
