@@ -355,8 +355,8 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
       securesystemslib.process.run_duplicate_streams(link_cmd_args)
     else: #record_streams true, quiet true
       process = securesystemslib.process.run(link_cmd_args, check=False,
-        stdout=securesystemslib.process.PIPE,
-        stderr=securesystemslib.process.PIPE)
+          stdout=securesystemslib.process.PIPE,
+          stderr=securesystemslib.process.PIPE)
       stdout_str = process.stdout
       stderr_str = process.stderr
       return_code = process.returncode
@@ -364,15 +364,13 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
   else:
     if not quiet: #record_streams false, quiet false
       process = securesystemslib.process.run(link_cmd_args, check=False, 
-        stdout=None, stderr=None)
-      stdout_str = stderr_str = ""
-      return_code = process.returncode
+          stdout=None, stderr=None)
     else: #record_streams false, quiet true
       process = securesystemslib.process.run(link_cmd_args, check=False,
-        stdout=securesystemslib.process.DEVNULL,
-        stderr=securesystemslib.process.DEVNULL)
-      stdout_str = stderr_str = ""
-      return_code = process.returncode
+          stdout=securesystemslib.process.DEVNULL,
+          stderr=securesystemslib.process.DEVNULL)
+    stdout_str = stderr_str = ""
+    return_code = process.returncode
 
   return {
       "stdout": stdout_str,
