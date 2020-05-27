@@ -32,7 +32,8 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
     BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS, LSTRIP_PATHS_KWARGS, KEY_ARGS,
     KEY_KWARGS, KEY_TYPE_KWARGS, KEY_TYPE_ARGS, GPG_ARGS, GPG_KWARGS,
     GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
-    QUIET_KWARGS, sort_action_groups, title_case_action_groups)
+    QUIET_KWARGS, METADATA_DIRECTORY_ARGS, METADATA_DIRECTORY_KWARGS,
+    sort_action_groups, title_case_action_groups)
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -141,6 +142,7 @@ e.g. 'document.pdf'.
   parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
   parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
+  parser.add_argument(*METADATA_DIRECTORY_ARGS, **METADATA_DIRECTORY_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -209,7 +211,8 @@ def main():
         record_streams=args.record_streams, signing_key=key,
         gpg_keyid=gpg_keyid, gpg_use_default=gpg_use_default,
         gpg_home=args.gpg_home, exclude_patterns=args.exclude_patterns,
-        base_path=args.base_path, lstrip_paths=args.lstrip_paths)
+        base_path=args.base_path, lstrip_paths=args.lstrip_paths,
+        metadata_directory=args.metadata_directory)
 
   except Exception as e:
     LOG.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
