@@ -22,6 +22,8 @@ import os
 import unittest
 import shutil
 import tempfile
+import sys
+import stat
 
 import in_toto.settings
 import in_toto.exceptions
@@ -520,6 +522,35 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
         FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
     self.assertEqual(repr(link), repr(link_dump))
 
+  def test_in_toto_run_with_metadata_directory(self):
+    """Successfully run with metadata directory,
+     compare dumped link is equal to returned link"""
+    tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
+    link = in_toto_run(self.step_name, [self.test_artifact],
+        [self.test_artifact], ["python", "--version"], True, self.key,
+        metadata_directory=tmp_dir)
+    file_path = os.path.join(tmp_dir, FILENAME_FORMAT.format(step_name=self.step_name,
+        keyid=self.key["keyid"]))
+    link_dump = Metablock.load(file_path)
+    self.assertEqual(repr(link), repr(link_dump))
+
+  def test_in_toto_run_compare_with_and_without_metadata_directory(self):
+    """Successfully run with and without metadata directory,
+     compare the signed is equal"""
+    tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
+    in_toto_run(self.step_name, [self.test_artifact], [self.test_artifact],
+        ["python", "--version"], True, self.key, metadata_directory=tmp_dir)
+    file_path = os.path.join(tmp_dir, FILENAME_FORMAT.format(step_name=self.step_name,
+        keyid=self.key["keyid"]))
+    link_dump_with_md = Metablock.load(file_path)
+
+    in_toto_run(self.step_name, [self.test_artifact], [self.test_artifact],
+        ["python", "--version"], True, self.key)
+    link_dump_without_md = Metablock.load(
+        FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
+    self.assertEqual(repr(link_dump_with_md.signed),
+        repr(link_dump_without_md.signed))
+
   def test_in_toto_run_verify_recorded_artifacts(self):
     """Successfully run, verify properly recorded artifacts. """
     link = in_toto_run(self.step_name, [self.test_artifact],
@@ -572,6 +603,40 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto_run(self.step_name, None, None,
           ["python", "--version"], True, self.key_pub)
+
+  def test_nonexistent_directory(self):
+    """Fail run, passed metadata_directory not exist. """
+    expected_error = IOError if sys.version_info < (3, 0) \
+        else FileNotFoundError
+    with self.assertRaises(expected_error):
+      in_toto_run(self.step_name, None, None, ["python", "--version"],
+          True, self.key, metadata_directory='nonexistentDir')
+
+  def test_not_a_directory(self):
+    """Fail run, passed metadata_directory is not a directory. """
+    fd, path = tempfile.mkstemp()
+    os.write(fd, b"hello in-toto")
+    os.close(fd)
+    # Windows will raise FileNotFoundError instead of NotADirectoryError
+    expected_error = IOError if sys.version_info < (3, 0) \
+        else (NotADirectoryError, FileNotFoundError)
+    with self.assertRaises(expected_error):
+      in_toto_run(self.step_name, None, None, ["python", "--version"],
+          True, self.key, metadata_directory=path)
+    os.remove(path)
+
+  @unittest.skipIf(os.name == 'nt', "chmod doesn't work properly on Windows")
+  def test_in_toto_read_only_metadata_directory(self):
+    """Fail run, passed metadata directory is read only"""
+    tmp_dir = os.path.realpath(tempfile.mkdtemp())
+    # make the directory read only
+    os.chmod(tmp_dir, stat.S_IREAD)
+    expected_error = IOError if sys.version_info < (3, 0) \
+        else PermissionError
+    with self.assertRaises(expected_error):
+      in_toto_run(self.step_name, None, None, ["python", "--version"],
+          True, self.key, metadata_directory=tmp_dir)
+    os.rmdir(tmp_dir)
 
 
 class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
@@ -661,6 +726,23 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     self.assertEqual(list(link.signed.products.keys()), [self.test_product])
     os.remove(self.link_name)
 
+  def test_compare_metadata_with_and_without_metadata_directory(self):
+    """Test record stop with and without metadata directory,
+     compare the expected product"""
+    tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key,
+        metadata_directory=tmp_dir)
+    link_path = os.path.join(tmp_dir, self.link_name)
+    link_with_md = Metablock.load(link_path)
+
+    in_toto_record_start(self.step_name, [], self.key)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key)
+    link_without_md = Metablock.load(self.link_name)
+    self.assertEqual(link_with_md.signed, link_without_md.signed)
+    os.remove(link_path)
+    os.remove(self.link_name)
+
   def test_create_metadata_with_expected_cwd(self):
     """Test record start/stop run, verify cwd. """
     in_toto_record_start(self.step_name, [], self.key, record_environment=True)
@@ -744,6 +826,43 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     finally:
       for path in paths:
         os.remove(path)
+
+  def test_nonexistent_directory(self):
+    """Test record stop with nonexistent metadata directory"""
+    expected_error = IOError if sys.version_info < (3, 0) \
+        else FileNotFoundError
+    with self.assertRaises(expected_error):
+      in_toto_record_start(self.step_name, [], self.key)
+      in_toto_record_stop(self.step_name, [], self.key,
+          metadata_directory='nonexistentDir')
+
+  def test_not_a_directory(self):
+    """Test record stop, passed metadata directory is not a dir"""
+    fd, path = tempfile.mkstemp()
+    os.write(fd, b"hello in-toto")
+    os.close(fd)
+    # Windows will raise FileNotFoundError instead of NotADirectoryError
+    expected_error = IOError if sys.version_info < (3, 0) \
+        else (NotADirectoryError, FileNotFoundError)
+    with self.assertRaises(expected_error):
+      in_toto_record_start(self.step_name, [], self.key)
+      in_toto_record_stop(self.step_name, [], self.key,
+          metadata_directory=path)
+    os.remove(path)
+
+  @unittest.skipIf(os.name == 'nt', "chmod doesn't work properly on Windows")
+  def test_read_only_metadata_directory(self):
+    """Test record stop with read only metadata directory"""
+    tmp_dir = os.path.realpath(tempfile.mkdtemp())
+    # make the directory read only
+    os.chmod(tmp_dir, stat.S_IREAD)
+    expected_error = IOError if sys.version_info < (3, 0) \
+       else PermissionError
+    with self.assertRaises(expected_error):
+      in_toto_record_start(self.step_name, [], self.key)
+      in_toto_record_stop(self.step_name, [], self.key,
+          metadata_directory=tmp_dir)
+    os.rmdir(tmp_dir)
 
 
 if __name__ == "__main__":

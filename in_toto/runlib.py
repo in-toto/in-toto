@@ -424,7 +424,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None):
+    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None):
   """Performs a supply chain step or inspection generating link metadata.
 
   Executes link_cmd_args, recording paths and hashes of files before and after
@@ -527,6 +527,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   if base_path:
     securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
+  if metadata_directory:
+    securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+
   if material_list:
     LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
 
@@ -578,6 +581,10 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   if signature:
     signing_keyid = signature["keyid"]
     filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
+
+    if metadata_directory is not None:
+      filename = os.path.join(metadata_directory, filename)
+
     LOG.info("Storing link metadata to '{}'...".format(filename))
     link_metadata.dump(filename)
 
@@ -728,7 +735,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, normalize_line_endings=False,
-    lstrip_paths=None):
+    lstrip_paths=None, metadata_directory=None):
   """Finalizes preliminary link metadata generated with in_toto_record_start.
 
   Loads preliminary link metadata file, verifies its signature, and records
@@ -824,6 +831,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   if base_path:
     securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
+  if metadata_directory:
+    securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+
   # Load preliminary link file
   # If we have a signing key we can use the keyid to construct the name
   if signing_key:
@@ -904,6 +914,10 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     link_metadata.sign_gpg(keyid, gpg_home)
 
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
+
+  if metadata_directory is not None:
+    fn = os.path.join(metadata_directory, fn)
+
   LOG.info("Storing link metadata to '{}'...".format(fn))
   link_metadata.dump(fn)
 

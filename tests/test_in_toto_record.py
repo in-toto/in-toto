@@ -20,6 +20,8 @@
 
 import sys
 import unittest
+import tempfile
+import os
 
 if sys.version_info >= (3, 3):
   import unittest.mock as mock # pylint: disable=no-name-in-module,import-error
@@ -145,6 +147,12 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
       self.assert_cli_sys_exit(["start"] + args, 0)
       self.assert_cli_sys_exit(["stop"] + args, 0)
 
+      # Start/stop sign with metadata directory
+      args = ["--step-name", "test9", "--key", self.rsa_key_path]
+      tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
+      metadata_directory_arg = ["--metadata-directory", tmp_dir]
+      self.assert_cli_sys_exit(["start"] + args, 0)
+      self.assert_cli_sys_exit(["stop"] + metadata_directory_arg + args, 0)
 
 
   def test_glob_no_unfinished_files(self):
