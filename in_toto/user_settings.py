@@ -56,7 +56,7 @@ RC_PATHS = [
 # TODO: Should we use `dir` on the module instead? If we list them here, we
 # have to manually update if `settings.py` changes.
 IN_TOTO_SETTINGS = [
-  "ARTIFACT_EXCLUDE_PATTERNS", "ARTIFACT_BASE_PATH"
+  "ARTIFACT_EXCLUDE_PATTERNS", "ARTIFACT_BASE_PATH", "LINK_CMD_EXEC_TIMEOUT"
 ]
 
 

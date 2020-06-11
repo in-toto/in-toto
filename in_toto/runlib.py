@@ -361,6 +361,7 @@ def execute_link(link_cmd_args, record_streams):
 
   else:
     process = securesystemslib.process.run(link_cmd_args, check=False,
+      timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
       stdout=securesystemslib.process.DEVNULL,
       stderr=securesystemslib.process.DEVNULL)
     stdout_str = stderr_str = ""
