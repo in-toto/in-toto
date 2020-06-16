@@ -139,44 +139,6 @@ For a detailed list of all command line arguments and their usage, run
 [online
 documentation](https://in-toto.readthedocs.io/en/latest/command-line-tools/in-toto-sign.html).
 
-#### Settings
-Settings can be configured in [`in_toto.settings`](https://github.com/in-toto/in-toto/blob/develop/in_toto/settings.py), via prefixed environment variables or in RCfiles in one of the following
-paths: */etc/in_toto/config, /etc/in_totorc, \~/.config/in_toto/config,
-\~/.config/in_toto, \~/.in_toto/config, \~/.in_totorc, .in_totorc*.
-
-A setting in an RCfile in the current working directory overrides
-the same
-setting in an RCfile in the user's home directory, which overrides the
-same setting in an environment variable, which overrides the same setting
-in `in_toto.settings`.
-
-Setting names are restricted to the below listed settings (case sensitive).
-Also, setting values that contain colons are parsed as list.
-
-##### Available Settings
-
-`ARTIFACT_EXCLUDE_PATTERNS` Specifies a list of glob patterns that can be used to
-exclude files from being recorded as materials or products. See [runlib
-docs for more details](https://github.com/in-toto/in-toto/blob/develop/in_toto/runlib.py#L124-L142).
-
-`ARTIFACT_BASE_PATH` If set, material and product paths passed to
-`in-toto-run` are searched relative to the set base path. Also, the base
-path is stripped from the paths written to the resulting link metadata
-file.
-
-##### Examples
-```shell
-# Bash style environment variable export
-export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
-export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
-```
-```
-# E.g in rcfile ~/.in_totorc
-[in-toto settings]
-ARTIFACT_BASE_PATH=/home/user/project
-ARTIFACT_EXCLUDE_PATTERNS=*.link:.gitignore
-
-```
 
 ## in-toto demo
 You can try in-toto by running the [demo application](https://github.com/in-toto/demo).
