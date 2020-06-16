@@ -277,6 +277,14 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     self.assertListEqual(sorted(list(artifacts_dict.keys())),
       sorted(self.full_file_path_list))
 
+  @staticmethod
+  def _raise_win_dev_mode_error():
+    """If the platform is Windows, raises an error that asks the user if
+    developer mode is activated."""
+    if os.name == "nt":
+      raise IOError("Developer mode is required to work with symlinks on "
+          "Windows. Is it enabled?")
+
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
@@ -292,7 +300,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     for pair in link_pairs:
       # We only use the basename of the file (source) as it is on the same
       # level as the link (target)
-      os.symlink(os.path.basename(pair[0]), pair[1])
+      try:
+        os.symlink(os.path.basename(pair[0]), pair[1])
+      except IOError:
+        TestRecordArtifactsAsDict._raise_win_dev_mode_error()
+        raise
 
     # Record files and linked files
     # follow_symlink_dirs does not make a difference as it only concerns linked dirs
@@ -325,7 +337,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
     # Create dead links
     for link in links:
-      os.symlink("does/not/exist", link)
+      try:
+        os.symlink("does/not/exist", link)
+      except IOError:
+        TestRecordArtifactsAsDict._raise_win_dev_mode_error()
+        raise
 
     # Record files without dead links
     # follow_symlink_dirs does not make a difference as it only concerns linked dirs
@@ -345,8 +361,12 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
   def test_record_follow_symlinked_directories(self):
     """Record files in symlinked dirs if follow_symlink_dirs is True. """
 
-    # Link to subdir
-    os.symlink("subdir", "subdir_link")
+    try:
+      # Link to subdir
+      os.symlink("subdir", "subdir_link")
+    except IOError:
+      TestRecordArtifactsAsDict._raise_win_dev_mode_error()
+      raise
 
     link_pairs = [
       ("subdir/foosub1", "subdir_link/foosub1"),
@@ -363,7 +383,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     # ... and the hashes of each link/file pair match
     for pair in link_pairs:
       self.assertDictEqual(artifacts_dict[pair[0]], artifacts_dict[pair[1]])
-
 
     # Record with follow_symlink_dirs FALSE (default)
     artifacts_dict = record_artifacts_as_dict(["."])
