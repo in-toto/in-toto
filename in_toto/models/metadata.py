@@ -34,9 +34,20 @@ from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False, init=False)
 class Metablock(ValidationMixin):
-  """ This object holds the in-toto metablock data structure. This includes
-  the fields "signed" and "signatures", i.e., what was signed and the
-  signatures. """
+  """A container for signed in-toto metadata.
+
+  Provides methods for metadata JSON (de-)serialization, reading from and
+  writing to disk, creating and verifying signatures, and self-validation.
+
+  Attributes:
+    signed: A subclass of Signable which has the actual metadata payload,
+        usually a Link or Layout object.
+    signatures: A list of signatures over the canonical JSON representation
+        of the value of the signed attribute.
+    compact_json: A boolean indicating if the dump method should write a
+        compact JSON string representation of the metadata.
+
+  """
   signatures = attr.ib()
   signed = attr.ib()
 
@@ -50,7 +61,7 @@ class Metablock(ValidationMixin):
 
 
   def __repr__(self):
-    """Returns an indented JSON string of the metadata object. """
+    """Returns the JSON string representation. """
     indent = None if self.compact_json else 1
     separators = (',', ':') if self.compact_json else (',', ': ')
 
@@ -65,46 +76,34 @@ class Metablock(ValidationMixin):
       )
 
 
-  def dump(self, filename):
-    """
-    <Purpose>
-      Write the JSON string representation of the Metablock object
-      to disk.
+  def dump(self, path):
+    """Writes the JSON string representation of the instance to disk.
 
-    <Arguments>
-      filename:
-              The path to write the file to.
+    Arguments:
+      path: The path to write the file to.
 
-    <Side Effects>
-      Writing metadata file to disk
-
-    <Returns>
-      None.
+    Raises:
+      IOError: File cannot be written.
 
     """
-    with open(filename, "wb") as fp:
+    with open(path, "wb") as fp:
       fp.write("{}".format(self).encode("utf-8"))
 
 
   @staticmethod
   def load(path):
-    """
-    <Purpose>
-      Loads the JSON string representation of signed metadata from disk
-      and creates a Metablock object.
-      The `signed` attribute of the Metablock object is assigned a Link
-      or Layout object, depending on the `_type` field in the loaded
-      metadata file.
+    """Loads the JSON string representation of in-toto metadata from disk.
 
-    <Arguments>
-      path:
-              The path to write the file to.
+    Arguments:
+      path: The path to read the file from.
 
-    <Side Effects>
-      Reading metadata file from disk
+    Raises:
+      IOError: The file cannot be written.
+      securesystemslib.exceptions.FormatError: Metadata format is invalid.
 
-    <Returns>
-      None.
+    Returns:
+      A Metablock object whose signable attribute is either a Link or a Layout
+      object.
 
     """
     with open(path, "r") as fp:
@@ -128,29 +127,30 @@ class Metablock(ValidationMixin):
 
   @property
   def type_(self):
-    """Shortcut to the _type property of the contained Link or Layout object,
-    should be one of "link" or "layout". Trailing underscore used by
-    convention (pep8) to avoid conflict with Python's type keyword. """
+    """A shortcut to the `type_` attribute of the object on the signable
+    attribute (should be one of "link" or "layout"). """
+    # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict
+    # with Python's type keyword.
     return self.signed.type_
 
 
   def sign(self, key):
-    """
-    <Purpose>
-      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
-      contained in `self.signed` with the passed key and appends the created
-      signature to `self.signatures`.
+    """Creates signature over signable with key and adds it to signatures.
 
-      Note: We actually pass the dictionary representation of the data to be
-      signed and `securesystemslib.keys.create_signature` converts it to
-      canonical JSON utf-8 encoded bytes before creating the signature.
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to create signatures deterministically.
 
-    <Arguments>
-      key:
-              A signing key in the format securesystemslib.formats.KEY_SCHEMA
+    Attributes:
+      key: A signing key. The format is securesystemslib.formats.KEY_SCHEMA.
 
-    <Returns>
-      The dictionary representation of the newly created signature.
+    Raises:
+      securesystemslib.exceptions.FormatError: Key argument is malformed.
+      securesystemslib.exceptions.CryptoError, \
+              securesystemslib.exceptions.UnsupportedAlgorithmError:
+          Signing errors.
+
+    Returns:
+      The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
 
     """
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
@@ -163,28 +163,28 @@ class Metablock(ValidationMixin):
     return signature
 
   def sign_gpg(self, gpg_keyid=None, gpg_home=None):
-    """
-    <Purpose>
-      Signs the utf-8 encoded canonical JSON bytes of the Link or Layout object
-      contained in `self.signed` using `gpg.functions.create_signature` and
-      appends the created signature to `self.signatures`.
+    """Creates signature over signable with gpg and adds it to signatures.
 
-    <Arguments>
-      gpg_keyid: (optional)
-              A gpg keyid, if omitted the default signing key is used
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to create signatures deterministically.
 
-      gpg_home: (optional)
-              The path to the gpg home directory, if omitted the default gpg
-              home directory is used
+    Arguments:
+      gpg_keyid (optional): A keyid used to identify a local gpg signing key.
+          If omitted the default signing key is used.
 
-    <Exceptions>
-      securesystemslib.gpg.exceptions.CommandError:
-              If the gpg signing command returned a non-zero exit code, e.g.
-              because the key has expired.
+      gpg_home (optional): A path to the gpg home directory. If not set the
+          default gpg home directory is used.
 
+    Raises:
+      ValueError, OSError, securesystemslib.gpg.exceptions.CommandError, \
+            securesystemslib.gpg.exceptions.KeyNotFoundError:
+        gpg signing errors.
 
-    <Returns>
-      The dictionary representation of the newly created signature.
+    Side Effects:
+      Calls system gpg command in a subprocess.
+
+    Returns:
+      The signature. Format is securesystemslib.formats.GPG_SIGNATURE_SCHEMA.
 
     """
     signature = securesystemslib.gpg.functions.create_signature(
@@ -196,50 +196,29 @@ class Metablock(ValidationMixin):
 
 
   def verify_signature(self, verification_key):
-    """
-    <Purpose>
-      Verifies the signature, found in `self.signatures`, corresponding to the
-      passed verification key, or in case of GPG one of its subkeys, identified
-      by the key's keyid, using the passed verification key and the utf-8
-      encoded canonical JSON bytes of the Link or Layout object, contained in
-      `self.signed`.
+    """Verifies a signature over signable in signatures with verification_key.
 
-      If the signature matches securesystemslib.formats.GPG_SIGNATURE_SCHEMA,
-      `securesystemslib.gpg.functions.verify_signature` is used,
-      if the signature matches `securesystemslib.formats.SIGNATURE_SCHEMA`
-      `securesystemslib.keys.verify_signature`.
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to verify the signature deterministically.
 
-      Note: In case of securesystemslib we actually pass the dictionary
-      representation of the data to be verified and
-      `securesystemslib.keys.verify_signature` converts it to
-      canonical JSON utf-8 encoded bytes before verifying the signature.
+    NOTE: Only the first signature in the signatures attribute, whose keyid
+    matches the verification_key keyid, is verified. If the verification_key
+    format is securesystemslib.formats.GPG_PUBKEY_SCHEMA, subkey keyids are
+    considered too.
 
-    <Arguments>
-      verification_key:
-              Verifying key in the format:
-              securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA
+    Arguments:
+      verification_key: A verification key. The format is
+          securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.
 
-    <Exceptions>
-      FormatError
-            If the passed key is not conformant with
-            securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA
+    Raises:
+      securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      SignatureVerificationError
-            If the Metablock does not carry a signature signed with the
-            private key corresponding to the passed verification key or one
-            of its subkeys
+      SignatureVerificationError: No signature keyid matches the verification
+          key keyid, or the matching signature is malformed, or the matching
+          signature is invalid.
 
-            If the signature corresponding to the passed verification key or
-            one of its subkeys does not match securesystemslib's or
-            securesystemslib.gpg's signature schema.
-
-            If the signature to be verified is malformed or invalid.
-
-      securesystemslib.gpg.exceptions.KeyExpirationError:
-            if the passed verification key is an expired gpg key
-
-    <Returns>
-      None.
+      securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
+          key is an expired gpg key.
 
     """
     securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(
