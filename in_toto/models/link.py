@@ -31,51 +31,50 @@ UNFINISHED_FILENAME_FORMAT_GLOB = ".{step_name}.{pattern}.link-unfinished"
 
 @attr.s(repr=False, init=False)
 class Link(Signable):
-  """
-  A link is the metadata representation of a supply chain step performed
-  by a functionary.
+  """Evidence for a performed step or inspection of the supply chain.
 
-  The object should be contained in a generic Metablock object, which
-  provides functionality for signing and signature verification, and reading
-  from and writing to disk.
+  A Link object is usually contained in a generic Metablock object for signing,
+  serialization and I/O capabilities.
 
-  <Attributes>
-    _type:
-        "link"
+  Attributes:
+    name: A unique name used to identify the related step or inspection in an
+        in-toto layout.
 
-    name:
-        a unique name used to identify the related step in the layout
+    command: A list of command and command arguments that report how the
+        corresponding step is performed.
 
-    materials and products:
-        a dictionary in the format of
-          { <relative file path> : {
-            {<hash algorithm> : <hash of the file>}
-          },... }
+    materials: A dictionary of the artifacts *used* by the step, i.e::
 
-    byproducts:
-        a dictionary in the format of
-          {
-            "stdout": <standard output of the executed command>,
-            "stderr": <standard error of the executed command>,
-            "return-value": the return value of the executed command
-          }
+            {
+              "<material path>": {
+                "<hash algorithm name>": "<hash digest of material>",
+                ...
+              },
+              ...
+            }
 
-    command:
-        the command that was wrapped by in_toto-run
+    products: A dictionary of the artifacts *produced* by the step, i.e::
 
-    return_value:
-        the return value of the executed command
+            {
+              "<product path>": {
+                "<hash algorithm name>": "<hash digest of product>",
+                ...
+              },
+              ...
+            }
 
-    environment:
-        environment information, e.g.
-        {
-          "variables": <list of environment variable "KEY=value" pairs>,
-          "filesystem": <filesystems info>,
-          "workdir": <cwd while running `in-toto-run`>
-        }
+    byproducts: An opaque dictionary that lists byproducts of the link command
+        execution. It should have at least the following entries
+        "stdout" (str), "stderr" (str) and "return-value" (int).
 
-        Note: None of the values in environment is mandated
-        runlib currently only records the workdir
+    environment: An opaque dictionary that lists information about the
+        execution environment of the link command. eg.::
+
+            {
+              "variables": "<list of env var KEY=value pairs>",
+              "filesystem": "<filesystem info>",
+              "workdir": "<CWD when executing link command>"
+            }
 
   """
   _type = attr.ib()
@@ -102,13 +101,27 @@ class Link(Signable):
 
   @property
   def type_(self):
-    """Getter for protected _type attribute. Trailing underscore used by
-    convention (pep8) to avoid conflict with Python's type keyword. """
+    """The string "link" to indentify the in-toto metadata type."""
+    # NOTE: We expose the type_ property in the API documentation instead of
+    # _type to protect it against modification.
+    # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict
+    # with Python's type keyword.
     return self._type
 
   @staticmethod
   def read(data):
-    """Static method to instantiate a new Link from a Python dictionary """
+    """Creates a Link object from its dictionary representation.
+
+    Arguments:
+      data: A dictionary with link metadata fields.
+
+    Raises:
+      securesystemslib.exceptions.FormatError: Passed data is invalid.
+
+    Returns:
+      The created Link object.
+
+    """
     return Link(**data)
 
 

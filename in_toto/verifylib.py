@@ -1387,101 +1387,73 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     substitution_parameters=None, step_name=""):
-  """
-  <Purpose>
-    Does entire in-toto supply chain verification of a final product
-    by performing the following actions:
+  """Performs complete in-toto supply chain verification for a final product.
 
-        1.  Verify layout signature(s), requires at least one verification key
-            to be passed, and a valid signature for each passed key.
+  The verification procedure consists of the following activities, performed in
+  the given order:
 
-        2.  Verify layout expiration
+  1.  Verify layout signatures
+  2.  Verify layout expiration date
+  3.  Substitute placeholders in the layout
+  4.  Load link metadata
+  5.  Verify link signatures with keys in layout
+  6.  Recurse into sublayout verification
+  7.  Soft-verify alignment of reported and expected commands
+  8.  Verify threshold artifact constraints
+  9.  Process step product and material rules
+  10. Execute inspection commands and generate inspection links
+  11. Process inspection product and material rules
 
+  Arguments:
+    layout: A Metablock object that contains a Layout object to be verified.
 
-        3.  Load link metadata for every Step defined in the layout and
-            fail if less links than the defined threshold for a step are found.
-            NOTE: Link files are expected to have the corresponding step
-            and the functionary, who carried out the step, encoded in their
-            filename.
+    layout_key_dict: A public key dictionary. The verification routine requires
+        at least one key, and a valid signature on the layout for each key.
 
-        4.  Verify functionary signature for every loaded Link, skipping links
-            with failing signatures or signed by unauthorized functionaries,
-            and fail if less than `threshold` links validly signed by different
-            authorized functionaries can be found.
-            The routine returns a dictionary containing only links with valid
-            signatures by authorized functionaries.
+    link_dir_path (optional): A directory path to link metadata files. The
+        expected filename format for link metadata files is
+        ``STEP-NAME.KEYID-PREFIX.link``. Link metadata files for a sublayout
+        are loaded from a subdirectory relative to the link_dir_path of the
+        superlayout. The expected directory name format is
+        ``SUBLAYOUT-STEP-NAME.KEYID-PREFIX``.
 
-        5.  Verify sublayouts
-            Recurses into layout verification for each link of the
-            superlayout that is a layout itself (i.e. sublayout).
-            Links for the sublayout are expected to be in a subdirectory
-            relative to the superlayout's link_dir_path, with a name in the
-            format: in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+    substitution_parameters (optional): A dictionary with substitution values
+        for artifact rules (steps and inspections), the expected command
+        attribute (steps), and the run attribute (inspections) in the layout.
 
-            The successfully verified sublayout is replaced with an unsigned
-            summary link in the chain_link_dict of the superlayout.
-            The summary link is then used just like a regular link
-            to verify command alignments, thresholds and inspections according
-            to the superlayout.
+    step_name (optional): A name assigned to the returned link. This is mostly
+        useful during recursive sublayout verification.
 
-        6.  Verify alignment of defined (Step) and reported (Link) commands
-            NOTE: Won't raise exception on mismatch
+  Raises:
+    securesystemslib.exceptions.FormatError: Passed parameters are malformed.
 
-        7.  Verify threshold constraints, i.e. if all links corresponding to
-            one step have recorded the same artifacts (materials and products).
+    SignatureVerificationError: No layout verification key is passed, or any of
+        the passed keys fails to verify a signature.
 
-        8.  Verify rules defined in each Step's expected_materials and
-            expected_products field
-            NOTE: At this point no Inspection link metadata is available,
-            hence (MATCH) rules cannot reference materials or products of
-            Inspections.
-            Verifying Steps' artifact rules before executing Inspections
-            guarantees that Inspection commands don't run on compromised
-            target files, which would be a surface for attacks.
+    LayoutExpiredError: The layout is expired.
 
-        9.  Execute Inspection commands
-            NOTE: Inspections, similar to Steps executed with 'in-toto-run',
-            will record materials before and products after command execution.
-            For now it records everything in the current working directory.
+    LinkNotFoundError: Fewer than threshold link metadata files can be found
+        for a step of the layout.
 
-        10. Verify rules defined in each Inspection's expected_materials and
-            expected_products field
+    ThresholdVerificationError: Fewer than threshold links, validly signed by
+        different authorized functionaries, who agree on the recorded materials
+        and products, can be found for a step of the layout. (Links with
+        invalid signatures or signatures by unauthorized functionaries are
+        ignored.)
 
-  <Arguments>
-    layout:
-            Layout object that is being verified.
+    RuleVerificationError: A DISALLOW rule matches disallowed artifacts, or
+        a REQUIRE rule does not find a required artifact.
 
-    layout_key_dict:
-            Dictionary of project owner public keys, used to verify the
-            layout's signature.
+    BadReturnValueError: An inspection command returns a non-zero value.
 
-    link_dir_path: (optional)
-            A path to the directory from which link metadata files
-            corresponding to the steps in the passed layout are loaded.
-            Default is the current working directory.
+  Side Effects:
+    Reads link metadata files from disk.
+    Runs inspection commands in subprocess.
 
-    substitution_parameters: (optional)
-            a dictionary containing key-value pairs for substituting in the
-            following metadata fields:
-
-              - artifact rules in step and inspection definitions in the layout
-              - the run fields in the inspection definitions
-              - the expected command in the step definitions
-    step_name: (optional)
-            The step that the layout corresponds to, typically used during
-            recursive calls of in_toto_verify. This usually happens when
-            resolving sublayouts. The function verify_sublayouts may provide a
-            clearer picture on how it's used.
-
-  <Exceptions>
-    None.
-
-  <Side Effects>
-    Read link metadata files from disk
-
-  <Returns>
-    A link which summarizes the materials and products of the overall
-    software supply chain (used by super-layout verification if any)
+  Returns:
+    A Metablock object that contains a Link object, which summarizes the
+    materials and products of the overall software supply chain. This is mostly
+    useful during recursive sublayout verification.
 
   """
   LOG.info("Verifying layout signatures...")
@@ -1495,7 +1467,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
 
-  # If there are parameters sent to the tanslation layer, substitute them
+  # If there are parameters sent to the translation layer, substitute them
   if substitution_parameters is not None:
     LOG.info('Performing parameter substitution...')
     substitute_parameters(layout, substitution_parameters)
@@ -1516,6 +1488,9 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   verify_threshold_constraints(layout, chain_link_dict)
   reduced_chain_link_dict = reduce_chain_links(chain_link_dict)
 
+  # NOTE: Processing step rules before executing inspections guarantees that
+  # inspection commands don't run on compromised target files, however, this
+  # also precludes step match rules from referencing inspection artifacts.
   LOG.info("Verifying Step rules...")
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 

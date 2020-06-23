@@ -337,7 +337,13 @@ def execute_link(link_cmd_args, record_streams):
             caller (True) or not (False).
 
   <Exceptions>
-    TBA (see https://github.com/in-toto/in-toto/issues/6)
+    OSError:
+            The given command is not present or non-executable
+
+    securesystemslib.process.subprocess.TimeoutExpired:
+            The execution of the given command times out. The default timeout
+            is securesystemslib.settings.SUBPROCESS_TIMEOUT.
+
 
   <Side Effects>
     Executes passed command in a subprocess and redirects stdout and stderr
@@ -419,90 +425,92 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
     normalize_line_endings=False, lstrip_paths=None):
-  """
-  <Purpose>
-    Calls functions in this module to run the command passed as link_cmd_args
-    argument and to store materials, products, by-products and environment
-    information into a link metadata file.
+  """Performs a supply chain step or inspection generating link metadata.
 
-    The link metadata file is signed either with the passed signing_key, or
-    a gpg key identified by the passed gpg_keyid or with the default gpg
-    key if gpg_use_default is True.
+  Executes link_cmd_args, recording paths and hashes of files before and after
+  command execution (aka. artifacts) in a link metadata file. The metadata is
+  signed with the passed signing_key, a gpg key identified by its ID, or the
+  default gpg key. If multiple key arguments are passed, only one key is used
+  in above order of precedence. The resulting link file is written to
+  ``STEP-NAME.KEYID-PREFIX.link``. If no key argument is passed the link
+  metadata is neither signed nor written to disk.
 
-    Even if multiple key parameters are passed, only one key is used for
-    signing (in above order of precedence).
+  Arguments:
+    name: A unique name to associate link metadata with a step or inspection.
 
-    The link file is dumped to `link.FILENAME_FORMAT` using the signing key's
-    keyid.
+    material_list: A list of artifact paths to be recorded before command
+        execution. Directories are traversed recursively.
 
-    If no key parameter is passed the link is neither signed nor dumped.
+    product_list: A list of artifact paths to be recorded after command
+        execution. Directories are traversed recursively.
 
-  <Arguments>
-    name:
-            A unique name to relate link metadata with a step or inspection
-            defined in the layout.
-    material_list:
-            List of file or directory paths that should be recorded as
-            materials.
-    product_list:
-            List of file or directory paths that should be recorded as
-            products.
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    record_streams: (optional)
-            A bool that specifies whether to redirect standard output and
-            and standard error to a temporary file which is returned to the
-            caller (True) or not (False).
-    signing_key: (optional)
-            If not None, link metadata is signed with this key.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    gpg_keyid: (optional)
-            If not None, link metadata is signed with a gpg key identified
-            by the passed keyid.
-    gpg_use_default: (optional)
-            If True, link metadata is signed with default gpg key.
-    gpg_home: (optional)
-            Path to GPG home directory (if not set the default gpg home
-            directory is used).
-    exclude_patterns: (optional)
-            Artifacts matched by the pattern are excluded from the materials
-            and products sections in the resulting link.
-    base_path: (optional)
-            If passed, record artifacts relative to base_path. Default is
-            current working directory.
-            NOTE: The base_path part of the recorded material is not included
-            in the resulting preliminary link's material/product sections.
-    compact_json: (optional)
-            Whether or not to use the most compact json representation.
-    record_environment: (optional)
-            if values such as workdir should be recorded  on the environment
-            dictionary (false by default)
-    normalize_line_endings: (optional)
-            If True, replaces windows and mac line endings with unix line
-            endings before hashing materials and products, for cross-platform
-            support.
-    lstrip_paths: (optional)
-            If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix.
+    link_cmd_args: A list where the first element is a command and the
+        remaining elements are arguments passed to that command.
 
-  <Exceptions>
-    securesystemslib.FormatError if a signing_key is passed and does not match
-        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
-        are passed and don't match securesystemslib.formats.NAMES_SCHEMA, or
-        base_path is passed and does not match
-        securesystemslib.formats.PATH_SCHEMA or is not a directory.
+    record_streams (optional): A boolean indicating if standard output and
+        standard error of the link command should be recorded in the link
+        metadata in addition to being displayed while the command is executed.
 
-    securesystemslib.gpg.exceptions.CommandError:
-        If gpg is used for signing and the command exits with a non-zero code.
+    signing_key (optional): A key used to sign the resulting link metadata. The
+        format is securesystemslib.formats.KEY_SCHEMA.
 
-  <Side Effects>
-    If a key parameter is passed for signing, the newly created link metadata
-    file is written to disk using the filename scheme: `link.FILENAME_FORMAT`
+    gpg_keyid (optional): A keyid used to identify a local gpg key used to sign
+        the resulting link metadata.
 
-  <Returns>
-    Newly created Metablock object containing a Link object
+    gpg_use_default (optional): A boolean indicating if the default gpg key
+        should be used to sign the resulting link metadata.
+
+    gpg_home (optional): A path to the gpg home directory. If not set the
+        default gpg home directory is used.
+
+    exclude_patterns (optional): A list of filename patterns to exclude certain
+        files from being recorded as artifacts.
+
+    base_path (optional): A path relative to which artifacts are recorded.
+        Default is the current working directory.
+
+    compact_json (optional): A boolean indicating if the resulting link
+        metadata should be written in the most compact JSON representation.
+
+    record_environment (optional): A boolean indicating if information about
+        the environment should be added in the resulting link metadata.
+
+    normalize_line_endings (optional): A boolean indicating if line endings of
+        artifacts should be normalized before hashing for cross-platform
+        support.
+
+    lstrip_paths (optional): A list of path prefixes used to left-strip
+        artifact paths before storing them in the resulting link metadata.
+
+  Raises:
+    securesystemslib.exceptions.FormatError: Passed arguments are malformed.
+
+    ValueError: Cannot change to base path directory.
+
+    securesystemslib.exceptions.StorageError: Cannot hash artifacts.
+
+    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+
+    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+
+    IOError: Cannot write link metadata.
+
+    securesystemslib.exceptions.CryptoError, \
+            securesystemslib.exceptions.UnsupportedAlgorithmError:
+        Signing errors.
+
+    ValueError, OSError, securesystemslib.gpg.exceptions.CommandError, \
+            securesystemslib.gpg.exceptions.KeyNotFoundError:
+        gpg signing errors.
+
+  Side Effects:
+    Reads artifact files from disk.
+    Runs link command in subprocess.
+    Calls system gpg in a subprocess, if a gpg key argument is passed.
+    Writes link metadata file to disk, if any key argument is passed.
+
+  Returns:
+    A Metablock object that contains the resulting link object.
 
   """
   LOG.info("Running '{}'...".format(name))
@@ -580,72 +588,79 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, record_environment=False,
     normalize_line_endings=False, lstrip_paths=None):
-  """
-  <Purpose>
-    Starts creating link metadata for a multi-part in-toto step. I.e.
-    records passed materials, creates link meta data object from it, signs it
-    with passed signing_key, gpg key identified by the passed gpg_keyid
-    or the default gpg key and stores it to disk under
-    UNFINISHED_FILENAME_FORMAT.
+  """Generates preliminary link metadata.
 
-    One of signing_key, gpg_keyid or gpg_use_default has to be passed.
+  Records paths and hashes of materials in a preliminary link metadata file.
+  The metadata is signed with the passed signing_key, a gpg key identified by
+  its ID, or the default gpg key. If multiple key arguments are passed, only
+  one key is used in above order of precedence. At least one key argument must
+  be passed. The resulting link file is written to
+  ``.STEP-NAME.KEYID-PREFIX.link-unfinished``.
 
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    material_list:
-            List of file or directory paths that should be recorded as
-            materials.
-    signing_key: (optional)
-            If not None, link metadata is signed with this key.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    gpg_keyid: (optional)
-            If not None, link metadata is signed with a gpg key identified
-            by the passed keyid.
-    gpg_use_default: (optional)
-            If True, link metadata is signed with default gpg key.
-    gpg_home: (optional)
-            Path to GPG home directory (if not set the default gpg home
-            directory is used).
-    exclude_patterns: (optional)
-            Artifacts matched by the pattern are excluded from the materials
-            section in the resulting preliminary link.
-    base_path: (optional)
-            If passed, record materials relative to base_path. Default is
-            current working directory.
-            NOTE: The base_path part of the recorded materials is not included
-            in the resulting preliminary link's material section.
-    record_environment: (optional)
-            if values such as workdir should be recorded  on the environment
-            dictionary (false by default)
-    normalize_line_endings: (optional)
-            If True, replaces windows and mac line endings with unix line
-            endings before hashing materials, for cross-platform support.
-    lstrip_paths: (optional)
-            If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix.
+  Use this function together with in_toto_record_stop as an alternative to
+  in_toto_run, in order to provide evidence for supply chain steps that cannot
+  be carried out by a single command.
 
-  <Exceptions>
-    ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-        is passed.
+  Arguments:
+    step_name: A unique name to associate link metadata with a step.
 
-    securesystemslib.FormatError if a signing_key is passed and does not match
-        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.formats.KEYID_SCHEMA or exclude_patterns
-        are passed and don't match securesystemslib.formats.NAMES_SCHEMA, or
-        base_path is passed and does not match
-        securesystemslib.formats.PATH_SCHEMA or is not a directory.
+    material_list: A list of artifact paths to be recorded as materials.
+        Directories are traversed recursively.
 
-    securesystemslib.gpg.exceptions.CommandError:
-        If gpg is used for signing and the command exits with a non-zero code.
+    signing_key (optional): A key used to sign the resulting link metadata. The
+        format is securesystemslib.formats.KEY_SCHEMA.
 
-  <Side Effects>
-    Writes newly created link metadata file to disk using the filename scheme
-    from link.UNFINISHED_FILENAME_FORMAT
+    gpg_keyid (optional): A keyid used to identify a local gpg key used to sign
+        the resulting link metadata.
 
-  <Returns>
-    None.
+    gpg_use_default (optional): A boolean indicating if the default gpg key
+        should be used to sign the resulting link metadata.
+
+    gpg_home (optional): A path to the gpg home directory. If not set the
+        default gpg home directory is used.
+
+    exclude_patterns (optional): A list of filename patterns to exclude certain
+        files from being recorded as artifacts.
+
+    base_path (optional): A path relative to which artifacts are recorded.
+        Default is the current working directory.
+
+    record_environment (optional): A boolean indicating if information about
+        the environment should be added in the resulting link metadata.
+
+    normalize_line_endings (optional): A boolean indicating if line endings of
+        artifacts should be normalized before hashing for cross-platform
+        support.
+
+    lstrip_paths (optional): A list of path prefixes used to left-strip
+        artifact paths before storing them in the resulting link metadata.
+
+  Raises:
+    securesystemslib.exceptions.FormatError: Passed arguments are malformed.
+
+    ValueError: None of signing_key, gpg_keyid or gpg_use_default=True is
+        passed.
+
+    securesystemslib.exceptions.StorageError: Cannot hash artifacts.
+
+    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+
+    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+
+    IOError: Cannot write link metadata.
+
+    securesystemslib.exceptions.CryptoError, \
+            securesystemslib.exceptions.UnsupportedAlgorithmError:
+        Signing errors.
+
+    ValueError, OSError, securesystemslib.gpg.exceptions.CommandError, \
+            securesystemslib.gpg.exceptions.KeyNotFoundError:
+        gpg signing errors.
+
+  Side Effects:
+    Reads artifact files from disk.
+    Calls system gpg in a subprocess, if a gpg key argument is passed.
+    Writes preliminary link metadata file to disk.
 
   """
   LOG.info("Start recording '{}'...".format(step_name))
@@ -714,84 +729,81 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, normalize_line_endings=False,
     lstrip_paths=None):
-  """
-  <Purpose>
-    Finishes creating link metadata for a multi-part in-toto step.
-    Loads unfinished link metadata file from disk, verifies
-    that the file was signed with either the passed signing key, a gpg key
-    identified by the passed gpg_keyid or the default gpg key.
+  """Finalizes preliminary link metadata generated with in_toto_record_start.
 
-    Then records products, updates unfinished Link object
-    (products and signature), removes unfinished link file from and
-    stores new link file to disk.
+  Loads preliminary link metadata file, verifies its signature, and records
+  paths and hashes as products, thus finalizing the link metadata. The metadata
+  is signed with the passed signing_key, a gpg key identified by its ID, or the
+  default gpg key. If multiple key arguments are passed, only one key is used
+  in above order of precedence. At least one key argument must be passed and it
+  must be the same as the one used to sign the preliminary link metadata file.
+  The resulting link file is written to ``STEP-NAME.KEYID-PREFIX.link``.
 
-    One of signing_key, gpg_keyid or gpg_use_default has to be passed and it
-    needs to be the same that was used with preceding in_toto_record_start.
+  Use this function together with in_toto_record_start as an alternative to
+  in_toto_run, in order to provide evidence for supply chain steps that cannot
+  be carried out by a single command.
 
-  <Arguments>
-    step_name:
-            A unique name to relate link metadata with a step defined in the
-            layout.
-    product_list:
-            List of file or directory paths that should be recorded as
-            products.
-    signing_key: (optional)
-            If not None, link metadata is signed with this key.
-            Format is securesystemslib.formats.KEY_SCHEMA
-    gpg_keyid: (optional)
-            If not None, link metadata is signed with a gpg key identified
-            by the passed keyid.
-    gpg_use_default: (optional)
-            If True, link metadata is signed with default gpg key.
-    gpg_home: (optional)
-            Path to GPG home directory (if not set the default gpg home
-            directory is used).
-    exclude_patterns: (optional)
-            Artifacts matched by the pattern are excluded from the products
-            sections in the resulting link.
-    base_path: (optional)
-            If passed, record products relative to base_path. Default is
-            current working directory.
-            NOTE: The base_path part of the recorded products is not included
-            in the resulting preliminary link's product section.
-    normalize_line_endings: (optional)
-            If True, replaces windows and mac line endings with unix line
-            endings before hashing products, for cross-platform support.
-    lstrip_paths: (optional)
-            If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix.
+  Arguments:
+    step_name: A unique name to associate link metadata with a step.
 
-  <Exceptions>
-    ValueError if none of signing_key, gpg_keyid or gpg_use_default=True
-        is passed.
+    product_list: A list of artifact paths to be recorded as products.
+        Directories are traversed recursively.
 
-    securesystemslib.FormatError if a signing_key is passed and does not match
-        securesystemslib.formats.KEY_SCHEMA or a gpg_keyid is passed and does
-        not match securesystemslib.formats.KEYID_SCHEMA, or exclude_patterns
-        are passed and don't match securesystemslib.formats.NAMES_SCHEMA, or
-        base_path is passed and does not match
-        securesystemslib.formats.PATH_SCHEMA or is not a directory.
+    signing_key (optional): A key used to sign the resulting link metadata. The
+        format is securesystemslib.formats.KEY_SCHEMA.
 
-    LinkNotFoundError if gpg is used for signing and the corresponding
-        preliminary link file can not be found in the current working directory
+    gpg_keyid (optional): A keyid used to identify a local gpg key used to sign
+        the resulting link metadata.
 
-    SignatureVerificationError:
-        If the signature of the preliminary link file is invalid.
+    gpg_use_default (optional): A boolean indicating if the default gpg key
+        should be used to sign the resulting link metadata.
 
-    securesystemslib.gpg.exceptions.KeyExpirationError:
-        If the key used to verify the signature of the preliminary link file is
-        an expired gpg key.
+    gpg_home (optional): A path to the gpg home directory. If not set the
+        default gpg home directory is used.
 
-    securesystemslib.gpg.exceptions.CommandError:
-        If gpg is used for signing and the command exits with a non-zero code.
+    exclude_patterns (optional): A list of filename patterns to exclude certain
+        files from being recorded as artifacts.
 
-  <Side Effects>
-    Writes newly created link metadata file to disk using the filename scheme
-    from link.FILENAME_FORMAT
-    Removes unfinished link file link.UNFINISHED_FILENAME_FORMAT from disk
+    base_path (optional): A path relative to which artifacts are recorded.
+        Default is the current working directory.
 
-  <Returns>
-    None.
+    normalize_line_endings (optional): A boolean indicating if line endings of
+        artifacts should be normalized before hashing for cross-platform
+        support.
+
+    lstrip_paths (optional): A list of path prefixes used to left-strip
+        artifact paths before storing them in the resulting link metadata.
+
+  Raises:
+    securesystemslib.exceptions.FormatError: Passed arguments are malformed.
+
+    ValueError: None of signing_key, gpg_keyid or gpg_use_default=True is
+        passed.
+
+    LinkNotFoundError: No preliminary link metadata file found.
+
+    securesystemslib.exceptions.StorageError: Cannot hash artifacts.
+
+    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+
+    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+
+    IOError: Cannot write link metadata.
+
+    securesystemslib.exceptions.CryptoError, \
+            securesystemslib.exceptions.UnsupportedAlgorithmError:
+        Signing errors.
+
+    ValueError, OSError, securesystemslib.gpg.exceptions.CommandError, \
+            securesystemslib.gpg.exceptions.KeyNotFoundError:
+        gpg signing errors.
+
+  Side Effects:
+    Reads preliminary link metadata file from disk.
+    Reads artifact files from disk.
+    Calls system gpg in a subprocess, if a gpg key argument is passed.
+    Writes resulting link metadata file to disk.
+    Removes preliminary link metadata file from disk.
 
   """
   LOG.info("Stop recording '{}'...".format(step_name))

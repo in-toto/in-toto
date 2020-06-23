@@ -32,3 +32,9 @@ Utilities
   in-toto-mock: mock in-toto-run <in-toto-mock>
   in-toto-sign: sign/verify individual pieces of metadata <in-toto-sign>
   in-toto-keygen: generate cryptographic keys <in-toto-keygen>
+
+Settings
+--------
+.. toctree::
+
+  Settings <settings>

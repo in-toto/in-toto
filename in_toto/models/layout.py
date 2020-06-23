@@ -57,12 +57,27 @@ SUBLAYOUT_LINK_DIR_FORMAT = "{name}.{keyid:.8}"
 
 @attr.s(repr=False, init=False)
 class Layout(Signable):
-  """
-  A layout lists the sequence of steps of the software supply chain, and the
-  functionaries authorized to perform these steps.
+  """A definition for a software supply chain.
 
-  The object should be wrapped in a metablock object, to provide functionality
-  for signing and signature verification, and reading from and writing to disk.
+  A layout lists the sequence of steps of the software supply chain in the
+  order they are expected to be performed, the functionaries authorized and
+  required to perform them, and inspections to be performed by the client upon
+  final product verification.
+
+  A Layout object is usually contained in a generic Metablock object for
+  signing, serialization and I/O capabilities.
+
+  Attributes:
+    steps: A list of Step objects.
+
+    inspect: A list of Inspection objects.
+
+    keys: A dictionary of functionary public keys, with keyids as dict keys and
+        keys as values.
+
+    expires: The layout expiration.
+
+    readme: A human readable description of the software supply chain.
 
   """
   _type = attr.ib()
@@ -74,38 +89,6 @@ class Layout(Signable):
 
 
   def __init__(self, **kwargs):
-    """
-    <Purpose>
-      Instantiate a new layout object with optional initial values.
-
-    <Optional Keyword Arguments>
-      steps:
-              A list of step objects describing the steps required to carry out
-              the software supply chain.
-
-      inspect:
-              A list of inspection objects describing any additional actions
-              carried out upon verification.
-
-      keys:
-              A dictionary of public keys whose private keys are used
-              to sign the metadata (link metadata) corresponding to the steps
-              of the supply chain. Each step can authorize one or more of the
-              here listed keys individually.
-
-      expires:
-              The expiration date of a layout.
-
-      readme:
-              A human readable description of the software supply chain defined
-              by the layout.
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the instantiated layout has invalid properties, e.g. because
-              any of the assigned keyword arguments are invalid.
-
-    """
     super(Layout, self).__init__()
     self._type = "layout"
     self.steps = kwargs.get("steps", [])
@@ -128,41 +111,26 @@ class Layout(Signable):
 
   @property
   def type_(self):
-    """
-    <Purpose>
-      Getter for protected _type attribute.
-
-      NOTE: The trailing underscore used is by convention (pep8) to avoid
-      conflicts with Python's 'type' keyword.
-
-    <Returns>
-      The type of the metadata object, i.e. "layout" (see constructor).
-
-    """
+    """The string "layout" to indentify the in-toto metadata type."""
+    # NOTE: We expose the type_ property in the API documentation instead of
+    # _type to protect it against modification.
+    # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict
+    # with Python's type keyword.
     return self._type
 
 
   @staticmethod
   def read(data):
-    """
-    <Purpose>
-      Static method to instantiate a layout object from a Python dictionary,
-      e.g. by parsing its JSON representation. The method expects any
-      contained steps and inspections to be Python dictionaries as well, and
-      tries to instantiate the corresponding objects using the step's and
-      inspection's read methods respectively.
+    """Creates a Layout object from its dictionary representation.
 
-    <Arguments>
-      data:
-              A dictionary containing layout metadata.
+    Arguments:
+      data: A dictionary with layout metadata fields.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of the layout's properties is invalid.
+    Raises:
+      securesystemslib.exceptions.FormatError: Passed data is invalid.
 
-    <Returns>
-      The newly created layout object, optionally containing newly instantiated
-      step and inspection objects.
+    Returns:
+      The created Layout object.
 
     """
     steps = []
@@ -180,25 +148,17 @@ class Layout(Signable):
 
 
   def set_relative_expiration(self, days=0, months=0, years=0):
-    """
-    <Purpose>
-      Set the layout's expiration date in one or more of "days", "months" or
-      "years" from today. If no argument is passed, it defaults to today.
+    """Sets layout expiration relative to today.
 
-    <Arguments>
-      days:
-              Days from today.
+    If not argument is passed the set exipration date is now.
 
-      months:
-              Months from today.
+    Arguments:
+      days (optional): Days from today.
+      months (optional): Months from today.
+      years (optional): Years from today.
 
-      years:
-              Years from today.
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of days, months or years is passed and is not an
-              integer.
+    Raises:
+      securesystemslib.exceptions.FormatError: Arguments are not ints.
 
     """
     securesystemslib.schema.Integer().check_match(days)
@@ -210,12 +170,9 @@ class Layout(Signable):
 
 
   def get_step_name_list(self):
-    """
-    <Purpose>
-      Return list of step names in the order in which they are listed in the
-      layout.
+    """Returns ordered list of step names as they appear in the layout.
 
-    <Returns>
+    Returns:
       A list of step names.
 
     """
@@ -227,26 +184,19 @@ class Layout(Signable):
 
 
   def get_step_by_name(self, step_name):
-    """
-    <Purpose>
-      Return the first step in the layout's list of steps identified by the
-      passed step name.
+    """Returns step identified by step_name from the layout.
 
-      NOTE: Step names must be unique within a layout, which is enforced by
-      they Layout's validate method. However, if validate has not been called,
-      there may be multiple steps with the same name. In that case only
-      the first step with the passed name is returned.
+    NOTE: Returns the first step identified only, which should be the only step
+    for a given name of a valid layout.
 
-    <Arguments>
-      step_name:
-              A step name.
+    Arguments:
+      step_name: A step name.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed step name is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is not a string.
 
-    <Returns>
-      A step object.
+    Returns:
+      A Step object.
 
     """
     securesystemslib.schema.AnyString().check_match(step_name)
@@ -257,23 +207,16 @@ class Layout(Signable):
 
 
   def remove_step_by_name(self, step_name):
-    """
-    <Purpose>
-      Remove all steps from the layout's list of steps identified by the
-      passed step name.
+    """Removes steps identified by step_name from the layout.
 
-      NOTE: Step names must be unique within a layout, which is enforced by
-      they layout's validate method. However, if validate has not been called,
-      there might be multiple steps with the same name. The method removes
-      all steps with the passed name.
+    NOTE: Removes all steps identified, which should be only one step for a
+    given name of a valid layout.
 
-    <Arguments>
-      step_name:
-              A step name.
+    Arguments:
+      step_name: A step name.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed step name is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is not a string.
 
     """
     securesystemslib.schema.AnyString().check_match(step_name)
@@ -284,13 +227,10 @@ class Layout(Signable):
 
 
   def get_inspection_name_list(self):
-    """
-    <Purpose>
-      Return list of inspection names in the order in which they are listed in
-      the layout.
+    """Returns ordered list of inspection names as they appear in the layout.
 
-    <Returns>
-      A list of the inspection names.
+    Returns:
+      A list of inspection names.
 
     """
     inspection_names = []
@@ -301,26 +241,19 @@ class Layout(Signable):
 
 
   def get_inspection_by_name(self, inspection_name):
-    """
-    <Purpose>
-      Return the first inspection in the layout's list of inspections
-      identified by the passed inspection name.
+    """Returns inspection identified by inspection_names from the layout.
 
-      NOTE: Inspection names must be unique within a layout, which is enforced
-      by they layout's validate method. However, if validate has not been
-      called, there may be multiple inspections with the same name. In that
-      case only the first inspection with the passed name is returned.
+    NOTE: Returns the first inspection identified only, which should be the
+    only inspection for a given name of a valid layout.
 
-    <Arguments>
-      inspection_name:
-              An inspection name.
+    Arguments:
+      inspection_name: An inspection name.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed inspection name is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is not a string.
 
-    <Returns>
-      An inspection object.
+    Returns:
+      An Inspection object.
 
     """
     securesystemslib.schema.AnyString().check_match(inspection_name)
@@ -331,23 +264,16 @@ class Layout(Signable):
 
 
   def remove_inspection_by_name(self, inspection_name):
-    """
-    <Purpose>
-      Remove all inspections from the layout's list of inspections identified
-      by the passed inspection name.
+    """Removes inspections identified by inspection_name from the layout.
 
-      NOTE: Inspection names must be unique within a layout, which is enforced
-      by they layout's validate method. However, if validate has not been
-      called, there may be multiple inspections with the same name. The
-      method removes all inspections with the passed name.
+    NOTE: Removes all inspections identified, which should be only one
+    inspection for a given name of a valid layout.
 
-    <Arguments>
-      inspection_name:
-              An inspection name.
+    Arguments:
+      inspection_name: An inspection name.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed inspection name is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is not a string.
 
     """
     securesystemslib.schema.AnyString().check_match(inspection_name)
@@ -358,35 +284,26 @@ class Layout(Signable):
 
 
   def get_functionary_key_id_list(self):
-    """
-    <Purpose>
-      Return a list of the functionary keyids from the layout's keys
-      dictionary.
+    """Returns list of functionary keyids from the layout.
 
-    <Returns>
-      A list of functionary keyids.
+    Returns:
+      A list of keyids.
 
     """
     return list(self.keys.keys())
 
 
   def add_functionary_key(self, key):
-    """
-    <Purpose>
-      Add the passed functionary public key to the layout's dictionary of keys.
+    """Adds key as functionary key to layout.
 
-    <Arguments>
-      key:
-              A functionary public key conformant with
-              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
+    Arguments:
+      key: A public key. Format is securesystemslib.formats.ANY_PUBKEY_SCHEMA.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed key does not match
-              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
 
-    <Returns>
-      The added functionary public key.
+    Returns:
+      The added key.
 
     """
     securesystemslib.formats.ANY_PUBKEY_SCHEMA.check_match(key)
@@ -396,25 +313,17 @@ class Layout(Signable):
 
 
   def add_functionary_key_from_path(self, key_path):
-    """
-    <Purpose>
-      Load a functionary public key in RSA PEM format from the passed path
-      and add it to the layout's dictionary of keys.
+    """Loads key from disk and adds as functionary key to layout.
 
-    <Arguments>
-      key_path:
-              A path, conformant with securesystemslib.formats.PATH_SCHEMA,
-              to a functionary public key.
+    Arguments:
+      key_path: A path to a PEM-formatted RSA public key. Format is
+          securesystemslib.formats.PATH_SCHEMA.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed key path does not match
-              securesystemslib.formats.PATH_SCHEMA.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
+      securesystemslib.exceptions.Error: Key cannot be imported.
 
-      securesystemslib.exceptions.Error
-              If the key at the passed path cannot be imported as public key.
-
-    <Returns>
+    Returns:
       The added functionary public key.
 
     """
@@ -426,33 +335,22 @@ class Layout(Signable):
 
 
   def add_functionary_key_from_gpg_keyid(self, gpg_keyid, gpg_home=None):
-    """
-    <Purpose>
-      Load a functionary public key from the GPG keychain, located at the
-      passed GPG home path, identified by the passed GPG keyid, and add it to
-      the layout's dictionary of keys.
+    """Loads key from gpg keychain and adds as functionary key to layout.
 
-    <Arguments>
-      gpg_keyid:
-              A GPG keyid.
+    Arguments:
+      gpg_keyid: A keyid used to identify a local gpg public key.
+      gpg_home (optional): A path to the gpg home directory. If not set the
+          default gpg home directory is used.
 
-      gpg_home:
-              A path to the GPG keychain to load the key from. If not passed
-              the default GPG keychain is used.
+    Raises:
+      securesystemslib.exceptions.FormatError: Arguments are malformed.
+      securesystemslib.gpg.execeptions.KeyNotFoundError: Key cannot be found.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed gpg keyid does not match
-              securesystemslib.formats.KEYID_SCHEMA.
+    Side Effects:
+      Calls system gpg command in a subprocess.
 
-              If the gpg home path is passed and does not match
-              securesystemslib.formats.PATH_SCHEMA.
-
-              If the key loaded from the GPG keychain does not match
-              securesystemslib.formats.ANY_PUBKEY_SCHEMA.
-
-    <Returns>
-      The added functionary public key.
+    Returns:
+      The added key.
 
     """
     securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
@@ -465,28 +363,19 @@ class Layout(Signable):
 
 
   def add_functionary_keys_from_paths(self, key_path_list):
-    """
-    <Purpose>
-      Load the functionary public keys in RSA PEM format from the passed list
-      of paths and add them to the layout's dictionary of keys.
+    """Loads keys from disk and adds as functionary keys to layout.
 
-    <Arguments>
-      key_path_list:
-              A list of paths, conformant with
-              securesystemslib.formats.PATH_SCHEMA, to functionary public keys.
+    Arguments:
+      key_path_list: A list of paths to PEM-formatted RSA public keys. Format
+          of each path is securesystemslib.formats.PATH_SCHEMA.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of the passed key paths does not match
-              securesystemslib.formats.PATH_SCHEMA.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
+      securesystemslib.exceptions.Error: A key cannot be imported.
 
-      securesystemslib.exceptions.Error
-              If any of the keys at the passed paths cannot be imported as
-              public key.
-
-    <Returns>
-      A dictionary of the added functionary public keys with the key's keyids
-      as dictionary keys and the keys as values.
+    Returns:
+      A dictionary of the added functionary keys, with keyids as dictionary
+      keys and keys as values.
 
     """
     securesystemslib.formats.PATHS_SCHEMA.check_match(key_path_list)
@@ -500,34 +389,23 @@ class Layout(Signable):
 
   def add_functionary_keys_from_gpg_keyids(self, gpg_keyid_list,
       gpg_home=None):
-    """
-    <Purpose>
-      Load functionary public keys from the GPG keychain, located at the
-      passed GPG home path, identified by the passed GPG keyids, and add it to
-      the layout's dictionary of keys.
+    """Loads keys from gpg keychain and adds as functionary keys to layout.
 
-    <Arguments>
-      gpg_keyid_list:
-              A list of GPG keyids.
+    Arguments:
+      gpg_keyid_list: A list of keyids used to identify local gpg public keys.
+      gpg_home (optional): A path to the gpg home directory. If not set the
+          default gpg home directory is used.
 
-      gpg_home:
-              A path to the GPG keychain to load the keys from. If not passed
-              the default GPG keychain is used.
+    Raises:
+      securesystemslib.exceptions.FormatError: Arguments are malformed.
+      securesystemslib.gpg.execeptions.KeyNotFoundError: A key cannot be found.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of the passed gpg keyids does not match
-              securesystemslib.formats.KEYID_SCHEMA.
+    Side Effects:
+      Calls system gpg command in a subprocess.
 
-              If gpg home is passed and does not match
-              securesystemslib.formats.PATH_SCHEMA.
-
-              If any of the keys loaded from the GPG keychain does not
-              match securesystemslib.formats.ANY_PUBKEY_SCHEMA.
-
-    <Returns>
-      A dictionary of the added functionary public keys with the key's keyids
-      as dictionary keys and the keys as values.
+    Returns:
+      A dictionary of the added functionary keys, with keyids as dictionary
+      keys and keys as values.
 
     """
     securesystemslib.formats.KEYIDS_SCHEMA.check_match(gpg_keyid_list)
@@ -615,8 +493,16 @@ class Layout(Signable):
 
 @attr.s(repr=False, init=False)
 class SupplyChainItem(ValidationMixin):
-  """
-  Parent class for items of the supply chain, i.e. Steps and Inspections.
+  """Common attributes and methods for supply chain steps and inspections.
+
+  Attributes:
+    name: A unique named used to associate related link metadata.
+
+    expected_materials: A list of rules to encode expectations about used
+        artifacts (see ``rulelib`` for formats).
+
+    expected_products:  A list of rules to encode expectations about produced
+        artifacts (see ``rulelib`` for formats).
 
   """
   name = attr.ib()
@@ -625,20 +511,6 @@ class SupplyChainItem(ValidationMixin):
 
 
   def __init__(self, **kwargs):
-    """
-    <Purpose>
-      Instantiate a new SupplyChainItem object with optional initial values.
-
-    <Optional Keyword Arguments>
-      name:
-              A unique name used to identify the related link metadata
-
-      expected_materials and expected_products:
-              A list of artifact rules used to verify if the materials or
-              products of the item (found in the according link metadata file)
-              link correctly with other items of the supply chain.
-
-    """
     super(SupplyChainItem, self).__init__()
     self.name = kwargs.get("name")
     self.expected_materials = kwargs.get("expected_materials", [])
@@ -652,21 +524,13 @@ class SupplyChainItem(ValidationMixin):
 
 
   def add_material_rule_from_string(self, rule_string):
-    """
-    <Purpose>
-      Convenience method to parse the passed rule string into a list and append
-      it to the item's list of expected_materials.
+    """Parse artifact rule string as list and add to expected_materials.
 
-    <Arguments>
-      rule_string:
-              An artifact rule string, whose list representation is parseable
-              by in_toto.rulelib.unpack_rule
+    Arguments:
+      rule_string: An artifact rule string (see ``rulelib`` for formats).
 
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError:
-              If the passed rule_string is not a string.
-              If the parsed rule_string cannot be unpacked using rulelib.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
 
     """
     securesystemslib.schema.AnyString().check_match(rule_string)
@@ -679,21 +543,13 @@ class SupplyChainItem(ValidationMixin):
 
 
   def add_product_rule_from_string(self, rule_string):
-    """
-    <Purpose>
-      Convenience method to parse the passed rule string into a list and append
-      it to the item's list of expected_products.
+    """Parse artifact rule string as list and add to expected_products.
 
-    <Arguments>
-      rule_string:
-              An artifact rule string, whose list representation is parseable
-              by in_toto.rulelib.unpack_rule
+    Arguments:
+      rule_string: An artifact rule string (see ``rulelib`` for formats).
 
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError:
-              If the passed rule_string is not a string.
-              If the parsed rule_string cannot be unpacked using rulelib.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
 
     """
     securesystemslib.schema.AnyString().check_match(rule_string)
@@ -728,12 +584,22 @@ class SupplyChainItem(ValidationMixin):
 
 @attr.s(repr=False, init=False)
 class Step(SupplyChainItem):
-  """
-  Represents a step of the supply chain performed by a functionary. A step
-  relates to link metadata generated when the step was performed.
-  Materials and products used/produced by the step are constrained by the
-  artifact rules in the step's expected_materials and expected_products
-  attributes.
+  """A step of a software supply chain.
+
+  A Step object is usually contained in a Layout object and encodes the
+  expectations for a step of the software supply chain such as, who is
+  authorized to perform the step, what command is executed, and which artifacts
+  are used and produced. Evidence about a performed step is provided by link
+  metadata.
+
+  Attributes:
+    pubkeys: A list of functionary keyids authorized to perform the step.
+
+    threshold: A minimum number of distinct functionaries required to provide
+        evidence for a step.
+
+    expected_command: A list of command and command arguments, expected to
+        perform the step.
 
   """
   _type = attr.ib()
@@ -743,33 +609,6 @@ class Step(SupplyChainItem):
 
 
   def __init__(self, **kwargs):
-    """
-    <Purpose>
-      Instantiates a new step object with optional initial values.
-
-    <Optional Keyword Arguments>
-      name:
-              see parent class SupplyChainItem
-
-      expected_materials and expected_products:
-              see parent class SupplyChainItem
-
-      pubkeys:
-              A list of keyids of the functionaries authorized to perform the
-              step
-
-      expected_command:
-              The command expected to have performed this step
-
-      threshold:
-              The least number of functionaries expected to perform this step
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the instantiated step has invalid properties, e.g. because
-              any of the assigned keyword arguments are invalid.
-
-    """
     super(Step, self).__init__(**kwargs)
     self._type = "step"
     self.pubkeys = kwargs.get("pubkeys", [])
@@ -781,39 +620,29 @@ class Step(SupplyChainItem):
 
   @staticmethod
   def read(data):
-    """
-    <Purpose>
-      Static method to instantiate a step object from a Python dictionary,
-      e.g. by parsing its JSON representation.
+    """Creates a Step object from its dictionary representation.
 
-    <Arguments>
-      data:
-              A dictionary containing step metadata.
+    Arguments:
+      data: A dictionary with step metadata fields.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of the step's properties is invalid.
+    Raises:
+      securesystemslib.exceptions.FormatError: Passed data is invalid.
 
-    <Returns>
-      The newly created step object.
+    Returns:
+      The created Step object.
 
     """
     return Step(**data)
 
 
   def set_expected_command_from_string(self, command_string):
-    """
-    <Purpose>
-      Convenience method to parse the passed command_string into a list and
-      assign it to the step's expected_command attribute.
+    """Parse command string as list and assign to expected_command.
 
-    <Arguments>
-      command_string:
-              A string containing a command and command arguments.
+    Arguments:
+      command_string: A command and command arguments string.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed command_string is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
 
     """
     securesystemslib.schema.AnyString().check_match(command_string)
@@ -855,11 +684,15 @@ class Step(SupplyChainItem):
 
 @attr.s(repr=False, init=False)
 class Inspection(SupplyChainItem):
-  """
-  Represents an inspection whose command in the run attribute is executed
-  during final product verification. Materials and products used/produced by
-  the inspection are constrained by the artifact rules in the inspection's
-  expected_materials and expected_products attributes.
+  """An inspection for a software supply chain.
+
+  An Inspection object is usually contained in a Layout object and encodes a
+  command to be executed by an in-toto client during final product
+  verification. Akin to steps, inspections can define artifact rules.
+
+  Attributes:
+    run: A list of command and command arguments to be executed upon final
+        product verification.
 
   """
   _type = attr.ib()
@@ -867,26 +700,6 @@ class Inspection(SupplyChainItem):
 
 
   def __init__(self, **kwargs):
-    """
-    <Purpose>
-        Instantiates a new inspection object with optional initial values.
-
-    <Optional Keyword Arguments>
-      name:
-              see parent class SupplyChainItem
-
-      expected_materials and expected_products:
-              see parent class SupplyChainItem
-
-      run:
-              The command to be executed during final product verification
-
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the instantiated inspection has invalid properties, e.g.
-              because any of the assigned keyword arguments are invalid.
-
-    """
     super(Inspection, self).__init__(**kwargs)
     self._type = "inspection"
     self.run = kwargs.get("run", [])
@@ -896,39 +709,29 @@ class Inspection(SupplyChainItem):
 
   @staticmethod
   def read(data):
-    """
-    <Purpose>
-      Static method to instantiate an inspection object from a Python
-      dictionary, e.g. by parsing its JSON representation.
+    """Creates an Inspection object from its dictionary representation.
 
-    <Arguments>
-      data:
-              A dictionary containing inspection metadata.
+    Arguments:
+      data: A dictionary with inspection metadata fields.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If any of the inspection's properties is invalid.
+    Raises:
+      securesystemslib.exceptions.FormatError: Passed data is invalid.
 
-    <Returns>
-      The newly created inspection object.
+    Returns:
+      The created Inspection object.
 
     """
     return Inspection(**data)
 
 
   def set_run_from_string(self, command_string):
-    """
-    <Purpose>
-      Convenience method to parse the passed command_string into a list and
-      assign it to the inspection's run attribute.
+    """Parse command string as list and assign to run attribute.
 
-    <Arguments>
-      command_string:
-              A string containing a command and command arguments.
+    Arguments:
+      command_string: A command and command arguments string.
 
-    <Exceptions>
-      securesystemslib.exceptions.FormatError
-              If the passed command_string is not a string.
+    Raises:
+      securesystemslib.exceptions.FormatError: Argument is malformed.
 
     """
     securesystemslib.schema.AnyString().check_match(command_string)

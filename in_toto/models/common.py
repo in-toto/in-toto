@@ -29,24 +29,10 @@ class ValidationMixin(object):
   allow in-toto's objects to check that they are proper. """
 
   def validate(self):
-    """
-    <Purpose>
-      Inspects the class (or subclass) for validate methods to ensure the
-      all its members are properly formed. This method can be used to ensure
-      the metadata contained in this class is proper before calling dump.
+    """Validates attributes of the instance.
 
-    <Arguments>
-      None
-
-    <Exceptions>
-      FormatError: If any of the members of this class are not properly
-                   populated.
-
-    <Side Effects>
-      None
-
-    <Returns>
-      None
+    Raises:
+      securesystemslib.formats.FormatError: An attribute value is invalid.
 
     """
     for method in inspect.getmembers(self, predicate=inspect.ismethod):
@@ -68,12 +54,7 @@ class Signable(ValidationMixin):
 
   @property
   def signable_bytes(self):
-    """Returns canonical JSON utf-8 encoded bytes of Signable object dictionary
-    representation.
-
-    The bytes returned from this function are used to generate
-    and verify signatures (c.f. `metadata.Metablock`). Changes to this
-    function might break backwards compatibility with existing metadata. """
-
+    """The UTF-8 encoded canonical JSON byte representation of the dictionary
+    representation of the instance. """
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
