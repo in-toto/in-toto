@@ -493,6 +493,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     lstrip_paths (optional): A list of path prefixes used to left-strip
         artifact paths before storing them in the resulting link metadata.
 
+    metadata_directory (optional): A directory path to write the resulting link
+        metadata file to. Default destination is the current working directory.
+
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
 
@@ -504,7 +507,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
     securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
 
-    IOError: Cannot write link metadata.
+    IOError, FileNotFoundError, NotADirectoryError, PermissionError:
+        Cannot write link metadata.
 
     securesystemslib.exceptions.CryptoError, \
             securesystemslib.exceptions.UnsupportedAlgorithmError:
@@ -665,7 +669,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
     securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
 
-    IOError: Cannot write link metadata.
+    IOError, PermissionError:
+        Cannot write link metadata.
 
     securesystemslib.exceptions.CryptoError, \
             securesystemslib.exceptions.UnsupportedAlgorithmError:
@@ -792,6 +797,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     lstrip_paths (optional): A list of path prefixes used to left-strip
         artifact paths before storing them in the resulting link metadata.
 
+    metadata_directory (optional): A directory path to write the resulting link
+        metadata file to. Default destination is the current working directory.
+
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
 
@@ -806,7 +814,8 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
 
-    IOError: Cannot write link metadata.
+    IOError, FileNotFoundError, NotADirectoryError, PermissionError:
+        Cannot write link metadata.
 
     securesystemslib.exceptions.CryptoError, \
             securesystemslib.exceptions.UnsupportedAlgorithmError:
