@@ -22,6 +22,7 @@ import os
 import sys
 import unittest
 import glob
+import tempfile
 
 # Use external backport 'mock' on versions under 3.3
 if sys.version_info >= (3, 3):
@@ -138,6 +139,21 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
           [self.test_artifact[len(strip_prefix):]])
       self.assertListEqual(list(link_metadata.signed.products.keys()),
           [self.test_artifact[len(strip_prefix):]])
+
+
+  def test_main_with_metadata_directory(self):
+    """Test CLI command with metadata directory. """
+    tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
+    args = ["--step-name", self.test_step, "--key", self.rsa_key_path,
+        "--metadata-directory", tmp_dir, "--", "python", "--version"]
+
+    # Give wrong password whenever prompted.
+    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+      self.assert_cli_sys_exit(args, 0)
+
+    linkpath = os.path.join(tmp_dir, self.test_link_rsa)
+
+    self.assertTrue(os.path.exists(linkpath))
 
 
   def test_main_with_unencrypted_ed25519_key(self):

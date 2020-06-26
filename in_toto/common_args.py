@@ -122,6 +122,15 @@ QUIET_KWARGS = {
   "help": "suppress all output"
 }
 
+METADATA_DIRECTORY_ARGS = ["-d", "--metadata-directory"]
+METADATA_DIRECTORY_KWARGS = {
+  "required": False,
+  "type": str,
+  "metavar": "<directory>",
+  "help": ("path to a directory to dump metadata. If '--metadata-directory'"
+           " is not passed, the current working direcotry is used.")
+}
+
 
 def title_case_action_groups(parser):
   """Capitalize the first character of all words in the title of each action
