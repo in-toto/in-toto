@@ -77,7 +77,8 @@ four-month window between minor versions.
 This schedule will roughly match the following months:
 
 - [End of August](roadmap-reviews/2020/review_1_august_19.md)
-- End of December
+- [End of December](roadmap-reviews/2020/review_2_december_19.md)
+- [End of June](roadmap-reviews/2020/review_3_june_20.md)
 
 These time windows will also be used to review and update all stakeholders with
 the status of the in-toto implementation.
