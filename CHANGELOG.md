@@ -1,5 +1,17 @@
 # Changelog
 
+## in-toto v0.5.0
+
+* Docs: Major CLI and API documentation overhaul and release (#341, #369)
+* Bugfix: Use kwargs in in-toto-run to fix lstrip-paths bug (#340)
+* Feature: Add option to specify target directory for generated metadata (#364)
+* Tests: Add Python 3.8 to tested versions (#339)
+* Tests: Add tmp dir and gpg key test mixins (#345)
+* Tests: Use constant from securesystemslib to detect GPG in tests (#352)
+* Tests: Enhance test suite feedback on Windows (#368)
+* Dependencies: Misc updates (#342, #346, #349, #350, #353, #354, #356, #358,
+  #359,  #362, #363, #366)
+
 ## in-toto v0.4.2
 
 * Drop custom OpenPGP subpackage and subprocess module and instead use the
