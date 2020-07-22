@@ -15,4 +15,5 @@ found at `in-toto.io <https://in-toto.io>`_.
    api
    model
    layout-creation-example
+   exclude-patterns <Will provide link when available>
    Demo Supply Chain <https://github.com/in-toto/demo>
