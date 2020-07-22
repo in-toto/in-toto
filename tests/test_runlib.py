@@ -445,6 +445,23 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"]).keys()))
 
 
+class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
+  """Tests LINK_CMD_EXEC_TIMEOUT setting in settings.py file. """
+
+  def test_timeout_setting(self):
+    # Save the old timeout and make sure it's saved properly
+    timeout_old = in_toto.settings.LINK_CMD_EXEC_TIMEOUT
+    self.assertEqual(in_toto.settings.LINK_CMD_EXEC_TIMEOUT, timeout_old)
+
+    # Modify timeout and check that it returns the same value
+    timeout_new = timeout_old + 1
+    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_new
+    self.assertEqual(in_toto.settings.LINK_CMD_EXEC_TIMEOUT, timeout_new)
+
+    # Restore original timeout
+    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old
+
+
 class TestInTotoRun(unittest.TestCase, TmpDirMixin):
   """"
   Tests runlib.in_toto_run() with different arguments
