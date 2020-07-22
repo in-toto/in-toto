@@ -1,5 +1,3 @@
-# Exclude Pattern Settings 
-
 ## Introduction
 
 The optional argument `exclude_patterns` in the `in_toto_run` API, also used by `--exclude` in the ```in-toto-run``` command line tool, applies [pathspec](http://python-path-specification.readthedocs.io) to compile [gitignore-style patterns](https://git-scm.com/docs/gitignore). Artifacts (materials and products) matched by an exclude pattern are not recorded when generating link metadata. If a pattern matches a directory, all files and subdirectories are also excluded.
@@ -17,7 +15,7 @@ The optional argument `exclude_patterns` in the `in_toto_run` API, also used by 
   
   More information about pattern formats found in [`gitignore`](https://git-scm.com/docs/gitignore). 
 
-## Special Cases::::wq
+## Special Cases
 ### Pattern beginning with a slash
   - Match paths directly on the root directory instead of descendant paths. Escape the relative root conversion with an forward slash to match absolute paths. (i.e., 
  `//<pattern>`). 
