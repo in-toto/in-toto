@@ -12,8 +12,6 @@ import securesystemslib.exceptions
 import securesystemslib.gpg.functions
 
 from in_toto.exceptions import UnsupportedKeyTypeError
-from securesystemslib.interface import (import_ed25519_privatekey_from_file,
-    import_ed25519_publickey_from_file)
 
 DEFAULT_RSA_KEY_BITS = 3072
 
@@ -170,7 +168,8 @@ def import_public_keys_from_files_as_dict(filepaths, key_types=None):
   for idx, filepath in enumerate(filepaths):
 
     if key_types[idx] == KEY_TYPE_ED25519:
-      key = import_ed25519_publickey_from_file(filepath)
+      key = securesystemslib.interface.import_ed25519_publickey_from_file(
+          filepath)
     elif key_types[idx] == KEY_TYPE_RSA:
       key = import_rsa_key_from_file(filepath)
     else:  # pragma: no cover
@@ -241,10 +240,12 @@ def prompt_import_ed25519_privatekey_from_file(filepath):
   """
   password = None
   try:
-    import_ed25519_privatekey_from_file(filepath, password)
+    securesystemslib.interface.import_ed25519_privatekey_from_file(
+        filepath, password)
   except securesystemslib.exceptions.CryptoError:
     password = prompt_password()
-  return import_ed25519_privatekey_from_file(filepath, password)
+  return securesystemslib.interface.import_ed25519_privatekey_from_file(
+      filepath, password)
 
 
 def prompt_import_rsa_key_from_file(filepath):

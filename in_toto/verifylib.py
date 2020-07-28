@@ -39,8 +39,6 @@ import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
 from in_toto.models.metadata import Metablock
-from in_toto.models.link import (FILENAME_FORMAT, FILENAME_FORMAT_SHORT)
-from in_toto.models.layout import SUBLAYOUT_LINK_DIR_FORMAT
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
@@ -144,7 +142,8 @@ def load_links_for_layout(layout, link_dir_path):
       for keyid in [authorized_keyid] + list(layout.keys.get(authorized_keyid,
           {}).get("subkeys", {}).keys()):
 
-        filename = FILENAME_FORMAT.format(step_name=step.name, keyid=keyid)
+        filename = in_toto.models.link.FILENAME_FORMAT.format(
+            step_name=step.name, keyid=keyid)
         filepath = os.path.join(link_dir_path, filename)
 
         try:
@@ -222,7 +221,8 @@ def run_all_inspections(layout):
 
     # Dump the inspection link file for auditing
     # Keep in mind that this pollutes the verifier's (client's) filesystem.
-    filename = FILENAME_FORMAT_SHORT.format(step_name=inspection.name)
+    filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format(
+        step_name=inspection.name)
     link.dump(filename)
 
     in_toto.settings.ARTIFACT_BASE_PATH = base_path_backup
@@ -1311,11 +1311,11 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
         # name relative the the current link directory path, i.e. if there
         # are multiple levels of sublayout nesting, the links are expected to
         # be nested accordingly
-        sublayout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
+        sub_link_dir = in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.format(
             name=step_name, keyid=keyid)
 
         sublayout_link_dir_path = os.path.join(
-            superlayout_link_dir_path, sublayout_link_dir)
+            superlayout_link_dir_path, sub_link_dir)
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
