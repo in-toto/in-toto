@@ -356,7 +356,7 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
     else: #record_streams true, quiet true
       process = securesystemslib.process.run(link_cmd_args, check=False,
           stdout=securesystemslib.process.PIPE,
-          stderr=securesystemslib.process.PIPE)
+          stderr=securesystemslib.process.PIPE, universal_newlines=True)
       stdout_str = process.stdout
       stderr_str = process.stderr
       return_code = process.returncode
