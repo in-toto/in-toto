@@ -451,12 +451,19 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
   def test_timeout_setting(self):
     # Save the old timeout and make sure it's saved properly
     timeout_old = in_toto.settings.LINK_CMD_EXEC_TIMEOUT
-    self.assertEqual(in_toto.settings.LINK_CMD_EXEC_TIMEOUT, timeout_old)
 
-    # Modify timeout and check that it returns the same value
-    timeout_new = timeout_old + 1
-    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_new
-    self.assertEqual(in_toto.settings.LINK_CMD_EXEC_TIMEOUT, timeout_new)
+    # Modify timeout
+    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = -1
+
+    # check if exception is raised
+    with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
+      # Call execute_link to see if new timeout is respected
+      in_toto.runlib.execute_link(['python', '--version'], True)
+
+    # check if exception is raised
+    with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
+      # Call execute_link to see if new timeout is respected
+      in_toto.runlib.execute_link(['python', '--version'], False)
 
     # Restore original timeout
     in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old

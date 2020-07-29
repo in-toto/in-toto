@@ -357,7 +357,8 @@ def execute_link(link_cmd_args, record_streams):
   """
   if record_streams:
     return_code, stdout_str, stderr_str = \
-        securesystemslib.process.run_duplicate_streams(link_cmd_args)
+        securesystemslib.process.run_duplicate_streams(link_cmd_args,
+            timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT)
 
   else:
     process = securesystemslib.process.run(link_cmd_args, check=False,
