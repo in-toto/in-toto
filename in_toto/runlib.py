@@ -319,7 +319,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   return artifacts_dict
 
-def execute_link(link_cmd_args, record_streams, quiet=True):
+def execute_link(link_cmd_args, record_streams, quiet):
   """
   <Purpose>
     Executes the passed command plus arguments in a subprocess and returns
@@ -436,7 +436,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None, quiet=True):
+    normalize_line_endings=False, lstrip_paths=None, 
+    metadata_directory=None, quiet=True):
   """Performs a supply chain step or inspection generating link metadata.
   Executes link_cmd_args, recording paths and hashes of files before and after
   command execution (aka. artifacts) in a link metadata file. The metadata is
