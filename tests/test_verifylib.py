@@ -148,15 +148,16 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(BadReturnValueError):
       run_all_inspections(layout, True)
 
+  def test_inspection_persistence_false(self):
+    """Test metadata link file non-persistence"""
+    os.remove("touch-bar.link")
+    run_all_inspections(self.layout, False)
+    self.assertFalse(os.path.exists("touch-bar.link"))
+
   def test_inspection_persistence_true(self):
     """Test metadata link file persistence"""
     run_all_inspections(self.layout, True)
     self.assertTrue(os.path.exists("touch-bar.link"))
-
-  def test_inspection_persistence_false(self):
-    """Test metadata link file non-persistence"""
-    run_all_inspections(self.layout, False)
-    self.assertFalse(os.path.exists("touch-bar.link"))
 
 
 class TestVerifyCommandAlignment(unittest.TestCase):
