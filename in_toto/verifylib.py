@@ -167,7 +167,7 @@ def load_links_for_layout(layout, link_dir_path):
   return steps_metadata
 
 
-def run_all_inspections(layout):
+def run_all_inspections(layout, persist_inspection_links):
   """
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
@@ -180,6 +180,10 @@ def run_all_inspections(layout):
   <Arguments>
     layout:
             A Layout object which is used to extract the Inspections.
+
+    persist_inspection_links:
+            A boolean that determines whether or not link metadata files for
+            inspection are written to cwd.
 
   <Exceptions>
     Calls function that raises BadReturnValueError if an inspection returned
@@ -220,11 +224,13 @@ def run_all_inspections(layout):
 
     inspection_links_dict[inspection.name] = link
 
+    # If the client requests persistent inspection links,
     # Dump the inspection link file for auditing
     # Keep in mind that this pollutes the verifier's (client's) filesystem.
-    filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format(
-        step_name=inspection.name)
-    link.dump(filename)
+    if persist_inspection_links:
+      filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format(
+          step_name=inspection.name)
+      link.dump(filename)
 
     in_toto.settings.ARTIFACT_BASE_PATH = base_path_backup
 
@@ -1387,7 +1393,8 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
-    substitution_parameters=None, step_name=""):
+    substitution_parameters=None, step_name="",
+    persist_inspection_links=True):
   """Performs complete in-toto supply chain verification for a final product.
 
   The verification procedure consists of the following activities, performed in
@@ -1424,6 +1431,9 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
 
     step_name (optional): A name assigned to the returned link. This is mostly
         useful during recursive sublayout verification.
+
+    persist_inspection_links: (optional) : A boolean that determines whether or
+        not link metadata files for inspection are written to cwd.
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed parameters are malformed.
@@ -1496,7 +1506,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
   LOG.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout)
+  inspection_link_dict = run_all_inspections(layout, persist_inspection_links)
 
   LOG.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
