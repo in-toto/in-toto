@@ -1,8 +1,11 @@
 Roadmap
 =======
 
+_Note: Previous roadmaps can be found with the roadmap reviews for that period.
+[Link to Roadmap 2020](roadmap-reviews/2020/ROADMAP.md)_
+
 This document spans the Roadmap for the in-toto main implementation for the
-time window from July 2020 to July 2021. The main focus of this year is to
+time window from August 2020 to August 2021. The main focus of this year is to
 achieve spec compliance and agreement between all the different implementators,
 integrators and users throughout the in-toto ecosystem. 
 
@@ -35,8 +38,8 @@ use them.
 
 ## CII Gold badge
 
-in-toto is already marked as "silver" under the Core Infrastructure Initiative
-best practices badge. This year we aim to upgrade our rating to Silver. To work
+in-toto is already marked as "Silver" under the Core Infrastructure Initiative
+best practices badge. This year we aim to upgrade our rating to "Gold". To work
 towards this goal, we'll review and comply with the few missing requirements
 for the gold badge.
 
@@ -53,8 +56,9 @@ versions.
 
 This schedule will roughly match the following months:
 
-- End of October
-- End of February 
+- End of December
+- End of April
+- End of July
 
 These time windows will also be used to review and update all stakeholders with
 the status of the in-toto implementation.
