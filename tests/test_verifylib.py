@@ -88,7 +88,7 @@ class Test_RaiseOnBadRetval(unittest.TestCase):
 
 
 class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
-  """Test verifylib.run_all_inspections(layout)"""
+  """Test verifylib.run_all_inspections(layout, persist_inspection_links)"""
 
   @classmethod
   def setUpClass(self):
@@ -127,7 +127,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
       f.write("ignore foo")
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 
-    run_all_inspections(self.layout)
+    run_all_inspections(self.layout, True)
     link = Metablock.load("touch-bar.link")
     self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
     self.assertListEqual(sorted(list(link.signed.products.keys())), sorted(["foo", "bar"]))
@@ -146,7 +146,17 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         }]
     })
     with self.assertRaises(BadReturnValueError):
-      run_all_inspections(layout)
+      run_all_inspections(layout, True)
+
+  def test_inspection_persistence_true(self):
+    """Test metadata link file persistence"""
+    run_all_inspections(self.layout, True)
+    self.assertTrue(os.path.exists("touch-bar.link"))
+
+  def test_inspection_persistence_false(self):
+    """Test metadata link file non-persistence"""
+    run_all_inspections(self.layout, False)
+    self.assertFalse(os.path.exists("touch-bar.link"))
 
 
 class TestVerifyCommandAlignment(unittest.TestCase):
