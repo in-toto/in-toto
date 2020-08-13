@@ -21,9 +21,9 @@ Build-Depends:
  python3-cryptography,
  python3-nacl,
  python3-colorama,
- python3-securesystemslib (>= 0.12.0),
+ python3-securesystemslib (>= 0.16.0),
  gnupg2,
-Standards-Version: 4.4.1
+Standards-Version: 4.5.0
 Rules-Requires-Root: no
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
