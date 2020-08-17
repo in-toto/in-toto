@@ -25,7 +25,7 @@
 # rm requirements-pinned.combined
 #
 attrs==19.3.0
-cffi==1.14.0              # via cryptography, pynacl
+cffi==1.14.2              # via cryptography, pynacl
 colorama==0.4.3           # via securesystemslib
 cryptography==2.9.2         # via securesystemslib
 enum34==1.1.10             # via cryptography
