@@ -453,17 +453,17 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
     timeout_old = in_toto.settings.LINK_CMD_EXEC_TIMEOUT
 
     # Modify timeout
-    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = -1
+    in_toto.settings.LINK_CMD_EXEC_TIMEOUT = 0.1
 
     # check if exception is raised
     with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
       # Call execute_link to see if new timeout is respected
-      in_toto.runlib.execute_link(['python', '--version'], True)
+      in_toto.runlib.execute_link([sys.executable, '-c', 'while True: pass'], True)
 
     # check if exception is raised
     with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
       # Call execute_link to see if new timeout is respected
-      in_toto.runlib.execute_link(['python', '--version'], False)
+      in_toto.runlib.execute_link([sys.executable, '-c', 'while True: pass'], False)
 
     # Restore original timeout
     in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old
