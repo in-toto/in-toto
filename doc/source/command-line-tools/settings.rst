@@ -21,6 +21,8 @@ Setting Types
   ``in-toto-run`` are searched relative to the base path. The base path itself
   is not included in the link metadata. Default is the current working
   directory.
+- ``LINK_CMD_EXEC_TIMEOUT`` -- maximum timeout setting for the in-toto-run
+  command.
 
 
 Example Usage
@@ -31,6 +33,7 @@ Example Usage
   # Configure settings via bash-style environment variable export
   export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
   export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
+  export LINK_CMD_EXEC_TIMEOUT='10'
 
 .. code-block:: sh
 
@@ -38,3 +41,4 @@ Example Usage
   [in-toto settings]
   ARTIFACT_BASE_PATH=/home/user/project
   ARTIFACT_EXCLUDE_PATTERNS=*.link:.gitignore
+  LINK_CMD_EXEC_TIMEOUT=10
