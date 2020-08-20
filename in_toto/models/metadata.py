@@ -98,7 +98,7 @@ class Metablock(ValidationMixin):
       path: The path to read the file from.
 
     Raises:
-      IOError: The file cannot be written.
+      IOError: The file cannot be read.
       securesystemslib.exceptions.FormatError: Metadata format is invalid.
 
     Returns:
