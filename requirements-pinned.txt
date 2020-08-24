@@ -24,7 +24,7 @@
 # cat requirements-pinned.combined | sort -u >> requirements-pinned.txt
 # rm requirements-pinned.combined
 #
-attrs==19.3.0
+attrs==20.1.0
 cffi==1.14.2              # via cryptography, pynacl
 colorama==0.4.3           # via securesystemslib
 cryptography==3.0         # via securesystemslib
