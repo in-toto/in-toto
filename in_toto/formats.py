@@ -28,7 +28,6 @@
 """
 import securesystemslib.schema as ssl_schema
 
-# pylint: disable=bad-whitespace
 PARAMETER_DICTIONARY_KEY = ssl_schema.RegularExpression(r'[a-zA-Z0-9_-]+')
 PARAMETER_DICTIONARY_SCHEMA = ssl_schema.DictOf(
     key_schema = PARAMETER_DICTIONARY_KEY,
