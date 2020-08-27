@@ -15,17 +15,12 @@ good-names=e, fn, fp
 # TODO: Enable W0703 (broad-except) with in-toto/in-toto#126 and consider
 # enabling C0411, C0412, C0413, R0401 (import related checkers) with
 # in-toto/in-toto#145.
-# TODO: Consider enabling C0330 (bad-continuation) check. This would require
-# fixing up hanging indents, to not have parameters in first line (see PEP8).
-disable= fixme, logging-format-interpolation, logging-not-lazy, design, broad-except, wrong-import-order, ungrouped-imports, wrong-import-position, cyclic-import, len-as-condition, literal-comparison, useless-object-inheritance, consider-merging-isinstance, duplicate-code, inconsistent-return-statements, bad-continuation, no-self-use, bad-classmethod-argument
+disable= fixme, logging-format-interpolation, logging-not-lazy, design, broad-except, wrong-import-order, ungrouped-imports, wrong-import-position, cyclic-import, len-as-condition, literal-comparison, useless-object-inheritance, consider-merging-isinstance, duplicate-code, inconsistent-return-statements, no-self-use, bad-classmethod-argument, super-with-arguments
 
 [VARIABLES]
 dummy-variables-rgx= _+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_|junk
 
 [FORMAT]
 indent-string="  "
-# Number of spaces of indent required inside a hanging or continued line.
-# TODO: Un-comment when removing "bad-continuation" from disable list above
-#indent-after-paren=4
 max-line-length=79
 max-module-lines=2000

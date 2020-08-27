@@ -24,6 +24,7 @@
     - Return Metablock containing a Link object which can be can be signed
       and stored to disk
 """
+import six
 import glob
 import logging
 import os
@@ -212,8 +213,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       os.chdir(base_path)
 
     except Exception as e:
-      raise ValueError("Could not use '{}' as base path: '{}'".format(
-          base_path, e))
+      six.raise_from(ValueError("Could not use '{}' as base path: '{}'".format(
+          base_path, e)), e)
 
   # Normalize passed paths
   norm_artifacts = []
