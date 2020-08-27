@@ -33,7 +33,7 @@ Example Usage
   # Configure settings via bash-style environment variable export
   export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
   export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
-  export LINK_CMD_EXEC_TIMEOUT='10'
+  export IN_TOTO_LINK_CMD_EXEC_TIMEOUT='10'
 
 .. code-block:: sh
 
