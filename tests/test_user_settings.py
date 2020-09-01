@@ -40,6 +40,7 @@ class TestUserSettings(unittest.TestCase):
 
     os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"] = "e:n:v"
     os.environ["IN_TOTO_ARTIFACT_BASE_PATH"] = "e/n/v"
+    os.environ["IN_TOTO_LINK_CMD_EXEC_TIMEOUT"] = "0.1"
     os.environ["IN_TOTO_NOT_WHITELISTED"] = "parsed"
     os.environ["NOT_PARSED"] = "ignored"
 
@@ -56,6 +57,7 @@ class TestUserSettings(unittest.TestCase):
     # ... and delete test environment variables
     del os.environ["IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS"]
     del os.environ["IN_TOTO_ARTIFACT_BASE_PATH"]
+    del os.environ["IN_TOTO_LINK_CMD_EXEC_TIMEOUT"]
     del os.environ["IN_TOTO_NOT_WHITELISTED"]
     del os.environ["NOT_PARSED"]
 
@@ -66,6 +68,7 @@ class TestUserSettings(unittest.TestCase):
 
     # Parsed (and split) and used by `set_settings` to monkeypatch settings
     self.assertListEqual(rc_dict["ARTIFACT_EXCLUDE_PATTERNS"], ["r", "c", "file"])
+    self.assertEqual(rc_dict["LINK_CMD_EXEC_TIMEOUT"], "20")
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
     self.assertEqual(rc_dict["artifact_base_path"], "r/c/file")
@@ -82,6 +85,9 @@ class TestUserSettings(unittest.TestCase):
     # Parsed (and split) but overriden by rcfile setting in `set_settings`
     self.assertListEqual(env_dict["ARTIFACT_EXCLUDE_PATTERNS"],
         ["e", "n", "v"])
+
+    # Parsed and used by `set_settings`
+    self.assertEqual(env_dict["LINK_CMD_EXEC_TIMEOUT"], "0.1")
 
     # Parsed but ignored in `set_settings` (not in case sensitive whitelist)
     self.assertEqual(env_dict["NOT_WHITELISTED"], "parsed")
@@ -100,6 +106,7 @@ class TestUserSettings(unittest.TestCase):
     # From RCfile setting (has precedence over envvar setting)
     self.assertListEqual(in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS,
         ["r", "c", "file"])
+    self.assertEqual(in_toto.settings.LINK_CMD_EXEC_TIMEOUT, "20")
 
     # Not whitelisted rcfile settings are ignored by `set_settings`
     self.assertTrue("new_rc_setting" in in_toto.user_settings.get_rc())

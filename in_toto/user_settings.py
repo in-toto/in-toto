@@ -88,6 +88,7 @@ def get_env():
     # Exporting variables in e.g. bash
     export IN_TOTO_ARTIFACT_BASE_PATH='/home/user/project'
     export IN_TOTO_ARTIFACT_EXCLUDE_PATTERNS='*.link:.gitignore'
+    export IN_TOTO_LINK_CMD_EXEC_TIMEOUT='10'
     ```
 
     produces
@@ -96,6 +97,7 @@ def get_env():
     {
       "ARTIFACT_BASE_PATH": "/home/user/project"
       "ARTIFACT_EXCLUDE_PATTERNS": ["*.link", ".gitignore"]
+      "LINK_CMD_EXEC_TIMEOUT": "10"
     }
     ```
 
@@ -146,6 +148,7 @@ def get_rc():
     [in-toto setting]
     ARTIFACT_BASE_PATH = /home/user/project
     ARTIFACT_EXCLUDE_PATTERNS = *.link:.gitignore
+    LINK_CMD_EXEC_TIMEOUT = 10
     ```
 
     produces
@@ -154,6 +157,7 @@ def get_rc():
     {
       "ARTIFACT_BASE_PATH": "/home/user/project"
       "ARTIFACT_EXCLUDE_PATTERNS": ["*.link", ".gitignore"]
+      "LINK_CMD_EXEC_TIMEOUT": "10"
     }
     ```
 
