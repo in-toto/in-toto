@@ -358,7 +358,7 @@ def execute_link(link_cmd_args, record_streams, quiet):
   if record_streams:
     if not quiet: #record_streams true, quiet false
       return_code, stdout_str, stderr_str = \
-      securesystemslib.process.run_duplicate_streams(link_cmd_args)
+          securesystemslib.process.run_duplicate_streams(link_cmd_args)
     else: #record_streams true, quiet true
       process = securesystemslib.process.run(link_cmd_args, check=False,
           stdout=securesystemslib.process.PIPE,
@@ -556,7 +556,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if link_cmd_args:
     LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts = execute_link(link_cmd_args, record_streams, quiet=quiet)
+    byproducts = execute_link(link_cmd_args, record_streams, quiet)
   else:
     byproducts = {}
 
