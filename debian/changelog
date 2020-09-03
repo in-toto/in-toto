@@ -1,9 +1,17 @@
-in-toto (0.4.1-1) unstable; urgency=medium
+in-toto (0.5.0-1) unstable; urgency=medium
 
-  * See upstream changelog.
-    https://github.com/in-toto/in-toto/blob/develop/CHANGELOG.md
+  * New upstream release that includes i.a.:
+    - Removal of OpenPGP and subprocess interface
+      (transferred to python-securesystemslib)
+    - New command line arguments
+    - Improved code documentation
 
- -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Wed, 18 Dec 2019 13:42:05 +0100
+  * Remove obsolete d/patches for issues fixed upstream
+  * Update d/rules
+    - Unpin python-securesystemslib dependency
+    - Bump Standards-Version
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Thu, 13 Aug 2020 15:27:12 +0200
 
 in-toto (0.4.0-2) unstable; urgency=medium
 
