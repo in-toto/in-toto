@@ -40,3 +40,6 @@ ARTIFACT_EXCLUDE_PATTERNS = ["*.link*", ".git", "*.pyc", "*~"]
 # If not set the current working directory is used as base path
 # FIXME: Do we want different base paths for materials and products?
 ARTIFACT_BASE_PATH = None
+
+# Max timeout for the in-toto-run command
+LINK_CMD_EXEC_TIMEOUT = 10
