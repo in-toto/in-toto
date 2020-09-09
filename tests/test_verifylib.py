@@ -150,12 +150,12 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
 
   def test_inspection_persistence_false(self):
     """Test metadata link file non-persistence"""
-    os.remove("touch-bar.link")
+    if os.path.exists("touch-bar.link"):
+      os.remove("touch-bar.link")
     run_all_inspections(self.layout, False)
     self.assertFalse(os.path.exists("touch-bar.link"))
 
-  def test_inspection_persistence_true(self):
-    """Test metadata link file persistence"""
+  def test_inspeciton_persistence_true(self):
     run_all_inspections(self.layout, True)
     self.assertTrue(os.path.exists("touch-bar.link"))
 

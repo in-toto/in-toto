@@ -182,8 +182,8 @@ def run_all_inspections(layout, persist_inspection_links):
             A Layout object which is used to extract the Inspections.
 
     persist_inspection_links:
-            A boolean that determines whether or not link metadata files for
-            inspection are written to cwd.
+            A boolean indicating whether link metadata files for inspection
+            are written to cwd.
 
   <Exceptions>
     Calls function that raises BadReturnValueError if an inspection returned
@@ -224,11 +224,11 @@ def run_all_inspections(layout, persist_inspection_links):
 
     inspection_links_dict[inspection.name] = link
 
-    # If the client requests persistent inspection links,
+    # If client requests persistent inspection links,
     # Dump the inspection link file for auditing
     # Keep in mind that this pollutes the verifier's (client's) filesystem.
     if persist_inspection_links:
-      filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format(
+      filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format( # TODO: use full path...
           step_name=inspection.name)
       link.dump(filename)
 
@@ -1432,7 +1432,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     step_name (optional): A name assigned to the returned link. This is mostly
         useful during recursive sublayout verification.
 
-    persist_inspection_links: (optional) : A boolean that determines whether or
+    persist_inspection_links (optional): A boolean that determines whether or
         not link metadata files for inspection are written to cwd.
 
   Raises:
