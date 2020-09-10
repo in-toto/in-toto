@@ -320,7 +320,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   return artifacts_dict
 
-def execute_link(link_cmd_args, record_streams):
+def execute_link(link_cmd_args, record_streams, quiet=True):
   """
   <Purpose>
     Executes the passed command plus arguments in a subprocess and returns
@@ -357,15 +357,28 @@ def execute_link(link_cmd_args, record_streams):
     - The return value of the executed command.
   """
   if record_streams:
-    return_code, stdout_str, stderr_str = \
-        securesystemslib.process.run_duplicate_streams(link_cmd_args,
-            timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT))
+    if not quiet: #record_streams true, quiet false
+      return_code, stdout_str, stderr_str = \
+          securesystemslib.process.run_duplicate_streams(link_cmd_args,
+              timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT))
+    else: #record_streams true, quiet true
+      process = securesystemslib.process.run(link_cmd_args, check=False,
+          stdout=securesystemslib.process.PIPE,
+          stderr=securesystemslib.process.PIPE, universal_newlines=True)
+      stdout_str = process.stdout
+      stderr_str = process.stderr
+      return_code = process.returncode
 
   else:
-    process = securesystemslib.process.run(link_cmd_args, check=False,
-      timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
-      stdout=securesystemslib.process.DEVNULL,
-      stderr=securesystemslib.process.DEVNULL)
+    if not quiet: #record_streams false, quiet false
+      process = securesystemslib.process.run(link_cmd_args, check=False,
+          timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
+          stdout=None, stderr=None)
+    else: #record_streams false, quiet true
+      process = securesystemslib.process.run(link_cmd_args, check=False,
+          timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
+          stdout=securesystemslib.process.DEVNULL,
+          stderr=securesystemslib.process.DEVNULL)
     stdout_str = stderr_str = ""
     return_code = process.returncode
 
@@ -427,7 +440,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None):
+    normalize_line_endings=False, lstrip_paths=None,
+    metadata_directory=None, quiet=True):
   """Performs a supply chain step or inspection generating link metadata.
 
   Executes link_cmd_args, recording paths and hashes of files before and after
@@ -547,7 +561,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if link_cmd_args:
     LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts = execute_link(link_cmd_args, record_streams)
+    byproducts = execute_link(link_cmd_args, record_streams, quiet)
   else:
     byproducts = {}
 
