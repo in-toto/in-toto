@@ -228,7 +228,7 @@ def run_all_inspections(layout, persist_inspection_links):
     # Dump the inspection link file for auditing
     # Keep in mind that this pollutes the verifier's (client's) filesystem.
     if persist_inspection_links:
-      filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format( # TODO: use full path...
+      filename = in_toto.models.link.FILENAME_FORMAT_SHORT.format(
           step_name=inspection.name)
       link.dump(filename)
 
