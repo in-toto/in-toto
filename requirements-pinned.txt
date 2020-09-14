@@ -30,7 +30,7 @@ colorama==0.4.3           # via securesystemslib
 cryptography==3.1         # via securesystemslib
 enum34==1.1.10             # via cryptography
 ipaddress==1.0.23         # via cryptography
-iso8601==0.1.12
+iso8601==0.1.13
 pathspec==0.8.0
 pycparser==2.20           # via cffi
 pynacl==1.4.0             # via securesystemslib
