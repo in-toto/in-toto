@@ -34,7 +34,7 @@ The in-toto software supply chain layout consists of the following parts:
    correspond to steps carried out by a functionary as part of the software supply chain. The steps defined in the layout list the functionaries who are authorized to carry out the step (by key id). Steps require a unique name to associate them (upon verification) with link metadata that is created when a functionary carries out the step using the `in-toto` tools. Additionally, steps must have material and product rules which define the files a step is supposed to operate on. Material and product rules are described in the section below.
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
-Take a look at the [demo layout creation example](https://github.com/in-toto/in-toto/blob/develop/layout-creation.md)
+Take a look at the [demo layout creation example](https://in-toto.readthedocs.io/en/latest/layout-creation-example.html)
 for further information on how to create an in-toto layout. Or try our
 experimental [layout creation web tool](https://in-toto.engineering.nyu.edu/).
 
