@@ -6,13 +6,13 @@ _Note: Previous roadmaps can be found with the roadmap reviews for that period.
 
 This document spans the Roadmap for the in-toto main implementation for the
 time window from August 2020 to August 2021. The main focus of this year is to
-achieve spec compliance and agreement between all the different implementators,
+achieve spec compliance and agreement between all the different implementers,
 integrators and users throughout the in-toto ecosystem. 
 
 ## The 1.0 milestone
 
 Although the previous years's roadmap aimed to culminate with in-toto's 1.0
-release, we decided to hold off for a couple of months before we commited to
+release, we decided to hold off for a couple of months before we committed to
 such an important milestone. The main rationale is that there are some
 outstanding tickets we have not been able to squash. We'd much rather tag
 in-toto 1.0 once those are fixed.
