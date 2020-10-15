@@ -19,6 +19,7 @@ matrix:
           env: TOXENV=py38
         - python: "3.8"
           env: TOXENV=lint
+          after_success: skip
 
 install:
     - pip install -U tox
