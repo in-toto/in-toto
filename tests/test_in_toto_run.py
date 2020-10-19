@@ -83,9 +83,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     args = ["--step-name", self.test_step, "--key", self.rsa_key_path, "--",
         "python", "--version"]
 
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
-      self.assert_cli_sys_exit(args, 0)
+    self.assert_cli_sys_exit(args, 0)
 
     self.assertTrue(os.path.exists(self.test_link_rsa))
 
@@ -98,47 +96,44 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
         self.test_artifact, "--record-streams"]
     positional_args = ["--", "python", "--version"]
 
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
+    # Test and assert recorded artifacts
+    args1 = named_args + positional_args
+    self.assert_cli_sys_exit(args1, 0)
+    link_metadata = Metablock.load(self.test_link_rsa)
+    self.assertTrue(self.test_artifact in
+        list(link_metadata.signed.materials.keys()))
+    self.assertTrue(self.test_artifact in
+        list(link_metadata.signed.products.keys()))
 
-      # Test and assert recorded artifacts
-      args1 = named_args + positional_args
-      self.assert_cli_sys_exit(args1, 0)
-      link_metadata = Metablock.load(self.test_link_rsa)
-      self.assertTrue(self.test_artifact in
-          list(link_metadata.signed.materials.keys()))
-      self.assertTrue(self.test_artifact in
-          list(link_metadata.signed.products.keys()))
+    # Test and assert exlcuded artifacts
+    args2 = named_args + ["--exclude", "*test*"] + positional_args
+    self.assert_cli_sys_exit(args2, 0)
+    link_metadata = Metablock.load(self.test_link_rsa)
+    self.assertFalse(link_metadata.signed.materials)
+    self.assertFalse(link_metadata.signed.products)
 
-      # Test and assert exlcuded artifacts
-      args2 = named_args + ["--exclude", "*test*"] + positional_args
-      self.assert_cli_sys_exit(args2, 0)
-      link_metadata = Metablock.load(self.test_link_rsa)
-      self.assertFalse(link_metadata.signed.materials)
-      self.assertFalse(link_metadata.signed.products)
+    # Test with base path
+    args3 = named_args + ["--base-path", self.test_dir] + positional_args
+    self.assert_cli_sys_exit(args3, 0)
+    link_metadata = Metablock.load(self.test_link_rsa)
+    self.assertListEqual(list(link_metadata.signed.materials.keys()),
+        [self.test_artifact])
+    self.assertListEqual(list(link_metadata.signed.products.keys()),
+        [self.test_artifact])
 
-      # Test with base path
-      args3 = named_args + ["--base-path", self.test_dir] + positional_args
-      self.assert_cli_sys_exit(args3, 0)
-      link_metadata = Metablock.load(self.test_link_rsa)
-      self.assertListEqual(list(link_metadata.signed.materials.keys()),
-          [self.test_artifact])
-      self.assertListEqual(list(link_metadata.signed.products.keys()),
-          [self.test_artifact])
+    # Test with bogus base path
+    args4 = named_args + ["--base-path", "bogus/path"] + positional_args
+    self.assert_cli_sys_exit(args4, 1)
 
-      # Test with bogus base path
-      args4 = named_args + ["--base-path", "bogus/path"] + positional_args
-      self.assert_cli_sys_exit(args4, 1)
-
-      # Test with lstrip path
-      strip_prefix = self.test_artifact[:-1]
-      args5 = named_args + ["--lstrip-paths", strip_prefix] + positional_args
-      self.assert_cli_sys_exit(args5, 0)
-      link_metadata = Metablock.load(self.test_link_rsa)
-      self.assertListEqual(list(link_metadata.signed.materials.keys()),
-          [self.test_artifact[len(strip_prefix):]])
-      self.assertListEqual(list(link_metadata.signed.products.keys()),
-          [self.test_artifact[len(strip_prefix):]])
+    # Test with lstrip path
+    strip_prefix = self.test_artifact[:-1]
+    args5 = named_args + ["--lstrip-paths", strip_prefix] + positional_args
+    self.assert_cli_sys_exit(args5, 0)
+    link_metadata = Metablock.load(self.test_link_rsa)
+    self.assertListEqual(list(link_metadata.signed.materials.keys()),
+        [self.test_artifact[len(strip_prefix):]])
+    self.assertListEqual(list(link_metadata.signed.products.keys()),
+        [self.test_artifact[len(strip_prefix):]])
 
 
   def test_main_with_metadata_directory(self):
@@ -147,9 +142,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     args = ["--step-name", self.test_step, "--key", self.rsa_key_path,
         "--metadata-directory", tmp_dir, "--", "python", "--version"]
 
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
-      self.assert_cli_sys_exit(args, 0)
+    self.assert_cli_sys_exit(args, 0)
 
     linkpath = os.path.join(tmp_dir, self.test_link_rsa)
 
@@ -215,9 +208,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     args = ["in_toto_run.py", "--step-name", self.test_step, "--key",
         self.rsa_key_path, "--no-command"]
 
-    # Give wrong password whenever prompted.
-    with mock.patch('in_toto.util.prompt_password', return_value='x'):
-      self.assert_cli_sys_exit(args, 0)
+    self.assert_cli_sys_exit(args, 0)
 
     self.assertTrue(os.path.exists(self.test_link_rsa))
 
