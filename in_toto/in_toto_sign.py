@@ -88,7 +88,8 @@ def _sign_and_dump_metadata(metadata, args):
           " of keys specified")
 
       for idx, key_path in enumerate(args.key):
-        key = util.import_private_key_from_file(key_path, args.key_type[idx])
+        key = interface.import_privatekey_from_file(
+            key_path, key_type=args.key_type[idx], prompt=args.prompt)
         signature = metadata.sign(key)
 
     # If `--output` was specified we store the signed link or layout metadata
@@ -267,6 +268,9 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
       " types are then associated with keys by index. If '--key-type' is"
       " omitted, the default of '{rsa}' is used for all keys.".format(
       rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519)))
+
+  parser.add_argument("-p", "--prompt", action="store_true",
+      help="prompt for signing key decryption password")
 
   parser.add_argument("-g", "--gpg", nargs="*", metavar="<id>", help=(
       "GPG keyids used to sign the passed link or layout metadata or to verify"

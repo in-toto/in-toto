@@ -85,6 +85,28 @@ KEY_TYPE_KWARGS = {
            rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519))
 }
 
+KEY_PASSWORD_ARGS = ["-P", "--password"]
+KEY_PASSWORD_KWARGS = {
+  "nargs": "?",
+  "const": True,
+  "metavar": "<password>",
+  "help": ("password for encrypted key specified with '--key'. Passing  '-P'"
+           " without <password> opens a prompt. If no password is passed, or"
+           " entered on the prompt, the key is treated as unencrypted. (Do "
+           " not confuse with '-p/--products'!)")
+}
+def parse_password_and_prompt_args(args):
+  """Parse -P/--password optional arg (nargs=?, const=True). """
+   # --P was provided without argument (True)
+  if args.password is True:
+    password = None
+    prompt = True
+  # --P was not provided (None), or provided with argument (<password>)
+  else:
+    password = args.password
+    prompt = False
+
+  return password, prompt
 
 GPG_ARGS = ["-g", "--gpg"]
 GPG_KWARGS = {

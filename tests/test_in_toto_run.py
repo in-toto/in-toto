@@ -30,18 +30,16 @@ if sys.version_info >= (3, 3):
 else:
   import mock # pylint: disable=import-error
 
-from in_toto.util import (generate_and_write_rsa_keypair,
-    generate_and_write_ed25519_keypair, import_private_key_from_file,
-    KEY_TYPE_RSA, KEY_TYPE_ED25519)
-
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
-from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin
+
+import securesystemslib.interface # pylint: disable=unused-import
 
 
-class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
   """Test in_toto_run's main() - requires sys.argv patching; and
   in_toto_run- calls runlib and error logs/exits on Exception. """
   cli_main_func = staticmethod(in_toto_run_main)
@@ -52,20 +50,18 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     generate key pair, dummy artifact and base arguments. """
     self.set_up_test_dir()
     self.set_up_gpg_keys()
-
-    self.rsa_key_path = "test_key_rsa"
-    generate_and_write_rsa_keypair(self.rsa_key_path)
-    self.rsa_key = import_private_key_from_file(self.rsa_key_path,
-        KEY_TYPE_RSA)
-
-    self.ed25519_key_path = "test_key_ed25519"
-    generate_and_write_ed25519_keypair(self.ed25519_key_path)
-    self.ed25519_key = import_private_key_from_file(self.ed25519_key_path,
-        KEY_TYPE_ED25519)
+    self.set_up_keys()
 
     self.test_step = "test_step"
-    self.test_link_rsa = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.rsa_key["keyid"])
-    self.test_link_ed25519 = FILENAME_FORMAT.format(step_name=self.test_step, keyid=self.ed25519_key["keyid"])
+    self.test_link_rsa = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.rsa_key_id)
+    self.test_link_ed25519 = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.ed25519_key_id)
+    self.test_link_rsa_enc = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.rsa_key_enc_id)
+    self.test_link_ed25519_enc = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.ed25519_key_enc_id)
+
     self.test_artifact = "test_artifact"
     open(self.test_artifact, "w").close()
 
@@ -84,7 +80,6 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
         "python", "--version"]
 
     self.assert_cli_sys_exit(args, 0)
-
     self.assertTrue(os.path.exists(self.test_link_rsa))
 
 
@@ -159,21 +154,36 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.assertTrue(os.path.exists(self.test_link_ed25519))
 
 
-  def test_main_with_encrypted_ed25519_key(self):
+  def test_main_with_encrypted_keys(self):
     """Test CLI command with encrypted ed25519 key. """
-    key_path = "test_key_ed25519_enc"
-    password = "123456"
-    generate_and_write_ed25519_keypair(key_path, password)
-    args = ["-n", self.test_step,
-        "--key", key_path,
-        "--key-type", "ed25519", "--", "ls"]
 
-    with mock.patch('in_toto.util.prompt_password', return_value=password):
-      key = import_private_key_from_file(key_path, KEY_TYPE_ED25519)
-      linkpath = FILENAME_FORMAT.format(step_name=self.test_step, keyid=key["keyid"])
+    for key_type, key_path, link_path in [
+        ("rsa", self.rsa_key_enc_path, self.test_link_rsa_enc),
+        ("ed25519", self.ed25519_key_enc_path, self.test_link_ed25519_enc)]:
 
-      self.assert_cli_sys_exit(args, 0)
-      self.assertTrue(os.path.exists(linkpath))
+
+      # Define common arguments passed to in in-toto-run below
+      args = [
+          "-n", self.test_step,
+          "--key", key_path,
+          "--key-type", key_type]
+      cmd = ["--", "python", "--version"]
+
+      # Make sure the link file to be generated doesn't already exist
+      self.assertFalse(os.path.exists(link_path))
+
+      # Test 1: Call in-toto-run entering signing key password on prompt
+      with mock.patch('securesystemslib.interface.get_password',
+          return_value=self.key_pw):
+        self.assert_cli_sys_exit(args + ["--password"] + cmd, 0)
+
+      self.assertTrue(os.path.exists(link_path))
+      os.remove(link_path)
+
+      # Test 2: Call in-toto-run passing signing key password
+      self.assert_cli_sys_exit(args + ["--password", self.key_pw] + cmd, 0)
+      self.assertTrue(os.path.exists(link_path))
+      os.remove(link_path)
 
 
   def test_main_with_specified_gpg_key(self):
@@ -241,6 +251,16 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     self.assert_cli_sys_exit(args, 1)
     self.assertFalse(os.path.exists(self.test_link_rsa))
 
+
+  def test_main_encrypted_key_but_no_pw(self):
+    """Test CLI command exits 1 with encrypted key but no pw. """
+    args = ["-n", self.test_step, "--key", self.rsa_key_enc_path, "-x"]
+    self.assert_cli_sys_exit(args, 1)
+    self.assertFalse(os.path.exists(self.test_link_rsa_enc))
+
+    args = ["-n", self.test_step, "--key", self.ed25519_key_enc_path, "-x"]
+    self.assert_cli_sys_exit(args, 1)
+    self.assertFalse(os.path.exists(self.test_link_ed25519_enc))
 
 if __name__ == "__main__":
   unittest.main()

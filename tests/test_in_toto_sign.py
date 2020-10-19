@@ -14,17 +14,24 @@
 """
 
 import os
+import sys
 import json
 import shutil
 import unittest
+# Use external backport 'mock' on versions under 3.3
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock # pylint: disable=no-name-in-module,import-error
+else:
+  import mock # pylint: disable=import-error
+
+import securesystemslib.interface # pylint: disable=unused-import
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
 
-from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
+from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin
 
 
-
-class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
   """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
   on Exception. """
   cli_main_func = staticmethod(in_toto_sign_main)
@@ -38,6 +45,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     # Create and change into temporary directory
     self.set_up_test_dir()
     self.set_up_gpg_keys()
+    self.set_up_keys()
 
     # Copy demo files to temp dir
     for file_path in os.listdir(demo_files):
@@ -166,13 +174,44 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
         "--verify"
         ], 0)
 
+    # Sign Layout with encrypted rsa/ed25519 keys, prompting for pw, and verify
+    with mock.patch('securesystemslib.interface.get_password',
+        return_value=self.key_pw):
+      self.assert_cli_sys_exit([
+          "-f", self.layout_path,
+          "-k", self.rsa_key_enc_path, self.ed25519_key_enc_path,
+          "-t", "rsa", "ed25519",
+          "--prompt",
+          "-o", "signed_with_encrypted_keys.layout"
+          ], 0)
+    self.assert_cli_sys_exit([
+        "-f", "signed_with_encrypted_keys.layout",
+        "-k", self.rsa_key_enc_path + ".pub",
+              self.ed25519_key_enc_path + ".pub",
+        "-t", "rsa", "ed25519",
+        "--verify"
+        ], 0)
+
 
   def test_fail_signing(self):
-    """Fail signing with an invalid key. """
+    # Fail signing with invalid key
     self.assert_cli_sys_exit([
         "-f", self.layout_path,
         "-k", self.carl_path, self.link_path,
         ], 2)
+
+    # Fail with encrypted rsa key but no password
+    self.assert_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.rsa_key_enc_path
+        ], 2)
+
+    # Fail with encrypted ed25519 key but no password
+    self.assert_cli_sys_exit([
+        "-f", self.layout_path,
+        "-k", self.ed25519_key_enc_path,
+        "-t", "ed25519"]
+        , 2)
 
 
   def test_fail_verification(self):
