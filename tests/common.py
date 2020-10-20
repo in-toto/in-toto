@@ -27,6 +27,8 @@ import sys
 import inspect
 import shutil
 import tempfile
+from securesystemslib.interface import (generate_and_write_rsa_keypair,
+    generate_and_write_ed25519_keypair)
 
 import unittest
 if sys.version_info >= (3, 3):
@@ -84,6 +86,26 @@ class GPGKeysMixin():
 
     shutil.copytree(gpg_keys, os.path.join(os.getcwd(), cls.gnupg_home))
 
+
+class GenKeysMixin():
+  """Mixin with classmethod to create cryptographic keys in cwd. """
+  key_pw = "pw"
+
+  @classmethod
+  def set_up_keys(cls):
+    # Generated unencrypted keys
+    cls.rsa_key_path = generate_and_write_rsa_keypair()
+    cls.rsa_key_id = os.path.basename(cls.rsa_key_path)
+
+    cls.ed25519_key_path = generate_and_write_ed25519_keypair()
+    cls.ed25519_key_id = os.path.basename(cls.ed25519_key_path)
+
+    # Generate encrypted keys
+    cls.rsa_key_enc_path = generate_and_write_rsa_keypair(password=cls.key_pw)
+    cls.rsa_key_enc_id = os.path.basename(cls.rsa_key_enc_path)
+
+    cls.ed25519_key_enc_path = generate_and_write_ed25519_keypair(password=cls.key_pw)
+    cls.ed25519_key_enc_id = os.path.basename(cls.ed25519_key_enc_path)
 
 
 class CliTestCase(unittest.TestCase):
