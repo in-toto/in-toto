@@ -23,15 +23,18 @@ import six
 import argparse
 import logging
 
-from in_toto import exceptions, util
+from in_toto import exceptions
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
-from in_toto import __version__
+from in_toto import (
+    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519)
 
 import securesystemslib.formats
+from securesystemslib import interface
+from securesystemslib.gpg import functions as gpg_interface
 
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -80,7 +83,7 @@ def _sign_and_dump_metadata(metadata, args):
     elif args.key is not None: # pragma: no branch
 
       if args.key_type is None:
-        args.key_type = [util.KEY_TYPE_RSA] * len(args.key)
+        args.key_type = [KEY_TYPE_RSA] * len(args.key)
 
       if len(args.key_type) != len(args.key):
         raise securesystemslib.exceptions.FormatError(
@@ -140,12 +143,12 @@ def _verify_metadata(metadata, args):
   try:
     # Load pubkeys from disk ....
     if args.key is not None:
-      pub_key_dict = util.import_public_keys_from_files_as_dict(args.key,
+      pub_key_dict = interface.import_publickeys_from_file(args.key,
           args.key_type)
 
     # ... or from gpg keyring
     elif args.gpg is not None: # pragma: no branch
-      pub_key_dict = util.import_gpg_public_keys_from_keyring_as_dict(
+      pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
 
 
@@ -259,7 +262,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
       " or to verify its signatures. See '--key-type' for available formats."))
 
   parser.add_argument("-t", "--key-type", dest="key_type",
-      type=str, choices=util.SUPPORTED_KEY_TYPES,
+      type=str, choices=SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--key' option. '{rsa}' keys are"
       " expected in a 'PEM' format and '{ed25519}' in a custom"
@@ -267,7 +270,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
       " '--key' the same amount of key types must be passed. Key"
       " types are then associated with keys by index. If '--key-type' is"
       " omitted, the default of '{rsa}' is used for all keys.".format(
-      rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519)))
+      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519)))
 
   parser.add_argument("-p", "--prompt", action="store_true",
       help="prompt for signing key decryption password")

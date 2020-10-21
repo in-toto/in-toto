@@ -25,13 +25,15 @@ import sys
 import argparse
 import logging
 
-import in_toto.util
 from in_toto import verifylib
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
 from in_toto.models.metadata import Metablock
-from in_toto import __version__
+from in_toto import (
+    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519)
+from securesystemslib import interface
+from securesystemslib.gpg import functions as gpg_interface
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -114,7 +116,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
       " passed key the layout must carry a valid signature."))
 
   parser.add_argument("-t", "--key-types", dest="key_types",
-      type=str, choices=in_toto.util.SUPPORTED_KEY_TYPES,
+      type=str, choices=SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--layout-keys' option. '{rsa}' keys are"
       " expected in a 'PEM' format and '{ed25519}' in a custom"
@@ -122,7 +124,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
       " '--layout-keys' the same amount of key types must be passed. Key"
       " types are then associated with keys by index. If '--key-types' is"
       " omitted, the default of '{rsa}' is used for all keys.".format(
-      rsa=in_toto.util.KEY_TYPE_RSA, ed25519=in_toto.util.KEY_TYPE_ED25519)))
+      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519)))
 
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
       help=(
@@ -174,14 +176,14 @@ def main():
     if args.layout_keys is not None:
       LOG.info("Loading layout key(s)...")
       layout_key_dict.update(
-          in_toto.util.import_public_keys_from_files_as_dict(
-            args.layout_keys, args.key_types))
+          interface.import_publickeys_from_file(
+              args.layout_keys, args.key_types))
 
     if args.gpg is not None:
       LOG.info("Loading layout gpg key(s)...")
       layout_key_dict.update(
-          in_toto.util.import_gpg_public_keys_from_keyring_as_dict(
-          args.gpg, gpg_home=args.gpg_home))
+          gpg_interface.export_pubkeys(
+              args.gpg, homedir=args.gpg_home))
 
     verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 

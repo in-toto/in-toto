@@ -25,7 +25,7 @@
   ```
 
 """
-from in_toto import util
+from in_toto import SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519
 
 EXCLUDE_ARGS = ["--exclude"]
 EXCLUDE_KWARGS = {
@@ -77,12 +77,12 @@ KEY_TYPE_ARGS = ["-t", "--key-type"]
 KEY_TYPE_KWARGS = {
   "dest": "key_type",
   "type": str,
-  "choices": util.SUPPORTED_KEY_TYPES,
-  "default": util.KEY_TYPE_RSA,
+  "choices": SUPPORTED_KEY_TYPES,
+  "default": KEY_TYPE_RSA,
   "help": ("type of key specified by the '--key' option. '{rsa}' keys are"
            " expected in a 'PEM' format and '{ed25519}' in a custom"
            " 'securesystemslib/json' format. Default is '{rsa}'.".format(
-           rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519))
+           rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519))
 }
 
 KEY_PASSWORD_ARGS = ["-P", "--password"]
