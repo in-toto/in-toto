@@ -50,7 +50,10 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
 from in_toto.exceptions import (RuleVerificationError,
     SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
     ThresholdVerificationError)
-from in_toto.util import import_rsa_key_from_file, import_public_keys_from_files_as_dict
+from securesystemslib.interface import (
+    import_rsa_privatekey_from_file,
+    import_rsa_publickey_from_file,
+    import_publickeys_from_file)
 from in_toto.rulelib import unpack_rule
 import securesystemslib.gpg.functions
 from securesystemslib.gpg.constants import HAVE_GPG
@@ -730,8 +733,8 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     self.layout_no_steps_no_inspections = "no_steps_no_inspections.layout"
 
     # Import layout signing keys
-    alice = import_rsa_key_from_file("alice")
-    bob = import_rsa_key_from_file("bob")
+    alice = import_rsa_privatekey_from_file("alice")
+    bob = import_rsa_privatekey_from_file("bob")
     self.alice_path = "alice.pub"
     self.bob_path = "bob.pub"
 
@@ -797,40 +800,40 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_passing(self):
     """Test pass verification of single-signed layout. """
     layout = Metablock.load(self.layout_single_signed_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_passing_double_signed_layout(self):
     """Test pass verification of double-signed layout. """
     layout = Metablock.load(self.layout_double_signed_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path, self.bob_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path, self.bob_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_passing_empty_layout(self):
     """Test pass verification of layout without steps or inspections. """
     layout = Metablock.load(self.layout_no_steps_no_inspections)
-    layout_key_dict = import_public_keys_from_files_as_dict(
+    layout_key_dict = import_publickeys_from_file(
         [self.alice_path])
     in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_wrong_key(self):
     """Test fail verification with wrong layout key. """
     layout = Metablock.load(self.layout_single_signed_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.bob_path])
+    layout_key_dict = import_publickeys_from_file([self.bob_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_bad_signature(self):
     """Test fail verification with bad layout signature. """
     layout = Metablock.load(self.layout_bad_sig)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
     """Test fail verification with expired layout. """
     layout = Metablock.load(self.layout_expired_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(LayoutExpiredError):
       in_toto_verify(layout, layout_key_dict)
 
@@ -838,7 +841,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """Test fail verification with link metadata files not found. """
     os.rename("package.2f89b927.link", "package.link.bak")
     layout = Metablock.load(self.layout_single_signed_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
       in_toto_verify(layout, layout_key_dict)
     os.rename("package.link.bak", "package.2f89b927.link")
@@ -846,21 +849,21 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_failing_inspection_exits_non_zero(self):
     """Test fail verification with inspection returning non-zero. """
     layout = Metablock.load(self.layout_failing_inspection_retval)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(BadReturnValueError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_step_rules(self):
     """Test fail verification with failing step artifact rule. """
     layout = Metablock.load(self.layout_failing_step_rule_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_inspection_rules(self):
     """Test fail verification with failing inspection artifact rule. """
     layout = Metablock.load(self.layout_failing_inspection_rule_path)
-    layout_key_dict = import_public_keys_from_files_as_dict([self.alice_path])
+    layout_key_dict = import_publickeys_from_file([self.alice_path])
     with self.assertRaises(RuleVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
@@ -899,15 +902,15 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
     demo_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "demo_files")
 
-    self.alice = import_rsa_key_from_file(
+    self.alice = import_rsa_privatekey_from_file(
         os.path.join(demo_files, "alice"))
-    self.alice_pubkey = import_rsa_key_from_file(
+    self.alice_pubkey = import_rsa_publickey_from_file(
         os.path.join(demo_files, "alice.pub"))
     self.alice_keyid = self.alice["keyid"]
 
-    self.bob = import_rsa_key_from_file(
+    self.bob = import_rsa_privatekey_from_file(
         os.path.join(demo_files, "bob"))
-    self.bob_pubkey = import_rsa_key_from_file(
+    self.bob_pubkey = import_rsa_publickey_from_file(
         os.path.join(demo_files, "bob.pub"))
     self.bob_keyid = self.bob["keyid"]
 
@@ -1350,8 +1353,8 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Import sub layout signing (private) and verifying (public) keys
-    alice = import_rsa_key_from_file("alice")
-    alice_pub = import_rsa_key_from_file("alice.pub")
+    alice = import_rsa_privatekey_from_file("alice")
+    alice_pub = import_rsa_publickey_from_file("alice.pub")
 
     # From the perspective of the superlayout, the sublayout is treated as
     # a link corresponding to a step, hence needs a name.
@@ -1415,9 +1418,9 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
     # We don't need to copy the demo files, we just load the keys
     keys = {}
     for key_name in ["alice", "bob", "carl"]:
-      keys[key_name + "_priv"] = import_rsa_key_from_file(
+      keys[key_name + "_priv"] = import_rsa_privatekey_from_file(
           os.path.join(demo_files, key_name))
-      keys[key_name + "_pub"] = import_rsa_key_from_file(
+      keys[key_name + "_pub"] = import_rsa_publickey_from_file(
           os.path.join(demo_files, key_name + ".pub"))
 
 
@@ -1519,9 +1522,9 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
     # We don't need to copy the demo files, we just load the keys
     keys = {}
     for key_name in ["alice", "bob"]:
-      keys[key_name + "_priv"] = import_rsa_key_from_file(
+      keys[key_name + "_priv"] = import_rsa_privatekey_from_file(
         os.path.join(demo_files, key_name))
-      keys[key_name + "_pub"] = import_rsa_key_from_file(
+      keys[key_name + "_pub"] = import_rsa_publickey_from_file(
         os.path.join(demo_files, key_name + ".pub"))
 
     # Create layout hierarchy

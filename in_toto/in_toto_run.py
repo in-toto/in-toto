@@ -26,14 +26,17 @@ import sys
 import argparse
 import logging
 import in_toto.user_settings
-from in_toto import (util, runlib, __version__)
+from in_toto import (runlib, __version__)
 
 from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
     BASE_PATH_KWARGS, LSTRIP_PATHS_ARGS, LSTRIP_PATHS_KWARGS, KEY_ARGS,
     KEY_KWARGS, KEY_TYPE_KWARGS, KEY_TYPE_ARGS, GPG_ARGS, GPG_KWARGS,
     GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
     QUIET_KWARGS, METADATA_DIRECTORY_ARGS, METADATA_DIRECTORY_KWARGS,
+    KEY_PASSWORD_ARGS, KEY_PASSWORD_KWARGS, parse_password_and_prompt_args,
     sort_action_groups, title_case_action_groups)
+
+from securesystemslib import interface
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -135,6 +138,7 @@ e.g. 'document.pdf'.
 
   named_args.add_argument(*KEY_ARGS, **KEY_KWARGS)
   parser.add_argument(*KEY_TYPE_ARGS, **KEY_TYPE_KWARGS)
+  parser.add_argument(*KEY_PASSWORD_ARGS, **KEY_PASSWORD_KWARGS)
 
   named_args.add_argument(*GPG_ARGS, **GPG_KWARGS)
   parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
@@ -181,6 +185,8 @@ def main():
     parser.print_usage()
     parser.error("Specify either '--key <key path>' or '--gpg [<keyid>]'")
 
+  password, prompt = parse_password_and_prompt_args(args)
+
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
   gpg_use_default = (args.gpg is True)
@@ -204,7 +210,8 @@ def main():
     # case the key is encrypted. Something that should not happen in the lib.
     key = None
     if args.key:
-      key = util.import_private_key_from_file(args.key, args.key_type)
+      key = interface.import_privatekey_from_file(
+          args.key, key_type=args.key_type, password=password, prompt=prompt)
 
     runlib.in_toto_run(
         args.step_name, args.materials, args.products, args.link_cmd,

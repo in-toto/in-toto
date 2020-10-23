@@ -28,8 +28,9 @@ import in_toto.settings
 from in_toto.models.metadata import Metablock
 from in_toto.models.layout import  Layout
 from in_toto.verifylib import in_toto_verify, substitute_parameters
-from in_toto.util import (import_rsa_key_from_file,
-    import_public_keys_from_files_as_dict)
+from securesystemslib.interface import (
+    import_rsa_privatekey_from_file,
+    import_publickeys_from_file)
 
 import in_toto.exceptions
 
@@ -166,8 +167,8 @@ class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
       shutil.copy(os.path.join(demo_files, fn), self.test_dir)
 
     # load alice's key
-    self.alice = import_rsa_key_from_file("alice")
-    self.alice_pub_dict = import_public_keys_from_files_as_dict(
+    self.alice = import_rsa_privatekey_from_file("alice")
+    self.alice_pub_dict = import_publickeys_from_file(
         ["alice.pub"])
 
   @classmethod

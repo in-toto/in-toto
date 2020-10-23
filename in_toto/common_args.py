@@ -25,7 +25,7 @@
   ```
 
 """
-from in_toto import util
+from in_toto import SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519
 
 EXCLUDE_ARGS = ["--exclude"]
 EXCLUDE_KWARGS = {
@@ -77,14 +77,36 @@ KEY_TYPE_ARGS = ["-t", "--key-type"]
 KEY_TYPE_KWARGS = {
   "dest": "key_type",
   "type": str,
-  "choices": util.SUPPORTED_KEY_TYPES,
-  "default": util.KEY_TYPE_RSA,
+  "choices": SUPPORTED_KEY_TYPES,
+  "default": KEY_TYPE_RSA,
   "help": ("type of key specified by the '--key' option. '{rsa}' keys are"
            " expected in a 'PEM' format and '{ed25519}' in a custom"
            " 'securesystemslib/json' format. Default is '{rsa}'.".format(
-           rsa=util.KEY_TYPE_RSA, ed25519=util.KEY_TYPE_ED25519))
+           rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519))
 }
 
+KEY_PASSWORD_ARGS = ["-P", "--password"]
+KEY_PASSWORD_KWARGS = {
+  "nargs": "?",
+  "const": True,
+  "metavar": "<password>",
+  "help": ("password for encrypted key specified with '--key'. Passing  '-P'"
+           " without <password> opens a prompt. If no password is passed, or"
+           " entered on the prompt, the key is treated as unencrypted. (Do "
+           " not confuse with '-p/--products'!)")
+}
+def parse_password_and_prompt_args(args):
+  """Parse -P/--password optional arg (nargs=?, const=True). """
+   # --P was provided without argument (True)
+  if args.password is True:
+    password = None
+    prompt = True
+  # --P was not provided (None), or provided with argument (<password>)
+  else:
+    password = args.password
+    prompt = False
+
+  return password, prompt
 
 GPG_ARGS = ["-g", "--gpg"]
 GPG_KWARGS = {
