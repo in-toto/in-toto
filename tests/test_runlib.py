@@ -25,6 +25,11 @@ import tempfile
 import sys
 import stat
 
+try:
+  import StringIO as io
+except:
+  import io
+
 import in_toto.settings
 import in_toto.exceptions
 from in_toto.models.metadata import Metablock
@@ -467,6 +472,20 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
 
     # Restore original timeout
     in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old
+
+
+class TestQuietExecuteLink(unittest.TestCase):
+  """Tests the function of 'quiet when running execute_link"""
+  def test_quiet_false_record_streams_true(self):
+    """If quiet is false, then should enable printing streams to console"""
+    stdout_buffer = io.StringIO()
+    sys.stdout = stdout_buffer
+
+    #Call execute_link to see if it prints test string 'hello'
+    retlink = in_toto.runlib.execute_link([sys.executable, '-c', "print('hello')"], True, False)
+        
+    self.assertTrue(stdout_buffer.getvalue().strip() == "hello")
+    sys.stdout = sys.__stdout__     
 
 
 class TestInTotoRun(unittest.TestCase, TmpDirMixin):
