@@ -467,7 +467,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
         default gpg home directory is used.
 
     exclude_patterns (optional): A list of filename patterns to exclude certain
-        files from being recorded as artifacts.
+        files from being recorded as artifacts. See Config docs for details.
 
     base_path (optional): A path relative to which artifacts are recorded.
         Default is the current working directory.
@@ -634,7 +634,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
         default gpg home directory is used.
 
     exclude_patterns (optional): A list of filename patterns to exclude certain
-        files from being recorded as artifacts.
+        files from being recorded as artifacts. See Config docs for details.
 
     base_path (optional): A path relative to which artifacts are recorded.
         Default is the current working directory.
