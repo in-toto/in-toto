@@ -12,6 +12,15 @@ Default values for these settings are defined in the `in_toto.settings
 Settings names are case sensitive and settings values that contain colons are
 parsed as list.
 
+.. note::
+  Settings configured via rcfiles and environment variables are **only**
+  considered if in-toto is invoked form the **command line**, and ignored when
+  using the API.
+  The default ``in_toto.settings``, on the other hand, are considered in both
+  cases, unless overridden via API function arguments or, in the case of CLI
+  usage, environment variables, rcfiles, or CLI arguments.
+
+
 Setting Types
 -------------
 
