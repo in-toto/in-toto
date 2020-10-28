@@ -14,6 +14,6 @@ found at `in-toto.io <https://in-toto.io>`_.
    command-line-tools/index
    api
    model
+   configuration
    layout-creation-example
-   exclude-patterns
    Demo Supply Chain <https://github.com/in-toto/demo>
