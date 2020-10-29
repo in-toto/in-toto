@@ -35,8 +35,8 @@ EXCLUDE_KWARGS = {
   "nargs": "+",
   "help": ("path patterns to match paths that should not be recorded as"
            " 'materials' or 'products'. Passed patterns override patterns"
-           " defined in environment variables or config files. (see"
-           " 'ARTIFACT_EXCLUDE_PATTERNS' documentation for additional info)")
+           " defined in environment variables or config files. See Config docs"
+           " for details.")
   }
 
 BASE_PATH_ARGS = ["--base-path"]
