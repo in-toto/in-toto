@@ -360,11 +360,11 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
     - The return value of the executed command.
   """
   if record_streams:
-    if not quiet: 
+    if not quiet:
       return_code, stdout_str, stderr_str = \
           securesystemslib.process.run_duplicate_streams(link_cmd_args,
               timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT))
-    else: 
+    else:
       process = securesystemslib.process.run(link_cmd_args, check=False,
           stdout=securesystemslib.process.PIPE,
           stderr=securesystemslib.process.PIPE, universal_newlines=True)
@@ -373,11 +373,11 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
       return_code = process.returncode
 
   else:
-    if not quiet: 
+    if not quiet:
       process = securesystemslib.process.run(link_cmd_args, check=False,
           timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
           stdout=None, stderr=None)
-    else: 
+    else:
       process = securesystemslib.process.run(link_cmd_args, check=False,
           timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
           stdout=securesystemslib.process.DEVNULL,
@@ -504,7 +504,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
     metadata_directory (optional): A directory path to write the resulting link
         metadata file to. Default destination is the current working directory.
-    
+
     quiet (optional): A boolean indicating if streams are printed to console.
 
   Raises:
