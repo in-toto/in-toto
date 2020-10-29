@@ -480,14 +480,14 @@ class TestQuietExecuteLink(unittest.TestCase):
   def test_quiet_false_record_streams_true(self):
     stdout_buffer = io.StringIO()
     sys.stdout = stdout_buffer
-    
+
     #Call execute_link with record_streams as True and quiet as False
     retlink = in_toto.runlib.execute_link([sys.executable, '-c',
         "print('hello')"], True, False)
 
     #Check record_streams is properly saving in stdout
     self.assertTrue(retlink['stdout'].strip() == 'hello')
-    
+
     #Check test string 'hello' is being printed to console
     self.assertTrue(stdout_buffer.getvalue().strip() == 'hello')
 
