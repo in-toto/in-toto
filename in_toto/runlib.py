@@ -337,8 +337,8 @@ def execute_link(link_cmd_args, record_streams, quiet=True):
             and standard error to a temporary file which is returned to the
             caller (True) or not (False).
     quiet:
-            A bool that specifies whether to print streams to console (True)
-            or print nothing (False).
+            A bool that specifies whether to print streams to console (False)
+            or print nothing (True).
 
   <Exceptions>
     OSError:
