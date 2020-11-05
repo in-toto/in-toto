@@ -34,7 +34,11 @@ are documented below.
 Generate Key Pairs
 ^^^^^^^^^^^^^^^^^^
 .. autofunction:: securesystemslib.interface.generate_and_write_rsa_keypair
+.. autofunction:: securesystemslib.interface.generate_and_write_rsa_keypair_with_prompt
+.. autofunction:: securesystemslib.interface.generate_and_write_unencrypted_rsa_keypair
 .. autofunction:: securesystemslib.interface.generate_and_write_ed25519_keypair
+.. autofunction:: securesystemslib.interface.generate_and_write_ed25519_keypair_with_prompt
+.. autofunction:: securesystemslib.interface.generate_and_write_unencrypted_ed25519_keypair
 
 Load Signing Keys
 ^^^^^^^^^^^^^^^^^

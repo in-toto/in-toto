@@ -111,7 +111,7 @@ directory.
 def main():
   """
   First calls parse_args to parse the arguments, and then calls either
-  generate_and_write_rsa_keypair or generate_and_write_ed25519_keypair
+  _generate_and_write_rsa_keypair or _generate_and_write_ed25519_keypair
   depending upon the arguments. It then dumps the corresponding key files as:
   <filename> and <filename>.pub (Private key and Public key respectively)
   """
@@ -120,10 +120,10 @@ def main():
 
   try:
     if args.type == KEY_TYPE_RSA:
-      interface.generate_and_write_rsa_keypair(
+      interface._generate_and_write_rsa_keypair( # pylint: disable=protected-access
           filepath=args.name, bits=args.bits, prompt=args.prompt)
     elif args.type == KEY_TYPE_ED25519:
-      interface.generate_and_write_ed25519_keypair(
+      interface._generate_and_write_ed25519_keypair( # pylint: disable=protected-access
           filepath=args.name, prompt=args.prompt)
     else:  # pragma: no cover
       LOG.error(
