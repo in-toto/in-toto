@@ -27,7 +27,7 @@ import stat
 
 try:
   import StringIO as io
-except:
+except ImportError as ie:
   import io
 
 import in_toto.settings
