@@ -32,8 +32,10 @@ from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
     _hash_artifact)
-from securesystemslib.interface import (generate_and_write_rsa_keypair,
-    import_rsa_privatekey_from_file, import_rsa_publickey_from_file)
+from securesystemslib.interface import (
+    generate_and_write_unencrypted_rsa_keypair,
+    import_rsa_privatekey_from_file,
+    import_rsa_publickey_from_file)
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
 import securesystemslib.formats
@@ -489,7 +491,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     self.step_name = "test_step"
     self.key_path = "test_key"
-    generate_and_write_rsa_keypair(self.key_path)
+    generate_and_write_unencrypted_rsa_keypair(self.key_path)
     self.key = import_rsa_privatekey_from_file(self.key_path)
     self.key_pub = import_rsa_publickey_from_file(self.key_path + ".pub")
 
@@ -673,7 +675,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     self.set_up_test_dir()
 
     self.key_path = "test_key"
-    generate_and_write_rsa_keypair(self.key_path)
+    generate_and_write_unencrypted_rsa_keypair(self.key_path)
     self.key = import_rsa_privatekey_from_file(self.key_path)
 
     self.step_name = "test_step"
@@ -725,8 +727,8 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
 
     self.key_path = "test-key"
     self.key_path2 = "test-key2"
-    generate_and_write_rsa_keypair(self.key_path)
-    generate_and_write_rsa_keypair(self.key_path2)
+    generate_and_write_unencrypted_rsa_keypair(self.key_path)
+    generate_and_write_unencrypted_rsa_keypair(self.key_path2)
     self.key = import_rsa_privatekey_from_file(self.key_path)
     self.key2 = import_rsa_privatekey_from_file(self.key_path2)
 

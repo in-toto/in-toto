@@ -34,13 +34,28 @@ are documented below.
 Generate Key Pairs
 ^^^^^^^^^^^^^^^^^^
 .. autofunction:: securesystemslib.interface.generate_and_write_rsa_keypair
+.. autofunction:: securesystemslib.interface.generate_and_write_rsa_keypair_with_prompt
+.. autofunction:: securesystemslib.interface.generate_and_write_unencrypted_rsa_keypair
 .. autofunction:: securesystemslib.interface.generate_and_write_ed25519_keypair
+.. autofunction:: securesystemslib.interface.generate_and_write_ed25519_keypair_with_prompt
+.. autofunction:: securesystemslib.interface.generate_and_write_unencrypted_ed25519_keypair
+
+.. note::
+
+   ``securesystemslib`` does not provide functions to generate OpenPGP key
+   pairs. You can use `GnuPG <https://gnupg.org/>`_ for that.
 
 Load Signing Keys
 ^^^^^^^^^^^^^^^^^
 .. autofunction:: securesystemslib.interface.import_privatekey_from_file
 .. autofunction:: securesystemslib.interface.import_rsa_privatekey_from_file
 .. autofunction:: securesystemslib.interface.import_ed25519_privatekey_from_file
+
+.. note::
+
+   OpenPGP private keys do not need to be imported for signing. They remain in
+   the `GnuPG <https://gnupg.org/>`_ keyring and can be addressed by keyid
+   (see the :py:func:`in_toto.models.metadata.Metablock.sign_gpg` method).
 
 Load Verification Keys
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -49,3 +64,9 @@ Load Verification Keys
 .. autofunction:: securesystemslib.interface.import_rsa_publickey_from_file
 .. autofunction:: securesystemslib.gpg.functions.export_pubkey
 .. autofunction:: securesystemslib.gpg.functions.export_pubkeys
+
+ .. seealso::
+
+   The :py:func:`in_toto.models.layout.Layout` class also provides shortcuts to
+   load public functionary keys and directly assign them to an in-toto layout
+   (see ``add_functionary_key*`` methods).

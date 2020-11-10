@@ -27,8 +27,11 @@ import sys
 import inspect
 import shutil
 import tempfile
-from securesystemslib.interface import (generate_and_write_rsa_keypair,
-    generate_and_write_ed25519_keypair)
+from securesystemslib.interface import (
+    generate_and_write_rsa_keypair,
+    generate_and_write_unencrypted_rsa_keypair,
+    generate_and_write_ed25519_keypair,
+    generate_and_write_unencrypted_ed25519_keypair)
 
 import unittest
 if sys.version_info >= (3, 3):
@@ -94,10 +97,10 @@ class GenKeysMixin():
   @classmethod
   def set_up_keys(cls):
     # Generated unencrypted keys
-    cls.rsa_key_path = generate_and_write_rsa_keypair()
+    cls.rsa_key_path = generate_and_write_unencrypted_rsa_keypair()
     cls.rsa_key_id = os.path.basename(cls.rsa_key_path)
 
-    cls.ed25519_key_path = generate_and_write_ed25519_keypair()
+    cls.ed25519_key_path = generate_and_write_unencrypted_ed25519_keypair()
     cls.ed25519_key_id = os.path.basename(cls.ed25519_key_path)
 
     # Generate encrypted keys

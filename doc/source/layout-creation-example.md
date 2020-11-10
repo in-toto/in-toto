@@ -23,7 +23,7 @@ from in_toto.models.metadata import Metablock
 # In this example Alice is the project owner, whose private key is used to sign
 # the layout. The corresponding public key will be used during final product
 # verification.
-alice_path = generate_and_write_rsa_keypair("alice", password="123")
+alice_path = generate_and_write_rsa_keypair(password="123", filepath="alice")
 alice_key = import_rsa_privatekey_from_file(alice_path, password="123")
 
 # Bob and Carl are both functionaries, i.e. they are authorized to carry out
@@ -32,8 +32,8 @@ alice_key = import_rsa_privatekey_from_file(alice_path, password="123")
 # Carl will generate when carrying out their respective tasks.
 # Bob and Carl will each require their private key when creating link metadata
 # for a step.
-bob_path = generate_and_write_rsa_keypair("bob", password="123")
-carl_path = generate_and_write_rsa_keypair("carl", password="123")
+bob_path = generate_and_write_rsa_keypair(password="123", filepath="bob")
+carl_path = generate_and_write_rsa_keypair(password="123", filepath="carl")
 
 
 # Create an empty layout
