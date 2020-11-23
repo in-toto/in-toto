@@ -1,5 +1,32 @@
 # Changelog
 
+## in-toto v1.0.0
+
+### Added
+* '-P/--password' (prompt) cli argument for in-toto-run/in-toto-record (#402)
+* in-toto-run link command timeout setting (#367)
+* API and usage documentation for cryptographic key handling with
+  securesystemslib (#402, #408)
+* Artifact recording exclude pattern documentation (#373, #405)
+* Test key generation mixin (#402)
+* 2021 roadmap document (#381)
+
+### Changed
+* Move 'settings' docs to new 'configuration' section and make minor
+  enhancements in structure and content (#405)
+* Update tested dependencies (#377, #383, #384, #386, #389, #390,  #394, #397,
+  #398, #400, #404, #406, #409, #410, #411)
+* Debian downstream release metadata (#382)
+
+### Removed
+* 'util' crypto module in favor of securesystemslib key interfaces (#402)
+* Obsolete coveralls.io API call in Travis test builds (#399)
+
+### Fixed
+* Minor docs issues (#396, #385, #395)
+* pylint 2.6.0 (#387) and lgtm.com (#379) warnings
+
+
 ## in-toto v0.5.0
 
 * Docs: Major CLI and API documentation overhaul and release (#341, #369)
