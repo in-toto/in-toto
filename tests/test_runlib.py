@@ -494,6 +494,29 @@ class TestQuietExecuteLink(unittest.TestCase):
     sys.stdout = sys.__stdout__
     stdout_buffer.close()
 
+  from contextlib import contextmanager
+  @contextmanager
+  def stdout_redirector(self, stream):
+    old_stdout = sys.stdout
+    sys.stdout = stream
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+
+  def test_quiet_false_record_streams_false(self):
+    f = io.StringIO()
+    with self.stdout_redirector(f):
+      #Call execute_link with record_streams as False and quiet as False
+      retlink = in_toto.runlib.execute_link([sys.executable, '-c',
+          "print('hello')"], False, False)
+
+    #Check record_streams is saving nothing into stdout
+    self.assertTrue(retlink['stdout'].strip() == "")
+
+    #Check test string 'hello' is being printed to console
+    self.assertTrue(f.getvalue().strip() == 'hello')
+
 
 class TestInTotoRun(unittest.TestCase, TmpDirMixin):
   """"
