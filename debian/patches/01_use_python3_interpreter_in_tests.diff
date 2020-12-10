@@ -4,7 +4,7 @@ Description: Use python3 in tests
  commands. In debian, where we only build for python3, "python" is not
  available during build and thus makes those tests fail. This patch replaces
  "python" with "python3" where applicable.
-
+Forwarded: not-needed
 Origin: upstream, https://github.com/in-toto/in-toto/commit/a7f4baf8d0186fa4a6314264707f4d5d1b3cecdc
 
 diff --git a/tests/demo_files/demo.layout.template b/tests/demo_files/demo.layout.template
@@ -21,10 +21,10 @@ index 64ca250..0ac7f7e 100644
                  "xfz",
                  "foo.tar.gz"
 diff --git a/tests/test_in_toto_mock.py b/tests/test_in_toto_mock.py
-index bef1ba5..5e87050 100644
+index f0b45ba..82e89c2 100644
 --- a/tests/test_in_toto_mock.py
 +++ b/tests/test_in_toto_mock.py
-@@ -75,7 +75,7 @@ class TestInTotoMockTool(tests.common.CliTestCase):
+@@ -68,7 +68,7 @@ class TestInTotoMockTool(CliTestCase, TmpDirMixin):
    def test_main_required_args(self):
      """Test CLI command with required arguments. """
  
@@ -34,37 +34,46 @@ index bef1ba5..5e87050 100644
  
      self.assertTrue(os.path.exists(self.test_link))
 diff --git a/tests/test_in_toto_run.py b/tests/test_in_toto_run.py
-index 1d65c4b..7907de4 100755
+index b41762c..b49849a 100755
 --- a/tests/test_in_toto_run.py
 +++ b/tests/test_in_toto_run.py
-@@ -81,7 +81,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+@@ -77,7 +77,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
      """Test CLI command with required arguments. """
  
      args = ["--step-name", self.test_step, "--key", self.rsa_key_path, "--",
 -        "python", "--version"]
 +        "python3", "--version"]
  
-     # Give wrong password whenever prompted.
-     with mock.patch('in_toto.util.prompt_password', return_value='x'):
-@@ -96,7 +96,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+     self.assert_cli_sys_exit(args, 0)
+     self.assertTrue(os.path.exists(self.test_link_rsa))
+@@ -89,7 +89,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
      named_args = ["--step-name", self.test_step, "--key",
          self.rsa_key_path, "--materials", self.test_artifact, "--products",
          self.test_artifact, "--record-streams"]
 -    positional_args = ["--", "python", "--version"]
 +    positional_args = ["--", "python3", "--version"]
  
-     # Give wrong password whenever prompted.
-     with mock.patch('in_toto.util.prompt_password', return_value='x'):
-@@ -145,7 +145,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+     # Test and assert recorded artifacts
+     args1 = named_args + positional_args
+@@ -135,7 +135,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
      """Test CLI command with metadata directory. """
      tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
      args = ["--step-name", self.test_step, "--key", self.rsa_key_path,
 -        "--metadata-directory", tmp_dir, "--", "python", "--version"]
 +        "--metadata-directory", tmp_dir, "--", "python3", "--version"]
  
-     # Give wrong password whenever prompted.
-     with mock.patch('in_toto.util.prompt_password', return_value='x'):
-@@ -187,7 +187,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+     self.assert_cli_sys_exit(args, 0)
+ 
+@@ -167,7 +167,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
+           "-n", self.test_step,
+           "--key", key_path,
+           "--key-type", key_type]
+-      cmd = ["--", "python", "--version"]
++      cmd = ["--", "python3", "--version"]
+ 
+       # Make sure the link file to be generated doesn't already exist
+       self.assertFalse(os.path.exists(link_path))
+@@ -190,7 +190,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
      """Test CLI command with specified gpg key. """
      args = ["-n", self.test_step,
              "--gpg", self.gpg_key_85DA58,
@@ -73,7 +82,7 @@ index 1d65c4b..7907de4 100755
  
      self.assert_cli_sys_exit(args, 0)
      link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-@@ -199,7 +199,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+@@ -202,7 +202,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
    def test_main_with_default_gpg_key(self):
      """Test CLI command with default gpg key. """
      args = ["-n", self.test_step,
@@ -83,10 +92,10 @@ index 1d65c4b..7907de4 100755
      self.assert_cli_sys_exit(args, 0)
  
 diff --git a/tests/test_runlib.py b/tests/test_runlib.py
-index ae4c587..24a7097 100755
+index 50a771a..3b589e5 100755
 --- a/tests/test_runlib.py
 +++ b/tests/test_runlib.py
-@@ -487,17 +487,17 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -513,17 +513,17 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
    def test_in_toto_run_verify_signature(self):
      """Successfully run, verify signed metadata. """
      link = in_toto_run(self.step_name, None, None,
@@ -107,7 +116,7 @@ index ae4c587..24a7097 100755
          record_streams=True)
  
      # this or clause may seem weird, but given that python 2 prints its version
-@@ -510,14 +510,14 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -536,14 +536,14 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
  
    def test_in_toto_run_without_byproduct(self):
      """Successfully run, verify byproduct is not recorded. """
@@ -124,7 +133,7 @@ index ae4c587..24a7097 100755
      link_dump = Metablock.load(
          FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
      self.assertEqual(repr(link), repr(link_dump))
-@@ -527,7 +527,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -553,7 +553,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
       compare dumped link is equal to returned link"""
      tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
      link = in_toto_run(self.step_name, [self.test_artifact],
@@ -133,7 +142,7 @@ index ae4c587..24a7097 100755
          metadata_directory=tmp_dir)
      file_path = os.path.join(tmp_dir, FILENAME_FORMAT.format(step_name=self.step_name,
          keyid=self.key["keyid"]))
-@@ -539,13 +539,13 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -565,13 +565,13 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
       compare the signed is equal"""
      tmp_dir = os.path.realpath(tempfile.mkdtemp(dir=os.getcwd()))
      in_toto_run(self.step_name, [self.test_artifact], [self.test_artifact],
@@ -149,7 +158,7 @@ index ae4c587..24a7097 100755
      link_dump_without_md = Metablock.load(
          FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"]))
      self.assertEqual(repr(link_dump_with_md.signed),
-@@ -554,13 +554,13 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -580,13 +580,13 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
    def test_in_toto_run_verify_recorded_artifacts(self):
      """Successfully run, verify properly recorded artifacts. """
      link = in_toto_run(self.step_name, [self.test_artifact],
@@ -165,7 +174,7 @@ index ae4c587..24a7097 100755
          record_environment=True)
      self.assertEqual(link.signed.environment["workdir"],
          os.getcwd().replace("\\", "/"))
-@@ -578,7 +578,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -604,7 +604,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
  
        # Call in_toto_run and record artifacts as materials and products
        # with line ending normalization on
@@ -174,7 +183,7 @@ index ae4c587..24a7097 100755
            normalize_line_endings=True).signed
  
        # Check that all three hashes in materials and products are equal
-@@ -596,20 +596,20 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -622,20 +622,20 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
      """Fail run, passed key is not properly formatted. """
      with self.assertRaises(securesystemslib.exceptions.FormatError):
        in_toto_run(self.step_name, None, None,
@@ -198,7 +207,7 @@ index ae4c587..24a7097 100755
            True, self.key, metadata_directory='nonexistentDir')
  
    def test_not_a_directory(self):
-@@ -621,7 +621,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -647,7 +647,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
      expected_error = IOError if sys.version_info < (3, 0) \
          else (NotADirectoryError, FileNotFoundError)
      with self.assertRaises(expected_error):
@@ -207,7 +216,7 @@ index ae4c587..24a7097 100755
            True, self.key, metadata_directory=path)
      os.remove(path)
  
-@@ -634,7 +634,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
+@@ -660,7 +660,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
      expected_error = IOError if sys.version_info < (3, 0) \
          else PermissionError
      with self.assertRaises(expected_error):
@@ -217,10 +226,10 @@ index ae4c587..24a7097 100755
      os.rmdir(tmp_dir)
  
 diff --git a/tests/test_verifylib.py b/tests/test_verifylib.py
-index 96a4237..4055cae 100644
+index 55b1a55..7f8c7a9 100644
 --- a/tests/test_verifylib.py
 +++ b/tests/test_verifylib.py
-@@ -101,7 +101,7 @@ class TestRunAllInspections(unittest.TestCase):
+@@ -107,7 +107,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
          "steps": [],
          "inspect": [{
            "name": "touch-bar",
@@ -229,7 +238,7 @@ index 96a4237..4055cae 100644
          }]
        })
  
-@@ -141,7 +141,7 @@ class TestRunAllInspections(unittest.TestCase):
+@@ -143,7 +143,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
          "steps": [],
          "inspect": [{
            "name": "non-zero-inspection",
@@ -238,7 +247,7 @@ index 96a4237..4055cae 100644
          }]
      })
      with self.assertRaises(BadReturnValueError):
-@@ -784,7 +784,7 @@ class TestInTotoVerify(unittest.TestCase):
+@@ -782,7 +782,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
  
      # dump layout with failing inspection retval
      layout = copy.deepcopy(layout_template)

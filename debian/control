@@ -9,7 +9,7 @@ Uploaders:
  Justin Cappos <jcappos@nyu.edu>,
 Build-Depends:
  dh-python,
- debhelper-compat (= 12),
+ debhelper-compat (= 13),
  python3-all,
  python3-setuptools,
  python3-attr,
@@ -23,7 +23,7 @@ Build-Depends:
  python3-colorama,
  python3-securesystemslib (>= 0.16.0),
  gnupg2,
-Standards-Version: 4.5.0
+Standards-Version: 4.5.1
 Rules-Requires-Root: no
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git
