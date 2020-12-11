@@ -1,4 +1,3 @@
-securesystemslib[crypto,pynacl]>=0.14.1
 # in-toto runtime requirements plus securesystemslib with extra dependencies
 #
 # This file together with 'pip-compile' is used to generate a pinned
@@ -49,6 +48,7 @@ securesystemslib[crypto,pynacl]>=0.14.1
 # 3. Use this command to remove per-version files
 #    `rm requirements-?.?.txt`
 #
+securesystemslib[crypto,pynacl]>=0.18.0
 attrs
 python-dateutil
 iso8601
