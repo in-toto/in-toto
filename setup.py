@@ -70,18 +70,18 @@ setup(
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: Implementation :: CPython',
     'Topic :: Security',
     'Topic :: Software Development'
   ],
-  python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4",
+  python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "securesystemslib[crypto]>=0.12.0", "attrs",
+  install_requires=["six", "securesystemslib[crypto]>=0.18.0", "attrs",
                     "python-dateutil", "iso8601", "pathspec"],
   extras_require={
     # Install pynacl as optional dependency to use with securesystemslib, as a
