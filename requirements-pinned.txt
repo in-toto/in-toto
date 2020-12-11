@@ -1,29 +1,3 @@
-# These pinned requirements are the combined results of `pip-compile` over
-# "requirements.txt" in each supported Python version.
-#
-# - Below script may be used (copy-paste to bash removing leading '#') to
-#   re-generate this file, e.g. if `requirements.txt` is updated.
-#
-# - Version updates should be handled by a GitHub-integrated dependency monitor
-#   (e.g. Dependabot) that regularly scans PyPI for updates, patches this file,
-#   and submits a PR, which tirggers CI/CD builds and should catch breaking
-#   updates.
-#
-# # Gather pip-compile results for each supported Python version
-# for v in 2.7 3.5 3.6 3.7 3.8; do
-#   mkvirtualenv in-toto-env-${v} -p python${v};
-#   pip install pip-tools;
-#   pip-compile requirements.txt -n 2>&1 | grep -v "^#" >> requirements-pinned.combined;
-#   deactivate;
-#   rmvirtualenv in-toto-env-${v};
-# done;
-#
-# # Create pinned requirements file retaining this doc header
-# cat requirements-pinned.txt | grep "^#" > requirements-pinned.tmp;
-# mv requirements-pinned.tmp requirements-pinned.txt
-# cat requirements-pinned.combined | sort -u >> requirements-pinned.txt
-# rm requirements-pinned.combined
-#
 attrs==20.3.0
 cffi==1.14.4              # via cryptography, pynacl
 colorama==0.4.4           # via securesystemslib
