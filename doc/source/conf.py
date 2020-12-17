@@ -63,6 +63,7 @@ html_theme_options = {
   'logo_only': True
 }
 html_logo = 'in-toto-horizontal-white.png'
+html_favicon = 'in-toto-icon-color.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
