@@ -4,5 +4,5 @@
 # sphinx extensions
 sphinx-rtd-theme
 sphinx-argparse
-sphinxcontrib-napoleon
+git+https://github.com/secure-systems-lab/napoleon.git@v0.7-1
 recommonmark
