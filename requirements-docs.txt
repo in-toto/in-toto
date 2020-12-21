@@ -4,5 +4,6 @@
 # sphinx extensions
 sphinx-rtd-theme
 sphinx-argparse
-sphinxcontrib-napoleon
+# FIXME: Use sphinx built-in Napoleon (coordinate with in-toto/in-toto#401)
+git+https://github.com/secure-systems-lab/napoleon.git@v0.7-1
 recommonmark
