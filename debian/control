@@ -21,7 +21,7 @@ Build-Depends:
  python3-cryptography,
  python3-nacl,
  python3-colorama,
- python3-securesystemslib (>= 0.16.0),
+ python3-securesystemslib (>= 0.18.0),
  gnupg2,
 Standards-Version: 4.5.1
 Rules-Requires-Root: no

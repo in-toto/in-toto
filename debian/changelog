@@ -1,3 +1,9 @@
+in-toto (1.0.0-2) unstable; urgency=medium
+
+  * Raise versioned build depends on python3-securesystemslib to >= 0.18.0.
+
+ -- Holger Levsen <holger@debian.org>  Fri, 22 Jan 2021 01:17:51 +0100
+
 in-toto (1.0.0-1) unstable; urgency=medium
 
   * The 1.0.0 upstream release is above all a commitment to the maturity
