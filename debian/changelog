@@ -1,3 +1,14 @@
+in-toto (1.0.0-3) unstable; urgency=medium
+
+  Misc Debian metadata changes:
+
+  * d/watch: add missing trailing newline
+  * d/control: specify upstream tracking branch for downstream-related changes
+  * d/upstream/: add basic metadata file
+  * d/copyright: add Upstream-Contact field and missing trailing newline
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Tue, 02 Feb 2021 12:52:12 +0200
+
 in-toto (1.0.0-2) unstable; urgency=medium
 
   * Raise versioned build depends on python3-securesystemslib to >= 0.18.0.
