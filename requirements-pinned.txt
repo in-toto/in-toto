@@ -3,7 +3,7 @@ cffi==1.14.4              # via cryptography, pynacl
 cryptography==3.3.1       # via securesystemslib
 enum34==1.1.10            # via cryptography
 ipaddress==1.0.23         # via cryptography
-iso8601==0.1.13
+iso8601==0.1.14
 pathspec==0.8.1
 pycparser==2.20           # via cffi
 pynacl==1.4.0             # via securesystemslib
