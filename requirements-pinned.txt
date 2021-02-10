@@ -1,6 +1,6 @@
 attrs==20.3.0
 cffi==1.14.4              # via cryptography, pynacl
-cryptography==3.3.1       # via securesystemslib
+cryptography==3.3.2       # via securesystemslib
 enum34==1.1.10            # via cryptography
 ipaddress==1.0.23         # via cryptography
 iso8601==0.1.14
