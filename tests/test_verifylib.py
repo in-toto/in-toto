@@ -150,6 +150,54 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(BadReturnValueError):
       run_all_inspections(layout)
 
+  def test_inspection_prerecorded(self):
+    """Use pre-recorded inspection results."""
+
+    prerecorded_inspections = {
+        "touch-bar": {
+            "materials": {
+                "foo": {
+                    "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+                },
+            },
+            "products": {
+                "foo": {
+                    "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+                },
+                "bar": {
+                    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                },
+            },
+        },
+    }
+    link_dict = run_all_inspections(
+            self.layout,
+            prerecorded_inspections=prerecorded_inspections)
+    link = link_dict['touch-bar']
+    self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
+    self.assertListEqual(sorted(list(link.signed.products.keys())), sorted(["foo", "bar"]))
+    # the actual file should not be created
+    self.assertFalse(os.path.exists("bar"))
+
+    # now try to really execute the inspection and compare the result
+    link_dict_real = run_all_inspections(self.layout)
+    self.assertEqual(link_dict, link_dict_real)
+
+  def test_inspection_prerecorded_empty(self):
+    """Use pre-recorded inspection results."""
+
+    prerecorded_inspections = {
+        "touch-bar": {},
+    }
+    link_dict = run_all_inspections(
+            self.layout,
+            prerecorded_inspections=prerecorded_inspections)
+    link = link_dict['touch-bar']
+    self.assertListEqual(list(link.signed.materials.keys()), [])
+    self.assertListEqual(sorted(list(link.signed.products.keys())), [])
+    # the actual file should not be created
+    self.assertFalse(os.path.exists("bar"))
+
 
 class TestVerifyCommandAlignment(unittest.TestCase):
   """Test verifylib.verify_command_alignment(command, expected_command)"""

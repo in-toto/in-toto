@@ -165,7 +165,7 @@ def load_links_for_layout(layout, link_dir_path):
   return steps_metadata
 
 
-def run_all_inspections(layout):
+def run_all_inspections(layout, prerecorded_inspections=None):
   """
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
@@ -178,6 +178,28 @@ def run_all_inspections(layout):
   <Arguments>
     layout:
             A Layout object which is used to extract the Inspections.
+
+    prerecorded_inspections:
+            A dictionary of already performed inspections. Inspections present
+            here will not be executed and provided results will be recorded
+            instead.
+            The dictionary format is as follows:
+
+            {
+                <inspection name> : {
+                    "materials": {
+                        <material 1 filename>: {
+                            "sha256": <material 1 sha256 hash>,
+                            ...
+                        },
+                    "products": {
+                        <product 1 filename>: {
+                            "sha256": <product 1 sha256 hash>,
+                            ...
+                        },
+                    },
+                ...
+            }
 
   <Exceptions>
     Calls function that raises BadReturnValueError if an inspection returned
@@ -194,8 +216,34 @@ def run_all_inspections(layout):
     }
 
   """
+
+  if prerecorded_inspections is None:
+    prerecorded_inspections = {}
+
   inspection_links_dict = {}
   for inspection in layout.inspect:
+    if inspection.name in prerecorded_inspections:
+      LOG.info("Using pre-recorded inspection '{}' results...".format(
+          inspection.name))
+      results = prerecorded_inspections[inspection.name]
+      if "materials" not in results:
+        results["materials"] = {}
+      if "products" not in results:
+        results["products"] = {}
+
+      byproducts = {
+        "return-value": 0,
+        "stdout": "",
+        "stderr": "",
+      }
+
+      link = in_toto.models.link.Link(name=inspection.name,
+          materials=results["materials"], products=results["products"],
+          command=inspection.run, byproducts=byproducts)
+
+      inspection_links_dict[inspection.name] = Metablock(signed=link)
+      continue
+
     LOG.info("Executing command for inspection '{}'...".format(
         inspection.name))
 
@@ -1385,7 +1433,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
-    substitution_parameters=None, step_name=""):
+    substitution_parameters=None, step_name="", prerecorded_inspections=None):
   """Performs complete in-toto supply chain verification for a final product.
 
   The verification procedure consists of the following activities, performed in
@@ -1422,6 +1470,27 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
 
     step_name (optional): A name assigned to the returned link. This is mostly
         useful during recursive sublayout verification.
+
+    prerecorded_inspections (optional):
+        A dictionary of already performed inspections. Inspections present here
+        will not be executed and provided results will be recorded instead.
+        The dictionary format is as follows:
+
+        {
+            <inspection name> : {
+                "materials": {
+                    <material 1 filename>: {
+                        "sha256": <material 1 sha256 hash>,
+                        ...
+                    },
+                "products": {
+                    <product 1 filename>: {
+                        "sha256": <product 1 sha256 hash>,
+                        ...
+                    },
+                },
+            ...
+        }
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed parameters are malformed.
@@ -1494,7 +1563,9 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
   LOG.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout)
+  inspection_link_dict = run_all_inspections(
+      layout,
+      prerecorded_inspections=prerecorded_inspections)
 
   LOG.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
