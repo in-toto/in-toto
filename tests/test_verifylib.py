@@ -91,11 +91,12 @@ class Test_RaiseOnBadRetval(unittest.TestCase):
 class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
   """Test verifylib.run_all_inspections(layout)"""
 
-  @classmethod
-  def setUpClass(self):
+  def setUp(self):
     """
     Create layout with dummy inpsection.
     Create and change into temp test directory with dummy artifact."""
+
+    super(TestRunAllInspections, self).setUp()
 
     # find where the scripts directory is located.
     scripts_directory = os.path.join(
@@ -116,9 +117,9 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     with open("foo", "w") as f:
       f.write("foo")
 
-  @classmethod
-  def tearDownClass(self):
+  def tearDown(self):
     self.tear_down_test_dir()
+    super(TestRunAllInspections, self).tearDown()
 
   def test_inpsection_artifacts_with_base_path_ignored(self):
     """Create new dummy test dir and set as base path, must ignore. """
