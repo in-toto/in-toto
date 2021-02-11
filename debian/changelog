@@ -1,3 +1,36 @@
+in-toto (1.0.0-3) unstable; urgency=medium
+
+  Misc Debian metadata changes:
+
+  * d/watch: add missing trailing newline
+  * d/control: specify upstream tracking branch for downstream-related changes
+  * d/upstream/: add basic metadata file
+  * d/copyright: add Upstream-Contact field and missing trailing newline
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Tue, 02 Feb 2021 12:52:12 +0200
+
+in-toto (1.0.0-2) unstable; urgency=medium
+
+  * Raise versioned build depends on python3-securesystemslib to >= 0.18.0.
+
+ -- Holger Levsen <holger@debian.org>  Fri, 22 Jan 2021 01:17:51 +0100
+
+in-toto (1.0.0-1) unstable; urgency=medium
+
+  * The 1.0.0 upstream release is above all a commitment to the maturity
+    of in-toto and the stability of its API. It also includes:
+    - new '-P/--password' (prompt) cli argument
+    - link command timeout setting
+    - enhanced documentation
+    - removal of 'util' module in favor of securesystemslib key interfaces
+
+  * Bump standards version and compat level in d/control
+  * Bump standard version in d/watch
+  * Adopt relevant upstream test changes in d/patches and add
+    "Forwarded: not-needed"-header (see patch description for rationale)
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Thu, 10 Dec 2020 14:01:34 +0200
+
 in-toto (0.5.0-1) unstable; urgency=medium
 
   * New upstream release that includes i.a.:
@@ -8,7 +41,7 @@ in-toto (0.5.0-1) unstable; urgency=medium
 
   * Remove obsolete d/patches for issues fixed upstream
   * Update d/rules
-    - Unpin python-securesystemslib dependency
+    - Unpin python-securesystemslib dependency (Closes: #966972)
     - Bump Standards-Version
 
  -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Thu, 13 Aug 2020 15:27:12 +0200
