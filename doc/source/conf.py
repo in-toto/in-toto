@@ -41,9 +41,8 @@ master_doc = 'index'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-# FIXME: Use sphinx built-in Napoleon (coordinate with in-toto/in-toto#401)
-extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.napoleon', 'sphinxarg.ext',
-    'argparse_epilog', 'recommonmark', 'sphinx.ext.todo', 'sphinx_rtd_theme']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinxarg.ext',
+    'argparse_epilog', 'recommonmark', 'sphinx.ext.todo', 'sphinx_rtd_theme',]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -72,3 +71,5 @@ html_favicon = 'in-toto-icon-color.png'
 # html_static_path = ['_static']
 
 todo_include_todos = True
+
+napoleon_custom_sections = [('Side Effects', 'returns_style')]
