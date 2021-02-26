@@ -24,7 +24,6 @@ requests undergo review and automated testing, including, but not limited to:
 
 * Unit and build testing via [Tox](https://tox.readthedocs.io/en/latest/) on
 [GitHub Actions](https://github.com/in-toto/in-toto/actions) and
-[Travis CI](https://travis-ci.org/in-toto/in-toto) and
 [AppVeyor](https://ci.appveyor.com/project/in-toto/in-toto)
 * Static code analysis via [Pylint](https://www.pylint.org/) and
 [Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
