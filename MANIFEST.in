@@ -8,5 +8,4 @@ global-exclude *.py[cod] __pycache__ *.so .coverage
 # Add test config files to show how to run tests
 include .coveragerc
 include tox.ini
-include .travis.yml
 include requirements*.txt
