@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.0.1
+**NOTE**: this will be the final release of in-toto that supports Python 2.7.
+This is because Python 2.7 was marked [end-of-life](
+https://www.python.org/dev/peps/pep-0373/) in January of 2020, and
+since then several of in-toto's direct and transitive dependencies have stopped
+supporting Python 2.7.
+
+### Added
+* Python 3.9 in the CI test matrix (#419)
+* Logo and other visual enhancements on readthedocs (#420, #428)
+* Review of first evaluation period for 2021 roadmap (#421)
+
+### Changed
+* Switch to GitHub Actions for CI (#432)
+* Switch to only running bandit on Python versions greater than 3.5 (#416)
+* Debian downstream release metadata (#418)
+* Bump tested dependencies: cffi (#415, #427), cryptography (#424, #429),
+  securesystemslib (#430, #431), iso8601 (#423) **NOTE**: the latest version of
+  cryptography is no longer used on Python 2, as that is not supported.
+
+### Removed
+* Dropped support for Python 3.5 (#419)
+
+
 ## in-toto v1.0.0
 
 ### Added
