@@ -1,3 +1,16 @@
+in-toto (1.0.1-1) unstable; urgency=medium
+
+  * New upstream release includes among other things:
+    - enhanced documentation,
+    - a new CI/CD test setup (GitHub Actions),
+    - updated tested dependencies,
+    - and it removes support for Python 3.5.
+
+  **NOTE**: this will be the final upstream release of in-toto that supports
+  Python 2.7.*
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Mon, 01 Mar 2021 20:13:58 +0100
+
 in-toto (1.0.0-3) unstable; urgency=medium
 
   Misc Debian metadata changes:
