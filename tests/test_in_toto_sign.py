@@ -18,11 +18,9 @@ import sys
 import json
 import shutil
 import unittest
-# Use external backport 'mock' on versions under 3.3
-if sys.version_info >= (3, 3):
-  import unittest.mock as mock # pylint: disable=no-name-in-module,import-error
-else:
-  import mock # pylint: disable=import-error
+
+import unittest.mock as mock
+
 
 import securesystemslib.interface # pylint: disable=unused-import
 
