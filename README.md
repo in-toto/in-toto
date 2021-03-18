@@ -57,7 +57,7 @@ Note that it is up to you to properly secure your supply chain, by authorizing, 
 - `REQUIRE <file>`
 - `MATCH <pattern> [IN <source-path-prefix>] WITH (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>`
 
-*Rule arguments specified as `<pattern>` allow for Unix shell-style wildcards as implemented by Python's [`fnmatch`](https://docs.python.org/2/library/fnmatch.html).*
+*Rule arguments specified as `<pattern>` allow for Unix shell-style wildcards as implemented by Python's [`fnmatch`](https://docs.python.org/3/library/fnmatch.html).*
 
 To learn more about the different rule types, their guarantees and how they are applied take a look at the [Artifact Rules](https://github.com/in-toto/docs/blob/master/in-toto-spec.md#433-artifact-rules) section of the in-toto specification.
 
