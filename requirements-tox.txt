@@ -3,5 +3,5 @@
 
 # Test tools for linting and test coverage measurement
 pylint
-bandit; python_version >= "3.5"
+bandit
 coverage
