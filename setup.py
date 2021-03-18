@@ -79,7 +79,7 @@ setup(
   python_requires="~=3.6",
   packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests",
       "debian"]),
-  install_requires=["six", "securesystemslib[crypto]>=0.18.0", "attrs",
+  install_requires=["securesystemslib[crypto]>=0.18.0", "attrs",
                     "python-dateutil", "iso8601", "pathspec"],
   extras_require={
     # Install pynacl as optional dependency to use with securesystemslib, as a

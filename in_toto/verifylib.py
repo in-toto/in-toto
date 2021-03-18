@@ -26,7 +26,6 @@ import os
 import datetime
 import iso8601
 import fnmatch
-import six
 import logging
 from dateutil import tz
 
@@ -368,7 +367,7 @@ def verify_layout_signatures(layout_metablock, keys_dict):
         " requires at least one key.")
 
   # Fail if any of the passed keys can't verify a signature on the Layout
-  for junk, verify_key in six.iteritems(keys_dict):
+  for junk, verify_key in keys_dict.items():
     layout_metablock.verify_signature(verify_key)
 
 
@@ -438,7 +437,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     used_main_keyids = []
 
     # Do per step link threshold verification
-    for link_keyid, link in six.iteritems(chain_link_dict.get(step.name, {})):
+    for link_keyid, link in chain_link_dict.get(step.name, {}).items():
       # Iterate over authorized keyids to find a key or subkey corresponding
       # to the given link and check if the link's keyid is authorized.
       # Subkeys of authorized main keys are authorized implicitly.
@@ -583,7 +582,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
 
     # FIXME: I think we could do this for one link per step only
     # providing that we verify command alignment AFTER threshold equality
-    for keyid, link in six.iteritems(key_link_dict):
+    for keyid, link in key_link_dict.items():
       LOG.info("Verifying command alignment for '{0}'...".format(
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
@@ -1189,7 +1188,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
     reference_link = key_link_dict[reference_keyid]
 
     # Iterate over all links to compare their properties with a reference_link
-    for keyid, link in six.iteritems(key_link_dict):
+    for keyid, link in key_link_dict.items():
       # TODO: Do we only care for artifacts, or do we want to
       # assert equality of other properties as well?
       if (reference_link.signed.materials != link.signed.materials or
@@ -1239,7 +1238,7 @@ def reduce_chain_links(chain_link_dict):
 
   reduced_chain_link_dict = {}
 
-  for step_name, key_link_dict in six.iteritems(chain_link_dict):
+  for step_name, key_link_dict in chain_link_dict.items():
     # Extract the key_link_dict for this step from the passed chain_link_dict
     # take one exemplary link (e.g. the first in the step_link_dict)
     # form the reduced_chain_link_dict to return
@@ -1294,9 +1293,9 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     }
 
   """
-  for step_name, key_link_dict in six.iteritems(chain_link_dict):
+  for step_name, key_link_dict in chain_link_dict.items():
 
-    for keyid, link in six.iteritems(key_link_dict):
+    for keyid, link in key_link_dict.items():
 
       if link.type_ == "layout":
         LOG.info("Verifying sublayout {}...".format(step_name))
