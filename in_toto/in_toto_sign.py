@@ -19,7 +19,6 @@
 
 """
 import sys
-import six
 import argparse
 import logging
 
@@ -152,7 +151,7 @@ def _verify_metadata(metadata, args):
           args.gpg, args.gpg_home)
 
 
-    for keyid, verification_key in six.iteritems(pub_key_dict):
+    for keyid, verification_key in pub_key_dict.items():
       metadata.verify_signature(verification_key)
       LOG.info("Signature verification passed for keyid '{}'"
           .format(keyid))

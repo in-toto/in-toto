@@ -632,9 +632,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
   def test_nonexistent_directory(self):
     """Fail run, passed metadata_directory not exist. """
-    expected_error = IOError if sys.version_info < (3, 0) \
-        else FileNotFoundError
-    with self.assertRaises(expected_error):
+    with self.assertRaises(FileNotFoundError):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory='nonexistentDir')
 
@@ -644,9 +642,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     os.write(fd, b"hello in-toto")
     os.close(fd)
     # Windows will raise FileNotFoundError instead of NotADirectoryError
-    expected_error = IOError if sys.version_info < (3, 0) \
-        else (NotADirectoryError, FileNotFoundError)
-    with self.assertRaises(expected_error):
+    with self.assertRaises((NotADirectoryError, FileNotFoundError)):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory=path)
     os.remove(path)
@@ -657,9 +653,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     tmp_dir = os.path.realpath(tempfile.mkdtemp())
     # make the directory read only
     os.chmod(tmp_dir, stat.S_IREAD)
-    expected_error = IOError if sys.version_info < (3, 0) \
-        else PermissionError
-    with self.assertRaises(expected_error):
+    with self.assertRaises(PermissionError):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory=tmp_dir)
     os.rmdir(tmp_dir)
@@ -855,9 +849,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
 
   def test_nonexistent_directory(self):
     """Test record stop with nonexistent metadata directory"""
-    expected_error = IOError if sys.version_info < (3, 0) \
-        else FileNotFoundError
-    with self.assertRaises(expected_error):
+    with self.assertRaises(FileNotFoundError):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory='nonexistentDir')
@@ -868,9 +860,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     os.write(fd, b"hello in-toto")
     os.close(fd)
     # Windows will raise FileNotFoundError instead of NotADirectoryError
-    expected_error = IOError if sys.version_info < (3, 0) \
-        else (NotADirectoryError, FileNotFoundError)
-    with self.assertRaises(expected_error):
+    with self.assertRaises((NotADirectoryError, FileNotFoundError)):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory=path)
@@ -882,9 +872,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     tmp_dir = os.path.realpath(tempfile.mkdtemp())
     # make the directory read only
     os.chmod(tmp_dir, stat.S_IREAD)
-    expected_error = IOError if sys.version_info < (3, 0) \
-       else PermissionError
-    with self.assertRaises(expected_error):
+    with self.assertRaises(PermissionError):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory=tmp_dir)

@@ -21,7 +21,6 @@
 
 """
 import os
-import six
 import logging
 import in_toto.settings
 
@@ -113,7 +112,7 @@ def get_env():
   """
   env_dict = {}
 
-  for name, value in six.iteritems(os.environ):
+  for name, value in os.environ.items():
     if (name.startswith(ENV_PREFIX) and
         len(name) > len(ENV_PREFIX)):
       stripped_name = name[len(ENV_PREFIX):]

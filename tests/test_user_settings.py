@@ -15,8 +15,6 @@
   Test in_toto/user_settings.py
 
 """
-import six
-
 import os
 import unittest
 import in_toto.settings
@@ -51,7 +49,7 @@ class TestUserSettings(unittest.TestCase):
 
     # Other unittests might depend on defaults:
     # Restore monkey patched settings ...
-    for key, val in six.iteritems(self.settings_backup):
+    for key, val in self.settings_backup.items():
       setattr(in_toto.settings, key, val)
 
     # ... and delete test environment variables

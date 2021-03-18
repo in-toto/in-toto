@@ -19,7 +19,6 @@
 """
 
 import os
-import sys
 import shutil
 import copy
 import tempfile
@@ -27,10 +26,7 @@ import unittest
 import glob
 import shlex
 
-if sys.version_info >= (3, 3):
-  from unittest.mock import patch # pylint: disable=no-name-in-module,import-error
-else:
-  from mock import patch # pylint: disable=import-error
+from unittest.mock import patch
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
