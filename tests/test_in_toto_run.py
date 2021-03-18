@@ -19,7 +19,6 @@
 """
 
 import os
-import sys
 import unittest
 import glob
 import tempfile

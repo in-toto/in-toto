@@ -18,7 +18,6 @@
 
 """
 
-import sys
 import unittest
 import tempfile
 import os
