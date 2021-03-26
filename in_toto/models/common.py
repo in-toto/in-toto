@@ -1,3 +1,6 @@
+# Copyright New York University and the in-toto contributors
+# SPDX-License-Identifier: Apache-2.0
+
 """
 <Program Name>
   common.py
