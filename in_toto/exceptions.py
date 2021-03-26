@@ -1,3 +1,6 @@
+# Copyright New York University and the in-toto contributors
+# SPDX-License-Identifier: Apache-2.0
+
 # TODO: Add module docstring and remove pylint exemption in in-toto/in-toto#126
 # pylint: disable=missing-docstring
 from securesystemslib.exceptions import Error
