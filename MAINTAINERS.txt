@@ -27,3 +27,8 @@ Maintainers:
     Email: sebastien.awwad@nyu.edu
     GitHub username: @awwad
     PGP fingerprint: C2FB 9C91 0758 B682 7BC4  3233 BC0C 6DED D5E5 CC03
+
+  Aditya Sirish A Yelgundhalli
+    Email: aditya.sirish@nyu.edu
+    GitHub username: @adityasaky
+    PGP fingerprint: E329 4129 9CB8 C0D9 3DCF 27AC B831 10D0 1254 5604
