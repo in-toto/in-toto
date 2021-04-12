@@ -1,5 +1,10 @@
 {
- "signatures": [],
+ "signatures": [
+  {
+   "keyid": "556caebdc0877eed53d419b60eddb1e57fa773e4e31d70698b588f3e9cc48b35",
+   "sig": "3d486e9194b34aff6998f00071fabe3a04cadcd1bf5280de5e567d0cda64e1032c2fbb89e1b8aa37d2884666ef25e1338c0a6e49fe5e9acd7b08517acce68a954559aba5865523332716b7682ba4e85e224bbfa3b5c25c66d6abcca8a0689217ac6117232ea9ed9b09895ee8b601d6ec11489a3bef44933ebb08a3d630fe5fa7643422d8aa32d7e71e247df06edbe5bf8ce41d607cf094e73e9d6e14c473be3f9a99fbae174ebf75803365fb1110e1b94ddd1e50192133a41b9445c053549db2071bb91a3dcaeb3c124bd0208ddcd996bef37d939f8b9b8db95a51fbb7e69937d883fdc9d14d8b0dc0bc987e0fee76ef1cc7c0dc9b3bf51ff3742c26bfc1d1f6660185edb455b9f738894051fa49e7d79ffec90a8e03fa3880e142dbc468fd3d07a2bba56a069a32f33324fb3bba359768d4bbd82e6ca8783846aa60a9d8cdff124c1b02833ccc144e6ed839e850ce784f5b6164906bb1017dfb740d147625dfe3b97747a2f29639b3993f8e3ec45842c7d8628b97f1f76d500e85c73bd65fd2"
+  }
+ ],
  "signed": {
   "_type": "layout",
   "expires": "2021-04-28T18:36:37Z",
@@ -15,7 +20,7 @@
       "IN",
       "dist",
       "FROM",
-      "build-sdist"
+      "create-sdist"
      ]
     ],
     "expected_products": [
@@ -25,7 +30,7 @@
       "WITH",
       "MATERIALS",
       "FROM",
-      "sign-tag"
+      "git-tag"
      ]
     ],
     "name": "untar",
@@ -619,7 +624,7 @@
       "*"
      ]
     ],
-    "name": "sign-tag",
+    "name": "git-tag",
     "pubkeys": [
      "776a00e29f3559e0141b3b096f696abc6cfb0c657ab40f441132b345b08453f5"
     ],
@@ -639,8 +644,8 @@
       "WITH",
       "MATERIALS",
       "FROM",
-      "sign-tag"
-     ]
+      "git-tag"
+     ],
      [
       "DISALLOW",
       "*"
@@ -656,7 +661,7 @@
       "*"
      ]
     ],
-    "name": "build-sdist",
+    "name": "create-sdist",
     "pubkeys": [
      "776a00e29f3559e0141b3b096f696abc6cfb0c657ab40f441132b345b08453f5"
     ],
