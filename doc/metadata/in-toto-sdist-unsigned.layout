@@ -58,7 +58,7 @@
     "expected_command": [
      "git",
      "tag",
-     "--sig",
+     "--sign",
      "v1.0.1",
      "-m",
      "v1.0.1"
