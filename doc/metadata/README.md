@@ -18,6 +18,10 @@ We will use the following commands to create the link files:
 
 The example links are laid out in "git-tag.776a00e2.link" and "create-sdist.776a00e2.link". The key for signing the steps is the bob's key from the in-toto demo: https://github.com/in-toto/demo/tree/master/functionary_bob
 
+To verify the supply chain, we can run the in-toto verify command:  
+```in-toto-verify -l in-toto-sdist-signed.layout -k keys/alice.pub -v```
+
+*The "in-toto-sdist-signed" layout is signed with the alice's (owner) key, which is also from the in-toto demo. 
 
 **Notes/Discussion**  
 
