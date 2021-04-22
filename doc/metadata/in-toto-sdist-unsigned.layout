@@ -32,7 +32,7 @@
     "run": [
      "python",
      "-c",
-     "import sys, tarfile; tarfile.open(sys.argv[2], 'r:*').extractall()"
+     "import tarfile; tarfile.open('in-toto-1.0.1.tar.gz', 'r:*').extractall()"
     ]
    }
   ],
