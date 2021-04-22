@@ -13,8 +13,8 @@ To create link files, we may want to start with a clean clone or using ```--excl
 
 We will use the following commands to create the link files:
 
-1. ```in-toto-run --step-name git-tag --materials . --key owner -- git tag --sign v1.0.1 -m "v1.0.1"```
-2. ```in-toto-run --step-name create-sdist --materials . --products in-toto.1.0.1.tar.gz --key owner -- python setup.py sdist```
+1. ```in-toto-run --step-name git-tag --materials . --key keys/bob -- git tag --sign v1.0.1 -m "v1.0.1"```
+2. ```in-toto-run --step-name create-sdist --materials . --products in-toto.1.0.1.tar.gz --key keys/bob -- python setup.py sdist```
 
 The example links are laid out in "git-tag.776a00e2.link" and "create-sdist.776a00e2.link". The key for signing the steps is the bob's key from the in-toto demo: https://github.com/in-toto/demo/tree/master/functionary_bob
 
