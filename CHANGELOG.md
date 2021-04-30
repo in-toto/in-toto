@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.1.0
+**NOTE**: this release of in-toto drops supports for Python 2.7.
+This is because Python 2.7 was marked [end-of-life](
+https://www.python.org/dev/peps/pep-0373/) in January of 2020, and
+since then several of in-toto's direct and transitive dependencies have stopped
+supporting Python 2.7.
+
+### Added
+* SPDX License identifiers and copyright information (#440)
+* Aditya Sirish (@adityasaky) as a maintainer (#443)
+
+### Changed
+* PyPI development status from `Beta` to `Production/Stable` (#447)
+* Santiago Torres-Arias's (@SantiagoTorres) email to reflect Purdue affiliation
+  (#446)
+* Debian downstream release metadata (#437)
+* Bump dependency: cryptography (#442)
+
+### Removed
+* Dropped support for Python 2.7 (#438)
+
+
 ## v1.0.1
 **NOTE**: this will be the final release of in-toto that supports Python 2.7.
 This is because Python 2.7 was marked [end-of-life](
