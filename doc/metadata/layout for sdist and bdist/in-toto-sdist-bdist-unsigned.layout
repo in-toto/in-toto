@@ -59,11 +59,10 @@
       "git-tag"
      ]
     ],
-    "name": "untar-bdist",
+    "name": "unzip-bdist",
     "run": [
-     "python",
-     "-c",
-     "import tarfile; tarfile.open('in_toto-1.1.0-py3-none-any.whl', 'r:*').extractall()"
+     "unzip",
+     "in_toto-1.1.0-py3-none-any.whl"
     ]
    }
   ],
