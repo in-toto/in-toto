@@ -52,9 +52,11 @@
     "expected_products": [
      [
       "MATCH",
-      "./in_toto",
+      "*",
       "WITH",
       "MATERIALS",
+      "IN",
+      "./in_toto",
       "FROM",
       "git-tag"
      ]
