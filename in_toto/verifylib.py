@@ -1406,7 +1406,10 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   4.  Load link metadata
   5.  Verify link signatures with keys in layout
   6.  Recurse into sublayout verification
-  7.  Soft-verify alignment of reported and expected commands
+  7.  Soft-verify alignment of reported and expected commands. Note:
+      verification does not fail if commands don't match, instead a warning is
+      logged as per the in-toto specification --
+      https://github.com/in-toto/docs/blob/master/in-toto-spec.md#431-steps
   8.  Verify threshold artifact constraints
   9.  Process step product and material rules
   10. Execute inspection commands and generate inspection links
