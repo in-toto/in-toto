@@ -418,7 +418,7 @@ class TestVerifyMatchRule(unittest.TestCase):
         "dest-item": Metablock(signed=Link(
           name="dest-item",
           materials=self.materials,
-          products=self.products)),
+          products=self.products))
     }
 
 
