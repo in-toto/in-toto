@@ -397,11 +397,10 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foobar": {"sha256": self.sha256_foobar},
       "sub/foobar": {"sha256": self.sha256_foobar},
       "sub/foo": {"sha256": self.sha256_foo},
-      "lib/build/foobar": {"sha256": self.sha256_foobar},
       "lib/foo": {"sha256": self.sha256_foo},
-      "lib/build/foo": {"sha256": self.sha256_foo},
       "lib/foobar": {"sha256": self.sha256_foobar},
-      "build/lib": {"sha256": self.sha256_foobar}
+      "lib/build/foo": {"sha256": self.sha256_foo},
+      "lib/build/foobar": {"sha256": self.sha256_foobar},
     }
     self.products = {
       "bar": {"sha256": self.sha256_bar},
@@ -419,7 +418,7 @@ class TestVerifyMatchRule(unittest.TestCase):
         "dest-item": Metablock(signed=Link(
           name="dest-item",
           materials=self.materials,
-          products=self.products))
+          products=self.products)),
     }
 
 
@@ -524,22 +523,22 @@ class TestVerifyMatchRule(unittest.TestCase):
         set()
       ],
       [
-        # Ensures the sub/bar file matches the product file in the sub folder from the
-        # dest-item step.
+        # Ensures the sub/bar file matches the product file in the sub folder
+        # from the dest-item step.
         "MATCH bar IN sub WITH PRODUCTS IN sub FROM dest-item",
         set(self.products.keys()), self.products,
         {"sub/bar", "sub/bar"}
       ],
       [
-        # Ensures the sub/bar and sub/barfoo files matches the product files in the sub
-        # folder from the dest-item step.
+        # Ensures the sub/bar and sub/barfoo files matches the product
+        # files in the sub folder from the dest-item step.
         "MATCH bar* IN sub WITH PRODUCTS IN sub/ FROM dest-item",
         set(self.products.keys()), self.products,
         {"sub/bar", "sub/barfoo"}
       ],
       [
-        # Ensure the sub/bar file matches the product file in the sub/lib folder from
-        # the dest-item step.
+        # Ensure the sub/bar file matches the product file in the
+        # sub/lib folder from the dest-item step.
         "MATCH bar IN sub WITH PRODUCTS IN sub/lib FROM dest-item",
         set(self.products.keys()), self.products,
         {"sub/bar"}
@@ -551,22 +550,22 @@ class TestVerifyMatchRule(unittest.TestCase):
         set()
       ],
       [
-        # Ensures the sub/foo file matches the material file in the lib folder from
-        # the dest-item step.
+        # Ensures the sub/foo file matches the material file in the
+        # lib folder from the dest-item step.
         "MATCH foo IN sub WITH MATERIALS IN lib FROM dest-item",
         set(self.materials.keys()), self.materials,
         {"sub/foo"}
       ],
       [
-        # Ensures any sub/foo and sub/foobar files matches material files in the
-        # lib folder from the dest-item step.
+        # Ensures any sub/foo and sub/foobar files matches material
+        # files in the lib folder from the dest-item step.
         "MATCH foo* IN sub WITH MATERIALS IN lib/ FROM dest-item",
         set(self.materials.keys()), self.materials,
         {"sub/foo", "sub/foobar"}
       ],
       [
         # Ensures the sub/foo file matches the material files in the lib/build
-        # folder from the dest-item step.
+        # the lib/build folder from the dest-item step.
         "MATCH foo IN sub WITH MATERIALS IN lib/build FROM dest-item",
         set(self.materials.keys()), self.materials,
         {"sub/foo"}
@@ -588,6 +587,7 @@ class TestVerifyMatchRule(unittest.TestCase):
 
       result = verify_match_rule(
           rule_data, queue, source_artifacts, self.links)
+
       self.assertSetEqual(result, expected,
           "'result': {}\n test {}: {}, 'links':{}".format(result,
           i, dict(zip(test_data_keys, test_data)), self.links))
