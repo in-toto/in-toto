@@ -535,14 +535,14 @@ class TestVerifyMatchRule(unittest.TestCase):
         # folder from the dest-item step.
         "MATCH bar* IN sub WITH PRODUCTS IN sub/ FROM dest-item",
         set(self.products.keys()), self.products,
-        {  "sub/bar", "sub/barfoo" }
+        {"sub/bar", "sub/barfoo"}
       ],
       [
         # Ensure the sub/bar file matches the product file in the sub/lib folder from
         # the dest-item step.
         "MATCH bar IN sub WITH PRODUCTS IN sub/lib FROM dest-item",
         set(self.products.keys()), self.products,
-        { "sub/bar" }
+        {"sub/bar"}
       ],
       [
         # Do not consume. Missing link
@@ -555,28 +555,28 @@ class TestVerifyMatchRule(unittest.TestCase):
         # the dest-item step.
         "MATCH foo IN sub WITH MATERIALS IN lib FROM dest-item",
         set(self.materials.keys()), self.materials,
-        { "sub/foo"  }
+        {"sub/foo"}
       ],
       [
         # Ensures any sub/foo and sub/foobar files matches material files in the
         # lib folder from the dest-item step.
         "MATCH foo* IN sub WITH MATERIALS IN lib/ FROM dest-item",
         set(self.materials.keys()), self.materials,
-        { "sub/foo", "sub/foobar"  }
+        {"sub/foo", "sub/foobar"}
       ],
       [
         # Ensures the sub/foo file matches the material files in the lib/build
         # folder from the dest-item step.
         "MATCH foo IN sub WITH MATERIALS IN lib/build FROM dest-item",
         set(self.materials.keys()), self.materials,
-        { "sub/foo"  }
+        {"sub/foo"}
       ],
       [
         # Ensures the sub/foo and sub/foobar files matches the material files
         # in the lib/build folder from the dest-item step.
         "MATCH foo* IN sub WITH MATERIALS IN lib/build FROM dest-item",
         set(self.materials.keys()), self.materials,
-        { "sub/foo", "sub/foobar" }
+        {"sub/foo", "sub/foobar"}
       ]
     ]
 
