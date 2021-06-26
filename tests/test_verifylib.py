@@ -576,7 +576,7 @@ class TestVerifyMatchRule(unittest.TestCase):
         # in the lib/build folder from the dest-item step.
         "MATCH foo* IN sub WITH MATERIALS IN lib/build FROM dest-item",
         set(self.materials.keys()), self.materials,
-        { "sub/foo", "sub/foobar"  }
+        { "sub/foo", "sub/foobar" }
       ]
     ]
 
