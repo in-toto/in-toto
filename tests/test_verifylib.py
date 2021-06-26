@@ -406,10 +406,6 @@ class TestVerifyMatchRule(unittest.TestCase):
     self.products = {
       "bar": {"sha256": self.sha256_bar},
       "barfoo": {"sha256": self.sha256_barfoo},
-      #"lib": {"sha256": self.sha256_bar},
-      "lib/bar": {"sha256": self.sha256_bar},
-      "lib/barfoo": {"sha256": self.sha256_barfoo},
-      "sub": {"sha256": self.sha256_bar},
       "sub/bar": {"sha256": self.sha256_bar},
       "sub/barfoo": {"sha256": self.sha256_barfoo},
       "sub/lib/bar": {"sha256": self.sha256_bar},
