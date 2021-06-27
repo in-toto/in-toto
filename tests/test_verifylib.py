@@ -395,8 +395,8 @@ class TestVerifyMatchRule(unittest.TestCase):
     self.materials = {
       "foo": {"sha256": self.sha256_foo},
       "foobar": {"sha256": self.sha256_foobar},
-      "sub/foobar": {"sha256": self.sha256_foobar},
       "sub/foo": {"sha256": self.sha256_foo},
+      "sub/foobar": {"sha256": self.sha256_foobar},
       "lib/foo": {"sha256": self.sha256_foo},
       "lib/foobar": {"sha256": self.sha256_foobar},
       "lib/build/foo": {"sha256": self.sha256_foo},
@@ -409,16 +409,15 @@ class TestVerifyMatchRule(unittest.TestCase):
       "sub/barfoo": {"sha256": self.sha256_barfoo},
       "sub/lib/bar": {"sha256": self.sha256_bar},
       "sub/lib/barfoo": {"sha256": self.sha256_barfoo},
-      "build": {"sha256": self.sha256_bar},
       "build/bar": {"sha256": self.sha256_bar},
       "build/barfoo": {"sha256": self.sha256_barfoo},
     }
 
     self.links = {
         "dest-item": Metablock(signed=Link(
-          name="dest-item",
-          materials=self.materials,
-          products=self.products))
+            name="dest-item",
+            materials=self.materials,
+            products=self.products)),
     }
 
 
@@ -591,6 +590,8 @@ class TestVerifyMatchRule(unittest.TestCase):
       self.assertSetEqual(result, expected,
           "'result': {}\n test {}: {}, 'links':{}".format(result,
           i, dict(zip(test_data_keys, test_data)), self.links))
+
+
 
 class TestVerifyItemRules(unittest.TestCase):
   """Test verifylib.verify_item_rules(source_name, source_type, rules, links)"""
