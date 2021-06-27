@@ -396,15 +396,22 @@ class TestVerifyMatchRule(unittest.TestCase):
       "foo": {"sha256": self.sha256_foo},
       "foobar": {"sha256": self.sha256_foobar},
       "sub/foo": {"sha256": self.sha256_foo},
-      "sub/foobar": {"sha256": self.sha256_foobar}
-
+      "sub/foobar": {"sha256": self.sha256_foobar},
+      "lib/foo": {"sha256": self.sha256_foo},
+      "lib/foobar": {"sha256": self.sha256_foobar},
+      "lib/build/foo": {"sha256": self.sha256_foo},
+      "lib/build/foobar": {"sha256": self.sha256_foobar},
     }
     self.products = {
       "bar": {"sha256": self.sha256_bar},
       "barfoo": {"sha256": self.sha256_barfoo},
       "sub/bar": {"sha256": self.sha256_bar},
       "sub/barfoo": {"sha256": self.sha256_barfoo},
-      }
+      "sub/lib/bar": {"sha256": self.sha256_bar},
+      "sub/lib/barfoo": {"sha256": self.sha256_barfoo},
+      "build/bar": {"sha256": self.sha256_bar},
+      "build/barfoo": {"sha256": self.sha256_barfoo},
+    }
 
     self.links = {
         "dest-item": Metablock(signed=Link(
@@ -513,6 +520,61 @@ class TestVerifyMatchRule(unittest.TestCase):
         "MATCH foo WITH MATERIALS FROM dest-item-missing-link",
         set(self.materials.keys()), self.materials,
         set()
+      ],
+      [
+        # Ensures the sub/bar file matches the product file in the sub folder
+        # from the dest-item step.
+        "MATCH bar IN sub WITH PRODUCTS IN sub FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"sub/bar", "sub/bar"}
+      ],
+      [
+        # Ensures the sub/bar and sub/barfoo files matches the product
+        # files in the sub folder from the dest-item step.
+        "MATCH bar* IN sub WITH PRODUCTS IN sub/ FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"sub/bar", "sub/barfoo"}
+      ],
+      [
+        # Ensure the sub/bar file matches the product file in the
+        # sub/lib folder from the dest-item step.
+        "MATCH bar IN sub WITH PRODUCTS IN sub/lib FROM dest-item",
+        set(self.products.keys()), self.products,
+        {"sub/bar"}
+      ],
+      [
+        # Do not consume. Missing link
+        "MATCH bar IN sub WITH PRODUCTS IN sub FROM dest-item-missing-link",
+        set(self.products.keys()), self.products,
+        set()
+      ],
+      [
+        # Ensures the sub/foo file matches the material file in the
+        # lib folder from the dest-item step.
+        "MATCH foo IN sub WITH MATERIALS IN lib FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo"}
+      ],
+      [
+        # Ensures any sub/foo and sub/foobar files matches material
+        # files in the lib folder from the dest-item step.
+        "MATCH foo* IN sub WITH MATERIALS IN lib/ FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo", "sub/foobar"}
+      ],
+      [
+        # Ensures the sub/foo file matches the material files in the lib/build
+        # the lib/build folder from the dest-item step.
+        "MATCH foo IN sub WITH MATERIALS IN lib/build FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo"}
+      ],
+      [
+        # Ensures the sub/foo and sub/foobar files matches the material files
+        # in the lib/build folder from the dest-item step.
+        "MATCH foo* IN sub WITH MATERIALS IN lib/build FROM dest-item",
+        set(self.materials.keys()), self.materials,
+        {"sub/foo", "sub/foobar"}
       ]
     ]
 
