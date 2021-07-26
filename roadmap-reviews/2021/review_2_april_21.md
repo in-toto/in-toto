@@ -1,7 +1,7 @@
 # ROADMAP review (End of April '21)
 
 We've reached the end of our second evaluation period of our [roadmap for
-2021](https://github.com/in-toto/in-toto/blob/develop/ROADMAP.md) and it is
+2021](https://github.com/in-toto/in-toto/blob/develop/roadmap-reviews/2021/ROADMAP.md) and it is
 time to do a review of how the in-toto reference implementation is
 holding up to its goals for this year. In this document, we will cover the
 activities from January to April 2021 in the context of the goals for this
@@ -20,7 +20,7 @@ indicate the lack of Python 2 support.
 
 - 1.1.0 release (on [PyPI](https://pypi.org/project/in-toto/v1.1.0)
   and on [GitHub](https://github.com/in-toto/in-toto/releases/tag/v1.1.0))
-  - Closed isses and merged pull requests
+  - Closed issues and merged pull requests
     - SPDX License identifiers and copyright information
       ([#440](https://github.com/in-toto/in-toto/pull/440))
     - Aditya Sirish (@adityasaky) as a maintainer

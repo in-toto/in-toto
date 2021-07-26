@@ -1,7 +1,7 @@
 # ROADMAP review (End of December '20)
 
 We're past the first evaluation period of our [roadmap for
-2021](https://github.com/in-toto/in-toto/blob/develop/ROADMAP.md) and it is
+2021](https://github.com/in-toto/in-toto/blob/develop/roadmap-reviews/2021/ROADMAP.md) and it is
 time to do a review of how the in-toto reference implementation is
 holding up to its goals for this year. In this document, we will cover the
 activities from August to December 2020 in the context of the goals for this
