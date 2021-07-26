@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.1
+
+### Added
+* Added tests that use source and destination prefixes in match rules, courtesy of
+  Brandon Michael Hunter (#456)
+
+### Changed
+* Updated documentation of command alignment during verification workflow (#455)
+* Started using GitHub-native dependabot ($450)
+* Bump dependencies: attrs (#451), six (#452), securesystemslib (#453),
+  cffi (#457), python-dateutil (#458), iso8601 (#459), pathspec (#460)
+* Fixed linter warnings (#462)
+
 ## v1.1.0
 **NOTE**: this release of in-toto drops supports for Python 2.7.
 This is because Python 2.7 was marked [end-of-life](
