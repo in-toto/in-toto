@@ -25,7 +25,8 @@ import unittest
 import tempfile
 import os
 
-import unittest.mock as mock
+from pathlib import Path
+from unittest import mock
 
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from in_toto.in_toto_record import main as in_toto_record_main
@@ -52,8 +53,8 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin)
 
     self.test_artifact1 = "test_artifact1"
     self.test_artifact2 = "test_artifact2"
-    open(self.test_artifact1, "w").close()
-    open(self.test_artifact2, "w").close()
+    Path(self.test_artifact1).touch()
+    Path(self.test_artifact2).touch()
 
 
   @classmethod
@@ -187,8 +188,8 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin)
     name = "test-to-many-glob"
     fn1 = UNFINISHED_FILENAME_FORMAT.format(step_name=name, keyid="a12345678")
     fn2 = UNFINISHED_FILENAME_FORMAT.format(step_name=name, keyid="b12345678")
-    open(fn1, "w").close()
-    open(fn2, "w").close()
+    Path(fn1).touch()
+    Path(fn2).touch()
     args = ["--step-name", name, "--gpg", self.gpg_key_768C43,
         "--gpg-home", self.gnupg_home]
     self.assert_cli_sys_exit(["stop"] + args, 1)

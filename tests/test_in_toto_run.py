@@ -26,7 +26,8 @@ import unittest
 import glob
 import tempfile
 
-import unittest.mock as mock
+from pathlib import Path
+from unittest import mock
 
 from in_toto.models.metadata import Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
@@ -61,7 +62,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         step_name=self.test_step, keyid=self.ed25519_key_enc_id)
 
     self.test_artifact = "test_artifact"
-    open(self.test_artifact, "w").close()
+    Path(self.test_artifact).touch()
 
   @classmethod
   def tearDownClass(self):
