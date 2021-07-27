@@ -45,6 +45,7 @@ import securesystemslib.formats
 import securesystemslib.exceptions
 
 from tests.common import TmpDirMixin
+from pathlib import Path
 
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
@@ -499,7 +500,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     self.key_pub = import_rsa_publickey_from_file(self.key_path + ".pub")
 
     self.test_artifact = "test_artifact"
-    open(self.test_artifact, "w").close()
+    Path(self.test_artifact).touch()
 
   @classmethod
   def tearDownClass(self):
@@ -679,7 +680,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_material = "test_material"
-    open(self.test_material, "w").close()
+    Path(self.test_material).touch()
 
   @classmethod
   def tearDownClass(self):
@@ -735,7 +736,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         step_name=self.step_name, keyid=self.key["keyid"])
 
     self.test_product = "test_product"
-    open(self.test_product, "w").close()
+    Path(self.test_product).touch()
 
   @classmethod
   def tearDownClass(self):
@@ -788,7 +789,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
-      open(self.link_name_unfinished, "r")
+      open(self.link_name_unfinished, "r") # pylint: disable=consider-using-with
     self.assertTrue(os.path.isfile(self.link_name))
     os.remove(self.link_name)
 
@@ -797,7 +798,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(IOError):
       in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
-      open(self.link_name, "r")
+      open(self.link_name, "r") # pylint: disable=consider-using-with
 
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
@@ -810,7 +811,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, [], self.key2)
     with self.assertRaises(IOError):
-      open(self.link_name, "r")
+      open(self.link_name, "r") # pylint: disable=consider-using-with
     os.rename(changed_link_name, link_name)
     os.remove(self.link_name_unfinished)
 

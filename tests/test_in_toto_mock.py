@@ -25,6 +25,7 @@ import unittest
 import logging
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
+from pathlib import Path
 
 from tests.common import CliTestCase, TmpDirMixin
 
@@ -51,7 +52,7 @@ class TestInTotoMockTool(CliTestCase, TmpDirMixin):
     self.test_step = "test_step"
     self.test_link = self.test_step + ".link"
     self.test_artifact = "test_artifact"
-    open(self.test_artifact, "w").close()
+    Path(self.test_artifact).touch()
 
 
   @classmethod
