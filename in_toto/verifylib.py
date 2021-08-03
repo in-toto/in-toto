@@ -939,6 +939,15 @@ def verify_require_rule(filename, artifacts_queue):
         "in: {queue}\n{traceback}".format(filename=filename,
         queue=artifacts_queue, traceback=_get_artifact_rule_traceback()))
 
+def _get_attribute(data, key):
+  """To check whether given key is exist in data"""
+  try:
+    buf = data[key]
+  except KeyError:
+    return False
+
+  return True
+
 
 def _get_artifact_rule_traceback():
   """Build and return string form global `RULE_TRACE` which may be used as
