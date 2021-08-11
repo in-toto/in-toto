@@ -58,7 +58,7 @@ This schedule will roughly match the following months:
 
 - [End of December](roadmap-reviews/2021/review_1_december_20.md)
 - [End of April](roadmap-reviews/2021/review_2_april_21.md)
-- End of July
+- [End of July](roadmap-reviews/2021/review_3_july_21.md)
 
 These time windows will also be used to review and update all stakeholders with
 the status of the in-toto implementation.
