@@ -74,12 +74,13 @@ coming soon on this front.
 
 ## CII Gold Badge
 
-Unfortunately, this is a goal we have not been able to meet this period. The
-reference implementation closely matches the current release of the in-toto
-specification, and as a result, active development has slowed down. This has
-led to us not meeting one major criteria in the defined time period: having
-two unassociated significant contributors. As ITE-5 and ITE-6 materialize, we
-believe we will have the necessary activity to apply for the Gold badge.
+Unfortunately, this is a goal we have not been able to meet this period, yet we
+are incredibly close -- 86% of the way through!. The reference implementation
+closely matches the current release of the in-toto specification, and as a
+result, active development has slowed down. This has led to us not meeting one
+major criteria in the defined time period: having two unassociated significant
+contributors. As ITE-5 and ITE-6 materialize, we believe we will have the
+necessary activity to apply for the Gold badge.
 
 ### Relevant documents
 
