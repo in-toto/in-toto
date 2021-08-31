@@ -109,7 +109,7 @@ class Metablock(ValidationMixin):
       object.
 
     """
-    with open(path, "r") as fp:
+    with open(path, "r", encoding="utf8") as fp:
       data = json.load(fp)
 
     signatures = data.get("signatures", [])
