@@ -112,7 +112,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
 
     # Create directory where the verification will take place
     self.set_up_test_dir()
-    with open("foo", "w") as f:
+    with open("foo", "w", encoding="utf8") as f:
       f.write("foo")
 
   @classmethod
@@ -123,7 +123,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     """Create new dummy test dir and set as base path, must ignore. """
     ignore_dir = os.path.realpath(tempfile.mkdtemp())
     ignore_foo = os.path.join(ignore_dir, "ignore_foo")
-    with open(ignore_foo, "w") as f:
+    with open(ignore_foo, "w", encoding="utf8") as f:
       f.write("ignore foo")
     in_toto.settings.ARTIFACT_BASE_PATH = ignore_dir
 

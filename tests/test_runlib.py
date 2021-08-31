@@ -125,7 +125,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         "subdir/foosub2", "subdir/subsubdir/foosubsub"]
 
     for path in self.full_file_path_list:
-      with open(path, "w") as fp:
+      with open(path, "w", encoding="utf8") as fp:
         fp.write(path)
 
 
@@ -789,7 +789,8 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
-      open(self.link_name_unfinished, "r") # pylint: disable=consider-using-with
+      # pylint: disable-next=consider-using-with
+      open(self.link_name_unfinished, "r", encoding="utf8")
     self.assertTrue(os.path.isfile(self.link_name))
     os.remove(self.link_name)
 
@@ -798,7 +799,8 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(IOError):
       in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
-      open(self.link_name, "r") # pylint: disable=consider-using-with
+      # pylint: disable-next=consider-using-with
+      open(self.link_name, "r", encoding="utf8")
 
   def test_wrong_signature_in_unfinished_metadata(self):
     """Test record stop exits on wrong signature, no link recorded. """
@@ -811,7 +813,8 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, [], self.key2)
     with self.assertRaises(IOError):
-      open(self.link_name, "r") # pylint: disable=consider-using-with
+      # pylint: disable-next=consider-using-with
+      open(self.link_name, "r", encoding="utf8")
     os.rename(changed_link_name, link_name)
     os.remove(self.link_name_unfinished)
 
