@@ -10,7 +10,7 @@ cffi==1.15.0
     # via
     #   cryptography
     #   pynacl
-cryptography==3.4.8
+cryptography==35.0.0
     # via securesystemslib
 iso8601==0.1.16
     # via -r requirements.txt
