@@ -16,7 +16,7 @@ iso8601==0.1.16
     # via -r requirements.txt
 pathspec==0.9.0
     # via -r requirements.txt
-pycparser==2.20
+pycparser==2.21
     # via cffi
 pynacl==1.4.0
     # via securesystemslib
