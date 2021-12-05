@@ -39,7 +39,7 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
     GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
     QUIET_KWARGS, METADATA_DIRECTORY_ARGS, METADATA_DIRECTORY_KWARGS,
     KEY_PASSWORD_ARGS, KEY_PASSWORD_KWARGS, parse_password_and_prompt_args,
-    sort_action_groups, title_case_action_groups)
+    sort_action_groups, title_case_action_groups, OPTS_TITLE)
 
 from securesystemslib import interface
 
@@ -151,8 +151,8 @@ file to the target directory (on stop).
                       version='{} {}'.format(parser.prog, __version__))
 
   for _parser, _order in [
-      (parser, ["Positional Arguments", "Optional Arguments"]),
-      (subparser_start, None), (subparser_stop, None)]:
+    (parser, ["Positional Arguments", OPTS_TITLE]),
+    (subparser_start, None), (subparser_stop, None)]:
     title_case_action_groups(_parser)
     sort_action_groups(_parser, _order)
 

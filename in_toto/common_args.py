@@ -28,6 +28,8 @@
   ```
 
 """
+import sys
+
 from in_toto import SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519
 
 EXCLUDE_ARGS = ["--exclude"]
@@ -98,6 +100,7 @@ KEY_PASSWORD_KWARGS = {
            " entered on the prompt, the key is treated as unencrypted. (Do "
            " not confuse with '-p/--products'!)")
 }
+OPTS_TITLE = "Optional Arguments" if sys.version_info < (3, 10) else "Options"
 def parse_password_and_prompt_args(args):
   """Parse -P/--password optional arg (nargs=?, const=True). """
    # --P was provided without argument (True)
@@ -176,7 +179,7 @@ def sort_action_groups(parser, title_order=None):
   """
   if title_order is None:
     title_order = ["Required Named Arguments", "Positional Arguments",
-        "Optional Arguments"]
+                   OPTS_TITLE]
 
   action_group_dict = {}
   for action_group in parser._action_groups: # pylint: disable=protected-access

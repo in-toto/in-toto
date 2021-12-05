@@ -38,7 +38,7 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
     GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
     QUIET_KWARGS, METADATA_DIRECTORY_ARGS, METADATA_DIRECTORY_KWARGS,
     KEY_PASSWORD_ARGS, KEY_PASSWORD_KWARGS, parse_password_and_prompt_args,
-    sort_action_groups, title_case_action_groups)
+    sort_action_groups, title_case_action_groups, OPTS_TITLE)
 
 from securesystemslib import interface
 
@@ -60,8 +60,9 @@ writes them together with other information (executed command, return value,
 stdout and stderr) to a link metadata file, which is signed with the passed
 key. It returns a non-zero value on failure and zero otherwise.""")
 
-  parser.usage = ("%(prog)s <named arguments> [optional arguments] \\\n\t"
-      " -- <command> [args]")
+  parser.usage = (
+    "%(prog)s <named arguments> [{}] \\\n\t -- <command> [args]".format(
+      OPTS_TITLE.lower()))
 
   parser.epilog = """EXAMPLE USAGE
 
