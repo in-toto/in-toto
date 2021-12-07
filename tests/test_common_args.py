@@ -25,7 +25,8 @@ from in_toto.common_args import (
   title_case_action_groups,
   KEY_PASSWORD_ARGS,
   KEY_PASSWORD_KWARGS,
-  parse_password_and_prompt_args)
+  parse_password_and_prompt_args,
+  OPTS_TITLE)
 
 
 class TestCommonArgs(unittest.TestCase):
@@ -63,7 +64,7 @@ class TestArgparseActionGroupHelpers(unittest.TestCase):
 
     # Assert default action groups with default titles' case and default order
     self.assertListEqual([group.title for group in self.parser._action_groups],
-        ["positional arguments", "optional arguments"])
+        ["positional arguments", OPTS_TITLE.lower()])
 
 
   def test_title_case_action_groups(self):
@@ -73,13 +74,13 @@ class TestArgparseActionGroupHelpers(unittest.TestCase):
 
     # Assert successful title-casing
     self.assertListEqual([group.title for group in self.parser._action_groups],
-        ["Positional Arguments", "Optional Arguments"])
+        ["Positional Arguments", OPTS_TITLE])
 
 
   def test_sort_action_groups(self):
     """Test sort_action_groups sorts action groups by custom title order. """
     # Create custom order for titles (default is asserted in setUp)
-    custom_order = ["optional arguments", "positional arguments"]
+    custom_order = [OPTS_TITLE.lower(), "positional arguments"]
     sort_action_groups(self.parser, title_order=custom_order)
     # Assert successful re-ordering
     self.assertListEqual([group.title for group in self.parser._action_groups],
@@ -93,7 +94,7 @@ class TestArgparseActionGroupHelpers(unittest.TestCase):
     title_case_action_groups(self.parser)
     sort_action_groups(self.parser)
     default_custom_order = ["Required Named Arguments", "Positional Arguments",
-        "Optional Arguments"]
+        OPTS_TITLE]
 
     # Assert successful(title-casing) re-ordering
     self.assertListEqual([group.title for group in self.parser._action_groups],
