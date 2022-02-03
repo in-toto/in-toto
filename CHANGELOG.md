@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.0
+
+### Added
+* Python 3.10 support ([#480](https://github.com/in-toto/in-toto/pull/480))
+* Roadmap review ([#463](https://github.com/in-toto/in-toto/pull/463))
+
+### Changed
+* Bump dependencies: attrs ([#482](https://github.com/in-toto/in-toto/pull/482)), cffi ([#474](https://github.com/in-toto/in-toto/pull/474)), cryptography ([#468](https://github.com/in-toto/in-toto/pull/468), [#472](https://github.com/in-toto/in-toto/pull/472), [#477](https://github.com/in-toto/in-toto/pull/477), [#481](https://github.com/in-toto/in-toto/pull/481)), iso8601 ([#476](https://github.com/in-toto/in-toto/pull/476), [#478](https://github.com/in-toto/in-toto/pull/478), [#479](https://github.com/in-toto/in-toto/pull/479)), pycparser ([#475](https://github.com/in-toto/in-toto/pull/475)), pynacl ([#483](https://github.com/in-toto/in-toto/pull/483)), securesystemslib ([#469](https://github.com/in-toto/in-toto/pull/469))
+* Use explicit UTF-8 encoding in open calls ([#470](https://github.com/in-toto/in-toto/pull/470))
+* Misc. linter changes ([#473](https://github.com/in-toto/in-toto/pull/473))
+* Update acknowledgment to reflect Purdue ([#471](https://github.com/in-toto/in-toto/pull/471))
+
+### Removed
+* Python 3.6 support ([#485](https://github.com/in-toto/in-toto/pull/485))
+
 ## v1.1.1
 
 ### Added
