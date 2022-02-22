@@ -121,7 +121,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     os.mkdir("subdir")
     os.mkdir("subdir/subsubdir")
 
-    self.full_file_path_list = ["foo", "bar", "subdir/foosub1",
+    self.full_file_path_list = ["foo", "bar", "#esc!", "subdir/foosub1",
         "subdir/foosub2", "subdir/subsubdir/foosubsub"]
 
     for path in self.full_file_path_list:
@@ -190,7 +190,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
   def test_lstrip_paths_valid_prefix_directory(self):
     lstrip_paths = ["subdir/subsubdir/"]
-    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+    expected_artifacts = sorted(["#esc!", "bar", "foo", "subdir/foosub1",
         "subdir/foosub2", "foosubsub"])
     artifacts_dict = record_artifacts_as_dict(["."],
         lstrip_paths=lstrip_paths)
@@ -217,7 +217,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
   def test_lstrip_paths_invalid_prefix_directory(self):
     lstrip_paths = ["not/a/directory/"]
-    expected_artifacts = sorted(["bar", "foo", "subdir/foosub1",
+    expected_artifacts = sorted(["#esc!", "bar", "foo", "subdir/foosub1",
                                  "subdir/foosub2", "subdir/subsubdir/foosubsub"])
     artifacts_dict = record_artifacts_as_dict(["."],
         lstrip_paths=lstrip_paths)
@@ -416,14 +416,61 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     """Test excluding artifacts using passed pattern or setting. """
     excludes_and_results = [
       # Exclude files containing 'foo' everywhere
-      (["*foo*"], ["bar"]),
+      (["*foo*"], ["bar", "#esc!"]),
       # Exclude subdirectory and all its contents
-      (["subdir"], ["bar", "foo"]),
+      (["subdir"], ["bar", "foo", "#esc!"]),
       # Exclude files 'subdir/foosub1' and 'subdir/foosub2'
-      (["*foosub?"], ["bar", "foo", "subdir/subsubdir/foosubsub"]),
+      (["*foosub?"], ["bar", "foo", "#esc!", "subdir/subsubdir/foosubsub"]),
       # Exclude subsubdirectory and its contents
-      (["*subsubdir"], ["foo", "bar", "subdir/foosub1", "subdir/foosub2"])
-      ]
+      (
+        ["*subsubdir"],
+        ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
+      ),
+      (["/**"], []),
+      (["*sub*"], ["foo", "bar", "#esc!"]),
+      (
+        ["**/subdir/subsubdir"],
+        ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
+      ),
+      (
+        ["subdir/foo*"],
+        ["bar", "foo", "#esc!", "subdir/subsubdir/foosubsub"],
+      ),
+      (["**/subdir/"], ["bar", "foo", "#esc!"]),
+      (["foo*"], ["bar", "#esc!"]),
+      (
+        ["**/*1"],
+        ["bar", "foo", "#esc!", "subdir/foosub2", "subdir/subsubdir/foosubsub"]
+      ),
+      (["**/*sub?"], ["bar", "foo", "#esc!", "subdir/subsubdir/foosubsub"]),
+      (["**/foo*[1-9]"], ["bar", "foo", "#esc!", "subdir/subsubdir/foosubsub"]),
+      (["**/[a-z][a-z][a-z][a-z][a-z][a-z]/"], ["bar", "foo", "#esc!"]),
+      (["/subdir"], ["foo", "bar", "#esc!"]),
+      (["subdir/"], ["foo", "bar", "#esc!"]),
+      (
+        ["/subdir/subsubdir"],
+        ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
+      ),
+      (
+        ["subdir/subsubdir/"],
+        ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
+      ),
+      (
+        ["\#esc*"],  # pylint: disable=W1401
+        ["foo", "bar", "subdir/foosub1", "subdir/foosub2",
+            "subdir/subsubdir/foosubsub"],
+      ),
+      (
+        ["*esc\!"],  # pylint: disable=W1401
+        ["foo", "bar", "subdir/foosub1", "subdir/foosub2",
+            "subdir/subsubdir/foosubsub"],
+      ),
+      (
+        ["/"],
+        ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2",
+            "subdir/subsubdir/foosubsub"],
+      )
+    ]
 
     for exclude_patterns, expected_results in excludes_and_results:
       # Exclude via setting
