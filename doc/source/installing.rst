@@ -55,7 +55,7 @@ do so, you will need the following dependencies:
 - `OpenSSL <https://openssl.org>`_
 - `python-cryptography <https://cryptography.readthedocs.io>`_
 - `python-securesystemslib <https://github.com/secure-systems-lab/securesystemslib/>`_
-- `setuptools <https://pypi.org/project/setuptools/>`_
+- `pip <https://pypi.org/project/pip/>`_ version ``19.0`` or higher
 
 With these dependencies installed, fetch the latest tarball of in-toto
 `here <https://github.com/in-toto/in-toto/releases>`_. Unpack it on a directory
@@ -63,7 +63,7 @@ you trust and execute the following commands on a terminal:
 
  .. code-block:: sh
 
-    python setup.py build && python setup.py install
+    pip install .
 
 Installing for Development
 --------------------------

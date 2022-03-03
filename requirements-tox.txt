@@ -5,3 +5,4 @@
 pylint
 bandit
 coverage
+mock
