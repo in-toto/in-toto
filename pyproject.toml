@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=0.18.0"]
+requires = ["hatchling>=0.21.1"]
 build-backend = "hatchling.build"
 
 [project]
@@ -10,14 +10,6 @@ license = "Apache-2.0"
 requires-python = "~=3.7"
 authors = [
     { name = "New York University: Secure Systems Lab", email = "in-toto-dev@googlegroups.com" },
-]
-maintainers = [
-    { name = "Justin Cappos", email = "jcappos@nyu.edu" },
-    { name = "Santiago Torres", email = "santiago@nyu.edu" },
-    { name = "Lukas Puehringer", email = "lukas.puehringer@nyu.edu" },
-    { name = "Marina Moore", email = "mm9693@nyu.edu" },
-    { name = "Sebastien Awwad", email = "sebastien.awwad@nyu.edu" },
-    { name = "Aditya Sirish A Yelgundhalli", email = "aditya.sirish@nyu.edu" },
 ]
 keywords = [
     "security",
