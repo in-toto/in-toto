@@ -1,3 +1,17 @@
+in-toto (1.2.0-1) unstable; urgency=medium
+
+  * New upstream releases include among other things:
+    - documentation and project metadata updates
+    - test and linter enhancements
+    - build on Python 3.7 through 3.10 and updated dependencies
+
+  * d/control:
+    - bump standards version to 4.6.0.1
+  * d/patches:
+    - adopt test patch upstream line offsets and minor changes
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Tue, 22 Feb 2022 09:42:10 +0100
+
 in-toto (1.0.1-1) unstable; urgency=medium
 
   * New upstream release includes among other things:
