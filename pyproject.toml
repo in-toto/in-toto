@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling>=0.21.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "in-toto"
+description = "A framework to define and secure the integrity of software supply chains"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = "~=3.7"
+authors = [
+    { name = "New York University: Secure Systems Lab", email = "in-toto-dev@googlegroups.com" },
+]
+keywords = [
+    "security",
+    "software",
+    "supply chain",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Security",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "attrs",
+    "iso8601",
+    "pathspec",
+    "python-dateutil",
+    "securesystemslib[crypto]>=0.18.0",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+# Install pynacl as optional dependency to use with securesystemslib, as a
+# workaround for `"ssl-pynacl": ["securesystemslib[pynacl]>=0.11.3"]`,
+# which currently is not supported in "extra_require" (see pypa/pip#4957).
+# TODO: Keep track of changes (version, additional requirements) under the
+# "pynacl" key in securesystemslib's setup.py.
+# https://github.com/secure-systems-lab/securesystemslib/blob/master/setup.py#L101
+pynacl = [
+    "pynacl>1.2.0",
+]
+
+[project.scripts]
+in-toto-keygen = "in_toto.in_toto_keygen:main"
+in-toto-mock = "in_toto.in_toto_mock:main"
+in-toto-record = "in_toto.in_toto_record:main"
+in-toto-run = "in_toto.in_toto_run:main"
+in-toto-sign = "in_toto.in_toto_sign:main"
+in-toto-verify = "in_toto.in_toto_verify:main"
+
+[project.urls]
+"Bug Reports" = "https://github.com/in-toto/in-toto/issues"
+Homepage = "https://in-toto.io"
+Source = "https://github.com/in-toto/in-toto"
+
+[tool.hatch.version]
+path = "in_toto/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/in_toto",
+    "/.coveragerc",
+    "/tox.ini",
+    "/requirements*.txt",
+]
