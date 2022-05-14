@@ -11,4 +11,8 @@ updates:
   ignore:
   - dependency-name: cryptography
     versions:
-    - 3.4.1
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10   - 3.4.1
