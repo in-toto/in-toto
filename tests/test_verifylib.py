@@ -526,7 +526,7 @@ class TestVerifyMatchRule(unittest.TestCase):
         # from the dest-item step.
         "MATCH bar IN sub WITH PRODUCTS IN sub FROM dest-item",
         set(self.products.keys()), self.products,
-        {"sub/bar", "sub/bar"}
+        {"sub/bar"}
       ],
       [
         # Ensures the sub/bar and sub/barfoo files matches the product
