@@ -7,6 +7,12 @@
 # linter (for good reasons) consider updating this config file, or disable
 # checks via `# pylint: disable=XYZ` in a module or via `--disable` in tox.ini.
 
+[MAIN]
+# no-self-use has been moved to an optional plugin which needs to be explicitly
+# loaded.
+# https://pylint.pycqa.org/en/latest/whatsnew/2/2.14/summary.html#removed-checkers.
+load-plugins=pylint.extensions.no_self_use
+
 [BASIC]
 good-names=e, fn, fp
 
