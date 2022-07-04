@@ -6,7 +6,7 @@
 #
 attrs==21.4.0
     # via -r requirements.txt
-cffi==1.15.0
+cffi==1.15.1
     # via
     #   cryptography
     #   pynacl
