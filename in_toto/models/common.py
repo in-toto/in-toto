@@ -25,6 +25,8 @@ import attr
 import inspect
 import securesystemslib.formats
 
+from securesystemslib.metadata import Envelope
+
 
 
 class ValidationMixin(object):
@@ -61,3 +63,12 @@ class Signable(ValidationMixin):
     representation of the instance. """
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
+
+  def create_envelope(self) -> Envelope:
+    """Create a DSSE envelope with signable bytes as payload."""
+
+    return Envelope(
+      payload=self.signable_bytes,
+      payload_type="application/vnd.in-toto+json",
+      signatures=[]
+    )
