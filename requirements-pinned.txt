@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements-pinned.txt requirements.txt
 #
-attrs==21.4.0
+attrs==22.1.0
     # via -r requirements.txt
 cffi==1.15.1
     # via
