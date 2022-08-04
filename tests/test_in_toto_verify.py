@@ -93,10 +93,10 @@ class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
     self.bob_path = "bob.pub"
 
     # dump a single signed layout
-    layout_template.sign(alice)
+    layout_template.sign_key(alice)
     layout_template.dump(self.layout_single_signed_path)
     # dump a double signed layout
-    layout_template.sign(bob)
+    layout_template.sign_key(bob)
     layout_template.dump(self.layout_double_signed_path)
 
 
@@ -197,8 +197,8 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
     self.danny_path = "danny.pub"
 
     # dump a double signed layout
-    layout_template.sign(alice)
-    layout_template.sign(danny)
+    layout_template.sign_key(alice)
+    layout_template.sign_key(danny)
     layout_template.dump(self.layout_double_signed_path)
 
 

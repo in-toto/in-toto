@@ -97,7 +97,7 @@ def _sign_and_dump_metadata(metadata, args):
       for idx, key_path in enumerate(args.key):
         key = interface.import_privatekey_from_file(
             key_path, key_type=args.key_type[idx], prompt=args.prompt)
-        signature = metadata.sign(key)
+        signature = metadata.sign_key(key)
 
     # If `--output` was specified we store the signed link or layout metadata
     # to that location no matter what

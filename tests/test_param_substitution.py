@@ -181,7 +181,7 @@ class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
   def test_substitute(self):
     """Do a simple substitution on the expected_command field"""
     signed_layout = Metablock(signed=self.layout)
-    signed_layout.sign(self.alice)
+    signed_layout.sign_key(self.alice)
 
     # we will catch a LinkNotFound error because we don't have (and don't need)
     # the metadata.

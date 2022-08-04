@@ -812,18 +812,18 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     # dump single signed layout
     layout = copy.deepcopy(layout_template)
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_single_signed_path)
 
     # dump double signed layout
     layout = copy.deepcopy(layout_template)
-    layout.sign(alice)
-    layout.sign(bob)
+    layout.sign_key(alice)
+    layout.sign_key(bob)
     layout.dump(self.layout_double_signed_path)
 
     # dump layout with bad signature
     layout = copy.deepcopy(layout_template)
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.signed.readme = "this breaks the signature"
     layout.dump(self.layout_bad_sig)
 
@@ -831,7 +831,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     layout = copy.deepcopy(layout_template)
     layout.signed.expires = (datetime.today() +
         relativedelta(months=-1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_expired_path)
 
     # dump layout with failing step rule
@@ -840,7 +840,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         ["DISALLOW", "*"])
     layout.signed.steps[0].expected_products.insert(0,
         ["MODIFY", "*"])
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_failing_step_rule_path)
 
     # dump layout with failing inspection rule
@@ -849,18 +849,18 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         ["MODIFY", "*"])
     layout.signed.inspect[0].expected_materials.append(
         ["DISALLOW", "*"])
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_failing_inspection_rule_path)
 
     # dump layout with failing inspection retval
     layout = copy.deepcopy(layout_template)
     layout.signed.inspect[0].run = ["python", "./scripts/expr", "1", "/", "0"]
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_failing_inspection_retval)
 
     # dump empty layout
     layout = Metablock(signed=Layout())
-    layout.sign(alice)
+    layout.sign_key(alice)
     layout.dump(self.layout_no_steps_no_inspections)
     self.alice = alice
 
@@ -948,7 +948,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_layout_signatures_fail_with_malformed_signature(self):
     """Layout signature verification fails with malformed signatures. """
     layout_metablock = Metablock(signed=Layout())
-    signature = layout_metablock.sign(self.alice)
+    signature = layout_metablock.sign_key(self.alice)
     pubkey = self.alice
     pubkey["keyval"]["private"] = ""
 
@@ -1007,9 +1007,9 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
     # Signed links (one authorized the other one not)
     link_bob = Metablock(signed=Link(name=self.name))
-    link_bob.sign(self.bob)
+    link_bob.sign_key(self.bob)
     link_alice = Metablock(signed=Link(name=self.name))
-    link_alice.sign(self.alice)
+    link_alice.sign_key(self.alice)
 
     # The dictionary of links per step passed to the verify function
     chain_link_dict = {
@@ -1052,7 +1052,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
     # Authorized links (one signed one not)
     link_bob = Metablock(signed=Link(name=self.name))
-    link_bob.sign(self.bob)
+    link_bob.sign_key(self.bob)
     link_alice = Metablock(signed=Link(name=self.name))
 
     # The dictionary of links per step passed to the verify function
@@ -1097,7 +1097,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
     # Only one authorized and validly signed link
     link_bob = Metablock(signed=Link(name=self.name))
-    link_bob.sign(self.bob)
+    link_bob.sign_key(self.bob)
 
     # The dictionary of links per step passed to the verify function
     chain_link_dict = {
@@ -1447,7 +1447,7 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
     sub_layout = copy.deepcopy(layout_template)
     sub_layout_path = FILENAME_FORMAT.format(step_name=sub_layout_name,
         keyid=alice_pub["keyid"])
-    sub_layout.sign(alice)
+    sub_layout.sign_key(alice)
     sub_layout.dump(sub_layout_path)
 
     # Create super layout that has only one step, the sublayout
@@ -1523,7 +1523,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
           ]
         )
       )
-    root_layout.sign(keys["alice_priv"])
+    root_layout.sign_key(keys["alice_priv"])
 
 
     # Sublayout (first level)
@@ -1554,7 +1554,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
           ]
         )
       )
-    bobs_layout.sign(keys["bob_priv"])
+    bobs_layout.sign_key(keys["bob_priv"])
     bobs_layout.dump(bobs_layout_name)
 
 
@@ -1568,7 +1568,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
 
     carls_layout_path = os.path.join(bobs_layout_link_dir, carls_layout_name)
     carls_layout = Metablock(signed=Layout())
-    carls_layout.sign(keys["carl_priv"])
+    carls_layout.sign_key(keys["carl_priv"])
     carls_layout.dump(carls_layout_path)
 
     in_toto_verify(root_layout, root_layout_pub_key_dict)
@@ -1628,7 +1628,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
       ]
     )
     )
-    root_layout.sign(keys["alice_priv"])
+    root_layout.sign_key(keys["alice_priv"])
 
 
     # Sublayout (first level)
@@ -1645,7 +1645,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
     os.mkdir(bobs_layout_link_dir)
 
     bobs_layout = Metablock.load(os.path.join(demo_files, "demo.layout.template"))
-    bobs_layout.sign(keys["bob_priv"])
+    bobs_layout.sign_key(keys["bob_priv"])
     bobs_layout.dump(bobs_layout_name)
     shutil.copy2(os.path.join(demo_files, "write-code.776a00e2.link"), bobs_layout_link_dir)
     shutil.copy2(os.path.join(demo_files, "package.2f89b927.link"), bobs_layout_link_dir)

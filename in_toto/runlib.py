@@ -662,7 +662,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   signature = None
   if signing_key:
     LOG.info("Signing link metadata using passed key...")
-    signature = link_metadata.sign(signing_key)
+    signature = link_metadata.sign_key(signing_key)
 
   elif gpg_keyid:
     LOG.info("Signing link metadata using passed GPG keyid...")
@@ -806,7 +806,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   if signing_key:
     LOG.info("Signing link metadata using passed key...")
-    signature = link_metadata.sign(signing_key)
+    signature = link_metadata.sign_key(signing_key)
 
   elif gpg_keyid:
     LOG.info("Signing link metadata using passed GPG keyid...")
@@ -1005,7 +1005,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
   link_metadata.signatures = []
   if signing_key:
     LOG.info("Updating signature with key '{:.8}...'...".format(keyid))
-    link_metadata.sign(signing_key)
+    link_metadata.sign_key(signing_key)
 
   else: # gpg_keyid or gpg_use_default
     # In both cases we use the keyid we got from verifying the preliminary

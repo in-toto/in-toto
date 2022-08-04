@@ -29,6 +29,7 @@ import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
+from securesystemslib.signer import Signer
 
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
@@ -137,7 +138,32 @@ class Metablock(ValidationMixin):
     return self.signed.type_
 
 
-  def sign(self, key):
+  def sign(self, signer: Signer):
+    """Creates signature over signable with Signer and adds it to signatures.
+
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to create signatures deterministically.
+
+    Attributes:
+      signer: A "Signer" class instance to create signature.
+
+    Raises:
+      securesystemslib.exceptions.FormatError: Key argument is malformed.
+      securesystemslib.exceptions.CryptoError, \
+              securesystemslib.exceptions.UnsupportedAlgorithmError:
+          Signing errors.
+
+    Returns:
+      The signature. A securesystemslib.signer.Signature type.
+
+    """
+    signature = signer.sign(self.signed.signable_bytes)
+
+    self.signatures.append(signature.to_dict())
+
+    return signature
+
+  def sign_key(self, key):
     """Creates signature over signable with key and adds it to signatures.
 
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
@@ -156,6 +182,7 @@ class Metablock(ValidationMixin):
       The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
 
     """
+
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key,
