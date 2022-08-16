@@ -44,6 +44,8 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
 import securesystemslib.formats
 import securesystemslib.exceptions
+from securesystemslib.key import SSlibKey
+from securesystemslib.metadata import Envelope
 
 from tests.common import TmpDirMixin
 from pathlib import Path
@@ -746,7 +748,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
   def test_nonexistent_directory(self):
     """Fail run, passed metadata_directory not exist. """
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory='nonexistentDir')
 
@@ -756,7 +758,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     os.write(fd, b"hello in-toto")
     os.close(fd)
     # Windows will raise FileNotFoundError instead of NotADirectoryError
-    with self.assertRaises((NotADirectoryError, FileNotFoundError)):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory=path)
     os.remove(path)
@@ -767,10 +769,18 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     tmp_dir = os.path.realpath(tempfile.mkdtemp())
     # make the directory read only
     os.chmod(tmp_dir, stat.S_IREAD)
-    with self.assertRaises(PermissionError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_run(self.step_name, None, None, ["python", "--version"],
           True, self.key, metadata_directory=tmp_dir)
     os.rmdir(tmp_dir)
+
+  def test_in_toto_for_dsse(self):
+    """Test metadata generation using dsse."""
+
+    link_metadata = in_toto_run(self.step_name, None, None,
+        ["python", "--version"], True, self.key, use_dsse=True)
+    self.assertIsInstance(link_metadata, Envelope)
+    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
 
 
 class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
