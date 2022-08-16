@@ -30,6 +30,8 @@ import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
 from securesystemslib.signer import Signer
+from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
+     JSONDeserializer, JSONSerializable, JSONSerializer, SerializationMixin)
 
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
@@ -37,7 +39,7 @@ from in_toto.models.layout import Layout
 from in_toto.exceptions import SignatureVerificationError
 
 @attr.s(repr=False, init=False)
-class Metablock(ValidationMixin):
+class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
   """A container for signed in-toto metadata.
 
   Provides methods for metadata JSON (de-)serialization, reading from and
@@ -80,6 +82,44 @@ class Metablock(ValidationMixin):
       )
 
 
+  @staticmethod
+  def default_serializer() -> BaseSerializer:
+    return JSONSerializer()
+
+  @staticmethod
+  def default_deserializer() -> BaseDeserializer:
+    return JSONDeserializer()
+
+
+  @classmethod
+  def from_dict(cls, data: dict) -> "Metablock":
+    """Creates a Metablock object from its JSON/dict representation."""
+
+    signatures = data.get("signatures", [])
+    signed_data = data.get("signed", {})
+    signed_type = signed_data.get("_type")
+
+    if signed_type == "link":
+      signed = Link.read(signed_data)
+
+    elif signed_type == "layout":
+      signed = Layout.read(signed_data)
+
+    else:
+      raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
+
+    return cls(signatures=signatures, signed=signed)
+
+
+  def to_dict(self) -> dict:
+    """Returns the JSON-serializable dictionary representation of self."""
+
+    return {
+      "signatures": self.signatures,
+      "signed": attr.asdict(self.signed)
+    }
+
+
   def dump(self, path):
     """Writes the JSON string representation of the instance to disk.
 
@@ -113,20 +153,8 @@ class Metablock(ValidationMixin):
     with open(path, "r", encoding="utf8") as fp:
       data = json.load(fp)
 
-    signatures = data.get("signatures", [])
-    signed_data = data.get("signed", {})
-    signed_type = signed_data.get("_type")
+    return Metablock.from_dict(data)
 
-    if signed_type == "link":
-      signed = Link.read(signed_data)
-
-    elif signed_type == "layout":
-      signed = Layout.read(signed_data)
-
-    else:
-      raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
-
-    return Metablock(signatures=signatures, signed=signed)
 
 
   @property
