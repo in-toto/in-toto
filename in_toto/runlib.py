@@ -44,13 +44,15 @@ import in_toto.exceptions
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
+from in_toto.models.metadata import Metablock
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
+from securesystemslib.serialization import JSONSerializer
+from securesystemslib.signer import GPGSigner, SSlibSigner
 
-from in_toto.models.metadata import Metablock
 
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
@@ -513,7 +515,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     record_streams=False, signing_key=None, gpg_keyid=None,
     gpg_use_default=False, gpg_home=None, exclude_patterns=None,
     base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None):
+    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None,
+    use_dsse=False):
   """Performs a supply chain step or inspection generating link metadata.
 
   Executes link_cmd_args, recording paths and hashes of files before and after
@@ -573,6 +576,9 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
     metadata_directory (optional): A directory path to write the resulting link
         metadata file to. Default destination is the current working directory.
+
+    use_dsse (optional): A boolean indicating if DSSE should be used to
+        generate metadata.
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
@@ -657,31 +663,39 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       materials=materials_dict, products=products_dict, command=link_cmd_args,
       byproducts=byproducts, environment=environment)
 
-  link_metadata = Metablock(signed=link, compact_json=compact_json)
+  if use_dsse:
+    link_metadata = link.create_envelope()
+  else:
+    link_metadata = Metablock(signed=link, compact_json=compact_json)
 
-  signature = None
+  signer = None
   if signing_key:
     LOG.info("Signing link metadata using passed key...")
-    signature = link_metadata.sign_key(signing_key)
+    signer = SSlibSigner(signing_key)
 
   elif gpg_keyid:
     LOG.info("Signing link metadata using passed GPG keyid...")
-    signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
+    signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
 
   elif gpg_use_default:
     LOG.info("Signing link metadata using default GPG key ...")
-    signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
+    signer = GPGSigner(keyid=None, homedir=gpg_home)
 
   # We need the signature's keyid to write the link to keyid infix'ed filename
-  if signature:
-    signing_keyid = signature["keyid"]
+  if signer:
+    signature = link_metadata.sign(signer)
+    signing_keyid = signature.keyid
+
     filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
 
     if metadata_directory is not None:
       filename = os.path.join(metadata_directory, filename)
 
     LOG.info("Storing link metadata to '{}'...".format(filename))
-    link_metadata.dump(filename)
+    link_metadata.to_file(
+      filename=filename,
+      serializer=JSONSerializer(compact=compact_json)
+    )
 
   return link_metadata
 
