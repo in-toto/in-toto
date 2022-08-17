@@ -43,13 +43,14 @@ import in_toto.settings
 import in_toto.exceptions
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
-from in_toto.models.metadata import Metablock
+    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB, Link)
+from in_toto.models.metadata import AnyMetadata, Metablock
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
+from securesystemslib.metadata import Envelope
 from securesystemslib.serialization import JSONSerializer
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
@@ -703,7 +704,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 def in_toto_record_start(step_name, material_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None):
+    normalize_line_endings=False, lstrip_paths=None, use_dsse=False):
   """Generates preliminary link metadata.
 
   Records paths and hashes of materials in a preliminary link metadata file.
@@ -750,6 +751,9 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
     lstrip_paths (optional): A list of path prefixes used to left-strip
         artifact paths before storing them in the resulting link metadata.
+
+    use_dsse (optional): A boolean indicating if DSSE should be used to
+        generate metadata.
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
@@ -816,30 +820,33 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
           materials=materials_dict, products={}, command=[], byproducts={},
           environment=environment)
 
-  link_metadata = Metablock(signed=link)
+  if use_dsse:
+    link_metadata = link.create_envelope()
+  else:
+    link_metadata = Metablock(signed=link)
 
   if signing_key:
     LOG.info("Signing link metadata using passed key...")
-    signature = link_metadata.sign_key(signing_key)
+    signer = SSlibSigner(signing_key)
 
   elif gpg_keyid:
     LOG.info("Signing link metadata using passed GPG keyid...")
-    signature = link_metadata.sign_gpg(gpg_keyid, gpg_home=gpg_home)
+    signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
 
   else:  # (gpg_use_default)
     LOG.info("Signing link metadata using default GPG key ...")
-    signature = link_metadata.sign_gpg(gpg_keyid=None, gpg_home=gpg_home)
+    signer = GPGSigner(keyid=None, homedir=gpg_home)
 
+  signature = link_metadata.sign(signer)
   # We need the signature's keyid to write the link to keyid infix'ed filename
-  signing_keyid = signature["keyid"]
+  signing_keyid = signature.keyid
 
   unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
     keyid=signing_keyid)
 
   LOG.info(
       "Storing preliminary link metadata to '{}'...".format(unfinished_fn))
-  link_metadata.dump(unfinished_fn)
-
+  link_metadata.to_file(unfinished_fn)
 
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
@@ -975,7 +982,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     unfinished_fn = unfinished_fn_list[0]
 
   LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link_metadata = Metablock.load(unfinished_fn)
+  link_metadata = AnyMetadata.from_file(unfinished_fn)
 
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
@@ -1005,35 +1012,51 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
         keyid, gpg_home)
     verification_key = gpg_pubkey
 
-  link_metadata.verify_signature(verification_key)
+  if isinstance(link_metadata, Envelope):
+    link_metadata.verify([verification_key], 1)
+    link = link_metadata.deserialize_payload(in_toto.models.link.Link)
+    use_dsse = True
+  else:
+    link_metadata.verify(verification_key)
+    link = link_metadata.signed
+
+  metadata = AnyMetadata(link_metadata)
+  metadata.verify_signatures({keyid: verification_key})
+  link = metadata.extract(Link)
+  use_dsse = metadata.dsse
 
   # Record products if a product path list was passed
   if product_list:
     LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
-  link_metadata.signed.products = record_artifacts_as_dict(
+  link.products = record_artifacts_as_dict(
       product_list, exclude_patterns=exclude_patterns, base_path=base_path,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
 
-  link_metadata.signatures = []
+  if use_dsse:
+    link_metadata = link.create_envelope()
+  else:
+    link_metadata = Metablock(signed=link)
+
   if signing_key:
     LOG.info("Updating signature with key '{:.8}...'...".format(keyid))
-    link_metadata.sign_key(signing_key)
+    signer = SSlibSigner(signing_key)
 
   else: # gpg_keyid or gpg_use_default
     # In both cases we use the keyid we got from verifying the preliminary
     # link signature above.
     LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
-    link_metadata.sign_gpg(keyid, gpg_home)
+    signer = GPGSigner(keyid=keyid, homedir=gpg_home)
 
+  link_metadata.sign(signer)
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
 
   if metadata_directory is not None:
     fn = os.path.join(metadata_directory, fn)
 
   LOG.info("Storing link metadata to '{}'...".format(fn))
-  link_metadata.dump(fn)
+  link_metadata.to_file(fn)
 
   LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)
