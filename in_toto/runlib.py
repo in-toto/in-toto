@@ -1012,14 +1012,6 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
         keyid, gpg_home)
     verification_key = gpg_pubkey
 
-  if isinstance(link_metadata, Envelope):
-    link_metadata.verify([verification_key], 1)
-    link = link_metadata.deserialize_payload(in_toto.models.link.Link)
-    use_dsse = True
-  else:
-    link_metadata.verify(verification_key)
-    link = link_metadata.signed
-
   metadata = AnyMetadata(link_metadata)
   metadata.verify_signatures({keyid: verification_key})
   link = metadata.extract(Link)

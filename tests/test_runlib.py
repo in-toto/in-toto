@@ -818,7 +818,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     self.assertEqual(list(link.signed.materials.keys()), [self.test_material])
     os.remove(self.link_name_unfinished)
 
-  def test_create_unfininished_metadata_verify_signature(self):
+  def test_create_unfinished_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
@@ -832,6 +832,14 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
       in_toto_record_start(
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
+
+  def test_create_unfinished_metadata_using_dsse(self):
+    """Test record start creates metadata using dsse."""
+    in_toto_record_start(
+        self.step_name, [self.test_material], self.key, use_dsse=True)
+    link_metadata = Envelope.from_file(self.link_name_unfinished)
+    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    os.remove(self.link_name_unfinished)
 
 class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
   """"Test in_toto_record_stop(step_name, key, product_list). """
@@ -915,7 +923,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
 
   def test_missing_unfinished_file(self):
     """Test record stop exits on missing unfinished file, no link recorded. """
-    with self.assertRaises(IOError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_record_stop(self.step_name, [], self.key)
     with self.assertRaises(IOError):
       # pylint: disable-next=consider-using-with
@@ -975,7 +983,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
 
   def test_nonexistent_directory(self):
     """Test record stop with nonexistent metadata directory"""
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory='nonexistentDir')
@@ -986,7 +994,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     os.write(fd, b"hello in-toto")
     os.close(fd)
     # Windows will raise FileNotFoundError instead of NotADirectoryError
-    with self.assertRaises((NotADirectoryError, FileNotFoundError)):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory=path)
@@ -998,11 +1006,23 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     tmp_dir = os.path.realpath(tempfile.mkdtemp())
     # make the directory read only
     os.chmod(tmp_dir, stat.S_IREAD)
-    with self.assertRaises(PermissionError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_record_start(self.step_name, [], self.key)
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory=tmp_dir)
     os.rmdir(tmp_dir)
+
+  def test_created_metadata_using_dsse(self):
+    """Test record stop records created metadata with dsse."""
+    in_toto_record_start(self.step_name, [], self.key, use_dsse=True)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key)
+
+    link_metadata = Envelope.from_file(self.link_name)
+    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
+
+    link = link_metadata.deserialize_payload(in_toto.models.link.Link)
+    self.assertEqual(list(link.products.keys()), [self.test_product])
+    os.remove(self.link_name)
 
 
 if __name__ == "__main__":
