@@ -465,7 +465,7 @@ def execute_link(link_cmd_args, record_streams):
     }
 
 
-def in_toto_mock(name, link_cmd_args):
+def in_toto_mock(name, link_cmd_args, use_dsse=False):
   """
   <Purpose>
     in_toto_run with defaults
@@ -480,6 +480,8 @@ def in_toto_mock(name, link_cmd_args):
     link_cmd_args:
             A list where the first element is a command and the remaining
             elements are arguments passed to that command.
+    use_dsse (optional):
+            A boolean indicating if DSSE should be used to generate metadata.
 
   <Exceptions>
     None.
@@ -493,11 +495,11 @@ def in_toto_mock(name, link_cmd_args):
 
   """
   link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
-      record_streams=True)
+      record_streams=True, use_dsse=use_dsse)
 
   filename = FILENAME_FORMAT_SHORT.format(step_name=name)
   LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
-  link_metadata.dump(filename)
+  link_metadata.to_file(filename)
   return link_metadata
 
 
