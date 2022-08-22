@@ -21,45 +21,42 @@
 
 """
 
-import os
-import shutil
 import copy
+import glob
+import os
+import shlex
+import shutil
 import tempfile
 import unittest
-import glob
-import shlex
-
+from datetime import datetime
 from unittest.mock import patch
 
-from datetime import datetime
+import securesystemslib.exceptions
+import securesystemslib.gpg.functions
 from dateutil.relativedelta import relativedelta
+from securesystemslib.interface import (import_publickeys_from_file,
+    import_rsa_privatekey_from_file, import_rsa_publickey_from_file)
+from securesystemslib.signer import SSlibSigner
 
+import in_toto.exceptions
 import in_toto.settings
-from in_toto.models.metadata import Metablock
-from in_toto.models.link import Link, FILENAME_FORMAT
-from in_toto.models.layout import (Step, Inspection, Layout,
-    SUBLAYOUT_LINK_DIR_FORMAT)
-from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
-    verify_modify_rule, verify_allow_rule, verify_disallow_rule,
-    verify_require_rule, verify_match_rule, verify_item_rules,
-    verify_all_item_rules, verify_command_alignment, run_all_inspections,
-    in_toto_verify, verify_sublayouts, get_summary_link, _raise_on_bad_retval,
-    load_links_for_layout, verify_link_signature_thresholds,
-    verify_threshold_constraints)
 from in_toto.exceptions import (BadReturnValueError, LayoutExpiredError,
     RuleVerificationError, ThresholdVerificationError)
-from securesystemslib.interface import (
-    import_rsa_privatekey_from_file,
-    import_rsa_publickey_from_file,
-    import_publickeys_from_file)
+from in_toto.models.layout import (SUBLAYOUT_LINK_DIR_FORMAT, Inspection,
+    Layout, Step)
+from in_toto.models.link import FILENAME_FORMAT, Link
+from in_toto.models.metadata import Metablock
 from in_toto.rulelib import unpack_rule
-import securesystemslib.gpg.functions
 from securesystemslib.gpg.constants import have_gpg
 
-import securesystemslib.exceptions
-import in_toto.exceptions
-
-from tests.common import TmpDirMixin, GPGKeysMixin
+from in_toto.verifylib import (_raise_on_bad_retval, get_summary_link,
+    in_toto_verify, load_links_for_layout, run_all_inspections,
+    verify_all_item_rules, verify_allow_rule, verify_command_alignment,
+    verify_create_rule, verify_delete_rule, verify_disallow_rule,
+    verify_item_rules, verify_link_signature_thresholds, verify_match_rule,
+    verify_modify_rule, verify_require_rule, verify_sublayouts,
+    verify_threshold_constraints)
+from tests.common import GPGKeysMixin, TmpDirMixin
 
 
 class Test_RaiseOnBadRetval(unittest.TestCase):
@@ -413,10 +410,11 @@ class TestVerifyMatchRule(unittest.TestCase):
     }
 
     self.links = {
-        "dest-item": Metablock(signed=Link(
+        "dest-item": Link(
             name="dest-item",
             materials=self.materials,
-            products=self.products)),
+            products=self.products
+          ),
     }
 
 
@@ -603,21 +601,20 @@ class TestVerifyItemRules(unittest.TestCase):
         "cfdaaf1ab2e4661952a9dec5e8fa3c360c1b06b1a073e8493a7c46d2af8c504b"
 
     self.links = {
-      "item": Metablock(signed=Link(name="item",
-          materials={
-              "foo": {"sha256": self.sha256_1},
-              "foobar": {"sha256": self.sha256_1},
-              "bar": {"sha256": self.sha256_1},
-              "foobarbaz": {"sha256": self.sha256_1}
-          },
-          products={
-              "baz" : {"sha256": self.sha256_1},
-              "foo": {"sha256": self.sha256_1},
-              "bar": {"sha256": self.sha256_2},
-              "foobarbaz": {"sha256": self.sha256_1}
-
-          }
-      ))
+      "item": Link(name="item",
+        materials={
+            "foo": {"sha256": self.sha256_1},
+            "foobar": {"sha256": self.sha256_1},
+            "bar": {"sha256": self.sha256_1},
+            "foobarbaz": {"sha256": self.sha256_1}
+        },
+        products={
+            "baz" : {"sha256": self.sha256_1},
+            "foo": {"sha256": self.sha256_1},
+            "bar": {"sha256": self.sha256_2},
+            "foobarbaz": {"sha256": self.sha256_1}
+        }
+      )
     }
 
   def test_pass_rules_with_each_rule_type(self):
@@ -703,37 +700,37 @@ class TestVerifyAllItemRules(unittest.TestCase):
     ]
 
     self.links = {
-      "write-code" : Metablock(signed=Link(name="write-code",
-          products={
-              "foo": {
-                  "sha256": self.sha256_foo
-              }
-          }
-      )),
-      "package" : Metablock(signed=Link(name="package",
+      "write-code" : Link(name="write-code",
+        products={
+            "foo": {
+                "sha256": self.sha256_foo
+            }
+        }
+      ),
+      "package" : Link(name="package",
+        materials={
+            "foo": {
+                "sha256": self.sha256_foo
+            }
+        },
+        products={
+            "foo.tar.gz": {
+                "sha256": self.sha256_foo_tar
+            }
+        }
+      ),
+        "untar" : Link(name="untar",
           materials={
-              "foo": {
-                  "sha256": self.sha256_foo
-              }
-          },
-          products={
               "foo.tar.gz": {
                   "sha256": self.sha256_foo_tar
               }
+          },
+          products={
+              "dir/foo": {
+                  "sha256": self.sha256_foo
+              },
           }
-      )),
-        "untar" : Metablock(signed=Link(name="untar",
-            materials={
-                "foo.tar.gz": {
-                    "sha256": self.sha256_foo_tar
-                }
-            },
-            products={
-                "dir/foo": {
-                    "sha256": self.sha256_foo
-                },
-            }
-        ))
+        )
     }
 
   def test_pass_verify_all_step_rules(self):
@@ -913,7 +910,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     os.rename("package.2f89b927.link", "package.link.bak")
     layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_publickeys_from_file([self.alice_path])
-    with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
+    with self.assertRaises(securesystemslib.exceptions.StorageError):
       in_toto_verify(layout, layout_key_dict)
     os.rename("package.link.bak", "package.2f89b927.link")
 
@@ -948,7 +945,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """Layout signature verification fails with malformed signatures. """
     layout_metablock = Metablock(signed=Layout())
     signature = layout_metablock.sign_key(self.alice)
-    pubkey = self.alice
+    pubkey = copy.deepcopy(self.alice)
     pubkey["keyval"]["private"] = ""
 
     del signature["sig"]
@@ -956,6 +953,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
 
+  def test_verify_layout_signatures_for_envelope(self):
+    """Layout signature verification for DSSE envelope."""
+    layout_metadata = Layout().create_envelope()
+    layout_metadata.sign(SSlibSigner(self.alice))
+    pubkey = copy.deepcopy(self.alice)
+    pubkey["keyval"]["private"] = ""
+
+    in_toto_verify(layout_metadata, {self.alice["keyid"]: pubkey})
 
 
 
@@ -1134,16 +1139,14 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
     """ Test that the links for a step recorded the same artifacts. """
     # Layout with one step and threshold 2
     layout = Layout(steps=[Step(name=self.name, threshold=2)])
-    link_bob = Metablock(
-        signed=Link(
-          name=self.name,
-          materials={
-            "foo": {"sha256": self.foo_hash}
-          }
-        )
-      )
+    link_bob = Link(
+      name=self.name,
+      materials={
+        "foo": {"sha256": self.foo_hash}
+      }
+    )
     # Cf. signing comment in test_thresholds_constraints_with_not_enough_links
-    link_alice = Metablock(signed=Link(name=self.name))
+    link_alice = Link(name=self.name)
 
     chain_link_dict = {
       self.name: {
@@ -1163,22 +1166,18 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
     layout = Layout(steps=[Step(name=self.name, threshold=2)])
     # Two authorized links with equal artifact recordings (materials)
     # Cf. signing comment in test_thresholds_constraints_with_not_enough_links
-    link_bob = Metablock(
-        signed=Link(
-          name=self.name,
-          materials={
-            "foo": {"sha256": self.foo_hash}
-          }
-        )
-      )
-    link_alice = Metablock(
-        signed=Link(
-          name=self.name,
-          materials={
-            "foo": {"sha256": self.foo_hash}
-          }
-        )
-      )
+    link_bob = Link(
+      name=self.name,
+      materials={
+        "foo": {"sha256": self.foo_hash}
+      }
+    )
+    link_alice = Link(
+      name=self.name,
+      materials={
+        "foo": {"sha256": self.foo_hash}
+      }
+    )
 
     chain_link_dict = {
       self.name: {
@@ -1684,8 +1683,8 @@ class TestGetSummaryLink(unittest.TestCase, TmpDirMixin):
     self.code_link = Metablock.load("package.2f89b927.link")
     self.package_link = Metablock.load("write-code.776a00e2.link")
     self.demo_links = {
-        "write-code": self.code_link,
-        "package": self.package_link
+        "write-code": self.code_link.signed,
+        "package": self.package_link.signed
       }
 
   @classmethod

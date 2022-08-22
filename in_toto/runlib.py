@@ -50,7 +50,6 @@ import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
-from securesystemslib.metadata import Envelope
 from securesystemslib.serialization import JSONSerializer
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
