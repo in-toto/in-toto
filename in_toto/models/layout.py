@@ -49,6 +49,7 @@ import securesystemslib.formats
 import securesystemslib.schema
 import securesystemslib.interface
 import securesystemslib.gpg.functions
+from securesystemslib.serialization import JSONSerializable
 
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -58,7 +59,7 @@ SUBLAYOUT_LINK_DIR_FORMAT = "{name}.{keyid:.8}"
 
 
 @attr.s(repr=False, init=False)
-class Layout(Signable):
+class Layout(Signable, JSONSerializable):
   """A definition for a software supply chain.
 
   A layout lists the sequence of steps of the software supply chain in the
@@ -147,6 +148,15 @@ class Layout(Signable):
     data["inspect"] = inspections
 
     return Layout(**data)
+
+
+  @classmethod
+  def from_dict(cls, data: dict) -> "Layout":
+    return cls.read(data)
+
+
+  def to_dict(self) -> dict:
+    return attr.asdict(self)  # pragma: no cover
 
 
   def set_relative_expiration(self, days=0, months=0, years=0):

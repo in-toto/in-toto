@@ -26,6 +26,8 @@ import attr
 import securesystemslib.formats
 from in_toto.models.common import Signable
 
+from securesystemslib.serialization import JSONSerializable
+
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 FILENAME_FORMAT_SHORT = "{step_name}.link"
@@ -34,7 +36,7 @@ UNFINISHED_FILENAME_FORMAT_GLOB = ".{step_name}.{pattern}.link-unfinished"
 
 
 @attr.s(repr=False, init=False)
-class Link(Signable):
+class Link(Signable, JSONSerializable):
   """Evidence for a performed step or inspection of the supply chain.
 
   A Link object is usually contained in a generic Metablock object for signing,
@@ -127,6 +129,15 @@ class Link(Signable):
 
     """
     return Link(**data)
+
+
+  @classmethod
+  def from_dict(cls, data: dict) -> "Link":
+    return cls.read(data)
+
+
+  def to_dict(self) -> dict:
+    return attr.asdict(self)  # pragma: no cover
 
 
   def _validate_type(self):

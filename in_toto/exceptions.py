@@ -29,3 +29,6 @@ class UnsupportedKeyTypeError(Error):
 
 class PrefixError(Error):
   """Indicates that there is an error because of the prefixes passed. """
+
+class InvalidMetadata(Error):
+  """Indicates that the metadata is not valid."""

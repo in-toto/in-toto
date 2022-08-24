@@ -24,11 +24,14 @@
 
 import attr
 import json
+from typing import Optional, Type, Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
+from securesystemslib.key import GPGKey, SSlibKey
+from securesystemslib.metadata import Envelope
 from securesystemslib.signer import Signer
 from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
      JSONDeserializer, JSONSerializable, JSONSerializer, SerializationMixin)
@@ -36,7 +39,7 @@ from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
-
+from in_toto.exceptions import InvalidMetadata
 
 @attr.s(repr=False, init=False)
 class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
@@ -337,3 +340,120 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
 
     for signature in self.signatures:
       securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+
+
+class AnyMetadata(SerializationMixin, JSONSerializable):
+  """A Metadata Wrapper to provide some common methods."""
+
+  def __init__(self, metadata):
+    self.metadata: Union[Envelope, Metablock] = metadata
+    self.dsse = isinstance(metadata, Envelope)
+
+  @staticmethod
+  def default_deserializer() -> BaseDeserializer:
+    return JSONDeserializer()
+
+  @staticmethod
+  def default_serializer() -> BaseSerializer:
+    return JSONSerializer()
+
+  @classmethod
+  def from_dict(cls, data: dict) -> Union[Envelope, Metablock]:
+    """Creates an Envelope/ Metablock object from their JSON/dict
+    representation.
+    """
+
+    if "payload" in data:
+      if data.get("payloadType") == "application/vnd.in-toto+json":
+        return Envelope.from_dict(data)
+    elif "signed" in data:
+      return Metablock.from_dict(data)
+
+    raise InvalidMetadata
+
+  def to_dict(self) -> dict:
+    return self.metadata.to_dict()
+
+  def verify_signatures(self, keys_dict):
+    """Iteratively verifies the signatures of a Metablock object containing
+      a Layout object for every verification key in the passed keys dictionary.
+
+      Requires at least one key to be passed and requires every passed key to
+      find a valid signature.
+
+    Arguments:
+      keys_dict:
+              A dictionary of keys to verify the signatures conformant with
+              securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
+
+    Exceptions:
+      securesystemslib.exceptions.FormatError
+        if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
+
+      SignatureVerificationError
+        if an empty verification key dictionary was passed, or
+        if any of the passed verification keys fails to verify a signature.
+
+      securesystemslib.gpg.exceptions.KeyExpirationError:
+        if any of the passed verification keys is an expired gpg key
+
+    """
+    securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(
+        keys_dict)
+
+    if self.dsse:
+      keys = []
+
+      # Convert into SSlibKey and GPGKey from keys_dict.
+      for _, key in keys_dict.items():
+        if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
+          keys.append(GPGKey.from_dict(key))
+        elif securesystemslib.formats.ANYKEY_SCHEMA.matches(key):
+          keys.append(SSlibKey.from_securesystemslib_key(key))
+
+      self.metadata.verify(keys, len(keys))
+
+    else:
+      # Fail if an empty verification key dictionary was passed
+      if len(keys_dict) < 1:
+        raise securesystemslib.exceptions.SignatureVerificationError(
+          "Layout signature verification requires at least one key.")
+
+      # Fail if any of the passed keys can't verify a signature on the Layout
+      for _, verify_key in keys_dict.items():
+        self.metadata.verify_signature(verify_key)
+
+  def extract(self, _type: Optional[Type] = None):
+    """Returns Link or Layout object extracted from metadata.
+
+    Arguments:
+      _type: class_type for which dsse metada need to be encapsulated.
+
+    Returns:
+      An instance of ``_type``.
+    """
+
+    if self.dsse:
+      return self.metadata.deserialize_payload(_type)
+
+    return self.metadata.signed
+
+  def match_payload(self, _type: Type) -> bool:
+    """Checks type of the payload with the provided argument.
+
+    Arguments:
+      _type: class_type for which dsse metada need to be encapsulated.
+
+    Returns:
+      Boolean. Indicating the type matched.
+    """
+
+    if self.dsse:
+      try:
+        self.extract(_type)
+      except securesystemslib.exceptions.DeserializationError:
+        return False
+      else:
+        return True
+
+    return isinstance(self.metadata.signed, _type)
