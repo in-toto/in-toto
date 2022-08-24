@@ -36,7 +36,7 @@ from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
-from in_toto.exceptions import SignatureVerificationError
+
 
 @attr.s(repr=False, init=False)
 class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
@@ -271,9 +271,9 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
     Raises:
       securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      SignatureVerificationError: No signature keyid matches the verification
-          key keyid, or the matching signature is malformed, or the matching
-          signature is invalid.
+      securesystemslib.exceptions.SignatureVerificationError: No signature
+          keyid matches the verification key keyid, or the matching signature
+          is malformed, or the matching signature is invalid.
 
       securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
           key is an expired gpg key.
@@ -295,8 +295,8 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
         break
 
     else:
-      raise SignatureVerificationError("No signature found for key '{}'"
-          .format(verification_keyid))
+      raise securesystemslib.exceptions.SignatureVerificationError(
+        "No signature found for key '{}'".format(verification_keyid))
 
     if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
       valid = securesystemslib.gpg.functions.verify_signature(signature,
@@ -310,8 +310,8 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
       valid = False
 
     if not valid:
-      raise SignatureVerificationError("Invalid signature for keyid '{}'"
-          .format(verification_keyid))
+      raise securesystemslib.exceptions.SignatureVerificationError(
+        "Invalid signature for keyid '{}'".format(verification_keyid))
 
 
   def _validate_signed(self):

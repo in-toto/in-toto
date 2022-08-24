@@ -41,8 +41,8 @@ import in_toto.models.link
 import in_toto.formats
 from in_toto.models.metadata import Metablock
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError,
-    SignatureVerificationError)
+    ThresholdVerificationError, BadReturnValueError)
+from securesystemslib.exceptions import SignatureVerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
 import in_toto.rulelib
 

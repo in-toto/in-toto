@@ -46,9 +46,8 @@ from in_toto.verifylib import (verify_delete_rule, verify_create_rule,
     in_toto_verify, verify_sublayouts, get_summary_link, _raise_on_bad_retval,
     load_links_for_layout, verify_link_signature_thresholds,
     verify_threshold_constraints)
-from in_toto.exceptions import (RuleVerificationError,
-    SignatureVerificationError, LayoutExpiredError, BadReturnValueError,
-    ThresholdVerificationError)
+from in_toto.exceptions import (BadReturnValueError, LayoutExpiredError,
+    RuleVerificationError, ThresholdVerificationError)
 from securesystemslib.interface import (
     import_rsa_privatekey_from_file,
     import_rsa_publickey_from_file,
@@ -892,14 +891,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """Test fail verification with wrong layout key. """
     layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_publickeys_from_file([self.bob_path])
-    with self.assertRaises(SignatureVerificationError):
+    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_bad_signature(self):
     """Test fail verification with bad layout signature. """
     layout = Metablock.load(self.layout_bad_sig)
     layout_key_dict = import_publickeys_from_file([self.alice_path])
-    with self.assertRaises(SignatureVerificationError):
+    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
@@ -942,7 +941,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_layout_signatures_fail_with_no_keys(self):
     """Layout signature verification fails when no keys are passed. """
     layout_metablock = Metablock(signed=Layout())
-    with self.assertRaises(SignatureVerificationError):
+    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout_metablock, {})
 
   def test_verify_layout_signatures_fail_with_malformed_signature(self):
@@ -954,7 +953,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     del signature["sig"]
     layout_metablock.signed.signatures = [signature]
-    with self.assertRaises(SignatureVerificationError):
+    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
 
 

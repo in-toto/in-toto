@@ -37,6 +37,7 @@ from in_toto import (
     KEY_TYPE_ECDSA)
 
 import securesystemslib.formats
+import securesystemslib.exceptions
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
 
@@ -163,7 +164,7 @@ def _verify_metadata(metadata, args):
 
     sys.exit(0)
 
-  except exceptions.SignatureVerificationError as e:
+  except securesystemslib.exceptions.SignatureVerificationError as e:
     LOG.error("Signature verification failed: {}".format(e))
     sys.exit(1)
 

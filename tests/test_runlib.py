@@ -32,7 +32,6 @@ import subprocess
 import in_toto.settings
 import in_toto.exceptions
 from in_toto.models.metadata import Metablock
-from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
     _hash_artifact, _subprocess_run_duplicate_streams)
@@ -930,7 +929,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     changed_link_name = UNFINISHED_FILENAME_FORMAT.format(
         step_name=self.step_name, keyid=self.key2["keyid"])
     os.rename(link_name, changed_link_name)
-    with self.assertRaises(SignatureVerificationError):
+    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_record_stop(self.step_name, [], self.key2)
     with self.assertRaises(IOError):
       # pylint: disable-next=consider-using-with
