@@ -1474,7 +1474,6 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   LOG.info("Reading link metadata files...")
   chain_link_dict = load_links_for_layout(layout, link_dir_path)
 
-  # TODO: Add DSSE support for verify_link_signature_thresholds
   LOG.info("Verifying link metadata signatures...")
   chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
 

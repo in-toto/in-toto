@@ -375,8 +375,9 @@ class AnyMetadata(SerializationMixin, JSONSerializable):
     return self.metadata.to_dict()
 
   def verify_signatures(self, keys_dict):
-    """Iteratively verifies the signatures of a Metablock object containing
-      a Layout object for every verification key in the passed keys dictionary.
+    """Iteratively verifies the signatures of metadata object containing a Link
+      or Layout object for every verification key in the passed keys
+      dictionary.
 
       Requires at least one key to be passed and requires every passed key to
       find a valid signature.
@@ -387,10 +388,10 @@ class AnyMetadata(SerializationMixin, JSONSerializable):
               securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
 
     Exceptions:
-      securesystemslib.exceptions.FormatError
+      securesystemslib.exceptions.FormatError:
         if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
 
-      SignatureVerificationError
+      securesystemslib.exceptions.SignatureVerificationError:
         if an empty verification key dictionary was passed, or
         if any of the passed verification keys fails to verify a signature.
 
@@ -411,6 +412,7 @@ class AnyMetadata(SerializationMixin, JSONSerializable):
         elif securesystemslib.formats.ANYKEY_SCHEMA.matches(key):
           keys.append(SSlibKey.from_securesystemslib_key(key))
 
+      # Verify the metadata.
       self.metadata.verify(keys, len(keys))
 
     else:

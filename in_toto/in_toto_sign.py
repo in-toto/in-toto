@@ -165,6 +165,7 @@ def _verify_metadata(metadata, args):
       pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
 
+    LOG.info("Verifying metadata signatures against keys in `pub_key_dict`...")
     AnyMetadata(metadata).verify_signatures(pub_key_dict)
 
     sys.exit(0)
