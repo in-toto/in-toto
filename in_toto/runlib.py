@@ -44,12 +44,14 @@ import in_toto.exceptions
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB, Link)
-from in_toto.models.metadata import AnyMetadata, Metablock
+from in_toto.models.metadata import (Metablock, MetadataLoader,
+    verify_signatures)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
+from securesystemslib.metadata import Envelope
 from securesystemslib.serialization import JSONSerializer
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
@@ -987,7 +989,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     unfinished_fn = unfinished_fn_list[0]
 
   LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link_metadata = AnyMetadata.from_file(unfinished_fn)
+  link_metadata = MetadataLoader.from_file(unfinished_fn)
 
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
@@ -1017,12 +1019,11 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
         keyid, gpg_home)
     verification_key = gpg_pubkey
 
-  metadata = AnyMetadata(link_metadata)
-  metadata.verify_signatures({keyid: verification_key})
+  verify_signatures(link_metadata, {keyid: verification_key})
 
   LOG.info("Extracting Link from metadata...")
-  link = metadata.extract(Link)
-  use_dsse = metadata.dsse
+  link = link_metadata.deserialize_payload(Link)
+  use_dsse = isinstance(link_metadata, Envelope)
 
   # Record products if a product path list was passed
   if product_list:

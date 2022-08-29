@@ -39,7 +39,8 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
-from in_toto.models.metadata import Metablock, AnyMetadata
+from in_toto.models.metadata import (Metablock, MetadataLoader,
+    verify_signatures)
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.rulelib
@@ -47,6 +48,7 @@ import in_toto.rulelib
 import securesystemslib.formats
 from securesystemslib.exceptions import SignatureVerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
+from securesystemslib.metadata import Envelope
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -150,7 +152,7 @@ def load_links_for_layout(layout, link_dir_path):
         filepath = os.path.join(link_dir_path, filename)
 
         try:
-          metadata = AnyMetadata.from_file(filepath)
+          metadata = MetadataLoader.from_file(filepath)
           links_per_step[keyid] = metadata
 
         except IOError:
@@ -437,8 +439,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
 
       # Verify signature and skip invalidly signed links
       try:
-        AnyMetadata(link).verify_signatures(
-            {verification_key["keyid"]: verification_key})
+        verify_signatures(link,  {verification_key["keyid"]: verification_key})
 
       except SignatureVerificationError:
         LOG.info("Skipping link. Broken link signature with keyid '{0}'"
@@ -1266,7 +1267,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
 
     for keyid, link in key_link_dict.items():
 
-      if AnyMetadata(link).match_payload(in_toto.models.layout.Layout):
+      if link.match_payload(in_toto.models.layout.Layout):
 
         LOG.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
@@ -1306,7 +1307,7 @@ def get_links(chain_link_dict):
     new_key_link_dict = {}
 
     for keyid, link in key_link_dict.items():
-      new_key_link_dict[keyid] = AnyMetadata(link).extract(
+      new_key_link_dict[keyid] = link.deserialize_payload(
           in_toto.models.link.Link)
 
     new_chain_link_dict[key] = new_key_link_dict
@@ -1451,17 +1452,15 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     useful during recursive sublayout verification.
 
   """
-  metadata = AnyMetadata(layout)
-
   LOG.info("Verifying layout signatures...")
-  metadata.verify_signatures(layout_key_dict)
+  verify_signatures(layout, layout_key_dict)
+  use_dsse = isinstance(layout, Envelope)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
   # container (Metablock) that also carries the signatures
   LOG.info("Extracting layout from metadata...")
-  layout = metadata.extract(in_toto.models.layout.Layout)
-  use_dsse = metadata.dsse
+  layout = layout.deserialize_payload(in_toto.models.layout.Layout)
 
   LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)

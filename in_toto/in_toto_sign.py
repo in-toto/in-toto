@@ -28,7 +28,7 @@ import logging
 
 from in_toto.models.layout import Layout
 from in_toto.models.link import FILENAME_FORMAT, Link
-from in_toto.models.metadata import AnyMetadata
+from in_toto.models.metadata import MetadataLoader, verify_signatures
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
@@ -102,11 +102,9 @@ def _sign_and_dump_metadata(metadata, args):
         signature = metadata.sign(SSlibSigner(key))
 
     _type = None
-    any_metadata = AnyMetadata(metadata)
-    if any_metadata.match_payload(Link):
+    if metadata.match_payload(Link):
       _type = "link"
-      link = any_metadata.extract(Link)
-    elif any_metadata.match_payload(Layout):
+    elif metadata.match_payload(Layout):
       _type = "layout"
 
     # If `--output` was specified we store the signed link or layout metadata
@@ -118,6 +116,7 @@ def _sign_and_dump_metadata(metadata, args):
     # name and the keyid of the created signature (there is only one for links)
     elif _type == "link":
       keyid = signature.keyid
+      link = metadata.deserialize_payload(Link)
       out_path = FILENAME_FORMAT.format(step_name=link.name, keyid=keyid)
 
     # In case of layouts we just override the input file.
@@ -166,7 +165,7 @@ def _verify_metadata(metadata, args):
           args.gpg, args.gpg_home)
 
     LOG.info("Verifying metadata signatures against keys in `pub_key_dict`...")
-    AnyMetadata(metadata).verify_signatures(pub_key_dict)
+    verify_signatures(metadata, pub_key_dict)
 
     sys.exit(0)
 
@@ -197,7 +196,7 @@ def _load_metadata(file_path):
 
   """
   try:
-    return AnyMetadata.from_file(file_path)
+    return MetadataLoader.from_file(file_path)
 
   except Exception as e:
     LOG.error("The following error occurred while loading the file '{}': "
@@ -355,7 +354,7 @@ def main():
   metadata = _load_metadata(args.file)
 
   # Specific command line argument restrictions if we deal with links
-  if AnyMetadata(metadata).match_payload(Link):
+  if metadata.match_payload(Link):
     # Above we check that it's either `--key ...` or `--gpg ...`
     # Here we check that it is not more than one in each case when dealing
     # with links
