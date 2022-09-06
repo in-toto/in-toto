@@ -26,9 +26,8 @@ import sys
 import argparse
 import logging
 
-from in_toto.models.layout import Layout
-from in_toto.models.link import FILENAME_FORMAT, Link
-from in_toto.models.metadata import MetadataLoader, verify_signatures
+from in_toto.models.link import FILENAME_FORMAT
+from in_toto.models.metadata import AnyMetadata
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
@@ -40,6 +39,7 @@ import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
+from securesystemslib.key import GPGKey, SSlibKey
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
 
@@ -82,7 +82,8 @@ def _sign_and_dump_metadata(metadata, args):
       # Otherwise we sign with each passed keyid
       for keyid in args.gpg:
         securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-        signature = metadata.create_sig(GPGSigner(keyid, homedir=args.gpg_home))
+        signature = metadata.create_sig(
+            GPGSigner(keyid, homedir=args.gpg_home))
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH
     # ...` load the corresponding key from disk and sign with it
@@ -101,11 +102,8 @@ def _sign_and_dump_metadata(metadata, args):
             key_path, key_type=args.key_type[idx], prompt=args.prompt)
         signature = metadata.create_sig(SSlibSigner(key))
 
-    _type = None
-    if metadata.match_payload(Link):
-      _type = "link"
-    elif metadata.match_payload(Layout):
-      _type = "layout"
+    payload = metadata.get_payload()
+    _type = payload.type_
 
     # If `--output` was specified we store the signed link or layout metadata
     # to that location no matter what
@@ -116,8 +114,7 @@ def _sign_and_dump_metadata(metadata, args):
     # name and the keyid of the created signature (there is only one for links)
     elif _type == "link":
       keyid = signature.keyid
-      link = metadata.deserialize_payload(Link)
-      out_path = FILENAME_FORMAT.format(step_name=link.name, keyid=keyid)
+      out_path = FILENAME_FORMAT.format(step_name=payload.name, keyid=keyid)
 
     # In case of layouts we just override the input file.
     elif _type == "layout": # pragma: no branch
@@ -152,20 +149,28 @@ def _verify_metadata(metadata, args):
 
   """
   try:
-    pub_key_dict = {}
+    keys = []
 
     # Load pubkeys from disk ....
     if args.key is not None:
       pub_key_dict = interface.import_publickeys_from_file(args.key,
           args.key_type)
+      keys = [
+        SSlibKey.from_securesystemslib_key(key)
+        for key in list(pub_key_dict.values())
+      ]
 
     # ... or from gpg keyring
     elif args.gpg is not None: # pragma: no branch
       pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
+      keys = [
+        GPGKey.from_dict(key)
+        for key in list(pub_key_dict.values())
+      ]
 
     LOG.info("Verifying metadata signatures against keys in `pub_key_dict`...")
-    verify_signatures(metadata, pub_key_dict)
+    metadata.verify_sigs(keys, len(keys))
 
     sys.exit(0)
 
@@ -196,7 +201,7 @@ def _load_metadata(file_path):
 
   """
   try:
-    return MetadataLoader.from_file(file_path)
+    return AnyMetadata.from_file(file_path)
 
   except Exception as e:
     LOG.error("The following error occurred while loading the file '{}': "
@@ -354,7 +359,8 @@ def main():
   metadata = _load_metadata(args.file)
 
   # Specific command line argument restrictions if we deal with links
-  if metadata.match_payload(Link):
+  payload = metadata.get_payload()
+  if payload.type_ == "link":
     # Above we check that it's either `--key ...` or `--gpg ...`
     # Here we check that it is not more than one in each case when dealing
     # with links

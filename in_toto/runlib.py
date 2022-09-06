@@ -43,15 +43,14 @@ import in_toto.settings
 import in_toto.exceptions
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB, Link)
-from in_toto.models.metadata import (Metablock, MetadataLoader,
-    verify_signatures)
+    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
+from in_toto.models.metadata import (AnyMetadata, Metablock)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
-from securesystemslib.metadata import Envelope
+from securesystemslib.key import SSlibKey, GPGKey
 from securesystemslib.serialization import JSONSerializer
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
@@ -989,7 +988,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     unfinished_fn = unfinished_fn_list[0]
 
   LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link_metadata = MetadataLoader.from_file(unfinished_fn)
+  link_metadata = AnyMetadata.from_file(unfinished_fn)
 
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
@@ -997,14 +996,14 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     LOG.info(
         "Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
-    verification_key = signing_key
+    verification_key = SSlibKey.from_securesystemslib_key(signing_key)
 
   elif gpg_keyid:
     LOG.info("Verifying preliminary link signature using passed gpg key...")
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
-    verification_key = gpg_pubkey
+    verification_key = GPGKey.from_dict(gpg_pubkey)
 
   else: # must be gpg_use_default
     # FIXME: Currently there is no way to know the default GPG key's keyid
@@ -1017,13 +1016,13 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     keyid = link_metadata.signatures[0]["keyid"]
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         keyid, gpg_home)
-    verification_key = gpg_pubkey
+    verification_key = GPGKey.from_dict(gpg_pubkey)
 
-  verify_signatures(link_metadata, {keyid: verification_key})
+  link_metadata.verify_sigs([verification_key], 1)
 
   LOG.info("Extracting Link from metadata...")
-  link = link_metadata.deserialize_payload(Link)
-  use_dsse = isinstance(link_metadata, Envelope)
+  link = link_metadata.get_payload()
+  use_metablock = isinstance(link_metadata, Metablock)
 
   # Record products if a product path list was passed
   if product_list:
@@ -1034,12 +1033,12 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
 
-  if use_dsse:
-    LOG.info("Generating link metadata using DSSE...")
-    link_metadata = link.create_envelope()
-  else:
+  if use_metablock:
     LOG.info("Generating link metadata using Metablock...")
     link_metadata = Metablock(signed=link)
+  else:
+    LOG.info("Generating link metadata using DSSE...")
+    link_metadata = link.create_envelope()
 
   if signing_key:
     LOG.info("Updating signature with key '{:.8}...'...".format(keyid))

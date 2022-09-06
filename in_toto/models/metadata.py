@@ -23,26 +23,86 @@
 """
 
 import attr
+import copy
 import json
-from typing import List, Union
+from typing import Optional, List, Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
 from securesystemslib.key import Key
-from securesystemslib.metadata import Envelope
-from securesystemslib.signer import Signer
+from securesystemslib.metadata import Envelope as SSlibEnvelope
+from securesystemslib.signer import GPGSignature, Signature, Signer
 from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
-     JSONDeserializer, JSONSerializable, JSONSerializer, SerializationMixin)
+    JSONDeserializer, JSONSerializer, SerializationMixin)
+from in_toto.exceptions import InvalidMetadata
 
 from in_toto.models.common import ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
-from in_toto.exceptions import InvalidMetadata
+
+
+class AnyMetadataDeserializer(JSONDeserializer):
+  """Deserialize bytes into Metablock / DSSE Envelope."""
+
+  def deserialize(self, raw_data: bytes) -> Union["Envelope", "Metablock"]:
+    """Deserialize JSON bytes into Metablock or Envelope as per ITE-5. """
+
+    data = super().deserialize(raw_data)
+
+    if "payload" in data:
+      if data.get("payloadType") == "application/vnd.in-toto+json":
+        return Envelope.from_dict(data)
+
+    elif "signed" in data:
+      return Metablock.from_dict(data)
+
+    raise InvalidMetadata
+
+
+class AnyMetadata(SerializationMixin):
+  """A Metadata abstraction between DSSE Envelope and Metablock."""
+
+  @staticmethod
+  def default_deserializer() -> BaseDeserializer:
+    return AnyMetadataDeserializer()
+
+  @staticmethod
+  def default_serializer() -> BaseSerializer:
+    return JSONSerializer()
+
+
+class PayloadDeserializer(JSONDeserializer):
+  """Deserialize JSON bytes into Link or Layout."""
+
+  def deserialize(self, raw_data: bytes) -> Union[Link, Layout]:
+    data = super().deserialize(raw_data)
+    _type = data.get("_type")
+    if _type == "link":
+      return Link.read(data)
+    if _type == "layout":
+      return Layout.read(data)
+
+    raise securesystemslib.exceptions.DeserializationError(
+      f"Invalid payload type {_type}, must be `link` or `layout`"
+    )
+
+
+class Envelope(AnyMetadata, SSlibEnvelope):
+  """in-toto copy of DSSE Envelope."""
+
+  def get_payload(self, deserializer: Optional[BaseDeserializer] = None
+  ) -> Union[Link, Layout]:
+
+    if deserializer is None:
+      deserializer = PayloadDeserializer()
+
+    return super().get_payload(deserializer)
+
 
 @attr.s(repr=False, init=False)
-class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
+class Metablock(ValidationMixin, AnyMetadata):
   """A container for signed in-toto metadata.
 
   Provides methods for metadata JSON (de-)serialization, reading from and
@@ -83,15 +143,6 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
         separators=separators,
         sort_keys=True
       )
-
-
-  @staticmethod
-  def default_serializer() -> BaseSerializer:
-    return JSONSerializer()
-
-  @staticmethod
-  def default_deserializer() -> BaseDeserializer:
-    return JSONDeserializer()
 
 
   @classmethod
@@ -295,6 +346,9 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
       elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
         signature = Signature.from_dict(copy.deepcopy(signature))
 
+      else:
+        raise securesystemslib.exceptions.SignatureVerificationError
+
       for key in keys:
         # If Signature keyid doesn't match with Key, skip.
         if not key.match_keyid(signature.keyid):
@@ -407,26 +461,3 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
     """Returns signed of the Metablock."""
 
     return self.signed
-
-
-# pylint: disable-next=abstract-method
-class MetadataLoader(SerializationMixin, JSONSerializable):
-  """A Metadata Loader to load DSSE and Metablock metadata."""
-
-  @staticmethod
-  def default_deserializer() -> BaseDeserializer:
-    return JSONDeserializer()
-
-  @classmethod
-  def from_dict(cls, data: dict) -> Union[Envelope, Metablock]:
-    """Creates an Envelope/ Metablock object from their JSON/dict
-    representation.
-    """
-
-    if "payload" in data:
-      if data.get("payloadType") == "application/vnd.in-toto+json":
-        return Envelope.from_dict(data)
-    elif "signed" in data:
-      return Metablock.from_dict(data)
-
-    raise InvalidMetadata

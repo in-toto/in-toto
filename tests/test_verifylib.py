@@ -36,7 +36,6 @@ import securesystemslib.gpg.functions
 from dateutil.relativedelta import relativedelta
 from securesystemslib.interface import (import_publickeys_from_file,
     import_rsa_privatekey_from_file, import_rsa_publickey_from_file)
-from securesystemslib.signer import SSlibSigner
 
 import in_toto.exceptions
 import in_toto.settings
@@ -938,7 +937,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_layout_signatures_fail_with_no_keys(self):
     """Layout signature verification fails when no keys are passed. """
     layout_metablock = Metablock(signed=Layout())
-    with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
+    with self.assertRaises(ValueError):
       in_toto_verify(layout_metablock, {})
 
   def test_verify_layout_signatures_fail_with_malformed_signature(self):
@@ -952,15 +951,6 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     layout_metablock.signed.signatures = [signature]
     with self.assertRaises(securesystemslib.exceptions.SignatureVerificationError):
       in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
-
-  def test_verify_layout_signatures_for_envelope(self):
-    """Layout signature verification for DSSE envelope."""
-    layout_metadata = Layout().create_envelope()
-    layout_metadata.create_sig(SSlibSigner(self.alice))
-    pubkey = copy.deepcopy(self.alice)
-    pubkey["keyval"]["private"] = ""
-
-    in_toto_verify(layout_metadata, {self.alice["keyid"]: pubkey})
 
 
 

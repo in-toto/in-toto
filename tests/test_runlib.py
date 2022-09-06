@@ -31,7 +31,7 @@ import subprocess
 
 import in_toto.settings
 import in_toto.exceptions
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import Envelope, Metablock
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
     _hash_artifact, _subprocess_run_duplicate_streams)
@@ -44,7 +44,6 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib.key import SSlibKey
-from securesystemslib.metadata import Envelope
 
 from tests.common import TmpDirMixin
 from pathlib import Path
@@ -778,8 +777,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     link_metadata = in_toto_run(self.step_name, None, None,
         ["python", "--version"], True, self.key, use_dsse=True)
-    self.assertIsInstance(link_metadata, Envelope)
-    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_sigs([SSlibKey.from_securesystemslib_key(self.key)], 1)
 
 
 class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
@@ -838,7 +836,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key, use_dsse=True)
     link_metadata = Envelope.from_file(self.link_name_unfinished)
-    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_sigs([SSlibKey.from_securesystemslib_key(self.key)], 1)
     os.remove(self.link_name_unfinished)
 
 class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
@@ -1018,9 +1016,9 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
 
     link_metadata = Envelope.from_file(self.link_name)
-    link_metadata.verify([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_sigs([SSlibKey.from_securesystemslib_key(self.key)], 1)
 
-    link = link_metadata.deserialize_payload(in_toto.models.link.Link)
+    link = link_metadata.get_payload()
     self.assertEqual(list(link.products.keys()), [self.test_product])
     os.remove(self.link_name)
 

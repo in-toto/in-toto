@@ -39,8 +39,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
-from in_toto.models.metadata import (Metablock, MetadataLoader,
-    verify_signatures)
+from in_toto.models.metadata import (Metablock, AnyMetadata)
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.rulelib
@@ -48,7 +47,7 @@ import in_toto.rulelib
 import securesystemslib.formats
 from securesystemslib.exceptions import SignatureVerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
-from securesystemslib.metadata import Envelope
+from securesystemslib.key import GPGKey, SSlibKey
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ def load_links_for_layout(layout, link_dir_path):
         filepath = os.path.join(link_dir_path, filename)
 
         try:
-          metadata = MetadataLoader.from_file(filepath)
+          metadata = AnyMetadata.from_file(filepath)
           links_per_step[keyid] = metadata
 
         except IOError:
@@ -439,7 +438,13 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
 
       # Verify signature and skip invalidly signed links
       try:
-        verify_signatures(link,  {verification_key["keyid"]: verification_key})
+        if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(
+            verification_key):
+          keys = [GPGKey.from_dict(verification_key)]
+        elif securesystemslib.formats.KEY_SCHEMA.matches(verification_key):
+          keys = [SSlibKey.from_securesystemslib_key(verification_key)]
+
+        link.verify_sigs(keys, 1)
 
       except SignatureVerificationError:
         LOG.info("Skipping link. Broken link signature with keyid '{0}'"
@@ -1267,7 +1272,9 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
 
     for keyid, link in key_link_dict.items():
 
-      if link.match_payload(in_toto.models.layout.Layout):
+      payload = link.get_payload()
+
+      if payload.type_ == "layout":
 
         LOG.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
@@ -1307,15 +1314,18 @@ def get_links(chain_link_dict):
     new_key_link_dict = {}
 
     for keyid, link in key_link_dict.items():
-      new_key_link_dict[keyid] = link.deserialize_payload(
-          in_toto.models.link.Link)
+      new_key_link_dict[keyid] = link.get_payload()
 
     new_chain_link_dict[key] = new_key_link_dict
 
   return new_chain_link_dict
 
 
-def get_summary_link(layout, reduced_chain_link_dict, name, use_dsse=False):
+def get_summary_link(
+  layout,
+  reduced_chain_link_dict,
+  name,
+  use_metablock=True):
   """
   <Purpose>
     Merges the materials of the first step (as mentioned in the layout)
@@ -1340,6 +1350,9 @@ def get_summary_link(layout, reduced_chain_link_dict, name, use_dsse=False):
             }
     name:
             The name that the summary link will be associated with.
+
+    use_metablock:
+            Use metablock to generate metadata.
 
   <Exceptions>
     None.
@@ -1368,10 +1381,10 @@ def get_summary_link(layout, reduced_chain_link_dict, name, use_dsse=False):
     summary_link.byproducts = last_step_link.byproducts
     summary_link.command = last_step_link.command
 
-  if use_dsse:
-    return summary_link.create_envelope()
+  if use_metablock:
+    return Metablock(signed=summary_link)
 
-  return Metablock(signed=summary_link)
+  return summary_link.create_envelope()
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
@@ -1452,15 +1465,22 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     useful during recursive sublayout verification.
 
   """
+  keys = []
+  for key in list(layout_key_dict.values()):
+    if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
+      keys.append(GPGKey.from_dict(key))
+    elif securesystemslib.formats.KEY_SCHEMA.matches(key):
+      keys.append(SSlibKey.from_securesystemslib_key(key))
+
   LOG.info("Verifying layout signatures...")
-  verify_signatures(layout, layout_key_dict)
-  use_dsse = isinstance(layout, Envelope)
+  layout.verify_sigs(keys, len(keys))
+  use_metablock = isinstance(layout, Metablock)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
   # container (Metablock) that also carries the signatures
   LOG.info("Extracting layout from metadata...")
-  layout = layout.deserialize_payload(in_toto.models.layout.Layout)
+  layout = layout.get_payload()
 
   LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
@@ -1511,4 +1531,5 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded
   # in another supply chain
-  return get_summary_link(layout, reduced_chain_link_dict, step_name, use_dsse)
+  return get_summary_link(layout, reduced_chain_link_dict, step_name,
+      use_metablock)

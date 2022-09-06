@@ -33,7 +33,7 @@ from in_toto import verifylib
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups, OPTS_TITLE)
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import AnyMetadata
 from in_toto import (
     __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
     KEY_TYPE_ECDSA)
@@ -176,7 +176,7 @@ def main():
 
   try:
     LOG.info("Loading layout...")
-    layout = Metablock.load(args.layout)
+    layout = AnyMetadata.from_file(args.layout)
 
     layout_key_dict = {}
     if args.layout_keys is not None:
