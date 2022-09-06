@@ -77,12 +77,12 @@ def _sign_and_dump_metadata(metadata, args):
       # If `--gpg` was passed without argument we sign with the default key
       # Excluded so that coverage does not vary in different test environments
       if len(args.gpg) == 0: # pragma: no cover
-        signature = metadata.sign(GPGSigner(None, homedir=args.gpg_home))
+        signature = metadata.create_sig(GPGSigner(None, homedir=args.gpg_home))
 
       # Otherwise we sign with each passed keyid
       for keyid in args.gpg:
         securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-        signature = metadata.sign(GPGSigner(keyid, homedir=args.gpg_home))
+        signature = metadata.create_sig(GPGSigner(keyid, homedir=args.gpg_home))
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH
     # ...` load the corresponding key from disk and sign with it
@@ -99,7 +99,7 @@ def _sign_and_dump_metadata(metadata, args):
       for idx, key_path in enumerate(args.key):
         key = interface.import_privatekey_from_file(
             key_path, key_type=args.key_type[idx], prompt=args.prompt)
-        signature = metadata.sign(SSlibSigner(key))
+        signature = metadata.create_sig(SSlibSigner(key))
 
     _type = None
     if metadata.match_payload(Link):

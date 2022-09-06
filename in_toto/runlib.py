@@ -689,7 +689,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   # We need the signature's keyid to write the link to keyid infix'ed filename
   if signer:
-    signature = link_metadata.sign(signer)
+    signature = link_metadata.create_sig(signer)
     signing_keyid = signature.keyid
 
     filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
@@ -844,7 +844,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     LOG.info("Signing link metadata using default GPG key ...")
     signer = GPGSigner(keyid=None, homedir=gpg_home)
 
-  signature = link_metadata.sign(signer)
+  signature = link_metadata.create_sig(signer)
   # We need the signature's keyid to write the link to keyid infix'ed filename
   signing_keyid = signature.keyid
 
@@ -1051,7 +1051,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
     signer = GPGSigner(keyid=keyid, homedir=gpg_home)
 
-  link_metadata.sign(signer)
+  link_metadata.create_sig(signer)
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
 
   if metadata_directory is not None:

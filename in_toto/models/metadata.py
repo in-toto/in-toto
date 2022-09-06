@@ -24,13 +24,13 @@
 
 import attr
 import json
-from typing import Type, Union
+from typing import List, Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
-from securesystemslib.key import GPGKey, SSlibKey
+from securesystemslib.key import Key
 from securesystemslib.metadata import Envelope
 from securesystemslib.signer import Signer
 from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
@@ -169,7 +169,7 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
     return self.signed.type_
 
 
-  def sign(self, signer: Signer):
+  def create_sig(self, signer: Signer):
     """Creates signature over signable with Signer and adds it to signatures.
 
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
@@ -194,7 +194,7 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
 
     return signature
 
-  def sign_key(self, key):
+  def sign(self, key):
     """Creates signature over signable with key and adds it to signatures.
 
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
@@ -254,6 +254,68 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
     self.signatures.append(signature)
 
     return signature
+
+
+  def verify_sigs(self, keys: List[Key], threshold):
+    """Verifies signature over signable in signatures with a list of keys.
+
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to verify the signature deterministically.
+
+    Arguments:
+        keys: A list of public keys to verify the signatures.
+        threshold: Number of signatures needed to pass the verification.
+
+    Raises:
+        ValueError: If "threshold" is not valid.
+        SignatureVerificationError: If the enclosed signatures do not pass
+            the verification.
+
+    Returns:
+        accepted_keys: A dict of unique public keys.
+    """
+
+    accepted_keys = {}
+    pae = self.signed.signable_bytes
+
+    # checks for threshold value.
+    if threshold <= 0:
+      raise ValueError("Threshold must be greater than 0")
+
+    if len(keys) < threshold:
+      raise ValueError("Number of keys can't be less than threshold")
+
+    for signature in self.signatures:
+
+      # GPGSignature/ Signature from_dict method destroys the signature dict,
+      # Hence, deepcopy of signature is created.
+      if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
+        signature = GPGSignature.from_dict(copy.deepcopy(signature))
+
+      elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
+        signature = Signature.from_dict(copy.deepcopy(signature))
+
+      for key in keys:
+        # If Signature keyid doesn't match with Key, skip.
+        if not key.match_keyid(signature.keyid):
+          continue
+
+        # If a key verifies the signature, we exit and use the result.
+        if key.verify(signature, pae):
+          accepted_keys[key.keyid] = key
+          break
+
+      # Break, if amount of recognized_signer are more than threshold.
+      if len(accepted_keys) >= threshold:
+        break
+
+    if threshold > len(accepted_keys):
+      raise securesystemslib.exceptions.SignatureVerificationError(
+          "Accepted signatures do not match threshold,"
+          f" Found: {len(accepted_keys)}, Expected {threshold}"
+      )
+
+    return accepted_keys
 
 
   def verify_signature(self, verification_key):
@@ -341,92 +403,10 @@ class Metablock(ValidationMixin, SerializationMixin, JSONSerializable):
     for signature in self.signatures:
       securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
 
-  def deserialize_payload(self, class_type: Type):
-    """Returns signed after checking class_type.
+  def get_payload(self):
+    """Returns signed of the Metablock."""
 
-    This method is used to provide similar interface to DSSE Envelope which
-    requires payload parsing in process to return Link or Layout object.
-
-    Arguments:
-      class_type: The class to be deserialized.
-
-    Raises:
-      securesystemslib.exceptions.DeserializationError: If deserialization
-          fails.
-
-    Returns:
-      The deserialized object of payload.
-    """
-
-    if isinstance(self.signed, class_type):
-      return self.signed
-
-    raise securesystemslib.exceptions.DeserializationError(
-        "Failed to deserialize signed")
-
-  def match_payload(self, _type: Type):
-    """Matches the type of signed with the provided argument.
-
-    Arguments:
-      _type: class_type of the required form.
-
-    Returns:
-      Boolean. Indicating the type matched.
-    """
-
-    return isinstance(self.signed, _type)
-
-
-def verify_signatures(metadata, keys_dict):
-  """Iteratively verifies the signatures of metadata object containing a Link
-    or Layout object for every verification key in the passed keys
-    dictionary.
-
-    Requires at least one key to be passed and requires every passed key to
-    find a valid signature.
-
-  Arguments:
-    keys_dict:
-            A dictionary of keys to verify the signatures conformant with
-            securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
-
-  Exceptions:
-    securesystemslib.exceptions.FormatError:
-      if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
-
-    securesystemslib.exceptions.SignatureVerificationError:
-      if an empty verification key dictionary was passed, or
-      if any of the passed verification keys fails to verify a signature.
-
-    securesystemslib.gpg.exceptions.KeyExpirationError:
-      if any of the passed verification keys is an expired gpg key
-
-  """
-  securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(
-      keys_dict)
-
-  if isinstance(metadata, Envelope):
-    keys = []
-
-    # Convert into SSlibKey and GPGKey from keys_dict.
-    for _, key in keys_dict.items():
-      if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
-        keys.append(GPGKey.from_dict(key))
-      elif securesystemslib.formats.ANYKEY_SCHEMA.matches(key):
-        keys.append(SSlibKey.from_securesystemslib_key(key))
-
-    # Verify the metadata.
-    metadata.verify(keys, len(keys))
-
-  else:
-    # Fail if an empty verification key dictionary was passed
-    if len(keys_dict) < 1:
-      raise securesystemslib.exceptions.SignatureVerificationError(
-        "Layout signature verification requires at least one key.")
-
-    # Fail if any of the passed keys can't verify a signature on the Layout
-    for _, verify_key in keys_dict.items():
-      metadata.verify_signature(verify_key)
+    return self.signed
 
 
 # pylint: disable-next=abstract-method
