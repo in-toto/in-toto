@@ -25,8 +25,6 @@ import attr
 import inspect
 import securesystemslib.formats
 
-from securesystemslib.metadata import Envelope
-
 
 
 class ValidationMixin(object):
@@ -64,11 +62,14 @@ class Signable(ValidationMixin):
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
 
-  def create_envelope(self) -> Envelope:
+  def create_envelope(self):
     """Create a DSSE envelope with signable bytes as payload."""
+
+    # pylint: disable-next=import-outside-toplevel
+    from in_toto.models.metadata import Envelope, ENVELOPE_PAYLOAD_TYPE
 
     return Envelope(
       payload=self.signable_bytes,
-      payload_type="application/vnd.in-toto+json",
+      payload_type=ENVELOPE_PAYLOAD_TYPE,
       signatures=[]
     )
