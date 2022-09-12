@@ -31,6 +31,7 @@ import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
+from securesystemslib.exceptions import SignatureVerificationError
 from securesystemslib.key import Key
 from securesystemslib.metadata import Envelope as SSlibEnvelope
 from securesystemslib.signer import GPGSignature, Signature, Signer
@@ -50,12 +51,12 @@ class AnyMetadata(SerializationMixin):
   """A Metadata abstraction between DSSE Envelope and Metablock."""
 
   @staticmethod
-  def default_deserializer() -> BaseDeserializer:
+  def _default_deserializer() -> BaseDeserializer:
     from in_toto.models.serialization import AnyMetadataDeserializer
     return AnyMetadataDeserializer()
 
   @staticmethod
-  def default_serializer() -> BaseSerializer:
+  def _default_serializer() -> BaseSerializer:
     return JSONSerializer()
 
 
@@ -222,7 +223,7 @@ class Metablock(ValidationMixin, AnyMetadata):
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
     attribute to create signatures deterministically.
 
-    Arguments:
+    Attributes:
       key: A signing key. The format is securesystemslib.formats.KEY_SCHEMA.
 
     Raises:
@@ -235,7 +236,6 @@ class Metablock(ValidationMixin, AnyMetadata):
       The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
 
     """
-
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key,
@@ -318,7 +318,7 @@ class Metablock(ValidationMixin, AnyMetadata):
         signature = Signature.from_dict(copy.deepcopy(signature))
 
       else:
-        raise securesystemslib.exceptions.SignatureVerificationError
+        raise SignatureVerificationError
 
       for key in keys:
         # If Signature keyid doesn't match with Key, skip.
@@ -335,7 +335,7 @@ class Metablock(ValidationMixin, AnyMetadata):
         break
 
     if threshold > len(accepted_keys):
-      raise securesystemslib.exceptions.SignatureVerificationError(
+      raise SignatureVerificationError(
           "Accepted signatures do not match threshold,"
           f" Found: {len(accepted_keys)}, Expected {threshold}"
       )
@@ -361,9 +361,9 @@ class Metablock(ValidationMixin, AnyMetadata):
     Raises:
       securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      securesystemslib.exceptions.SignatureVerificationError: No signature
-          keyid matches the verification key keyid, or the matching signature
-          is malformed, or the matching signature is invalid.
+      SignatureVerificationError: No signature keyid matches the verification
+          key keyid, or the matching signature is malformed, or the matching
+          signature is invalid.
 
       securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
           key is an expired gpg key.
@@ -385,8 +385,8 @@ class Metablock(ValidationMixin, AnyMetadata):
         break
 
     else:
-      raise securesystemslib.exceptions.SignatureVerificationError(
-        "No signature found for key '{}'".format(verification_keyid))
+      raise SignatureVerificationError("No signature found for key '{}'"
+          .format(verification_keyid))
 
     if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
       valid = securesystemslib.gpg.functions.verify_signature(signature,
@@ -400,8 +400,8 @@ class Metablock(ValidationMixin, AnyMetadata):
       valid = False
 
     if not valid:
-      raise securesystemslib.exceptions.SignatureVerificationError(
-        "Invalid signature for keyid '{}'".format(verification_keyid))
+      raise SignatureVerificationError("Invalid signature for keyid '{}'"
+          .format(verification_keyid))
 
 
   def _validate_signed(self):

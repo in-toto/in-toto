@@ -491,7 +491,7 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     from link.FILENAME_FORMAT_SHORT
 
   <Returns>
-    Newly created Metablock object containing a Link object
+    Newly created AnyMetadata object containing a Link object
 
   """
   link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
@@ -612,7 +612,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     Writes link metadata file to disk, if any key argument is passed.
 
   Returns:
-    A Metablock object that contains the resulting link object.
+    A AnyMetadata object that contains the resulting link object.
 
   """
   LOG.info("Running '{}'...".format(name))

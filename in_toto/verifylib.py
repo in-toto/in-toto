@@ -125,7 +125,8 @@ def load_links_for_layout(layout, link_dir_path):
 
     {
       <step name> : {
-        <functionary key id> : <Metablock containing a Link or Layout object>,
+        <functionary key id> : <AnyMetadata containing a Link or Layout
+                               object>,
         ...
       }, ...
     }
@@ -175,8 +176,7 @@ def run_all_inspections(layout, persist_inspection_links):
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
     iteratively runs each command defined in the Inspection's `run` field using
-    `runlib.in_toto_run`, which returns a Metablock object containing a Link
-    object.
+    `runlib.in_toto_run`, which returns a Link object.
 
     If a link command returns non-zero the verification is aborted.
 
@@ -197,7 +197,7 @@ def run_all_inspections(layout, persist_inspection_links):
 
     {
       <inspection name> : {
-        <Metablock containing a Link object>,
+        <Link object>,
         ...
       }, ...
     }
@@ -362,7 +362,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link or Layout
+                <functionary key id> : <AnyMetadata containing a Link or Layout
                                         object>,
                 ...
               }, ...
@@ -538,7 +538,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -597,7 +597,7 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a link object>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -968,7 +968,7 @@ def verify_item_rules(source_name, source_type, rules, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a link>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -1081,7 +1081,7 @@ def verify_all_item_rules(items, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -1120,7 +1120,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -1194,7 +1194,7 @@ def reduce_chain_links(chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -1229,6 +1229,9 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     the delegation and replaces the layout object in the chain_link_dict
     by an equivalent link object.
 
+    Link and Layout get extracted from AnyMetadata and replaced in
+    chain_link_dict.
+
   <Arguments>
     layout:
             The layout specified by the project owner.
@@ -1238,7 +1241,7 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link or Layout
+                <functionary key id> : <AnyMetadata containing a Link or Layout
                                           object>,
                 ...
               }, ...
@@ -1257,12 +1260,12 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     None.
 
   <Returns>
-    The passed dictionary containing link metadata per functionary per step,
-    with layouts replaced with summary links.
+    The passed dictionary containing Link objects instead of metadata per
+    functionary per step, with layouts replaced with summary links.
     e.g.:
     {
       <link name> : {
-        <functionary key id> : <Metablock containing a Link object>,
+        <functionary key id> : <Link object>,
         ...
       }, ...
     }
@@ -1345,7 +1348,7 @@ def get_summary_link(
             A dictionary containing link metadata per step,
             e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Link object>,
               ...
             }
     name:
@@ -1361,8 +1364,8 @@ def get_summary_link(
     None.
 
   <Returns>
-    A Metablock object containing a Link which summarizes the materials and
-    products of the overall software supply chain.
+    A Link object which summarizes the materials and products of the overall
+    software supply chain.
 
   """
   # Create empty link object
@@ -1411,7 +1414,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   11. Process inspection product and material rules
 
   Arguments:
-    layout: A Metablock object that contains a Layout object to be verified.
+    layout: A AnyMetadata object that contains a Layout object to be verified.
 
     layout_key_dict: A public key dictionary. The verification routine requires
         at least one key, and a valid signature on the layout for each key.
@@ -1460,9 +1463,9 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     Runs inspection commands in subprocess.
 
   Returns:
-    A Metablock object that contains a Link object, which summarizes the
-    materials and products of the overall software supply chain. This is mostly
-    useful during recursive sublayout verification.
+    A Link object, which summarizes the materials and products of the overall
+    software supply chain. This is mostly useful during recursive sublayout
+    verification.
 
   """
   keys = []

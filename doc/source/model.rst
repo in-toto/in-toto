@@ -28,14 +28,20 @@ Metablock
   :inherited-members:
   :members:
 
+Serialization
+-------------
+
+The in-toto serialization module provides serializer and deserializer classes
+for various models.
+
 AnyMetadataDeserializer
------------------------
+***********************
 .. autoclass:: in_toto.models.serialization.AnyMetadataDeserializer
   :inherited-members:
   :members:
 
 PayloadDeserializer
--------------------
+*******************
 .. autoclass:: in_toto.models.serialization.PayloadDeserializer
   :inherited-members:
   :members:
