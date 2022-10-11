@@ -28,12 +28,13 @@ import shutil
 import unittest
 
 import in_toto.settings
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import Envelope, Metablock
 from in_toto.models.layout import  Layout
 from in_toto.verifylib import in_toto_verify, substitute_parameters
 from securesystemslib.interface import (
     import_rsa_privatekey_from_file,
     import_publickeys_from_file)
+from securesystemslib.signer import SSlibSigner
 
 import in_toto.exceptions
 
@@ -182,6 +183,20 @@ class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
     """Do a simple substitution on the expected_command field"""
     signed_layout = Metablock(signed=self.layout)
     signed_layout.sign(self.alice)
+
+    # we will catch a LinkNotFound error because we don't have (and don't need)
+    # the metadata.
+    with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
+      in_toto_verify(signed_layout, self.alice_pub_dict,
+          substitution_parameters={"EDITOR":"vim"})
+
+    self.assertEqual(self.layout.steps[0].expected_command[0], "vim")
+
+  def test_substitute_for_envelope(self):
+    """Do a simple substitution on the expected_command field for DSSE
+    envelope."""
+    signed_layout = Envelope.from_signable(self.layout)
+    signed_layout.create_sig(SSlibSigner(self.alice))
 
     # we will catch a LinkNotFound error because we don't have (and don't need)
     # the metadata.
