@@ -44,7 +44,7 @@ import in_toto.exceptions
 
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
-from in_toto.models.metadata import (AnyMetadata, Metablock)
+from in_toto.models.metadata import (AnyMetadata, Envelope, Metablock)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -52,7 +52,7 @@ import securesystemslib.exceptions
 import securesystemslib.gpg
 from securesystemslib.key import SSlibKey, GPGKey
 from securesystemslib.serialization import JSONSerializer
-from securesystemslib.signer import GPGSigner, SSlibSigner
+from securesystemslib.signer import GPGSigner, SSlibSigner, Signature
 
 
 
@@ -1013,7 +1013,12 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     # accepts many different ids (mail, name, parts of an id, ...) but we
     # need a specific format.
     LOG.info("Verifying preliminary link signature using default gpg key...")
-    keyid = link_metadata.signatures[0]["keyid"]
+    # signatures are objects in DSSE.
+    sig = link_metadata.signatures[0]
+    if isinstance(sig, Signature):
+      keyid = sig.keyid
+    else:
+      keyid = sig["keyid"]
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         keyid, gpg_home)
     verification_key = GPGKey.from_dict(gpg_pubkey)
@@ -1022,7 +1027,6 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   LOG.info("Extracting Link from metadata...")
   link = link_metadata.get_payload()
-  use_metablock = isinstance(link_metadata, Metablock)
 
   # Record products if a product path list was passed
   if product_list:
@@ -1033,7 +1037,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
 
-  if use_metablock:
+  if isinstance(link_metadata, Metablock):
     LOG.info("Generating link metadata using Metablock...")
     link_metadata = Metablock(signed=link)
   else:

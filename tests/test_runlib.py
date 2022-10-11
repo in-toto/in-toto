@@ -777,6 +777,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     link_metadata = in_toto_run(self.step_name, None, None,
         ["python", "--version"], True, self.key, use_dsse=True)
+    self.assertIsInstance(link_metadata, Envelope)
     link_metadata.verify_sigs([SSlibKey.from_securesystemslib_key(self.key)], 1)
 
 

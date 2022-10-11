@@ -1685,14 +1685,14 @@ class TestGetSummaryLink(unittest.TestCase, TmpDirMixin):
     """Create summary link from demo link files and compare properties. """
     sum_link = get_summary_link(self.demo_layout.signed, self.demo_links, "")
 
-    self.assertEqual(sum_link.signed._type, self.code_link.signed._type)
-    self.assertEqual(sum_link.signed.name, "")
-    self.assertEqual(sum_link.signed.materials, self.code_link.signed.materials)
+    self.assertEqual(sum_link._type, self.code_link.signed._type)
+    self.assertEqual(sum_link.name, "")
+    self.assertEqual(sum_link.materials, self.code_link.signed.materials)
 
-    self.assertEqual(sum_link.signed.products, self.package_link.signed.products)
-    self.assertEqual(sum_link.signed.command, self.package_link.signed.command)
-    self.assertEqual(sum_link.signed.byproducts, self.package_link.signed.byproducts)
-    self.assertEqual(sum_link.signed.byproducts.get("return-value"),
+    self.assertEqual(sum_link.products, self.package_link.signed.products)
+    self.assertEqual(sum_link.command, self.package_link.signed.command)
+    self.assertEqual(sum_link.byproducts, self.package_link.signed.byproducts)
+    self.assertEqual(sum_link.byproducts.get("return-value"),
         self.package_link.signed.byproducts.get("return-value"))
 
 

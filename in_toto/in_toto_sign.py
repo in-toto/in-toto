@@ -39,8 +39,9 @@ import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
-from securesystemslib.key import GPGKey, SSlibKey
 from securesystemslib.signer import GPGSigner, SSlibSigner
+
+from in_toto.verifylib import create_key_list_from_key_dict
 
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -155,21 +156,14 @@ def _verify_metadata(metadata, args):
     if args.key is not None:
       pub_key_dict = interface.import_publickeys_from_file(args.key,
           args.key_type)
-      keys = [
-        SSlibKey.from_securesystemslib_key(key)
-        for key in list(pub_key_dict.values())
-      ]
 
     # ... or from gpg keyring
     elif args.gpg is not None: # pragma: no branch
       pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
-      keys = [
-        GPGKey.from_dict(key)
-        for key in list(pub_key_dict.values())
-      ]
 
-    LOG.info("Verifying metadata signatures against keys in `pub_key_dict`...")
+    keys = create_key_list_from_key_dict(pub_key_dict)
+    LOG.info("Verifying metadata signatures against keys...")
     metadata.verify_sigs(keys, len(keys))
 
     sys.exit(0)

@@ -55,6 +55,19 @@ LOG = logging.getLogger(__name__)
 RULE_TRACE = {}
 
 
+def create_key_list_from_key_dict(key_dict):
+  """Creates list of ``Key`` from key_dict."""
+
+  keys = []
+  for key in key_dict.values():
+    if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
+      keys.append(GPGKey.from_dict(key))
+    elif securesystemslib.formats.KEY_SCHEMA.matches(key):
+      keys.append(SSlibKey.from_securesystemslib_key(key))
+
+  return keys
+
+
 def _raise_on_bad_retval(return_value, command=None):
   """
   <Purpose>
@@ -438,12 +451,8 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
 
       # Verify signature and skip invalidly signed links
       try:
-        if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(
-            verification_key):
-          keys = [GPGKey.from_dict(verification_key)]
-        elif securesystemslib.formats.KEY_SCHEMA.matches(verification_key):
-          keys = [SSlibKey.from_securesystemslib_key(verification_key)]
-
+        keys = create_key_list_from_key_dict(
+            {authorized_keyid: verification_key})
         link.verify_sigs(keys, 1)
 
       except SignatureVerificationError:
@@ -1302,33 +1311,16 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
             link_dir_path=sublayout_link_dir_path, step_name=step_name)
 
         # Replace the layout object in the passed chain_link_dict
-        # with the link file returned by in-toto-verify
+        # with the link object returned by in-toto-verify
         key_link_dict[keyid] = summary_link
+
+      else:
+        key_link_dict[keyid] = payload
 
   return chain_link_dict
 
 
-def get_links(chain_link_dict):
-  """Extracts Link(s) form metadata."""
-
-  new_chain_link_dict = {}
-
-  for key, key_link_dict in chain_link_dict.items():
-    new_key_link_dict = {}
-
-    for keyid, link in key_link_dict.items():
-      new_key_link_dict[keyid] = link.get_payload()
-
-    new_chain_link_dict[key] = new_key_link_dict
-
-  return new_chain_link_dict
-
-
-def get_summary_link(
-  layout,
-  reduced_chain_link_dict,
-  name,
-  use_metablock=True):
+def get_summary_link(layout, reduced_chain_link_dict, name):
   """
   <Purpose>
     Merges the materials of the first step (as mentioned in the layout)
@@ -1384,10 +1376,7 @@ def get_summary_link(
     summary_link.byproducts = last_step_link.byproducts
     summary_link.command = last_step_link.command
 
-  if use_metablock:
-    return Metablock(signed=summary_link)
-
-  return summary_link.create_envelope()
+  return summary_link
 
 
 def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
@@ -1468,16 +1457,11 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     verification.
 
   """
-  keys = []
-  for key in list(layout_key_dict.values()):
-    if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
-      keys.append(GPGKey.from_dict(key))
-    elif securesystemslib.formats.KEY_SCHEMA.matches(key):
-      keys.append(SSlibKey.from_securesystemslib_key(key))
+
+  keys = create_key_list_from_key_dict(layout_key_dict)
 
   LOG.info("Verifying layout signatures...")
   layout.verify_sigs(keys, len(keys))
-  use_metablock = isinstance(layout, Metablock)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
@@ -1501,9 +1485,6 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
 
   LOG.info("Verifying sublayouts...")
   chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
-
-  LOG.info("Extracting Link(s) from metadata...")
-  chain_link_dict = get_links(chain_link_dict)
 
   LOG.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
@@ -1534,5 +1515,4 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   # Return a link file which summarizes the entire software supply chain
   # This is mostly relevant if the currently verified supply chain is embedded
   # in another supply chain
-  return get_summary_link(layout, reduced_chain_link_dict, step_name,
-      use_metablock)
+  return get_summary_link(layout, reduced_chain_link_dict, step_name)
