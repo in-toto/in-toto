@@ -668,7 +668,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   if use_dsse:
     LOG.info("Generating link metadata using DSSE...")
-    link_metadata = link.create_envelope()
+    link_metadata = Envelope.from_signable(link)
   else:
     LOG.info("Generating link metadata using Metablock...")
     link_metadata = Metablock(signed=link, compact_json=compact_json)
@@ -826,7 +826,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   if use_dsse:
     LOG.info("Generating link metadata using DSSE...")
-    link_metadata = link.create_envelope()
+    link_metadata = Envelope.from_signable(link)
   else:
     LOG.info("Generating link metadata using Metablock...")
     link_metadata = Metablock(signed=link)
@@ -1042,7 +1042,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     link_metadata = Metablock(signed=link)
   else:
     LOG.info("Generating link metadata using DSSE...")
-    link_metadata = link.create_envelope()
+    link_metadata = Envelope.from_signable(link)
 
   if signing_key:
     LOG.info("Updating signature with key '{:.8}...'...".format(keyid))

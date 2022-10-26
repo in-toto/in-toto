@@ -25,6 +25,7 @@ import attr
 import inspect
 import securesystemslib.formats
 
+from securesystemslib.serialization import JSONSerializer
 
 
 class ValidationMixin(object):
@@ -62,14 +63,17 @@ class Signable(ValidationMixin):
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
 
-  def create_envelope(self):
-    """Create a DSSE envelope with signable bytes as payload."""
+  def to_bytes(self, serializer = None):
+    """Returns the JSON encoded bytes representation of self."""
 
-    # pylint: disable-next=import-outside-toplevel
-    from in_toto.models.metadata import Envelope, ENVELOPE_PAYLOAD_TYPE
+    if serializer is None:
+      serializer = JSONSerializer(compact=True)
 
-    return Envelope(
-      payload=self.signable_bytes,
-      payload_type=ENVELOPE_PAYLOAD_TYPE,
-      signatures=[]
-    )
+    # JSONSerializer requires an JSONSerializable object, typing.Protocol will
+    # fix this warning in future.
+    return serializer.serialize(self)  # type: ignore
+
+  def to_dict(self):
+    """Returns the JSON-serializable dictionary representation of self."""
+
+    return attr.asdict(self)

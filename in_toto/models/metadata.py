@@ -38,7 +38,7 @@ from securesystemslib.signer import GPGSignature, Signature, Signer
 from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
     JSONSerializer, SerializationMixin)
 
-from in_toto.models.common import ValidationMixin
+from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
 
@@ -63,8 +63,31 @@ class AnyMetadata(SerializationMixin):
 class Envelope(AnyMetadata, SSlibEnvelope):
   """DSSE Envelope for in-toto payloads."""
 
+  @classmethod
+  def from_signable(cls, signable: Signable) -> "Envelope":
+    """Creates DSSE envelope with signable bytes as payload."""
+
+    return cls(
+      payload=signable.to_bytes(),
+      payload_type=ENVELOPE_PAYLOAD_TYPE,
+      signatures=[]
+    )
+
   def get_payload(self, deserializer: Optional[BaseDeserializer] = None
   ) -> Union[Link, Layout]:
+    """Parse DSSE payload into Link or Layout object.
+
+      Arguments:
+          deserializer: ``securesystemslib.serialization.BaseDeserializer``
+              implementation to use. Default is ``PayloadDeserializer``.
+
+      Raises:
+          securesystemslib.exceptions.DeserializationError: The payload
+              cannot be deserialized.
+
+      Returns:
+          Link or Layout.
+    """
 
     if deserializer is None:
       from in_toto.models.serialization import PayloadDeserializer
