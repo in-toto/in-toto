@@ -39,7 +39,7 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
-from in_toto.models.metadata import (Metablock, AnyMetadata)
+from in_toto.models.metadata import AnyMetadata
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.rulelib
@@ -353,13 +353,13 @@ def substitute_parameters(layout, parameter_dictionary):
     inspection.expected_products = new_product_rules
 
 
-def verify_link_signature_thresholds(layout, chain_link_dict):
+def verify_link_signature_thresholds(layout, steps_metadata):
   """
   <Purpose>
     Verify that for each step of the layout there are at least `threshold`
-    links, signed by different authorized functionaries and return the chain
-    link dictionary containing only authorized links whose signatures
-    were successfully verified.
+    links metadata, signed by different authorized functionaries and return the
+    verified link metadata dictionary containing only authorized links metadata
+    whose signatures were successfully verified.
 
     NOTE: If the layout's key store (`layout.keys`) lists a (master) key `K`,
     with a subkey `K'`, then `K'` is authorized implicitly, to sign any link
@@ -370,7 +370,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     layout:
             A Layout object whose Steps are extracted and verified.
 
-    chain_link_dict:
+    steps_metadata:
             A dictionary containing link metadata per functionary per step,
             e.g.:
             {
@@ -388,7 +388,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
             functionaries.
 
   <Returns>
-    A chain_link_dict containing only links with valid signatures created by
+    A steps_metadata containing only links with valid signatures created by
     authorized functionaries.
 
   """
@@ -403,7 +403,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
       main_keys_for_subkeys[sub_keyid] = main_key
 
   # Dict for valid and authorized links of all steps of the layout
-  verfied_chain_link_dict = {}
+  verfied_steps_metadata = {}
 
   # For each step of the layout check the signatures of corresponding links.
   # Consider only links where the signature is valid and keys are authorized,
@@ -419,7 +419,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     used_main_keyids = []
 
     # Do per step link threshold verification
-    for link_keyid, link in chain_link_dict.get(step.name, {}).items():
+    for link_keyid, link in steps_metadata.get(step.name, {}).items():
       # Iterate over authorized keyids to find a key or subkey corresponding
       # to the given link and check if the link's keyid is authorized.
       # Subkeys of authorized main keys are authorized implicitly.
@@ -491,11 +491,11 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
           valid_authorized_links_cnt))
 
     # Add all good links of this step to the dictionary of links of all steps
-    verfied_chain_link_dict[step.name] = verified_key_link_dict
+    verfied_steps_metadata[step.name] = verified_key_link_dict
 
   # Threshold verification succeeded, return valid and authorized links for
   # further verification
-  return verfied_chain_link_dict
+  return verfied_steps_metadata
 
 def verify_command_alignment(command, expected_command):
   """
@@ -1231,21 +1231,19 @@ def reduce_chain_links(chain_link_dict):
   return reduced_chain_link_dict
 
 
-def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
+def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
   """
   <Purpose>
-    Checks if any step has been delegated by the functionary, recurses into
-    the delegation and replaces the layout object in the chain_link_dict
-    by an equivalent link object.
-
-    Link and Layout get extracted from AnyMetadata and replaced in
-    chain_link_dict.
+    Extracts link or layout object for each step in steps_metadata. Checks if
+    any step has been delegated by the functionary, recurses into the
+    delegation, and replaces the layout object with an equivalent link object.
+    Returns the extracted link objects in a dict called chain_link_dict.
 
   <Arguments>
     layout:
             The layout specified by the project owner.
 
-    chain_link_dict:
+    steps_metadata:
             A dictionary containing link metadata per functionary per step,
             e.g.:
             {
@@ -1280,11 +1278,14 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     }
 
   """
-  for step_name, key_link_dict in chain_link_dict.items():
+  chain_link_dict = {}
 
-    for keyid, link in key_link_dict.items():
+  for step_name, metadata_dict in steps_metadata.items():
 
-      payload = link.get_payload()
+    key_link_dict = {}
+    for keyid, metadata in metadata_dict.items():
+
+      payload = metadata.get_payload()
 
       if payload.type_ == "layout":
 
@@ -1307,15 +1308,15 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict,
+        summary_link = in_toto_verify(metadata, layout_key_dict,
             link_dir_path=sublayout_link_dir_path, step_name=step_name)
 
-        # Replace the layout object in the passed chain_link_dict
-        # with the link object returned by in-toto-verify
-        key_link_dict[keyid] = summary_link
+        # Replace the layout object with the link object returned
+        # by in-toto-verify
+        payload = summary_link
 
-      else:
-        key_link_dict[keyid] = payload
+      key_link_dict[keyid] = payload
+    chain_link_dict[step_name] = key_link_dict
 
   return chain_link_dict
 
@@ -1345,9 +1346,6 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
             }
     name:
             The name that the summary link will be associated with.
-
-    use_metablock:
-            Use metablock to generate metadata.
 
   <Exceptions>
     None.
@@ -1478,13 +1476,13 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     substitute_parameters(layout, substitution_parameters)
 
   LOG.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout, link_dir_path)
+  steps_metadata = load_links_for_layout(layout, link_dir_path)
 
   LOG.info("Verifying link metadata signatures...")
-  chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
+  steps_metadata = verify_link_signature_thresholds(layout, steps_metadata)
 
   LOG.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
+  chain_link_dict = verify_sublayouts(layout, steps_metadata, link_dir_path)
 
   LOG.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)
