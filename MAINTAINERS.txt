@@ -1,12 +1,12 @@
-The project is currently managed by Justin Cappos at New York University.
+The project is currently managed by Santiago Torres at Purdue.
 Please see GOVERNANCE.md for the project's governance and maintainership.
 
 Consensus Builder:
 
-  Justin Cappos
-    Email: jcappos@nyu.edu
-    GitHub username: @JustinCappos
-    PGP fingerprint: E9C0 59EC 0D32 64FA B35F  94AD 465B F9F6 F8EB 475A
+  Santiago Torres
+    Email: santiagotorres@purdue.edu
+    GitHub username: @SantiagoTorres
+    PGP fingerprint: 903B AB73 640E B6D6 5533  EFF3 468F 122C E816 2295
 
 Maintainers:
   Lukas Puehringer
@@ -14,10 +14,10 @@ Maintainers:
     GitHub username: @lukpueh
     PGP fingerprint: 8BA6 9B87 D43B E294 F23E  8120 89A2 AD3C 07D9 62E8
 
-  Santiago Torres
-    Email: santiagotorres@purdue.edu
-    GitHub username: @SantiagoTorres
-    PGP fingerprint: 903B AB73 640E B6D6 5533  EFF3 468F 122C E816 2295
+  Justin Cappos
+    Email: jcappos@nyu.edu
+    GitHub username: @JustinCappos
+    PGP fingerprint: E9C0 59EC 0D32 64FA B35F  94AD 465B F9F6 F8EB 475A
 
   Marina Moore
     Email: mm9693@nyu.edu
