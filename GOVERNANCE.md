@@ -11,7 +11,7 @@ review GitHub pull requests and (2) open issues or [submit vulnerability
 reports](https://github.com/in-toto/in-toto#security-issues-and-bugs).
 A maintainer has the authority to approve or reject pull requests submitted by
 contributors.  The project's Consensus Builder (CB) is
-Justin Cappos <jcappos@nyu.edu, @JustinCappos>.
+Santiago Torres-Arias <santiagotorres@purdue.edu, @santiagotorres>.
 
 ## Contributions
 A contributor can submit GitHub pull requests to the project's repositories.
