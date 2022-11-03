@@ -1,3 +1,5 @@
+# Security Policy
+
 Security issues can be reported by emailing torresariass@gmail.com.
 
 At a minimum, the report must contain the following:
