@@ -29,7 +29,7 @@ project.
 
 The project's Consensus Builder (CB), who is also granted all maintainer 
 privileges and responsibilities, is Santiago Torres-Arias 
-<santiagotorres@purdue.edu, @santiagotorres>.
+<santiagotorres@purdue.edu, @SantiagoTorres>.
 
 
 ## Reference Implementation Contributions
