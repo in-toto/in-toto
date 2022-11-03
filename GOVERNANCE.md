@@ -54,8 +54,8 @@ Contributors*](https://github.com/in-toto/in-toto#instructions-for-contributors)
 for help.
 
 ## Specification changes (ITEs) 
-The [in-toto enhancement (ITE)](https://github.com/in-toto/ITE) approval process which 
-changes the in-toto specification is listed in 
+The [in-toto enhancement (ITE)](https://github.com/in-toto/ITE) approval process, which 
+changes the in-toto specification, is listed in 
 [ITE-1](https://github.com/in-toto/ITE/blob/master/ITE/1/README.adoc_).  Future
 changes in the ITE process will be managed through new ITEs.
 
