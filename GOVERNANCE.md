@@ -64,7 +64,7 @@ Active contributors may be offered or request to be granted maintainer status.
 This requires approval from the CB and is done in consultation with the
 current maintainers.
 
-Maintainers may be moved to emertius status.  This is done at the discretion of 
+Maintainers may be moved to emeritus status.  This is done at the discretion of 
 the CB, in consultation with the project maintainers.  Emeritus maintainers are 
 listed in the MAINTAINERS.txt file as acknowledgment for their prior service to 
 the project, but no longer have code review or other maintainer privileges for 
