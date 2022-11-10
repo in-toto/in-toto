@@ -35,7 +35,9 @@ from securesystemslib.interface import (
     generate_and_write_rsa_keypair,
     generate_and_write_unencrypted_rsa_keypair,
     generate_and_write_ed25519_keypair,
-    generate_and_write_unencrypted_ed25519_keypair)
+    generate_and_write_unencrypted_ed25519_keypair,
+    generate_and_write_ecdsa_keypair,
+    generate_and_write_unencrypted_ecdsa_keypair)
 
 import unittest
 from unittest.mock import patch
@@ -104,12 +106,18 @@ class GenKeysMixin():
     cls.ed25519_key_path = generate_and_write_unencrypted_ed25519_keypair()
     cls.ed25519_key_id = os.path.basename(cls.ed25519_key_path)
 
+    cls.ecdsa_key_path = generate_and_write_unencrypted_ecdsa_keypair()
+    cls.ecdsa_key_id = os.path.basename(cls.ecdsa_key_path)
+
     # Generate encrypted keys
     cls.rsa_key_enc_path = generate_and_write_rsa_keypair(password=cls.key_pw)
     cls.rsa_key_enc_id = os.path.basename(cls.rsa_key_enc_path)
 
     cls.ed25519_key_enc_path = generate_and_write_ed25519_keypair(password=cls.key_pw)
     cls.ed25519_key_enc_id = os.path.basename(cls.ed25519_key_enc_path)
+
+    cls.ecdsa_key_enc_path = generate_and_write_ecdsa_keypair(password=cls.key_pw)
+    cls.ecdsa_key_enc_id = os.path.basename(cls.ecdsa_key_enc_path)
 
 
 class CliTestCase(unittest.TestCase):

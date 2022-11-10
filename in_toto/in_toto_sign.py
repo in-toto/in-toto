@@ -33,7 +33,8 @@ from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
 from in_toto import (
-    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519)
+    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
+    KEY_TYPE_ECDSA)
 
 import securesystemslib.formats
 from securesystemslib import interface
@@ -268,12 +269,12 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
       type=str, choices=SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--key' option. '{rsa}' keys are"
-      " expected in a 'PEM' format and '{ed25519}' in a custom"
-      " 'securesystemslib/json' format. If multiple keys are passed via"
+      " expected in a 'PEM' format. '{ed25519}' and '{ecdsa} are expected in a"
+      " custom 'securesystemslib/json' format. If multiple keys are passed via"
       " '--key' the same amount of key types must be passed. Key"
       " types are then associated with keys by index. If '--key-type' is"
       " omitted, the default of '{rsa}' is used for all keys.".format(
-      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519)))
+      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519, ecdsa=KEY_TYPE_ECDSA)))
 
   parser.add_argument("-p", "--prompt", action="store_true",
       help="prompt for signing key decryption password")
