@@ -35,7 +35,8 @@ import logging
 
 from in_toto.common_args import title_case_action_groups
 from in_toto import (
-    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519)
+    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
+    KEY_TYPE_ECDSA)
 from securesystemslib import interface
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -89,10 +90,12 @@ directory.
                             choices=SUPPORTED_KEY_TYPES,
                             default=KEY_TYPE_RSA,
                             help="type of the key to be generated. '{rsa}'"
-                            " keys are written in a 'PEM' format and"
-                            " '{ed25519}' in a custom 'securesystemslib/json'"
-                            " format. Default is '{rsa}'.".format(
-                            rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519))
+                            " keys are written in a 'PEM' format. '{ed25519}'"
+                            " and '{ecdsa}' keys are written in a custom"
+                            " 'securesystemslib/json' format. Default is"
+                            " '{rsa}'.".format(rsa=KEY_TYPE_RSA,
+                                               ed25519=KEY_TYPE_ED25519,
+                                               ecdsa=KEY_TYPE_ECDSA))
 
 
   parser.add_argument("name", type=str, metavar="<filename>",
@@ -128,6 +131,9 @@ def main():
           filepath=args.name, bits=args.bits, prompt=args.prompt)
     elif args.type == KEY_TYPE_ED25519:
       interface._generate_and_write_ed25519_keypair( # pylint: disable=protected-access
+          filepath=args.name, prompt=args.prompt)
+    elif args.type == KEY_TYPE_ECDSA:
+      interface._generate_and_write_ecdsa_keypair( # pylint: disable=protected-access
           filepath=args.name, prompt=args.prompt)
     else:  # pragma: no cover
       LOG.error(

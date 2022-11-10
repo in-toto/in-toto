@@ -30,7 +30,8 @@
 """
 import sys
 
-from in_toto import SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519
+from in_toto import (SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
+                    KEY_TYPE_ECDSA)
 
 EXCLUDE_ARGS = ["--exclude"]
 EXCLUDE_KWARGS = {
@@ -85,9 +86,11 @@ KEY_TYPE_KWARGS = {
   "choices": SUPPORTED_KEY_TYPES,
   "default": KEY_TYPE_RSA,
   "help": ("type of key specified by the '--key' option. '{rsa}' keys are"
-           " expected in a 'PEM' format and '{ed25519}' in a custom"
-           " 'securesystemslib/json' format. Default is '{rsa}'.".format(
-           rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519))
+           " expected in a 'PEM' format. '{ed25519}' and '{ecdsa}' are"
+           " expected to be in a custom 'securesystemslib/json' format."
+           " Default is '{rsa}'."
+           .format(rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519,
+                   ecdsa=KEY_TYPE_ECDSA))
 }
 
 KEY_PASSWORD_ARGS = ["-P", "--password"]

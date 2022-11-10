@@ -59,6 +59,9 @@ class TestInTotoKeyGenTool(unittest.TestCase, TmpDirMixin):
     with patch.object(sys, 'argv', args + ["-t", "ed25519", "bob"]), \
       self.assertRaises(SystemExit):
       in_toto_keygen_main()
+    with patch.object(sys, 'argv', args + ["-t", "ecdsa", "bob"]), \
+      self.assertRaises(SystemExit):
+      in_toto_keygen_main()
     with patch.object(sys, 'argv', args + ["-p", "-t", "ed25519", "bob"]), \
       patch("getpass.getpass", return_value=password), self.assertRaises(
       SystemExit):
