@@ -35,7 +35,8 @@ from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     sort_action_groups, OPTS_TITLE)
 from in_toto.models.metadata import Metablock
 from in_toto import (
-    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519)
+    __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
+    KEY_TYPE_ECDSA)
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
 
@@ -123,12 +124,13 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
       type=str, choices=SUPPORTED_KEY_TYPES,
       nargs="+", help=(
       "types of keys specified by the '--layout-keys' option. '{rsa}' keys are"
-      " expected in a 'PEM' format and '{ed25519}' in a custom"
-      " 'securesystemslib/json' format. If multiple keys are passed via"
-      " '--layout-keys' the same amount of key types must be passed. Key"
-      " types are then associated with keys by index. If '--key-types' is"
-      " omitted, the default of '{rsa}' is used for all keys.".format(
-      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519)))
+      " expected in a 'PEM' format. '{ed25519}' and '{ecdsa}' are expected"
+      " in a custom 'securesystemslib/json' format. If multiple keys are"
+      " passed via '--layout-keys' the same amount of key types must be"
+      " passed. Key types are then associated with keys by index. If"
+      " '--key-types' is omitted, the default of '{rsa}' is used for all"
+      " keys.".format(
+      rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519, ecdsa=KEY_TYPE_ECDSA)))
 
   named_args.add_argument("-g", "--gpg", nargs="+", metavar="<id>",
       help=(

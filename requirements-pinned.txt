@@ -10,11 +10,11 @@ cffi==1.15.1
     # via
     #   cryptography
     #   pynacl
-cryptography==38.0.1
+cryptography==38.0.4
     # via securesystemslib
 iso8601==1.1.0
     # via -r requirements.txt
-pathspec==0.10.1
+pathspec==0.10.3
     # via -r requirements.txt
 pycparser==2.21
     # via cffi

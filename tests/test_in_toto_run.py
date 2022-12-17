@@ -56,10 +56,14 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         step_name=self.test_step, keyid=self.rsa_key_id)
     self.test_link_ed25519 = FILENAME_FORMAT.format(
         step_name=self.test_step, keyid=self.ed25519_key_id)
+    self.test_link_ecdsa = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.ecdsa_key_id)
     self.test_link_rsa_enc = FILENAME_FORMAT.format(
         step_name=self.test_step, keyid=self.rsa_key_enc_id)
     self.test_link_ed25519_enc = FILENAME_FORMAT.format(
         step_name=self.test_step, keyid=self.ed25519_key_enc_id)
+    self.test_link_ecdsa_enc = FILENAME_FORMAT.format(
+        step_name=self.test_step, keyid=self.ecdsa_key_enc_id)
 
     self.test_artifact = "test_artifact"
     Path(self.test_artifact).touch()
@@ -152,13 +156,23 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
     self.assert_cli_sys_exit(args, 0)
     self.assertTrue(os.path.exists(self.test_link_ed25519))
 
+  def test_main_with_unencrypted_ecdsa_key(self):
+    """Test CLI command with ecdsa key. """
+    args = ["-n", self.test_step,
+        "--key", self.ecdsa_key_path,
+        "--key-type", "ecdsa", "--", "ls"]
+
+    self.assert_cli_sys_exit(args, 0)
+    self.assertTrue(os.path.exists(self.test_link_ecdsa))
+
 
   def test_main_with_encrypted_keys(self):
     """Test CLI command with encrypted ed25519 key. """
 
     for key_type, key_path, link_path in [
         ("rsa", self.rsa_key_enc_path, self.test_link_rsa_enc),
-        ("ed25519", self.ed25519_key_enc_path, self.test_link_ed25519_enc)]:
+        ("ed25519", self.ed25519_key_enc_path, self.test_link_ed25519_enc),
+        ("ecdsa", self.ecdsa_key_enc_path, self.test_link_ecdsa_enc)]:
 
 
       # Define common arguments passed to in in-toto-run below
