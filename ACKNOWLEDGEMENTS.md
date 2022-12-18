@@ -1,6 +1,8 @@
-in-toto is maintained by the [Secure Systems
-Lab](https://ssl.engineering.nyu.edu/) at [New York
-University](https://engineering.nyu.edu/) as well as researchers from the
+in-toto is maintained by researchers at
+[Purdue](https://www.cerias.purdue.edu/site/people/faculty/view/3153),
+the [Secure Systems Lab](https://ssl.engineering.nyu.edu/) at
+[New York University](https://engineering.nyu.edu/) as well as researchers
+from the
 [Cybersecurity Research Center](https://centers.njit.edu/cybersecurity/) at the
 [New Jersey Institute of Technology](https://www.njit.edu/).
 
