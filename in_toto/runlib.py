@@ -37,8 +37,6 @@ import sys
 import tempfile
 import time
 
-from pathspec import PathSpec
-
 import in_toto.settings
 import in_toto.exceptions
 
@@ -46,6 +44,8 @@ from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
+
+from in_toto.resolver import Resolver
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -59,42 +59,22 @@ from securesystemslib.signer import SSlibSigner, Signature
 LOG = logging.getLogger(__name__)
 
 
-
-
-
-def _hash_artifact(filepath, hash_algorithms=None,
-      normalize_line_endings=False):
-  """Internal helper that takes a filename and hashes the respective file's
-  contents using the passed hash_algorithms and returns a hashdict conformant
-  with securesystemslib.formats.HASHDICT_SCHEMA. """
+def _hash_artifact(hashable_representation, hash_algorithms=None):
   if not hash_algorithms:
     hash_algorithms = ['sha256']
+  
+  if not isinstance(hashable_representation, bytes):
+    hashable_representation = hashable_representation.encode('utf-8')
 
   securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
   for algorithm in hash_algorithms:
-    digest_object = securesystemslib.hash.digest_filename(filepath, algorithm,
-        normalize_line_endings=normalize_line_endings)
+    digest_object = securesystemslib.hash.digest(algorithm)
+    digest_object.update(hashable_representation)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
-  securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
-
   return hash_dict
-
-
-def _apply_exclude_patterns(names, exclude_filter):
-  """Exclude matched patterns from passed names."""
-  included = set(names)
-
-  # Assume old way for easier testing
-  if hasattr(exclude_filter, '__iter__'):
-    exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_filter)
-
-  for excluded in exclude_filter.match_files(names):
-    included.discard(excluded)
-
-  return sorted(included)
 
 
 def _apply_left_strip(artifact_filepath, artifacts_dict, lstrip_paths=None):
@@ -224,11 +204,6 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
       raise ValueError("Could not use '{}' as base path: '{}'".format(
           base_path, e)) from  e
 
-  # Normalize passed paths
-  norm_artifacts = []
-  for path in artifacts:
-    norm_artifacts.append(os.path.normpath(path))
-
   # Passed exclude patterns take precedence over exclude pattern settings
   if exclude_patterns:
     LOG.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
@@ -237,10 +212,20 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     # TODO: Do we want to keep the exclude pattern setting?
     exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
-  # Apply exclude patterns on the passed artifact paths if available
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
-    norm_artifacts = _apply_exclude_patterns(norm_artifacts, exclude_patterns)
+
+  # Normalize passed paths
+  resolved_artifacts = []
+  for artifact in artifacts:
+    resolved_artifacts.extend(Resolver.resolve_uri(
+      artifact,
+      exclude_patterns=exclude_patterns,
+      follow_symlink_dirs=follow_symlink_dirs))
+
+  if exclude_patterns:
+    resolved_artifacts = Resolver.apply_exclude_patterns(
+        resolved_artifacts, exclude_patterns)
 
   # Check if any of the prefixes passed for left stripping is a left substring
   # of another
@@ -251,76 +236,14 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         raise in_toto.exceptions.PrefixError("'{}' and '{}' "
             "triggered a left substring error".format(prefix_one, prefix_two))
 
-  # Compile the gitignore-style patterns
-  exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_patterns or [])
-
   # Iterate over remaining normalized artifact paths
-  for artifact in norm_artifacts:
-    if os.path.isfile(artifact):
-      # FIXME: this is necessary to provide consisency between windows
-      # filepaths and *nix filepaths. A better solution may be in order
-      # though...
-      artifact = artifact.replace('\\', '/')
-      key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
-      artifacts_dict[key] = _hash_artifact(artifact,
-          normalize_line_endings=normalize_line_endings)
+  for artifact in resolved_artifacts:
+    key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
+    hash_dict = _hash_artifact(Resolver.get_hashable_representation(key))
 
-    elif os.path.isdir(artifact):
-      for root, dirs, files in os.walk(artifact,
-          followlinks=follow_symlink_dirs):
-        # Create a list of normalized dirpaths
-        dirpaths = []
-        for dirname in dirs:
-          norm_dirpath = os.path.normpath(os.path.join(root, dirname))
-          dirpaths.append(norm_dirpath)
+    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 
-        # Applying exclude patterns on the directory paths returned by walk
-        # allows to exclude a subdirectory 'sub' with a pattern 'sub'.
-        # If we only applied the patterns below on the subdirectory's
-        # containing file paths, we'd have to use a wildcard, e.g.: 'sub*'
-        if exclude_patterns:
-          dirpaths = _apply_exclude_patterns(dirpaths, exclude_filter)
-
-        # Reset and refill dirs with remaining names after exclusion
-        # Modify (not reassign) dirnames to only recurse into remaining dirs
-        dirs[:] = []
-        for dirpath in dirpaths:
-          # Dirs only contain the basename and not the full path
-          name = os.path.basename(dirpath)
-          dirs.append(name)
-
-        # Create a list of normalized filepaths
-        filepaths = []
-        for filename in files:
-          norm_filepath = os.path.normpath(os.path.join(root, filename))
-
-          # `os.walk` could also list dead symlinks, which would
-          # result in an error later when trying to read the file
-          if os.path.isfile(norm_filepath):
-            filepaths.append(norm_filepath)
-
-          else:
-            LOG.info("File '{}' appears to be a broken symlink. Skipping..."
-                .format(norm_filepath))
-
-        # Apply exlcude patterns on the normalized file paths returned by walk
-        if exclude_patterns:
-          filepaths = _apply_exclude_patterns(filepaths, exclude_filter)
-
-        for filepath in filepaths:
-          # FIXME: this is necessary to provide consisency between windows
-          # filepaths and *nix filepaths. A better solution may be in order
-          # though...
-          normalized_filepath = filepath.replace("\\", "/")
-          key = _apply_left_strip(
-              normalized_filepath, artifacts_dict, lstrip_paths)
-          artifacts_dict[key] = _hash_artifact(filepath,
-              normalize_line_endings=normalize_line_endings)
-
-    # Path is no file and no directory
-    else:
-      LOG.info("path: {} does not exist, skipping..".format(artifact))
-
+    artifacts_dict[key] = hash_dict
 
   # Change back to where original current working dir
   if base_path:
