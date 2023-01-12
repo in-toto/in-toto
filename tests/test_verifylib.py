@@ -55,7 +55,7 @@ from securesystemslib.interface import (
     import_publickeys_from_file)
 from in_toto.rulelib import unpack_rule
 import securesystemslib.gpg.functions
-from securesystemslib.gpg.constants import HAVE_GPG
+from securesystemslib.gpg.constants import have_gpg
 
 import securesystemslib.exceptions
 import in_toto.exceptions
@@ -1192,7 +1192,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
 
 
-@unittest.skipIf(not HAVE_GPG, "gpg not found")
+@unittest.skipIf(not have_gpg(), "gpg not found")
 class TestInTotoVerifyThresholdsGpgSubkeys(
     unittest.TestCase, TmpDirMixin, GPGKeysMixin):
   """
