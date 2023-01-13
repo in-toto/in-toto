@@ -29,7 +29,7 @@ from in_toto.models.metadata import Metablock
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from securesystemslib.interface import (import_rsa_privatekey_from_file,
     import_ed25519_privatekey_from_file)
-from securesystemslib.gpg.constants import HAVE_GPG
+from securesystemslib.gpg.constants import have_gpg
 
 from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
@@ -214,7 +214,7 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
     self.assert_cli_sys_exit(args, 0)
 
 
-@unittest.skipIf(not HAVE_GPG, "gpg not found")
+@unittest.skipIf(not have_gpg(), "gpg not found")
 class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """ Tests in-toto-verify like TestInTotoVerifyTool but with
   gpg project owner and functionary keys. """
