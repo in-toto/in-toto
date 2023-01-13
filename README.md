@@ -59,7 +59,7 @@ Note that it is up to you to properly secure your supply chain, by authorizing, 
 
 *Rule arguments specified as `<pattern>` allow for Unix shell-style wildcards as implemented by Python's [`fnmatch`](https://docs.python.org/3/library/fnmatch.html).*
 
-To learn more about the different rule types, their guarantees and how they are applied take a look at the [Artifact Rules](https://github.com/in-toto/docs/blob/master/in-toto-spec.md#433-artifact-rules) section of the in-toto specification.
+in-toto's Artifact Rules, by default, allow artifacts to exist if they are not explicitly disallowed. As such, a `DISALLOW *` invocation is recommended as the final rule for most step definitions. To learn more about the different rule types, their guarantees and how they are applied, take a look at the [Artifact Rules](https://github.com/in-toto/docs/blob/master/in-toto-spec.md#433-artifact-rules) section of the in-toto specification.
 
 #### Carrying out software supply chain steps
 
