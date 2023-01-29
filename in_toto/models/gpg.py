@@ -104,7 +104,9 @@ class _LegacyGPGSigner(Signer):
     secrets_handler: Optional[SecretsHandler] = None
   ) -> "_LegacyGPGSigner":
 
-    raise NotImplementedError("Incompatible with private key URIs")
+    raise NotImplementedError(
+      "Incompatible with private key URIs")  # pragma: no cover
+
 
   def sign(self, payload: bytes) -> _LegacyGPGSignature:
     """Signs a given payload by the key assigned to the ``_LegacyGPGSigner``
@@ -191,6 +193,13 @@ class _LegacyGPGKey(Key):
       key_dict.get("validity_period"),
       gpg_subkeys,
     )
+
+  @classmethod
+  def from_legacy_dict(cls, key_dict: Dict[str, Any]):
+    """Create GPGKey from legacy dictionary representation."""
+
+    keyid = key_dict["keyid"]
+    return cls.from_dict(keyid, key_dict)
 
   def to_dict(self):
     """Returns the dictionary representation of self."""
