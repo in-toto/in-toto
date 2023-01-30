@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.0
+
+### Added
+* ECDSA key type in CLI (#520)
+* Windows builds in GitHub Actions CI (#513)
+* Dependabot version monitoring for GitHub Actions (#498)
+
+### Changed
+* Build is now reproducible, thanks to hatchling (#490)
+* Misc test updates (#487, #500, #529)
+* Misc docs updates (#499, #512, #516, #515, #530)
+
+### Removed
+* Obsolete test dependency (#521)
+
 ## v1.2.0
 
 ### Added
