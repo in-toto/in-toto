@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.3.1
+
+### Fixed
+* Includes tests in source distribution
+
 ## v1.3.0
 
 ### Added

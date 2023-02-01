@@ -73,6 +73,7 @@ path = "in_toto/__init__.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/in_toto",
+    "/tests",
     "/.coveragerc",
     "/tox.ini",
     "/requirements*.txt",
