@@ -194,7 +194,7 @@ def main():
 
   # If `--gpg` was set without argument it has the value `True` and
   # we will try to sign with the default key
-  gpg_use_default = (args.gpg is True)
+  gpg_use_default = args.gpg is True
 
   # Otherwise we interpret it as actual keyid
   gpg_keyid = None
