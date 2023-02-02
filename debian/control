@@ -10,20 +10,19 @@ Uploaders:
 Build-Depends:
  dh-python,
  debhelper-compat (= 13),
+ pybuild-plugin-pyproject,
  python3-all,
- python3-setuptools,
+ python3-hatchling,
  python3-attr,
  python3-dateutil,
  python3-six,
  python3-iso8601,
  python3-pathspec,
- python3-mock,
  python3-cryptography,
  python3-nacl,
- python3-colorama,
- python3-securesystemslib (>= 0.18.0),
+ python3-securesystemslib (>= 0.26.0),
  gnupg2,
-Standards-Version: 4.6.0.1
+Standards-Version: 4.6.2
 Rules-Requires-Root: no
 Homepage: https://in-toto.io
 Vcs-Git: https://github.com/in-toto/in-toto.git -b debian
@@ -35,7 +34,6 @@ Depends:
   python3-pkg-resources,
   python3-cryptography,
   python3-nacl,
-  python3-colorama,
   ${python3:Depends},
   ${misc:Depends},
 Recommends:
