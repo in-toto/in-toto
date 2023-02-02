@@ -6,7 +6,7 @@
   gpg.py
 
 <Author>
-  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Pradyumna Krishna <git@onpy.in>
 
 <Started>
   Jan 26, 2023
@@ -22,7 +22,9 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+import securesystemslib.gpg.exceptions as gpg_exceptions
 import securesystemslib.gpg.functions as gpg
+from securesystemslib import exceptions
 from securesystemslib.signer import Key, Signature, Signer, SecretsHandler
 
 
@@ -236,15 +238,24 @@ class _LegacyGPGKey(Key):
     self,
     signature: _LegacyGPGSignature,
     data: bytes
-  ) -> bool:
+  ) -> None:
     """Verifies a given payload by the key assigned to the _LegacyGPGKey
     instance.
 
     Arguments:
       signature: A ``_LegacyGPGSignature`` class instance.
-      payload: The bytes to be verified.
-    Returns:
-      Boolean. True if the signature is valid, False otherwise.
+      data: The bytes to be verified.
     """
 
-    return gpg.verify_signature(signature.to_dict(), self.to_dict(), data)
+    try:
+      if not gpg.verify_signature(signature.to_dict(), self.to_dict(), data):
+        raise exceptions.UnverifiedSignatureError(
+          f"Failed to verify signature by {self.keyid}")
+    except (
+      exceptions.FormatError,
+      exceptions.UnsupportedLibraryError,
+      gpg_exceptions.KeyExpirationError,
+    ) as e:
+      raise exceptions.VerificationError(
+        f"Unknown failure to verify signature by {self.keyid}"
+      ) from e

@@ -8,7 +8,7 @@
   test_gpg.py
 
 <Author>
-  Lukas Puehringer <lukas.puehringer@nyu.edu>
+  Pradyumna Krishna <git@onpy.in>
 
 <Started>
   Jan 28, 2023
@@ -24,6 +24,8 @@ import unittest
 
 from securesystemslib.gpg.functions import export_pubkey
 from securesystemslib.gpg.constants import have_gpg
+from securesystemslib.exceptions import (
+  UnverifiedSignatureError, VerificationError)
 
 from in_toto.models.gpg import (_LegacyGPGKey, _LegacyGPGSignature,
   _LegacyGPGSigner)
@@ -45,12 +47,13 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
 
     cls.default_keyid = cls.gpg_key_0C8A17
     cls.signing_subkey_keyid = cls.gpg_key_D924E9
+    cls.expired_keyid = "e8ac80c924116dabb51d4b987cb07d6d2c199c7c"
 
     cls.default_key_dict = export_pubkey(cls.default_keyid, cls.gnupg_home)
 
   @classmethod
-  def tearDownClass(self):
-    self.tear_down_test_dir()
+  def tearDownClass(cls):
+    cls.tear_down_test_dir()
 
   def test_gpg_sign_and_verify_object_with_default_key(self):
     """Create and verify a signature using the default key on the keyring."""
@@ -62,14 +65,16 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     # Generate Key from gnupg keyring.
     key = _LegacyGPGKey.from_keyring(self.default_keyid, self.gnupg_home)
 
-    self.assertTrue(key.verify_signature(signature, self.test_data))
-    self.assertFalse(key.verify_signature(signature, self.wrong_data))
+    key.verify_signature(signature, self.test_data)
+    with self.assertRaises(UnverifiedSignatureError):
+      key.verify_signature(signature, self.wrong_data)
 
     # Generate Key from dict.
     key = _LegacyGPGKey.from_legacy_dict(self.default_key_dict)
 
-    self.assertTrue(key.verify_signature(signature, self.test_data))
-    self.assertFalse(key.verify_signature(signature, self.wrong_data))
+    key.verify_signature(signature, self.test_data)
+    with self.assertRaises(UnverifiedSignatureError):
+      key.verify_signature(signature, self.wrong_data)
 
   def test_gpg_sign_and_verify_object(self):
     """Create and verify a signature using the specific key on the keyring."""
@@ -81,15 +86,29 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     # Generate Key from gnupg keyring.
     key = _LegacyGPGKey.from_keyring(self.signing_subkey_keyid, self.gnupg_home)
 
-    self.assertTrue(key.verify_signature(signature, self.test_data))
-    self.assertFalse(key.verify_signature(signature, self.wrong_data))
+    key.verify_signature(signature, self.test_data)
+    with self.assertRaises(UnverifiedSignatureError):
+      key.verify_signature(signature, self.wrong_data)
 
     # Generate Key from dict.
     key_dict = export_pubkey(self.signing_subkey_keyid, self.gnupg_home)
     key = _LegacyGPGKey.from_dict(key_dict["keyid"], key_dict)
 
-    self.assertTrue(key.verify_signature(signature, self.test_data))
-    self.assertFalse(key.verify_signature(signature, self.wrong_data))
+    key.verify_signature(signature, self.test_data)
+    with self.assertRaises(UnverifiedSignatureError):
+      key.verify_signature(signature, self.wrong_data)
+
+  def test_verify_using_expired_keyid(self):
+    """Creates and verifies a signature using expired key on the keyring."""
+
+    # Create a signature.
+    signer = _LegacyGPGSigner(self.signing_subkey_keyid, self.gnupg_home)
+    signature = signer.sign(self.test_data)
+
+    # Verify signature using expired key.
+    key = _LegacyGPGKey.from_keyring(self.expired_keyid, self.gnupg_home)
+    with self.assertRaises(VerificationError):
+      key.verify_signature(signature, self.test_data)
 
   def test_gpg_signer_serialization(self):
     """Tests from_dict and to_dict methods of GPGSignature."""
