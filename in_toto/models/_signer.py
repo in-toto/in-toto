@@ -3,7 +3,7 @@
 
 """
 <Program Name>
-  gpg.py
+  _signer.py
 
 <Author>
   Pradyumna Krishna <git@onpy.in>
@@ -28,7 +28,7 @@ from securesystemslib import exceptions
 from securesystemslib.signer import Key, Signature, Signer, SecretsHandler
 
 
-class _LegacyGPGSignature(Signature):
+class GPGSignature(Signature):
   """A container class containing information about a gpg signature.
   Besides the signature, it also contains other meta information
   needed to uniquely identify the key used to generate the signature.
@@ -49,8 +49,8 @@ class _LegacyGPGSignature(Signature):
     self.other_headers = other_headers
 
   @classmethod
-  def from_dict(cls, signature_dict: Dict) -> "_LegacyGPGSignature":
-    """Creates a ``_LegacyGPGSignature`` object from its JSON/dict
+  def from_dict(cls, signature_dict: Dict) -> "GPGSignature":
+    """Creates a ``GPGSignature`` object from its JSON/dict
     representation.
 
     Arguments:
@@ -60,7 +60,7 @@ class _LegacyGPGSignature(Signature):
       KeyError: If any of the "keyid", "sig" or "other_headers" fields
         are missing from the signature_dict.
     Returns:
-      ``_LegacyGPGSignature`` instance.
+      ``GPGSignature`` instance.
     """
 
     return cls(
@@ -78,7 +78,7 @@ class _LegacyGPGSignature(Signature):
     }
 
 
-class _LegacyGPGSigner(Signer):
+class GPGSigner(Signer):
   """A in-toto gpg implementation of the ``Signer`` interface.
   Provides a sign method to generate a cryptographic signature with gpg, using
   an RSA, DSA or EdDSA private key identified by the keyid on the instance.
@@ -104,20 +104,17 @@ class _LegacyGPGSigner(Signer):
     priv_key_uri: str,
     public_key: Key,
     secrets_handler: Optional[SecretsHandler] = None
-  ) -> "_LegacyGPGSigner":
+  ) -> "GPGSigner":
 
     raise NotImplementedError(
       "Incompatible with private key URIs")  # pragma: no cover
 
 
-  def sign(self, payload: bytes) -> _LegacyGPGSignature:
-    """Signs a given payload by the key assigned to the ``_LegacyGPGSigner``
+  def sign(self, payload: bytes) -> GPGSignature:
+    """Signs a given payload by the key assigned to the ``GPGSigner``
     instance. Calls the gpg command line utility to sign the passed content
     with the key identified by the passed keyid from the gpg keyring at the
     passed homedir.
-
-    The executed base command is defined in
-    securesystemslib.gpg.constants.GPG_SIGN_COMMAND.
 
     Arguments:
       payload: The bytes to be signed.
@@ -134,15 +131,15 @@ class _LegacyGPGSigner(Signer):
       securesystemslib.gpg.exceptions.KeyNotFoundError: the used gpg version is
         not fully supported and no public key can be found for short keyid.
       Returns:
-        Returns a ``_LegacyGPGSignature`` class instance.
+        Returns a ``GPGSignature`` class instance.
     """
 
     sig_dict = gpg.create_signature(payload, self.keyid, self.homedir)
-    return _LegacyGPGSignature(**sig_dict)
+    return GPGSignature(**sig_dict)
 
 
 @dataclass
-class _LegacyGPGKey(Key):
+class GPGKey(Key):
   """A container class representing public key portion of a GPG key.
   Provides a verify method to verify a cryptographic signature with a
   gpg-style rsa, dsa or ecdsa public key on the instance.
@@ -168,11 +165,11 @@ class _LegacyGPGKey(Key):
   keyid: str
   creation_time: Optional[int] = None
   validity_period: Optional[int] = None
-  subkeys: Optional[Dict[str, "_LegacyGPGKey"]] = None
+  subkeys: Optional[Dict[str, "GPGKey"]] = None
 
   @classmethod
   def from_dict(cls, keyid: str, key_dict: Dict[str, Any]):
-    """Creates ``_LegacyGPGKey`` object from its json/dict representation.
+    """Creates ``GPGKey`` object from its json/dict representation.
     Raises:
       KeyError, TypeError: Invalid arguments.
     """
@@ -181,7 +178,7 @@ class _LegacyGPGKey(Key):
     gpg_subkeys = None
     if subkeys_dict:
       gpg_subkeys = {
-        _keyid: _LegacyGPGKey.from_dict(_keyid, subkey_dict)
+        _keyid: GPGKey.from_dict(_keyid, subkey_dict)
         for (_keyid, subkey_dict) in subkeys_dict.items()
       }
 
@@ -229,21 +226,21 @@ class _LegacyGPGKey(Key):
 
   @classmethod
   def from_keyring(cls, keyid, homedir=None):
-    """Creates ``_LegacyGPGKey`` object from GnuPG Keyring."""
+    """Creates ``GPGKey`` object from GnuPG Keyring."""
 
     pubkey_dict = gpg.export_pubkey(keyid, homedir)
     return cls.from_dict(keyid, pubkey_dict)
 
   def verify_signature(
     self,
-    signature: _LegacyGPGSignature,
+    signature: GPGSignature,
     data: bytes
   ) -> None:
-    """Verifies a given payload by the key assigned to the _LegacyGPGKey
+    """Verifies a given payload by the key assigned to the GPGKey
     instance.
 
     Arguments:
-      signature: A ``_LegacyGPGSignature`` class instance.
+      signature: A ``GPGSignature`` class instance.
       data: The bytes to be verified.
     """
 
