@@ -5,7 +5,7 @@
 
 """
 <Program Name>
-  test_gpg.py
+  test_signer.py
 
 <Author>
   Pradyumna Krishna <git@onpy.in>
@@ -17,7 +17,7 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Test _LegacyGPGKey, _LegacyGPGSigner and _LegacyGPGSignature class methods.
+  Test GPGKey, GPGSigner and GPGSignature class methods.
 """
 
 import unittest
@@ -27,8 +27,8 @@ from securesystemslib.gpg.constants import have_gpg
 from securesystemslib.exceptions import (
   UnverifiedSignatureError, VerificationError)
 
-from in_toto.models.gpg import (_LegacyGPGKey, _LegacyGPGSignature,
-  _LegacyGPGSigner)
+from in_toto.models._signer import (GPGKey, GPGSignature,
+  GPGSigner)
 
 from tests.common import GPGKeysMixin, TmpDirMixin
 
@@ -59,18 +59,18 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     """Create and verify a signature using the default key on the keyring."""
 
     # Create a signature.
-    signer = _LegacyGPGSigner(homedir=self.gnupg_home)
+    signer = GPGSigner(homedir=self.gnupg_home)
     signature = signer.sign(self.test_data)
 
     # Generate Key from gnupg keyring.
-    key = _LegacyGPGKey.from_keyring(self.default_keyid, self.gnupg_home)
+    key = GPGKey.from_keyring(self.default_keyid, self.gnupg_home)
 
     key.verify_signature(signature, self.test_data)
     with self.assertRaises(UnverifiedSignatureError):
       key.verify_signature(signature, self.wrong_data)
 
     # Generate Key from dict.
-    key = _LegacyGPGKey.from_legacy_dict(self.default_key_dict)
+    key = GPGKey.from_legacy_dict(self.default_key_dict)
 
     key.verify_signature(signature, self.test_data)
     with self.assertRaises(UnverifiedSignatureError):
@@ -80,11 +80,11 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     """Create and verify a signature using the specific key on the keyring."""
 
     # Create a signature.
-    signer = _LegacyGPGSigner(self.signing_subkey_keyid, self.gnupg_home)
+    signer = GPGSigner(self.signing_subkey_keyid, self.gnupg_home)
     signature = signer.sign(self.test_data)
 
     # Generate Key from gnupg keyring.
-    key = _LegacyGPGKey.from_keyring(self.signing_subkey_keyid, self.gnupg_home)
+    key = GPGKey.from_keyring(self.signing_subkey_keyid, self.gnupg_home)
 
     key.verify_signature(signature, self.test_data)
     with self.assertRaises(UnverifiedSignatureError):
@@ -92,7 +92,7 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
 
     # Generate Key from dict.
     key_dict = export_pubkey(self.signing_subkey_keyid, self.gnupg_home)
-    key = _LegacyGPGKey.from_dict(key_dict["keyid"], key_dict)
+    key = GPGKey.from_dict(key_dict["keyid"], key_dict)
 
     key.verify_signature(signature, self.test_data)
     with self.assertRaises(UnverifiedSignatureError):
@@ -102,15 +102,15 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     """Creates and verifies a signature using expired key on the keyring."""
 
     # Create a signature.
-    signer = _LegacyGPGSigner(self.signing_subkey_keyid, self.gnupg_home)
+    signer = GPGSigner(self.signing_subkey_keyid, self.gnupg_home)
     signature = signer.sign(self.test_data)
 
     # Verify signature using expired key.
-    key = _LegacyGPGKey.from_keyring(self.expired_keyid, self.gnupg_home)
+    key = GPGKey.from_keyring(self.expired_keyid, self.gnupg_home)
     with self.assertRaises(VerificationError):
       key.verify_signature(signature, self.test_data)
 
-  def test_gpg_signer_serialization(self):
+  def test_gpg_signature_serialization(self):
     """Tests from_dict and to_dict methods of GPGSignature."""
 
     sig_dict = {
@@ -119,32 +119,32 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
       "other_headers": "d8f8a89b5d71f07b842a",
     }
 
-    signature = _LegacyGPGSignature.from_dict(sig_dict)
+    signature = GPGSignature.from_dict(sig_dict)
     self.assertEqual(sig_dict, signature.to_dict())
 
   def test_gpg_key_serialization(self):
     """Test to check serialization methods of GPGKey."""
 
     # Test loading and dumping of GPGKey.
-    key = _LegacyGPGKey.from_legacy_dict(self.default_key_dict)
+    key = GPGKey.from_legacy_dict(self.default_key_dict)
     self.assertEqual(key.to_dict(), self.default_key_dict)
 
     # Test loading and dumping of GPGKey from keyring.
-    key = _LegacyGPGKey.from_keyring(self.default_keyid, self.gnupg_home)
+    key = GPGKey.from_keyring(self.default_keyid, self.gnupg_home)
     self.assertEqual(key.to_dict(), self.default_key_dict)
 
   def test_gpg_key_equality(self):
     """Test to check equality between two GPGKey."""
 
     # Generate two GPGkey.
-    key1 = _LegacyGPGKey.from_legacy_dict(self.default_key_dict)
-    key2 = _LegacyGPGKey.from_legacy_dict(self.default_key_dict)
+    key1 = GPGKey.from_legacy_dict(self.default_key_dict)
+    key2 = GPGKey.from_legacy_dict(self.default_key_dict)
 
     self.assertNotEqual(self.default_key_dict, key1)
     self.assertEqual(key2, key1)
 
     # Assert equality of key created from dict of first GPGKey.
-    key2 = _LegacyGPGKey.from_legacy_dict(key1.to_dict())
+    key2 = GPGKey.from_legacy_dict(key1.to_dict())
     self.assertEqual(key2, key1)
 
     # Assert Inequalities.
