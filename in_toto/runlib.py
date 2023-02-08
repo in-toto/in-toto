@@ -62,7 +62,7 @@ LOG = logging.getLogger(__name__)
 def _hash_artifact(hashable_representation, hash_algorithms=None):
   if not hash_algorithms:
     hash_algorithms = ['sha256']
-  
+
   if not isinstance(hashable_representation, bytes):
     hashable_representation = hashable_representation.encode('utf-8')
 
@@ -239,7 +239,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
     key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
-    hash_dict = _hash_artifact(Resolver.get_hashable_representation(key))
+    hash_dict = _hash_artifact(
+        Resolver.get_hashable_representation(key, normalize_line_endings))
 
     securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 

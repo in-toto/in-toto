@@ -4,8 +4,6 @@ import os
 import logging
 
 from securesystemslib.storage import FilesystemBackend
-import securesystemslib.formats
-import securesystemslib.hash
 
 from in_toto.resolver._resolver import Resolver
 
@@ -18,7 +16,8 @@ class FileResolver(Resolver):
   SCHEME = "file"
 
   @classmethod
-  def resolve_uri(cls, generic_uri, exclude_patterns=None, follow_symlink_dirs=False):
+  def resolve_uri(cls, generic_uri, exclude_patterns=None,
+                  follow_symlink_dirs=False):
     norm_paths = []
 
     for norm_path in super().apply_exclude_patterns(
@@ -70,18 +69,18 @@ class FileResolver(Resolver):
     return norm_paths
 
   @classmethod
-  def get_hashable_representation(cls, resolved_uri, normalize_line_endings=False):
+  def get_hashable_representation(cls, resolved_uri,
+                                  normalize_line_endings=False):
     """Internal helper that takes a filename and hashes the respective file's
     contents using the passed hash_algorithms and returns a hashdict conformant
     with securesystemslib.formats.HASHDICT_SCHEMA. """
 
     data = b""
-    
+
     with FilesystemBackend().get(resolved_uri) as file_object:
       data = file_object.read()
-      
+
       if normalize_line_endings:
         data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
     return data
-

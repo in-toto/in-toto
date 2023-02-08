@@ -19,7 +19,7 @@ def _get_scheme(uri):
 
 def _get_resolver(uri):
   scheme = _get_scheme(uri)
-  
+
   if scheme not in RESOLVER_FOR_URI_SCHEME:
     raise ValueError(f"Unsupported in-toto resolver scheme '{scheme}'")
 
@@ -45,15 +45,17 @@ class Resolver(metaclass=ABCMeta):
 
   @classmethod
   @abstractmethod
-  def resolve_uri(cls, generic_uri, exclude_patterns=None, follow_symlink_dirs=False):
+  def resolve_uri(cls, generic_uri, exclude_patterns=None,
+                  follow_symlink_dirs=False):
     """Normalize and resolve artifact URIs"""
     resolver = _get_resolver(generic_uri)
-    return resolver.resolve_uri(generic_uri, exclude_patterns, follow_symlink_dirs)
+    return resolver.resolve_uri(
+        generic_uri, exclude_patterns, follow_symlink_dirs)
 
   @classmethod
   @abstractmethod
-  def get_hashable_representation(cls, resolved_uri, normalize_line_endings=False):
+  def get_hashable_representation(cls, resolved_uri,
+                                  normalize_line_endings=False):
     """Return dictionary of hash digests"""
     resolver = _get_resolver(resolved_uri)
     return resolver.hash_artifacts(resolved_uri, normalize_line_endings)
-
