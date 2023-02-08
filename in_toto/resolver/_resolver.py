@@ -58,4 +58,5 @@ class Resolver(metaclass=ABCMeta):
                                   normalize_line_endings=False):
     """Return dictionary of hash digests"""
     resolver = _get_resolver(resolved_uri)
-    return resolver.hash_artifacts(resolved_uri, normalize_line_endings)
+    return resolver.get_hashable_representation(resolved_uri,
+                                                normalize_line_endings)

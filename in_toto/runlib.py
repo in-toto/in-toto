@@ -74,6 +74,8 @@ def _hash_artifact(hashable_representation, hash_algorithms=None):
     digest_object.update(hashable_representation)
     hash_dict.update({algorithm: digest_object.hexdigest()})
 
+  securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+
   return hash_dict
 
 
@@ -239,12 +241,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
     key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
-    hash_dict = _hash_artifact(
-        Resolver.get_hashable_representation(key, normalize_line_endings))
-
-    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
-
-    artifacts_dict[key] = hash_dict
+    artifacts_dict[key] = _hash_artifact(
+        Resolver.get_hashable_representation(artifact, normalize_line_endings))
 
   # Change back to where original current working dir
   if base_path:
