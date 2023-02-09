@@ -18,6 +18,8 @@ class FileResolver(Resolver):
   @classmethod
   def resolve_uri(cls, generic_uri, exclude_patterns=None,
                   follow_symlink_dirs=False):
+    if generic_uri.startswith(cls.SCHEME + ":"):
+      generic_uri = generic_uri[len(cls.SCHEME)+1:]
 
     norm_paths = super().apply_exclude_patterns(
         [os.path.normpath(generic_uri)], exclude_patterns)

@@ -124,6 +124,23 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         expected_artifacts)
 
 
+  def test_base_path_is_child_dir_with_schema(self):
+    """Test path of recorded artifacts and cd back with child as base with the
+    resolver schema identifier prefixed."""
+    base_path = "subdir"
+    expected_artifacts = sorted(["foosub1", "foosub2", "subsubdir/foosubsub"])
+
+    in_toto.settings.ARTIFACT_BASE_PATH = base_path
+    artifacts_dict = record_artifacts_as_dict(["file:."])
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+    in_toto.settings.ARTIFACT_BASE_PATH = None
+
+    artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
+    self.assertListEqual(sorted(list(artifacts_dict.keys())),
+        expected_artifacts)
+
+
   def test_base_path_is_parent_dir(self):
     """Test path of recorded artifacts and cd back with parent as base. """
     base_path = ".."
