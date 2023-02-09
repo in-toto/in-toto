@@ -22,7 +22,8 @@ def _get_resolver(uri):
   scheme = _get_scheme(uri)
 
   if scheme not in RESOLVER_FOR_URI_SCHEME:
-    raise ValueError(f"Unsupported in-toto resolver scheme '{scheme}'")
+    raise ValueError(
+        f"Unsupported in-toto resolver scheme '{scheme}' from URI '{uri}'")
 
   return RESOLVER_FOR_URI_SCHEME[scheme]
 
