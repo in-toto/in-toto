@@ -9,13 +9,14 @@ RESOLVER_FOR_URI_SCHEME = {}
 
 
 def _get_scheme(uri):
-  match = re.fullmatch(r"(\w+\:)?(.+)", uri)
+  match = re.fullmatch(r"(\w\:\\)?(\w+\:)?(.+)", uri)
+
   if not match:
     raise ValueError(f"Artifact URI '{uri}' could not be parsed")
   groups = match.groups()
-  if not groups[0]:
+  if groups[0] or not groups[1]:
     return DEFAULT_SCHEME
-  return groups[0][:-1]
+  return groups[1][:-1]
 
 def _get_resolver(uri):
   scheme = _get_scheme(uri)
