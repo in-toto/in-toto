@@ -9,7 +9,7 @@ RESOLVER_FOR_URI_SCHEME = {}
 
 
 def _get_scheme(uri):
-  match = re.fullmatch(r"(\w+\:)?(.*)", uri)
+  match = re.fullmatch(r"(\w+\:)?(.+)", uri)
   if not match:
     raise ValueError(f"Artifact URI '{uri}' could not be parsed")
   groups = match.groups()
@@ -30,15 +30,13 @@ class Resolver(metaclass=ABCMeta):
   """Interface for resolvers"""
 
   @classmethod
-  def apply_exclude_patterns(cls, names, exclude_filter):
+  def apply_exclude_patterns(cls, names, exclude_patterns):
     """Exclude matched patterns from passed names."""
     included = set(names)
 
-    # Assume old way for easier testing
-    if hasattr(exclude_filter, '__iter__'):
-      exclude_filter = PathSpec.from_lines('gitwildmatch', exclude_filter)
+    exclude_patterns = PathSpec.from_lines('gitwildmatch', exclude_patterns)
 
-    for excluded in exclude_filter.match_files(names):
+    for excluded in exclude_patterns.match_files(names):
       included.discard(excluded)
 
     return sorted(included)
