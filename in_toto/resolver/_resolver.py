@@ -9,7 +9,7 @@ RESOLVER_FOR_URI_SCHEME = {}
 
 
 def _get_scheme(uri):
-  match = re.fullmatch(r"(\w\:\\)?(\w+\:)?(.+)", uri)
+  match = re.fullmatch(r"(\w\:[\\/])?(\w+\:)?(.+)", uri)
 
   if not match:
     raise ValueError(f"Artifact URI '{uri}' could not be parsed")
