@@ -31,6 +31,11 @@ import glob
 import logging
 import os
 import itertools
+import io
+import subprocess  # nosec
+import sys
+import tempfile
+import time
 
 from pathspec import PathSpec
 
@@ -43,7 +48,6 @@ from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
-import securesystemslib.process
 import securesystemslib.gpg
 
 from in_toto.models.metadata import Metablock
@@ -322,6 +326,86 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   return artifacts_dict
 
+def _subprocess_run_duplicate_streams(cmd, timeout):
+  """Helper to run subprocess and both print and capture standards streams.
+
+  Caveat:
+  * Might behave unexpectedly with interactive commands.
+  * Might not duplicate output in real time, if the command buffers it (see
+    e.g. `print("foo")` vs. `print("foo", flush=True)`).
+  * Possible race condition on Windows when removing temporary files.
+
+  """
+  # Use temporary files as targets for child process standard stream redirects
+  # They seem to work better (i.e. do not hang) than pipes, when using
+  # interactive commands like `vi`.
+  stdout_fd, stdout_name = tempfile.mkstemp()
+  stderr_fd, stderr_name = tempfile.mkstemp()
+  try:
+    with io.open(  # pylint: disable=unspecified-encoding
+      stdout_name, "r"
+    ) as stdout_reader, os.fdopen(  # pylint: disable=unspecified-encoding
+      stdout_fd, "w"
+    ) as stdout_writer, io.open(  # pylint: disable=unspecified-encoding
+      stderr_name, "r"
+    ) as stderr_reader, os.fdopen(
+      stderr_fd, "w"
+    ) as stderr_writer:
+
+      # Store stream results in mutable dict to update it inside nested helper
+      _std = {"out": "", "err": ""}
+
+      def _duplicate_streams():
+        """Helper to read from child process standard streams, write their
+        contents to parent process standard streams, and build up return values
+        for outer function.
+        """
+        # Read until EOF but at most `io.DEFAULT_BUFFER_SIZE` bytes per call.
+        # Reading and writing in reasonably sized chunks prevents us from
+        # subverting a timeout, due to being busy for too long or indefinitely.
+        stdout_part = stdout_reader.read(io.DEFAULT_BUFFER_SIZE)
+        stderr_part = stderr_reader.read(io.DEFAULT_BUFFER_SIZE)
+        sys.stdout.write(stdout_part)
+        sys.stderr.write(stderr_part)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        _std["out"] += stdout_part
+        _std["err"] += stderr_part
+
+      # Start child process, writing its standard streams to temporary files
+      proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
+        cmd,
+        stdout=stdout_writer,
+        stderr=stderr_writer,
+        universal_newlines=True,
+      )
+      proc_start_time = time.time()
+
+      # Duplicate streams until the process exits (or times out)
+      while proc.poll() is None:
+        # Time out as Python's `subprocess.run` would do it
+        if (
+          timeout is not None
+          and time.time() > proc_start_time + timeout
+        ):
+          proc.kill()
+          proc.wait()
+          raise subprocess.TimeoutExpired(cmd, timeout)
+
+        _duplicate_streams()
+
+      # Read/write once more to grab everything that the process wrote between
+      # our last read in the loop and exiting, i.e. breaking the loop.
+      _duplicate_streams()
+
+  finally:
+    # The work is done or was interrupted, the temp files can be removed
+    os.remove(stdout_name)
+    os.remove(stderr_name)
+
+  # Return process exit code and captured streams
+  return proc.poll(), _std["out"], _std["err"]
+
 def execute_link(link_cmd_args, record_streams):
   """
   <Purpose>
@@ -343,10 +427,9 @@ def execute_link(link_cmd_args, record_streams):
     OSError:
             The given command is not present or non-executable
 
-    securesystemslib.process.subprocess.TimeoutExpired:
-            The execution of the given command times out. The default timeout
-            is securesystemslib.settings.SUBPROCESS_TIMEOUT.
-
+    subprocess.TimeoutExpired:
+            The execution of the given command times (see
+            in_toto.settings.LINK_CMD_EXEC_TIMEOUT).
 
   <Side Effects>
     Executes passed command in a subprocess and redirects stdout and stderr
@@ -360,14 +443,15 @@ def execute_link(link_cmd_args, record_streams):
   """
   if record_streams:
     return_code, stdout_str, stderr_str = \
-        securesystemslib.process.run_duplicate_streams(link_cmd_args,
+        _subprocess_run_duplicate_streams(
+            link_cmd_args,
             timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT))
 
   else:
-    process = securesystemslib.process.run(link_cmd_args, check=False,
+    process = subprocess.run(link_cmd_args, check=False,  # nosec
       timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
-      stdout=securesystemslib.process.DEVNULL,
-      stderr=securesystemslib.process.DEVNULL)
+      stdout=subprocess.DEVNULL,
+      stderr=subprocess.DEVNULL)
     stdout_str = stderr_str = ""
     return_code = process.returncode
 
@@ -499,7 +583,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
     PrefixError: Left-stripping artifact paths results in non-unique dict keys.
 
-    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+    subprocess.TimeoutExpired: Link command times out.
 
     IOError, FileNotFoundError, NotADirectoryError, PermissionError:
         Cannot write link metadata.
@@ -548,6 +632,8 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       lstrip_paths=lstrip_paths)
 
   if link_cmd_args:
+    securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(
+        link_cmd_args)
     LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
     byproducts = execute_link(link_cmd_args, record_streams)
   else:
@@ -661,7 +747,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
     PrefixError: Left-stripping artifact paths results in non-unique dict keys.
 
-    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+    subprocess.TimeoutExpired: Link command times out.
 
     IOError, PermissionError:
         Cannot write link metadata.
@@ -806,7 +892,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     PrefixError: Left-stripping artifact paths results in non-unique dict keys.
 
-    securesystemslib.process.subprocess.TimeoutExpired: Link command times out.
+    subprocess.TimeoutExpired: Link command times out.
 
     IOError, FileNotFoundError, NotADirectoryError, PermissionError:
         Cannot write link metadata.
