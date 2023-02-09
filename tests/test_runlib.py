@@ -27,6 +27,7 @@ import shutil
 import tempfile
 import sys
 import stat
+import subprocess
 
 import in_toto.settings
 import in_toto.exceptions
@@ -34,7 +35,7 @@ from in_toto.models.metadata import Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
-    _hash_artifact)
+    _hash_artifact, _subprocess_run_duplicate_streams)
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
     import_rsa_privatekey_from_file,
@@ -509,18 +510,80 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
     in_toto.settings.LINK_CMD_EXEC_TIMEOUT = 0.1
 
     # check if exception is raised
-    with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
+    with self.assertRaises(subprocess.TimeoutExpired):
       # Call execute_link to see if new timeout is respected
       in_toto.runlib.execute_link([sys.executable, '-c', 'while True: pass'], True)
 
     # check if exception is raised
-    with self.assertRaises(securesystemslib.process.subprocess.TimeoutExpired):
+    with self.assertRaises(subprocess.TimeoutExpired):
       # Call execute_link to see if new timeout is respected
       in_toto.runlib.execute_link([sys.executable, '-c', 'while True: pass'], False)
 
     # Restore original timeout
     in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old
 
+class TestSubprocess(unittest.TestCase):
+
+  def test_run_duplicate_streams(self):
+    """Test output indeed duplicated."""
+    # Command that prints 'foo' to stdout and 'bar' to stderr.
+    cmd = [
+      sys.executable,
+      "-c",
+      "import sys; sys.stdout.write('foo'); sys.stderr.write('bar');"
+    ]
+
+    # Create and open fake targets for standard streams
+    stdout_fd, stdout_fn = tempfile.mkstemp()
+    stderr_fd, stderr_fn = tempfile.mkstemp()
+    with open(  # pylint: disable=unspecified-encoding
+      stdout_fn, "r"
+    ) as fake_stdout_reader, os.fdopen(
+      stdout_fd, "w"
+    ) as fake_stdout_writer, open(  # pylint: disable=unspecified-encoding
+      stderr_fn, "r"
+    ) as fake_stderr_reader, os.fdopen(
+      stderr_fd, "w"
+    ) as fake_stderr_writer:
+
+      # Backup original standard streams and redirect to fake targets
+      real_stdout = sys.stdout
+      real_stderr = sys.stderr
+      sys.stdout = fake_stdout_writer
+      sys.stderr = fake_stderr_writer
+
+      # Run command
+      ret_code, ret_out, ret_err = _subprocess_run_duplicate_streams(cmd, 10)
+
+      # Rewind fake standard streams
+      fake_stdout_reader.seek(0)
+      fake_stderr_reader.seek(0)
+
+      # Assert that what was printed and what was returned is correct
+      self.assertTrue(ret_out == fake_stdout_reader.read() == "foo")
+      self.assertTrue(ret_err == fake_stderr_reader.read() == "bar")
+      # Also assert the return value
+      self.assertEqual(ret_code, 0)
+
+      # Restore original streams
+      sys.stdout = real_stdout
+      sys.stderr = real_stderr
+
+    # Remove fake standard streams
+    os.remove(stdout_fn)
+    os.remove(stderr_fn)
+
+  def test_run_duplicate_streams_return_value(self):
+    """Test return code."""
+    cmd = [sys.executable, "-c", "import sys; sys.exit(100)"]
+    ret_code, _, _ = _subprocess_run_duplicate_streams(cmd, 10)
+    self.assertEqual(ret_code, 100)
+
+  def test_run_duplicate_streams_timeout(self):
+    """Test timeout."""
+    cmd = [sys.executable,  "-c", "while True: pass"]
+    with self.assertRaises(subprocess.TimeoutExpired ):
+      _subprocess_run_duplicate_streams(cmd, timeout=-1)
 
 class TestInTotoRun(unittest.TestCase, TmpDirMixin):
   """"
