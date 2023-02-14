@@ -257,7 +257,7 @@ def verify_layout_expiration(layout):
 
   """
   expire_datetime = iso8601.parse_date(layout.expires)
-  if expire_datetime < datetime.datetime.now(tz.tzutc()):
+  if expire_datetime <= datetime.datetime.now(tz.tzutc()):
     raise LayoutExpiredError("Layout expired")
 
 
