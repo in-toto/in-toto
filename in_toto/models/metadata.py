@@ -60,6 +60,13 @@ class Metablock(ValidationMixin):
     self.signed = kwargs.get("signed")
     self.compact_json = kwargs.get("compact_json", False)
 
+    if self.signatures is not None:
+      self.signatures=self.signatures.strip()
+    if self.signed is not None:
+      self.signed = self.signed.strip()
+    if self.compact_json is not None:
+      self.compact_json = self.compact_json.strip()
+
     self.validate()
 
 
@@ -75,7 +82,7 @@ class Metablock(ValidationMixin):
         },
         indent=indent,
         separators=separators,
-        sort_keys=True
+        sort_keys=False
       )
 
 
@@ -116,10 +123,17 @@ class Metablock(ValidationMixin):
     signed_data = data.get("signed", {})
     signed_type = signed_data.get("_type")
 
-    if signed_type == "link":
+    if signatures is not None:
+      signatures = signatures.strip()
+    if signed_data is not None:
+      signed_data = signed_data.strip()
+    if signed_type is not None:
+      signed_type = signed_type.strip()
+
+    if signed_type.lower() == "link":
       signed = Link.read(signed_data)
 
-    elif signed_type == "layout":
+    elif signed_type.lower() == "layout":
       signed = Layout.read(signed_data)
 
     else:
@@ -156,10 +170,15 @@ class Metablock(ValidationMixin):
       The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
 
     """
+    if key is not None:
+      key = key.strip()
     securesystemslib.formats.KEY_SCHEMA.check_match(key)
 
     signature = securesystemslib.keys.create_signature(key,
         self.signed.signable_bytes)
+
+    if signature is not None:
+      signature=signature.strip()
 
     self.signatures.append(signature)
 
@@ -192,6 +211,9 @@ class Metablock(ValidationMixin):
     """
     signature = securesystemslib.gpg.functions.create_signature(
         self.signed.signable_bytes, gpg_keyid, gpg_home)
+
+    if signature is not None:
+      signature =signature.strip()
 
     self.signatures.append(signature)
 
@@ -281,4 +303,4 @@ class Metablock(ValidationMixin):
         " 'signatures' property has to be of type 'list'.")
 
     for signature in self.signatures:
-      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature.strip())
