@@ -1,4 +1,27 @@
-"""Resolver implementation for files"""
+# Copyright New York University and the in-toto contributors
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+<Program Name>
+  _file_resolver.py
+
+<Author>
+  Alan Chung Ma <achungma@purdue.edu>
+
+<Started>
+  February 1, 2023
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Provide resolver implementation for files.
+
+<Classes>
+  FileResolver:
+      Resolver implementation for files
+
+"""
 
 import os
 import logging
@@ -18,6 +41,8 @@ class FileResolver(Resolver):
   @classmethod
   def resolve_uri(cls, generic_uri, exclude_patterns=None,
                   follow_symlink_dirs=False):
+    """Get all file names from the generic_uri.
+    """
     if generic_uri.startswith(cls.SCHEME + ":"):
       generic_uri = generic_uri[len(cls.SCHEME)+1:]
 
@@ -71,8 +96,8 @@ class FileResolver(Resolver):
   @classmethod
   def get_hashable_representation(cls, resolved_uri,
                                   normalize_line_endings=False):
-    """Internal helper that takes a filename and creates a hashable
-    representation of the file contents."""
+    """Takes a filename and obtain a hashable representation of the file
+    contents."""
 
     data = b""
 

@@ -1,5 +1,26 @@
 #!/usr/bin/env python
 
+# Copyright New York University and the in-toto contributors
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+<Program Name>
+  test_resolver.py
+
+<Author>
+  Alan Chung Ma <achungma@purdue.edu>
+
+<Started>
+  February 1, 2023
+
+<Copyright>
+  See LICENSE for licensing information.
+
+<Purpose>
+  Test resolver interface functions.
+
+"""
+
 import unittest
 from in_toto.resolver import (Resolver, FileResolver)
 from in_toto.resolver._resolver import _get_resolver
