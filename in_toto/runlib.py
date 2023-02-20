@@ -42,17 +42,16 @@ from pathspec import PathSpec
 import in_toto.settings
 import in_toto.exceptions
 
+from in_toto.models._signer import GPGKey, GPGSigner
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
-from in_toto.models.metadata import (AnyMetadata, Envelope, Metablock)
+from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 
 import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
-from securesystemslib.key import SSlibKey, GPGKey
-from securesystemslib.serialization import JSONSerializer
-from securesystemslib.signer import GPGSigner, SSlibSigner, Signature
+from securesystemslib.signer import SSlibKey, SSlibSigner, Signature
 
 
 
@@ -491,7 +490,7 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     from link.FILENAME_FORMAT_SHORT
 
   <Returns>
-    Newly created AnyMetadata object containing a Link object
+    Newly created Metadata object containing a Link object
 
   """
   link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
@@ -499,7 +498,7 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
 
   filename = FILENAME_FORMAT_SHORT.format(step_name=name)
   LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
-  link_metadata.to_file(filename)
+  link_metadata.dump(filename)
   return link_metadata
 
 
@@ -612,7 +611,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     Writes link metadata file to disk, if any key argument is passed.
 
   Returns:
-    A AnyMetadata object that contains the resulting link object.
+    A Metadata object that contains the resulting link object.
 
   """
   LOG.info("Running '{}'...".format(name))
@@ -688,7 +687,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
 
   # We need the signature's keyid to write the link to keyid infix'ed filename
   if signer:
-    signature = link_metadata.create_sig(signer)
+    signature = link_metadata.create_signature(signer)
     signing_keyid = signature.keyid
 
     filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
@@ -697,10 +696,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       filename = os.path.join(metadata_directory, filename)
 
     LOG.info("Storing link metadata to '{}'...".format(filename))
-    link_metadata.to_file(
-      filename=filename,
-      serializer=JSONSerializer(compact=compact_json)
-    )
+    link_metadata.dump(filename, compact=compact_json)
 
   return link_metadata
 
@@ -843,7 +839,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     LOG.info("Signing link metadata using default GPG key ...")
     signer = GPGSigner(keyid=None, homedir=gpg_home)
 
-  signature = link_metadata.create_sig(signer)
+  signature = link_metadata.create_signature(signer)
   # We need the signature's keyid to write the link to keyid infix'ed filename
   signing_keyid = signature.keyid
 
@@ -852,7 +848,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 
   LOG.info(
       "Storing preliminary link metadata to '{}'...".format(unfinished_fn))
-  link_metadata.to_file(unfinished_fn)
+  link_metadata.dump(unfinished_fn)
 
 
 def in_toto_record_stop(step_name, product_list, signing_key=None,
@@ -988,7 +984,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     unfinished_fn = unfinished_fn_list[0]
 
   LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link_metadata = AnyMetadata.from_file(unfinished_fn)
+  link_metadata = Metadata.load(unfinished_fn)
 
   # The file must have been signed by the same key
   # If we have a signing_key we use it for verification as well
@@ -1003,7 +999,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
-    verification_key = GPGKey.from_dict(gpg_pubkey)
+    verification_key = GPGKey.from_legacy_dict(gpg_pubkey)
 
   else: # must be gpg_use_default
     # FIXME: Currently there is no way to know the default GPG key's keyid
@@ -1021,9 +1017,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
       keyid = sig["keyid"]
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         keyid, gpg_home)
-    verification_key = GPGKey.from_dict(gpg_pubkey)
+    verification_key = GPGKey.from_legacy_dict(gpg_pubkey)
 
-  link_metadata.verify_sigs([verification_key], 1)
+  link_metadata.verify_signatures([verification_key], 1)
 
   LOG.info("Extracting Link from metadata...")
   link = link_metadata.get_payload()
@@ -1054,14 +1050,14 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
     signer = GPGSigner(keyid=keyid, homedir=gpg_home)
 
-  link_metadata.create_sig(signer)
+  link_metadata.create_signature(signer)
   fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
 
   if metadata_directory is not None:
     fn = os.path.join(metadata_directory, fn)
 
   LOG.info("Storing link metadata to '{}'...".format(fn))
-  link_metadata.to_file(fn)
+  link_metadata.dump(fn)
 
   LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)

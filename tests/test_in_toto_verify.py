@@ -25,12 +25,12 @@ import os
 import unittest
 import shutil
 
-from in_toto.models.metadata import AnyMetadata
+from in_toto.models.metadata import Metadata
 from in_toto.in_toto_verify import main as in_toto_verify_main
 from securesystemslib.interface import (import_rsa_privatekey_from_file,
     import_ed25519_privatekey_from_file)
 from securesystemslib.gpg.constants import have_gpg
-from securesystemslib.signer import SSlibSigner, GPGSigner
+from securesystemslib.signer import SSlibSigner
 
 from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin
 
@@ -81,7 +81,7 @@ class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
-    layout_template = AnyMetadata.from_file("demo.layout.template")
+    layout_template = Metadata.load("demo.layout.template")
 
     # Store layout paths to be used in tests
     self.layout_single_signed_path = "single-signed.layout"
@@ -205,7 +205,7 @@ class TestInTotoVerifyToolWithDSSE(CliTestCase, TmpDirMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
-    layout_template = AnyMetadata.from_file("demo.layout.template")
+    layout_template = Metadata.load("demo.layout.template")
 
     # Store layout paths to be used in tests
     self.layout_single_signed_path = "single-signed.layout"
@@ -218,11 +218,11 @@ class TestInTotoVerifyToolWithDSSE(CliTestCase, TmpDirMixin):
     self.bob_path = "bob.pub"
 
     # dump a single signed layout
-    layout_template.create_sig(SSlibSigner(alice))
-    layout_template.to_file(self.layout_single_signed_path)
+    layout_template.create_signature(SSlibSigner(alice))
+    layout_template.dump(self.layout_single_signed_path)
     # dump a double signed layout
-    layout_template.create_sig(SSlibSigner(bob))
-    layout_template.to_file(self.layout_double_signed_path)
+    layout_template.create_signature(SSlibSigner(bob))
+    layout_template.dump(self.layout_double_signed_path)
 
 
   @classmethod
@@ -293,7 +293,7 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
-    layout_template = AnyMetadata.from_file("demo.layout.template")
+    layout_template = Metadata.load("demo.layout.template")
 
     # Store layout paths to be used in tests
     self.layout_double_signed_path = "double-signed.layout"
@@ -363,7 +363,7 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Load layout template
-    layout_template = AnyMetadata.from_file("demo.layout.template")
+    layout_template = Metadata.load("demo.layout.template")
 
     # Store layout paths to be used in tests
     self.layout_double_signed_path = "double-signed.layout"
@@ -375,9 +375,9 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
     self.danny_path = "danny.pub"
 
     # dump a double signed layout
-    layout_template.create_sig(SSlibSigner(alice))
-    layout_template.create_sig(SSlibSigner(danny))
-    layout_template.to_file(self.layout_double_signed_path)
+    layout_template.create_signature(SSlibSigner(alice))
+    layout_template.create_signature(SSlibSigner(danny))
+    layout_template.dump(self.layout_double_signed_path)
 
 
   @classmethod
@@ -392,7 +392,7 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
     self.assert_cli_sys_exit(args, 0)
 
 
-@unittest.skipIf(not HAVE_GPG, "gpg not found")
+@unittest.skipIf(not have_gpg(), "gpg not found")
 class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
   """ Tests in-toto-verify like TestInTotoVerifyTool but with
   gpg project owner and functionary keys. """
@@ -421,60 +421,11 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
     shutil.copytree(scripts_directory, 'scripts')
 
     # Sign layout template with gpg key
-    layout_template = AnyMetadata.from_file("demo.layout.template")
+    layout_template = Metadata.load("demo.layout.template")
 
     self.layout_path = "gpg_signed.layout"
     layout_template.sign_gpg(self.gpg_key_0C8A17, self.gnupg_home)
     layout_template.dump(self.layout_path)
-
-
-  @classmethod
-  def tearDownClass(self):
-    self.tear_down_test_dir()
-
-  def test_gpg_signed_layout_with_gpg_functionary_keys(self):
-    """ Successfully test demo supply chain where the layout lists gpg keys
-    as functionary keys and is signed with a gpg key. """
-    args = ["--layout", self.layout_path,
-            "--gpg", self.gpg_key_0C8A17, "--gpg-home", self.gnupg_home]
-
-    self.assert_cli_sys_exit(args, 0)
-
-
-@unittest.skipIf(not have_gpg, "gpg not found")
-class TestInTotoVerifyToolGPGWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
-  """ Tests in-toto-verify like TestInTotoVerifyTool but with
-  gpg project owner and functionary keys. """
-  cli_main_func = staticmethod(in_toto_verify_main)
-
-
-  @classmethod
-  def setUpClass(self):
-    """Copy test gpg rsa keyring, gpg demo metadata files and demo final
-    product to tmp test dir. """
-    # Copy gpg demo metadata files
-    demo_files = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "demo_dsse_files_gpg")
-
-    # find where the scripts directory is located.
-    scripts_directory = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "scripts")
-
-    self.set_up_test_dir()
-    self.set_up_gpg_keys()
-
-    for fn in os.listdir(demo_files):
-      shutil.copy(os.path.join(demo_files, fn), self.test_dir)
-
-    # Change into test dir
-    shutil.copytree(scripts_directory, 'scripts')
-
-    # Sign layout template with gpg key
-    layout_template = AnyMetadata.from_file("demo.layout.template")
-
-    self.layout_path = "gpg_signed.layout"
-    layout_template.create_sig(GPGSigner(self.gpg_key_0C8A17, self.gnupg_home))
-    layout_template.to_file(self.layout_path)
 
 
   @classmethod

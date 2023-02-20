@@ -39,15 +39,16 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
-from in_toto.models.metadata import AnyMetadata
+from in_toto.models.metadata import Metadata
+from in_toto.models._signer import GPGKey
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.rulelib
 
 import securesystemslib.formats
-from securesystemslib.exceptions import SignatureVerificationError
+from securesystemslib.exceptions import VerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
-from securesystemslib.key import GPGKey, SSlibKey
+from securesystemslib.signer import SSlibKey
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ def create_key_list_from_key_dict(key_dict):
   keys = []
   for key in key_dict.values():
     if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
-      keys.append(GPGKey.from_dict(key))
+      keys.append(GPGKey.from_legacy_dict(key))
     elif securesystemslib.formats.KEY_SCHEMA.matches(key):
       keys.append(SSlibKey.from_securesystemslib_key(key))
 
@@ -138,8 +139,7 @@ def load_links_for_layout(layout, link_dir_path):
 
     {
       <step name> : {
-        <functionary key id> : <AnyMetadata containing a Link or Layout
-                               object>,
+        <functionary key id> : <Metadata containing a Link or Layout object>,
         ...
       }, ...
     }
@@ -165,7 +165,7 @@ def load_links_for_layout(layout, link_dir_path):
         filepath = os.path.join(link_dir_path, filename)
 
         try:
-          metadata = AnyMetadata.from_file(filepath)
+          metadata = Metadata.load(filepath)
           links_per_step[keyid] = metadata
 
         except IOError:
@@ -375,7 +375,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <AnyMetadata containing a Link or Layout
+                <functionary key id> : <Metadata containing a Link or Layout
                                         object>,
                 ...
               }, ...
@@ -403,7 +403,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       main_keys_for_subkeys[sub_keyid] = main_key
 
   # Dict for valid and authorized links of all steps of the layout
-  verfied_steps_metadata = {}
+  verified_steps_metadata = {}
 
   # For each step of the layout check the signatures of corresponding links.
   # Consider only links where the signature is valid and keys are authorized,
@@ -453,9 +453,9 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       try:
         keys = create_key_list_from_key_dict(
             {authorized_keyid: verification_key})
-        link.verify_sigs(keys, 1)
+        link.verify_signatures(keys, 1)
 
-      except SignatureVerificationError:
+      except VerificationError:
         LOG.info("Skipping link. Broken link signature with keyid '{0}'"
             " for step '{1}'".format(link_keyid, step.name))
         continue
@@ -491,11 +491,11 @@ def verify_link_signature_thresholds(layout, steps_metadata):
           valid_authorized_links_cnt))
 
     # Add all good links of this step to the dictionary of links of all steps
-    verfied_steps_metadata[step.name] = verified_key_link_dict
+    verified_steps_metadata[step.name] = verified_key_link_dict
 
   # Threshold verification succeeded, return valid and authorized links for
   # further verification
-  return verfied_steps_metadata
+  return verified_steps_metadata
 
 def verify_command_alignment(command, expected_command):
   """
@@ -1248,7 +1248,7 @@ def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <AnyMetadata containing a Link or Layout
+                <functionary key id> : <Metadata containing a Link or Layout
                                           object>,
                 ...
               }, ...
@@ -1377,7 +1377,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
   return summary_link
 
 
-def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
+def in_toto_verify(metadata: Metadata, layout_key_dict, link_dir_path=".",
     substitution_parameters=None, step_name="",
     persist_inspection_links=True):
   """Performs complete in-toto supply chain verification for a final product.
@@ -1401,7 +1401,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   11. Process inspection product and material rules
 
   Arguments:
-    layout: A AnyMetadata object that contains a Layout object to be verified.
+    metadata: A Metadata object that contains a Layout object to be verified.
 
     layout_key_dict: A public key dictionary. The verification routine requires
         at least one key, and a valid signature on the layout for each key.
@@ -1426,8 +1426,8 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   Raises:
     securesystemslib.exceptions.FormatError: Passed parameters are malformed.
 
-    SignatureVerificationError: No layout verification key is passed, or any of
-        the passed keys fails to verify a signature.
+    securesystemslib.exceptions.VerificationError: No layout verification key
+        is passed, or any of the passed keys fails to verify a signature.
 
     LayoutExpiredError: The layout is expired.
 
@@ -1458,14 +1458,14 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
 
   keys = create_key_list_from_key_dict(layout_key_dict)
 
-  LOG.info("Verifying layout signatures...")
-  layout.verify_sigs(keys, len(keys))
+  LOG.info("Verifying layout metadata signatures...")
+  metadata.verify_signatures(keys, len(keys))
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
   # container (Metablock) that also carries the signatures
   LOG.info("Extracting layout from metadata...")
-  layout = layout.get_payload()
+  layout = metadata.get_payload()
 
   LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)

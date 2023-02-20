@@ -238,7 +238,6 @@ class TestInTotoRecordToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKe
     """Create and change into temporary directory,
     generate key pair, dummy artifact and base arguments. """
     self.set_up_test_dir()
-    self.set_up_gpg_keys()
     self.set_up_keys()
 
     self.test_artifact1 = "test_artifact1"
@@ -286,18 +285,6 @@ class TestInTotoRecordToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKe
       self.test_artifact1, self.test_artifact2], 0)
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
       self.test_artifact2, self.test_artifact2], 0)
-
-    # Start/stop sign with specified gpg keyid
-    args = ["--step-name", "test7", "--gpg", self.gpg_key_768C43, "--gpg-home",
-      self.gnupg_home, "--use-dsse"]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
-
-    # Start/stop sign with default gpg keyid
-    args = ["--step-name", "test8", "--gpg", "--gpg-home", self.gnupg_home,
-      "--use-dsse"]
-    self.assert_cli_sys_exit(["start"] + args, 0)
-    self.assert_cli_sys_exit(["stop"] + args, 0)
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ import argparse
 import logging
 
 from in_toto.models.link import FILENAME_FORMAT
-from in_toto.models.metadata import AnyMetadata
+from in_toto.models.metadata import Metadata
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
@@ -48,7 +48,7 @@ from in_toto.verifylib import create_key_list_from_key_dict
 LOG = logging.getLogger("in_toto")
 
 
-def _sign_and_dump_metadata(metadata, args):
+def _sign_and_dump_metadata(metadata: Metadata, args):
   """
   <Purpose>
     Internal method to sign link or layout metadata and dump it to disk.
@@ -78,12 +78,13 @@ def _sign_and_dump_metadata(metadata, args):
       # If `--gpg` was passed without argument we sign with the default key
       # Excluded so that coverage does not vary in different test environments
       if len(args.gpg) == 0: # pragma: no cover
-        signature = metadata.create_sig(GPGSigner(None, homedir=args.gpg_home))
+        signature = metadata.create_signature(
+          GPGSigner(None, homedir=args.gpg_home))
 
       # Otherwise we sign with each passed keyid
       for keyid in args.gpg:
         securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-        signature = metadata.create_sig(
+        signature = metadata.create_signature(
             GPGSigner(keyid, homedir=args.gpg_home))
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH
@@ -101,7 +102,7 @@ def _sign_and_dump_metadata(metadata, args):
       for idx, key_path in enumerate(args.key):
         key = interface.import_privatekey_from_file(
             key_path, key_type=args.key_type[idx], prompt=args.prompt)
-        signature = metadata.create_sig(SSlibSigner(key))
+        signature = metadata.create_signature(SSlibSigner(key))
 
     payload = metadata.get_payload()
     _type = payload.type_
@@ -122,8 +123,7 @@ def _sign_and_dump_metadata(metadata, args):
       out_path = args.file
 
     LOG.info("Dumping {0} to '{1}'...".format(_type, out_path))
-
-    metadata.to_file(out_path)
+    metadata.dump(out_path)
     sys.exit(0)
 
   except Exception as e:
@@ -132,7 +132,7 @@ def _sign_and_dump_metadata(metadata, args):
     sys.exit(2)
 
 
-def _verify_metadata(metadata, args):
+def _verify_metadata(metadata: Metadata, args):
   """
   <Purpose>
     Internal method to verify link or layout signatures.
@@ -164,11 +164,11 @@ def _verify_metadata(metadata, args):
 
     keys = create_key_list_from_key_dict(pub_key_dict)
     LOG.info("Verifying metadata signatures against keys...")
-    metadata.verify_sigs(keys, len(keys))
+    metadata.verify_signatures(keys, len(keys))
 
     sys.exit(0)
 
-  except securesystemslib.exceptions.SignatureVerificationError as e:
+  except securesystemslib.exceptions.VerificationError as e:
     LOG.error("Signature verification failed: {}".format(e))
     sys.exit(1)
 
@@ -195,7 +195,7 @@ def _load_metadata(file_path):
 
   """
   try:
-    return AnyMetadata.from_file(file_path)
+    return Metadata.load(file_path)
 
   except Exception as e:
     LOG.error("The following error occurred while loading the file '{}': "

@@ -452,35 +452,6 @@ class TestInTotoSignToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeys
         "--verify"
         ], 0)
 
-    # Sign Layout with default gpg key
-    self.assert_cli_sys_exit([
-        "-f", self.layout_path,
-        "-g",
-        "-o", "tmp_gpg.layout",
-        "--gpg-home", self.gnupg_home
-        ], 0)
-    # Verify Layout signed with default gpg key
-    self.assert_cli_sys_exit([
-        "-f", "tmp_gpg.layout",
-        "-g", self.gpg_key_0C8A17,
-        "--gpg-home", self.gnupg_home,
-        "--verify"
-        ], 0)
-
-    # Sign Layout with two gpg keys
-    self.assert_cli_sys_exit([
-        "-f", self.layout_path,
-        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
-        "-o", "tmp_gpg.layout",
-        "--gpg-home", self.gnupg_home
-        ], 0)
-    self.assert_cli_sys_exit([
-        "-f", "tmp_gpg.layout",
-        "-g", self.gpg_key_768C43, self.gpg_key_85DA58,
-        "--gpg-home", self.gnupg_home,
-        "--verify"
-        ], 0)
-
 
   def test_fail_verification(self):
     """Fail signature verification. """

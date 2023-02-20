@@ -29,7 +29,7 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-from in_toto.models.metadata import AnyMetadata, Metablock
+from in_toto.models.metadata import Metadata, Metablock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 
@@ -331,7 +331,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysM
     # Test and assert recorded artifacts
     args1 = named_args + positional_args
     self.assert_cli_sys_exit(args1, 0)
-    metadata = AnyMetadata.from_file(self.test_link_rsa)
+    metadata = Metadata.load(self.test_link_rsa)
     link = metadata.get_payload()
     self.assertTrue(self.test_artifact in
         list(link.materials.keys()))
@@ -341,14 +341,14 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysM
     # Test and assert exlcuded artifacts
     args2 = named_args + ["--exclude", "*test*"] + positional_args
     self.assert_cli_sys_exit(args2, 0)
-    link = AnyMetadata.from_file(self.test_link_rsa).get_payload()
+    link = Metadata.load(self.test_link_rsa).get_payload()
     self.assertFalse(link.materials)
     self.assertFalse(link.products)
 
     # Test with base path
     args3 = named_args + ["--base-path", self.test_dir] + positional_args
     self.assert_cli_sys_exit(args3, 0)
-    link = AnyMetadata.from_file(self.test_link_rsa).get_payload()
+    link = Metadata.load(self.test_link_rsa).get_payload()
     self.assertListEqual(list(link.materials.keys()),
         [self.test_artifact])
     self.assertListEqual(list(link.products.keys()),
@@ -362,39 +362,20 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysM
     strip_prefix = self.test_artifact[:-1]
     args5 = named_args + ["--lstrip-paths", strip_prefix] + positional_args
     self.assert_cli_sys_exit(args5, 0)
-    link = AnyMetadata.from_file(self.test_link_rsa).get_payload()
+    link = Metadata.load(self.test_link_rsa).get_payload()
     self.assertListEqual(list(link.materials.keys()),
         [self.test_artifact[len(strip_prefix):]])
     self.assertListEqual(list(link.products.keys()),
         [self.test_artifact[len(strip_prefix):]])
 
 
-  def test_main_with_specified_gpg_key(self):
-    """Test CLI command with specified gpg key. """
-    args = ["-n", self.test_step,
-            "--gpg", self.gpg_key_85DA58,
-            "--gpg-home", self.gnupg_home, "--use-dsse",
-            "--", "python", "--version"]
-
-    self.assert_cli_sys_exit(args, 0)
-    link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.gpg_key_85DA58)
-
-    self.assertTrue(os.path.exists(link_filename))
-
-
   def test_main_with_default_gpg_key(self):
-    """Test CLI command with default gpg key. """
+    """Test CLI command with default gpg key."""
     args = ["-n", self.test_step,
             "--gpg", "--gpg-home", self.gnupg_home, "--use-dsse",
             "--", "python", "--version"]
 
-    self.assert_cli_sys_exit(args, 0)
-
-    link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
-        keyid=self.gpg_key_D924E9)
-
-    self.assertTrue(os.path.exists(link_filename))
+    self.assert_cli_sys_exit(args, 1)
 
 
   def test_main_no_command_arg(self):
