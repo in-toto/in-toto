@@ -25,8 +25,6 @@ import attr
 import inspect
 import securesystemslib.formats
 
-from securesystemslib.serialization import JSONSerializer
-
 
 class ValidationMixin(object):
   """ The validation mixin provides a self-inspecting method, validate, to
@@ -62,18 +60,3 @@ class Signable(ValidationMixin):
     representation of the instance. """
     return securesystemslib.formats.encode_canonical(
         attr.asdict(self)).encode("UTF-8")
-
-  def to_bytes(self, serializer = None):
-    """Returns the JSON encoded bytes representation of self."""
-
-    if serializer is None:
-      serializer = JSONSerializer(compact=True)
-
-    # JSONSerializer requires an JSONSerializable object, typing.Protocol will
-    # fix this warning in future.
-    return serializer.serialize(self)  # type: ignore
-
-  def to_dict(self):
-    """Returns the JSON-serializable dictionary representation of self."""
-
-    return attr.asdict(self)

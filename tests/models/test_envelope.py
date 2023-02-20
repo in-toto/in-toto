@@ -68,13 +68,13 @@ class TestMetablockValidator(unittest.TestCase, TmpDirMixin):
     link_path = "package.2f89b927.link"
 
     # Load layout metadata.
-    env = Envelope.from_file(layout_path)
+    env = Envelope.load(layout_path)
     layout = env.get_payload()
 
     self.assertIsInstance(layout, Layout)
 
     # Load link metadata.
-    env = Envelope.from_file(link_path)
+    env = Envelope.load(link_path)
     link = env.get_payload()
 
     self.assertIsInstance(link, Link)

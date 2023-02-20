@@ -25,19 +25,19 @@
 import attr
 import copy
 import json
-from typing import Optional, List, Union
+from typing import Dict, List, Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
-from securesystemslib.exceptions import SignatureVerificationError
-from securesystemslib.key import Key
-from securesystemslib.metadata import Envelope as SSlibEnvelope
-from securesystemslib.signer import GPGSignature, Signature, Signer
-from securesystemslib.serialization import (BaseDeserializer, BaseSerializer,
-    JSONSerializer, SerializationMixin)
+from securesystemslib.exceptions import (
+  VerificationError, UnverifiedSignatureError)
+from securesystemslib.signer import Key, Signature, Signer
+from securesystemslib.dsse import Envelope as SSlibEnvelope
 
+from in_toto.exceptions import InvalidMetadata
+from in_toto.models._signer import GPGSignature, GPGSigner
 from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
@@ -46,58 +46,172 @@ from in_toto.models.layout import Layout
 ENVELOPE_PAYLOAD_TYPE = "application/vnd.in-toto+json"
 
 
-# pylint: disable=import-outside-toplevel
-class AnyMetadata(SerializationMixin):
+class Metadata:
   """A Metadata abstraction between DSSE Envelope and Metablock."""
 
-  @staticmethod
-  def _default_deserializer() -> BaseDeserializer:
-    from in_toto.models.serialization import AnyMetadataDeserializer
-    return AnyMetadataDeserializer()
+  @classmethod
+  def from_dict(cls, data: dict) -> Union["Envelope", "Metablock"]:
+    """Loads DSSE or Traditional Metadata."""
 
-  @staticmethod
-  def _default_serializer() -> BaseSerializer:
-    return JSONSerializer()
+    if "payload" in data:
+      if data.get("payloadType") == ENVELOPE_PAYLOAD_TYPE:
+        return Envelope.from_dict(data)
+
+    elif "signed" in data:
+      return Metablock.from_dict(data)
+
+    raise InvalidMetadata
+
+  def to_dict(self) -> dict:
+    """Abstractmethod to convert metadata into dict"""
+    raise NotImplementedError  # pragma: no cover
+
+  @classmethod
+  def load(cls, path) -> Union["Envelope", "Metablock"]:
+    """Loads the JSON string representation of metadata from disk.
+
+    Arguments:
+      path: The path to read the file from.
+
+    Raises:
+      IOError: The file cannot be read.
+      securesystemslib.exceptions.FormatError: Metadata format is invalid.
+
+    Returns:
+      A Metablock object whose signable attribute is either a Link or a Layout
+      object.
+
+    """
+    with open(path, "r", encoding="utf8") as fp:
+      data = json.load(fp)
+
+    return cls.from_dict(data)
+
+  def dump(self, path, compact=False):
+    """Writes the JSON string representation of the instance to disk.
+
+    Arguments:
+      path: The path to write the file to.
+
+    Raises:
+      IOError: File cannot be written.
+
+    """
+    indent = None if compact else 1
+    separators = (',', ':') if compact else (',', ': ')
+
+    json_bytes = json.dumps(
+      self.to_dict(),
+      indent=indent,
+      separators=separators,
+      sort_keys=True,
+    ).encode("utf-8")
+
+    with open(path, "wb") as fp:
+      fp.write(json_bytes)
+
+  def create_signature(self, signer: Signer) -> Signature:
+    """Creates signature over signable with Signer and adds it to signatures.
+
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to create signatures deterministically.
+
+    Arguments:
+      signer: A "Signer" class instance to create signature.
+
+    Raises:
+      securesystemslib.exceptions.FormatError: Key argument is malformed.
+      securesystemslib.exceptions.CryptoError, \
+              securesystemslib.exceptions.UnsupportedAlgorithmError:
+          Signing errors.
+
+    Returns:
+      The signature. A securesystemslib.signer.Signature type.
+    """
+    raise NotImplementedError  # pragma: no cover
+
+  def verify_signatures(
+    self,
+    keys: List[Key],
+    threshold: int
+  ) -> Dict[str, Key]:
+    """Verifies signature over signable in signatures with a list of keys.
+
+    Uses the UTF-8 encoded canonical JSON byte representation of the signable
+    attribute to verify the signature deterministically.
+
+    Arguments:
+        keys: A list of public keys to verify the signatures.
+        threshold: Number of signatures needed to pass the verification.
+
+    Raises:
+        ValueError: If "threshold" is not valid.
+        VerificationError: If the enclosed signatures do not pass the
+          verification.
+
+    Returns:
+        accepted_keys: A dict of unique public keys.
+    """
+    raise NotImplementedError  # pragma: no cover
+
+  def get_payload(self):
+    """Returns ``Link`` or ``Layout`` from the metadata wrapper."""
+    raise NotImplementedError  # pragma: no cover
 
 
-class Envelope(AnyMetadata, SSlibEnvelope):
+class Envelope(SSlibEnvelope, Metadata):
   """DSSE Envelope for in-toto payloads."""
 
   @classmethod
   def from_signable(cls, signable: Signable) -> "Envelope":
     """Creates DSSE envelope with signable bytes as payload."""
 
+    json_bytes = json.dumps(
+      attr.asdict(signable),
+      sort_keys=True,
+    ).encode("utf-8")
+
     return cls(
-      payload=signable.to_bytes(),
+      payload=json_bytes,
       payload_type=ENVELOPE_PAYLOAD_TYPE,
       signatures=[]
     )
 
-  def get_payload(self, deserializer: Optional[BaseDeserializer] = None
-  ) -> Union[Link, Layout]:
+  def create_signature(self, signer: Signer) -> Signature:
+    if isinstance(signer, GPGSigner):
+      raise NotImplementedError("GPG Signing is not implemented")
+
+    return super().sign(signer)
+
+  def verify_signatures(
+    self,
+    keys: List[Key],
+    threshold: int
+  ) -> Dict[str, Key]:
+    return super().verify(keys, threshold)
+
+  def get_payload(self) -> Union[Link, Layout]:
     """Parse DSSE payload into Link or Layout object.
 
-      Arguments:
-          deserializer: ``securesystemslib.serialization.BaseDeserializer``
-              implementation to use. Default is ``PayloadDeserializer``.
-
       Raises:
-          securesystemslib.exceptions.DeserializationError: The payload
-              cannot be deserialized.
+          InvalidMetadata: If type in payload is not ``link`` or ``layout``.
 
       Returns:
           Link or Layout.
     """
 
-    if deserializer is None:
-      from in_toto.models.serialization import PayloadDeserializer
-      deserializer = PayloadDeserializer()
+    data = json.loads(self.payload.decode("utf-8"))
+    _type = data.get("_type")
+    if _type == "link":
+      return Link.read(data)
+    if _type == "layout":
+      return Layout.read(data)
 
-    return super().get_payload(deserializer)
+    raise InvalidMetadata
 
 
 @attr.s(repr=False, init=False)
-class Metablock(ValidationMixin, AnyMetadata):
+class Metablock(Metadata, ValidationMixin):
   """A container for signed in-toto metadata.
 
   Provides methods for metadata JSON (de-)serialization, reading from and
@@ -168,44 +282,6 @@ class Metablock(ValidationMixin, AnyMetadata):
       "signed": attr.asdict(self.signed)
     }
 
-
-  def dump(self, path):
-    """Writes the JSON string representation of the instance to disk.
-
-    Arguments:
-      path: The path to write the file to.
-
-    Raises:
-      IOError: File cannot be written.
-
-    """
-    with open(path, "wb") as fp:
-      fp.write("{}".format(self).encode("utf-8"))
-
-
-  @staticmethod
-  def load(path):
-    """Loads the JSON string representation of in-toto metadata from disk.
-
-    Arguments:
-      path: The path to read the file from.
-
-    Raises:
-      IOError: The file cannot be read.
-      securesystemslib.exceptions.FormatError: Metadata format is invalid.
-
-    Returns:
-      A Metablock object whose signable attribute is either a Link or a Layout
-      object.
-
-    """
-    with open(path, "r", encoding="utf8") as fp:
-      data = json.load(fp)
-
-    return Metablock.from_dict(data)
-
-
-
   @property
   def type_(self):
     """A shortcut to the `type_` attribute of the object on the signable
@@ -215,27 +291,8 @@ class Metablock(ValidationMixin, AnyMetadata):
     return self.signed.type_
 
 
-  def create_sig(self, signer: Signer):
-    """Creates signature over signable with Signer and adds it to signatures.
-
-    Uses the UTF-8 encoded canonical JSON byte representation of the signable
-    attribute to create signatures deterministically.
-
-    Arguments:
-      signer: A "Signer" class instance to create signature.
-
-    Raises:
-      securesystemslib.exceptions.FormatError: Key argument is malformed.
-      securesystemslib.exceptions.CryptoError, \
-              securesystemslib.exceptions.UnsupportedAlgorithmError:
-          Signing errors.
-
-    Returns:
-      The signature. A securesystemslib.signer.Signature type.
-
-    """
+  def create_signature(self, signer: Signer):
     signature = signer.sign(self.signed.signable_bytes)
-
     self.signatures.append(signature.to_dict())
 
     return signature
@@ -301,25 +358,7 @@ class Metablock(ValidationMixin, AnyMetadata):
     return signature
 
 
-  def verify_sigs(self, keys: List[Key], threshold):
-    """Verifies signature over signable in signatures with a list of keys.
-
-    Uses the UTF-8 encoded canonical JSON byte representation of the signable
-    attribute to verify the signature deterministically.
-
-    Arguments:
-        keys: A list of public keys to verify the signatures.
-        threshold: Number of signatures needed to pass the verification.
-
-    Raises:
-        ValueError: If "threshold" is not valid.
-        SignatureVerificationError: If the enclosed signatures do not pass
-            the verification.
-
-    Returns:
-        accepted_keys: A dict of unique public keys.
-    """
-
+  def verify_signatures(self, keys: List[Key], threshold):
     accepted_keys = {}
     pae = self.signed.signable_bytes
 
@@ -341,30 +380,29 @@ class Metablock(ValidationMixin, AnyMetadata):
         signature = Signature.from_dict(copy.deepcopy(signature))
 
       else:
-        raise SignatureVerificationError
+        raise VerificationError
 
       for key in keys:
-        # If Signature keyid doesn't match with Key, skip.
-        if not key.match_keyid(signature.keyid):
-          continue
-
         # If a key verifies the signature, we exit and use the result.
-        if key.verify(signature, pae):
+        try:
+          key.verify_signature(signature, pae)
           accepted_keys[key.keyid] = key
           break
+        except UnverifiedSignatureError:
+          # TODO: Log, Raise or continue with error?
+          continue
 
       # Break, if amount of recognized_signer are more than threshold.
       if len(accepted_keys) >= threshold:
         break
 
     if threshold > len(accepted_keys):
-      raise SignatureVerificationError(
+      raise VerificationError(
           "Accepted signatures do not match threshold,"
           f" Found: {len(accepted_keys)}, Expected {threshold}"
       )
 
     return accepted_keys
-
 
   def verify_signature(self, verification_key):
     """Verifies a signature over signable in signatures with verification_key.
@@ -384,9 +422,9 @@ class Metablock(ValidationMixin, AnyMetadata):
     Raises:
       securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      SignatureVerificationError: No signature keyid matches the verification
-          key keyid, or the matching signature is malformed, or the matching
-          signature is invalid.
+      securesystemslib.exceptions.VerificationError: No signature keyid matches
+          the verification key keyid, or the matching signature is malformed,
+          or the matching signature is invalid.
 
       securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
           key is an expired gpg key.
@@ -408,7 +446,7 @@ class Metablock(ValidationMixin, AnyMetadata):
         break
 
     else:
-      raise SignatureVerificationError("No signature found for key '{}'"
+      raise VerificationError("No signature found for key '{}'"
           .format(verification_keyid))
 
     if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
@@ -423,7 +461,7 @@ class Metablock(ValidationMixin, AnyMetadata):
       valid = False
 
     if not valid:
-      raise SignatureVerificationError("Invalid signature for keyid '{}'"
+      raise VerificationError("Invalid signature for keyid '{}'"
           .format(verification_keyid))
 
 
