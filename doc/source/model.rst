@@ -10,9 +10,9 @@ and read or write in-toto conformant metadata (see
 :doc:`layout-creation-example`).
 
 
-AnyMetadata
+Metadata
 -----------
-.. autoclass:: in_toto.models.metadata.AnyMetadata
+.. autoclass:: in_toto.models.metadata.Metadata
   :inherited-members:
   :members:
 
@@ -25,24 +25,6 @@ DSSE Envelope
 Metablock
 ---------
 .. autoclass:: in_toto.models.metadata.Metablock
-  :inherited-members:
-  :members:
-
-Serialization
--------------
-
-The in-toto serialization module provides serializer and deserializer classes
-for various models.
-
-AnyMetadataDeserializer
-***********************
-.. autoclass:: in_toto.models.serialization.AnyMetadataDeserializer
-  :inherited-members:
-  :members:
-
-PayloadDeserializer
-*******************
-.. autoclass:: in_toto.models.serialization.PayloadDeserializer
   :inherited-members:
   :members:
 
