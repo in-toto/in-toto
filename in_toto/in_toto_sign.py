@@ -26,6 +26,7 @@ import sys
 import argparse
 import logging
 
+from in_toto import exceptions
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metadata
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
@@ -46,7 +47,7 @@ from securesystemslib.signer import GPGSigner, SSlibSigner
 LOG = logging.getLogger("in_toto")
 
 
-def _sign_and_dump_metadata(metadata: Metadata, args):
+def _sign_and_dump_metadata(metadata, args):
   """
   <Purpose>
     Internal method to sign link or layout metadata and dump it to disk.
@@ -121,6 +122,7 @@ def _sign_and_dump_metadata(metadata: Metadata, args):
       out_path = args.file
 
     LOG.info("Dumping {0} to '{1}'...".format(_type, out_path))
+
     metadata.dump(out_path)
     sys.exit(0)
 
@@ -130,7 +132,7 @@ def _sign_and_dump_metadata(metadata: Metadata, args):
     sys.exit(2)
 
 
-def _verify_metadata(metadata: Metadata, args):
+def _verify_metadata(metadata, args):
   """
   <Purpose>
     Internal method to verify link or layout signatures.
@@ -158,6 +160,7 @@ def _verify_metadata(metadata: Metadata, args):
       pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
 
+
     for keyid, verification_key in pub_key_dict.items():
       metadata.verify_signature(verification_key)
       LOG.info("Signature verification passed for keyid '{}'"
@@ -165,7 +168,7 @@ def _verify_metadata(metadata: Metadata, args):
 
     sys.exit(0)
 
-  except securesystemslib.exceptions.VerificationError as e:
+  except exceptions.SignatureVerificationError as e:
     LOG.error("Signature verification failed: {}".format(e))
     sys.exit(1)
 

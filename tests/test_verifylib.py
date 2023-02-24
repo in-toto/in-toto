@@ -40,7 +40,8 @@ from securesystemslib.interface import (import_publickeys_from_file,
 import in_toto.exceptions
 import in_toto.settings
 from in_toto.exceptions import (BadReturnValueError, LayoutExpiredError,
-    RuleVerificationError, ThresholdVerificationError)
+    RuleVerificationError, ThresholdVerificationError,
+    SignatureVerificationError)
 from in_toto.models.layout import (SUBLAYOUT_LINK_DIR_FORMAT, Inspection,
     Layout, Step)
 from in_toto.models.link import FILENAME_FORMAT, Link
@@ -887,14 +888,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """Test fail verification with wrong layout key. """
     layout = Metablock.load(self.layout_single_signed_path)
     layout_key_dict = import_publickeys_from_file([self.bob_path])
-    with self.assertRaises(securesystemslib.exceptions.VerificationError):
+    with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_bad_signature(self):
     """Test fail verification with bad layout signature. """
     layout = Metablock.load(self.layout_bad_sig)
     layout_key_dict = import_publickeys_from_file([self.alice_path])
-    with self.assertRaises(securesystemslib.exceptions.VerificationError):
+    with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout, layout_key_dict)
 
   def test_verify_failing_layout_expired(self):
@@ -937,7 +938,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_layout_signatures_fail_with_no_keys(self):
     """Layout signature verification fails when no keys are passed. """
     layout_metablock = Metablock(signed=Layout())
-    with self.assertRaises(securesystemslib.exceptions.VerificationError):
+    with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout_metablock, {})
 
   def test_verify_layout_signatures_fail_with_malformed_signature(self):
@@ -949,7 +950,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     del signature["sig"]
     layout_metablock.signed.signatures = [signature]
-    with self.assertRaises(securesystemslib.exceptions.VerificationError):
+    with self.assertRaises(SignatureVerificationError):
       in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
 
 

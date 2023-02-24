@@ -32,6 +32,7 @@ import subprocess
 import in_toto.settings
 import in_toto.exceptions
 from in_toto.models.metadata import Envelope, Metablock
+from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
     _hash_artifact, _subprocess_run_duplicate_streams)
@@ -913,7 +914,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     """Test record stop removes unfinished file and creates link file. """
     in_toto_record_start(self.step_name, [], self.key)
     in_toto_record_stop(self.step_name, [], self.key)
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaises(IOError):
       # pylint: disable-next=consider-using-with
       open(self.link_name_unfinished, "r", encoding="utf8")
     self.assertTrue(os.path.isfile(self.link_name))
@@ -923,7 +924,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     """Test record stop exits on missing unfinished file, no link recorded. """
     with self.assertRaises(IOError):
       in_toto_record_stop(self.step_name, [], self.key)
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaises(IOError):
       # pylint: disable-next=consider-using-with
       open(self.link_name, "r", encoding="utf8")
 
@@ -935,9 +936,9 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     changed_link_name = UNFINISHED_FILENAME_FORMAT.format(
         step_name=self.step_name, keyid=self.key2["keyid"])
     os.rename(link_name, changed_link_name)
-    with self.assertRaises(securesystemslib.exceptions.VerificationError):
+    with self.assertRaises(SignatureVerificationError):
       in_toto_record_stop(self.step_name, [], self.key2)
-    with self.assertRaises(FileNotFoundError):
+    with self.assertRaises(IOError):
       # pylint: disable-next=consider-using-with
       open(self.link_name, "r", encoding="utf8")
     os.rename(changed_link_name, link_name)

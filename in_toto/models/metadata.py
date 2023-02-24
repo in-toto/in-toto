@@ -34,7 +34,7 @@ from securesystemslib.exceptions import VerificationError
 from securesystemslib.signer import Signature, Signer, SSlibKey
 from securesystemslib.dsse import Envelope as SSlibEnvelope
 
-from in_toto.exceptions import InvalidMetadata
+from in_toto.exceptions import InvalidMetadata, SignatureVerificationError
 from in_toto.models._signer import GPGSigner
 from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.link import Link
@@ -74,7 +74,7 @@ class Metadata:
     Raises:
       IOError: The file cannot be read.
       InvalidMetadata: Metadata format is invalid.
-        securesystemslib.exceptions.FormatError: Metadata format is invalid.
+      securesystemslib.exceptions.FormatError: Metadata format is invalid.
 
     Returns:
       A Metadata containing a Link or Layout object.
@@ -136,7 +136,7 @@ class Metadata:
     Raises:
       securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      securesystemslib.exceptions.VerificationError: No signature keyid matches
+      SignatureVerificationError: No signature keyid matches
           the verification key keyid, or the matching signature is malformed,
           or the matching signature is invalid.
     """
@@ -173,9 +173,12 @@ class Envelope(SSlibEnvelope, Metadata):
 
   def verify_signature(self, verification_key: dict):
     key = SSlibKey.from_securesystemslib_key(verification_key)
-    super().verify(
-      keys=[key], threshold=1
-    )
+    try:
+      super().verify(
+        keys=[key], threshold=1
+      )
+    except VerificationError as exc:
+      raise SignatureVerificationError from exc
 
   def get_payload(self) -> Union[Link, Layout]:
     """Parse DSSE payload into Link or Layout object.
@@ -344,6 +347,7 @@ class Metablock(Metadata, ValidationMixin):
 
     return signature
 
+
   def verify_signature(self, verification_key: dict):
     """Verifies a signature over signable in signatures with verification_key.
 
@@ -362,12 +366,13 @@ class Metablock(Metadata, ValidationMixin):
     Raises:
       securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-      securesystemslib.exceptions.VerificationError: No signature keyid matches
-          the verification key keyid, or the matching signature is malformed,
-          or the matching signature is invalid.
+      SignatureVerificationError: No signature keyid matches the verification
+          key keyid, or the matching signature is malformed, or the matching
+          signature is invalid.
 
       securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
           key is an expired gpg key.
+
     """
     securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(
         verification_key)
@@ -385,7 +390,7 @@ class Metablock(Metadata, ValidationMixin):
         break
 
     else:
-      raise VerificationError("No signature found for key '{}'"
+      raise SignatureVerificationError("No signature found for key '{}'"
           .format(verification_keyid))
 
     if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
@@ -400,7 +405,7 @@ class Metablock(Metadata, ValidationMixin):
       valid = False
 
     if not valid:
-      raise VerificationError("Invalid signature for keyid '{}'"
+      raise SignatureVerificationError("Invalid signature for keyid '{}'"
           .format(verification_keyid))
 
 

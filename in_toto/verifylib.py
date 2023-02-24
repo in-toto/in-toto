@@ -41,57 +41,17 @@ import in_toto.models.link
 import in_toto.formats
 from in_toto.models.metadata import Metadata
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
-    ThresholdVerificationError, BadReturnValueError)
+    ThresholdVerificationError, BadReturnValueError,
+    SignatureVerificationError)
 import in_toto.rulelib
 
 import securesystemslib.formats
-from securesystemslib.exceptions import VerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
 
 RULE_TRACE = {}
-
-
-def verify_metadata_signatures(metadata: Metadata, keys_dict):
-  """
-  <Purpose>
-    Iteratively verifies the signatures of a Metadata object containing
-    a Layout object for every verification key in the passed keys dictionary.
-
-    Requires at least one key to be passed and requires every passed key to
-    find a valid signature.
-
-  <Arguments>
-    metadata:
-      A Metadta object containing a Layout whose signatures are verified.
-
-    keys_dict:
-      A dictionary of keys to verify the signatures conformant with
-      securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
-
-  <Exceptions>
-    securesystemslib.exceptions.FormatError
-      if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
-
-    SignatureVerificationError
-      if an empty verification key dictionary was passed, or
-      if any of the passed verification keys fails to verify a signature.
-
-    securesystemslib.gpg.exceptions.KeyExpirationError:
-      if any of the passed verification keys is an expired gpg key
-  """
-  securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
-
-  # Fail if an empty verification key dictionary was passed
-  if len(keys_dict) < 1:
-    raise VerificationError("Layout signature verification"
-        " requires at least one key.")
-
-  # Fail if any of the passed keys can't verify a signature on the Layout
-  for junk, verify_key in keys_dict.items():
-    metadata.verify_signature(verify_key)
 
 
 def _raise_on_bad_retval(return_value, command=None):
@@ -378,6 +338,49 @@ def substitute_parameters(layout, parameter_dictionary):
     inspection.expected_products = new_product_rules
 
 
+
+def verify_metadata_signatures(metadata, keys_dict):
+  """
+  <Purpose>
+    Iteratively verifies the signatures of a Metadata object containing
+    a Layout object for every verification key in the passed keys dictionary.
+
+    Requires at least one key to be passed and requires every passed key to
+    find a valid signature.
+
+  <Arguments>
+    metadata:
+            A Metadata object containing a Layout whose signatures are
+            verified.
+
+    keys_dict:
+            A dictionary of keys to verify the signatures conformant with
+            securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
+
+  <Exceptions>
+    securesystemslib.exceptions.FormatError
+      if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
+
+    SignatureVerificationError
+      if an empty verification key dictionary was passed, or
+      if any of the passed verification keys fails to verify a signature.
+
+    securesystemslib.gpg.exceptions.KeyExpirationError:
+      if any of the passed verification keys is an expired gpg key
+
+  """
+  securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
+
+  # Fail if an empty verification key dictionary was passed
+  if len(keys_dict) < 1:
+    raise SignatureVerificationError("Layout signature verification"
+        " requires at least one key.")
+
+  # Fail if any of the passed keys can't verify a signature on the Layout
+  for junk, verify_key in keys_dict.items():
+    metadata.verify_signature(verify_key)
+
+
 def verify_link_signature_thresholds(layout, steps_metadata):
   """
   <Purpose>
@@ -478,7 +481,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       try:
         link.verify_signature(verification_key)
 
-      except VerificationError:
+      except SignatureVerificationError:
         LOG.info("Skipping link. Broken link signature with keyid '{0}'"
             " for step '{1}'".format(link_keyid, step.name))
         continue
@@ -1400,7 +1403,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
   return summary_link
 
 
-def in_toto_verify(metadata: Metadata, layout_key_dict, link_dir_path=".",
+def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
     substitution_parameters=None, step_name="",
     persist_inspection_links=True):
   """Performs complete in-toto supply chain verification for a final product.
@@ -1449,8 +1452,8 @@ def in_toto_verify(metadata: Metadata, layout_key_dict, link_dir_path=".",
   Raises:
     securesystemslib.exceptions.FormatError: Passed parameters are malformed.
 
-    securesystemslib.exceptions.VerificationError: No layout verification key
-        is passed, or any of the passed keys fails to verify a signature.
+    SignatureVerificationError: No layout verification key is passed, or any of
+        the passed keys fails to verify a signature.
 
     LayoutExpiredError: The layout is expired.
 
@@ -1480,7 +1483,7 @@ def in_toto_verify(metadata: Metadata, layout_key_dict, link_dir_path=".",
   """
 
   LOG.info("Verifying layout metadata signatures...")
-  verify_metadata_signatures(metadata=metadata, keys_dict=layout_key_dict)
+  verify_metadata_signatures(metadata, layout_key_dict)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout

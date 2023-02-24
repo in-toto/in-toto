@@ -851,6 +851,7 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
   link_metadata.dump(unfinished_fn)
 
 
+
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, normalize_line_endings=False,
@@ -993,7 +994,6 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
         "Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
     verification_key = signing_key
-
 
   elif gpg_keyid:
     LOG.info("Verifying preliminary link signature using passed gpg key...")
