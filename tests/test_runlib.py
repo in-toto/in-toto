@@ -43,7 +43,6 @@ from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
 import securesystemslib.formats
 import securesystemslib.exceptions
-from securesystemslib.signer import SSlibKey
 
 from tests.common import TmpDirMixin
 from pathlib import Path
@@ -778,7 +777,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     link_metadata = in_toto_run(self.step_name, None, None,
         ["python", "--version"], True, self.key, use_dsse=True)
     self.assertIsInstance(link_metadata, Envelope)
-    link_metadata.verify_signatures([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_signature(self.key)
 
 
 class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
@@ -837,7 +836,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     in_toto_record_start(
         self.step_name, [self.test_material], self.key, use_dsse=True)
     link_metadata = Envelope.load(self.link_name_unfinished)
-    link_metadata.verify_signatures([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_signature(self.key)
     os.remove(self.link_name_unfinished)
 
 class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
@@ -1017,7 +1016,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     in_toto_record_stop(self.step_name, [self.test_product], self.key)
 
     link_metadata = Envelope.load(self.link_name)
-    link_metadata.verify_signatures([SSlibKey.from_securesystemslib_key(self.key)], 1)
+    link_metadata.verify_signature(self.key)
 
     link = link_metadata.get_payload()
     self.assertEqual(list(link.products.keys()), [self.test_product])

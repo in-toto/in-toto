@@ -40,7 +40,6 @@ import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
 from in_toto.models.metadata import Metadata
-from in_toto.models._signer import GPGKey
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError)
 import in_toto.rulelib
@@ -48,7 +47,6 @@ import in_toto.rulelib
 import securesystemslib.formats
 from securesystemslib.exceptions import VerificationError
 from securesystemslib.gpg.exceptions import KeyExpirationError
-from securesystemslib.signer import SSlibKey
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -56,17 +54,44 @@ LOG = logging.getLogger(__name__)
 RULE_TRACE = {}
 
 
-def create_key_list_from_key_dict(key_dict):
-  """Creates list of ``Key`` from key_dict."""
+def verify_metadata_signatures(metadata: Metadata, keys_dict):
+  """
+  <Purpose>
+    Iteratively verifies the signatures of a Metadata object containing
+    a Layout object for every verification key in the passed keys dictionary.
 
-  keys = []
-  for key in key_dict.values():
-    if securesystemslib.formats.GPG_PUBKEY_SCHEMA.matches(key):
-      keys.append(GPGKey.from_legacy_dict(key))
-    elif securesystemslib.formats.KEY_SCHEMA.matches(key):
-      keys.append(SSlibKey.from_securesystemslib_key(key))
+    Requires at least one key to be passed and requires every passed key to
+    find a valid signature.
 
-  return keys
+  <Arguments>
+    metadata:
+      A Metadta object containing a Layout whose signatures are verified.
+
+    keys_dict:
+      A dictionary of keys to verify the signatures conformant with
+      securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
+
+  <Exceptions>
+    securesystemslib.exceptions.FormatError
+      if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
+
+    SignatureVerificationError
+      if an empty verification key dictionary was passed, or
+      if any of the passed verification keys fails to verify a signature.
+
+    securesystemslib.gpg.exceptions.KeyExpirationError:
+      if any of the passed verification keys is an expired gpg key
+  """
+  securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
+
+  # Fail if an empty verification key dictionary was passed
+  if len(keys_dict) < 1:
+    raise VerificationError("Layout signature verification"
+        " requires at least one key.")
+
+  # Fail if any of the passed keys can't verify a signature on the Layout
+  for junk, verify_key in keys_dict.items():
+    metadata.verify_signature(verify_key)
 
 
 def _raise_on_bad_retval(return_value, command=None):
@@ -451,9 +476,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
 
       # Verify signature and skip invalidly signed links
       try:
-        keys = create_key_list_from_key_dict(
-            {authorized_keyid: verification_key})
-        link.verify_signatures(keys, 1)
+        link.verify_signature(verification_key)
 
       except VerificationError:
         LOG.info("Skipping link. Broken link signature with keyid '{0}'"
@@ -1456,10 +1479,8 @@ def in_toto_verify(metadata: Metadata, layout_key_dict, link_dir_path=".",
 
   """
 
-  keys = create_key_list_from_key_dict(layout_key_dict)
-
   LOG.info("Verifying layout metadata signatures...")
-  metadata.verify_signatures(keys, len(keys))
+  verify_metadata_signatures(metadata=metadata, keys_dict=layout_key_dict)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout

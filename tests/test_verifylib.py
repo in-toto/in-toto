@@ -937,7 +937,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
   def test_verify_layout_signatures_fail_with_no_keys(self):
     """Layout signature verification fails when no keys are passed. """
     layout_metablock = Metablock(signed=Layout())
-    with self.assertRaises(ValueError):
+    with self.assertRaises(securesystemslib.exceptions.VerificationError):
       in_toto_verify(layout_metablock, {})
 
   def test_verify_layout_signatures_fail_with_malformed_signature(self):
@@ -1377,10 +1377,12 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
     )
 
     with self.assertRaises(ThresholdVerificationError), \
-        patch("in_toto.verifylib.LOG"):
+        patch("in_toto.verifylib.LOG") as mock_log:
       verify_link_signature_thresholds(layout, chain_link_dict)
 
-    # TODO: No expired key error is raised with verify_signatures
+    msg = mock_log.info.call_args[0][0]
+    self.assertTrue("Skipping link" in msg and "expired" in msg,
+        "Unexpected log message: {}".format(msg))
 
 
 class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):

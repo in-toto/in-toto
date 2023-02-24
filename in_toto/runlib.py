@@ -42,7 +42,7 @@ from pathspec import PathSpec
 import in_toto.settings
 import in_toto.exceptions
 
-from in_toto.models._signer import GPGKey, GPGSigner
+from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
@@ -51,7 +51,7 @@ import securesystemslib.formats
 import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
-from securesystemslib.signer import SSlibKey, SSlibSigner, Signature
+from securesystemslib.signer import SSlibSigner, Signature
 
 
 
@@ -992,14 +992,15 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     LOG.info(
         "Verifying preliminary link signature using passed signing key...")
     keyid = signing_key["keyid"]
-    verification_key = SSlibKey.from_securesystemslib_key(signing_key)
+    verification_key = signing_key
+
 
   elif gpg_keyid:
     LOG.info("Verifying preliminary link signature using passed gpg key...")
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         gpg_keyid, gpg_home)
     keyid = gpg_pubkey["keyid"]
-    verification_key = GPGKey.from_legacy_dict(gpg_pubkey)
+    verification_key = gpg_pubkey
 
   else: # must be gpg_use_default
     # FIXME: Currently there is no way to know the default GPG key's keyid
@@ -1017,9 +1018,9 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
       keyid = sig["keyid"]
     gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
         keyid, gpg_home)
-    verification_key = GPGKey.from_legacy_dict(gpg_pubkey)
+    verification_key = gpg_pubkey
 
-  link_metadata.verify_signatures([verification_key], 1)
+  link_metadata.verify_signature(verification_key)
 
   LOG.info("Extracting Link from metadata...")
   link = link_metadata.get_payload()

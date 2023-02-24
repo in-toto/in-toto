@@ -468,7 +468,7 @@ class TestInTotoSignToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeys
         "-g", self.gpg_key_0C8A17,
         "--gpg-home", self.gnupg_home,
         "--verify"
-        ], 1)
+        ], 2)
 
 
 if __name__ == "__main__":

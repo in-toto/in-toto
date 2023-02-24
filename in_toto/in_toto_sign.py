@@ -41,8 +41,6 @@ from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
 from securesystemslib.signer import GPGSigner, SSlibSigner
 
-from in_toto.verifylib import create_key_list_from_key_dict
-
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -150,8 +148,6 @@ def _verify_metadata(metadata: Metadata, args):
 
   """
   try:
-    keys = []
-
     # Load pubkeys from disk ....
     if args.key is not None:
       pub_key_dict = interface.import_publickeys_from_file(args.key,
@@ -162,9 +158,10 @@ def _verify_metadata(metadata: Metadata, args):
       pub_key_dict = gpg_interface.export_pubkeys(
           args.gpg, args.gpg_home)
 
-    keys = create_key_list_from_key_dict(pub_key_dict)
-    LOG.info("Verifying metadata signatures against keys...")
-    metadata.verify_signatures(keys, len(keys))
+    for keyid, verification_key in pub_key_dict.items():
+      metadata.verify_signature(verification_key)
+      LOG.info("Signature verification passed for keyid '{}'"
+          .format(keyid))
 
     sys.exit(0)
 

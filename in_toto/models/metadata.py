@@ -23,21 +23,19 @@
 """
 
 import attr
-import copy
 import json
-from typing import Dict, List, Union
+from typing import Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
-from securesystemslib.exceptions import (
-  VerificationError, UnverifiedSignatureError)
-from securesystemslib.signer import Key, Signature, Signer
+from securesystemslib.exceptions import VerificationError
+from securesystemslib.signer import Signature, Signer, SSlibKey
 from securesystemslib.dsse import Envelope as SSlibEnvelope
 
 from in_toto.exceptions import InvalidMetadata
-from in_toto.models._signer import GPGSignature, GPGSigner
+from in_toto.models._signer import GPGSigner
 from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
@@ -63,11 +61,11 @@ class Metadata:
     raise InvalidMetadata
 
   def to_dict(self) -> dict:
-    """Abstractmethod to convert metadata into dict"""
+    """Returns the JSON-serializable dictionary representation of self."""
     raise NotImplementedError  # pragma: no cover
 
   @classmethod
-  def load(cls, path) -> Union["Envelope", "Metablock"]:
+  def load(cls, path) -> "Metadata":
     """Loads the JSON string representation of metadata from disk.
 
     Arguments:
@@ -75,11 +73,11 @@ class Metadata:
 
     Raises:
       IOError: The file cannot be read.
-      securesystemslib.exceptions.FormatError: Metadata format is invalid.
+      InvalidMetadata: Metadata format is invalid.
+        securesystemslib.exceptions.FormatError: Metadata format is invalid.
 
     Returns:
-      A Metablock object whose signable attribute is either a Link or a Layout
-      object.
+      A Metadata containing a Link or Layout object.
 
     """
     with open(path, "r", encoding="utf8") as fp:
@@ -92,6 +90,8 @@ class Metadata:
 
     Arguments:
       path: The path to write the file to.
+      compact (optional): A boolean indicating if the dump method should write
+        a compact JSON string representation of the metadata.
 
     Raises:
       IOError: File cannot be written.
@@ -113,14 +113,10 @@ class Metadata:
   def create_signature(self, signer: Signer) -> Signature:
     """Creates signature over signable with Signer and adds it to signatures.
 
-    Uses the UTF-8 encoded canonical JSON byte representation of the signable
-    attribute to create signatures deterministically.
-
     Arguments:
       signer: A "Signer" class instance to create signature.
 
     Raises:
-      securesystemslib.exceptions.FormatError: Key argument is malformed.
       securesystemslib.exceptions.CryptoError, \
               securesystemslib.exceptions.UnsupportedAlgorithmError:
           Signing errors.
@@ -130,32 +126,24 @@ class Metadata:
     """
     raise NotImplementedError  # pragma: no cover
 
-  def verify_signatures(
-    self,
-    keys: List[Key],
-    threshold: int
-  ) -> Dict[str, Key]:
-    """Verifies signature over signable in signatures with a list of keys.
-
-    Uses the UTF-8 encoded canonical JSON byte representation of the signable
-    attribute to verify the signature deterministically.
+  def verify_signature(self, verification_key: dict):
+    """Verifies a signature over signable in signatures with verification_key.
 
     Arguments:
-        keys: A list of public keys to verify the signatures.
-        threshold: Number of signatures needed to pass the verification.
+      verification_key: A verification key. The format is
+          securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.
 
     Raises:
-        ValueError: If "threshold" is not valid.
-        VerificationError: If the enclosed signatures do not pass the
-          verification.
+      securesystemslib.exceptions.FormatError: The passed key is malformed.
 
-    Returns:
-        accepted_keys: A dict of unique public keys.
+      securesystemslib.exceptions.VerificationError: No signature keyid matches
+          the verification key keyid, or the matching signature is malformed,
+          or the matching signature is invalid.
     """
     raise NotImplementedError  # pragma: no cover
 
   def get_payload(self):
-    """Returns ``Link`` or ``Layout`` from the metadata wrapper."""
+    """Returns ``Link`` or ``Layout``."""
     raise NotImplementedError  # pragma: no cover
 
 
@@ -183,12 +171,11 @@ class Envelope(SSlibEnvelope, Metadata):
 
     return super().sign(signer)
 
-  def verify_signatures(
-    self,
-    keys: List[Key],
-    threshold: int
-  ) -> Dict[str, Key]:
-    return super().verify(keys, threshold)
+  def verify_signature(self, verification_key: dict):
+    key = SSlibKey.from_securesystemslib_key(verification_key)
+    super().verify(
+      keys=[key], threshold=1
+    )
 
   def get_payload(self) -> Union[Link, Layout]:
     """Parse DSSE payload into Link or Layout object.
@@ -269,7 +256,7 @@ class Metablock(Metadata, ValidationMixin):
       signed = Layout.read(signed_data)
 
     else:
-      raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
+      raise InvalidMetadata("Invalid Metadata format")
 
     return cls(signatures=signatures, signed=signed)
 
@@ -357,54 +344,7 @@ class Metablock(Metadata, ValidationMixin):
 
     return signature
 
-
-  def verify_signatures(self, keys: List[Key], threshold):
-    accepted_keys = {}
-    pae = self.signed.signable_bytes
-
-    # checks for threshold value.
-    if threshold <= 0:
-      raise ValueError("Threshold must be greater than 0")
-
-    if len(keys) < threshold:
-      raise ValueError("Number of keys can't be less than threshold")
-
-    for signature in self.signatures:
-
-      # GPGSignature/ Signature from_dict method destroys the signature dict,
-      # Hence, deepcopy of signature is created.
-      if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
-        signature = GPGSignature.from_dict(copy.deepcopy(signature))
-
-      elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
-        signature = Signature.from_dict(copy.deepcopy(signature))
-
-      else:
-        raise VerificationError
-
-      for key in keys:
-        # If a key verifies the signature, we exit and use the result.
-        try:
-          key.verify_signature(signature, pae)
-          accepted_keys[key.keyid] = key
-          break
-        except UnverifiedSignatureError:
-          # TODO: Log, Raise or continue with error?
-          continue
-
-      # Break, if amount of recognized_signer are more than threshold.
-      if len(accepted_keys) >= threshold:
-        break
-
-    if threshold > len(accepted_keys):
-      raise VerificationError(
-          "Accepted signatures do not match threshold,"
-          f" Found: {len(accepted_keys)}, Expected {threshold}"
-      )
-
-    return accepted_keys
-
-  def verify_signature(self, verification_key):
+  def verify_signature(self, verification_key: dict):
     """Verifies a signature over signable in signatures with verification_key.
 
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
@@ -428,7 +368,6 @@ class Metablock(Metadata, ValidationMixin):
 
       securesystemslib.gpg.exceptions.KeyExpirationError: Passed verification
           key is an expired gpg key.
-
     """
     securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.check_match(
         verification_key)
