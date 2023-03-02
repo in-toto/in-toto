@@ -29,6 +29,7 @@ import re
 
 DEFAULT_SCHEME = "default"
 RESOLVER_FOR_URI_SCHEME = {}
+RESOLVER_PARAMS = {}
 
 
 def _get_scheme(uri):
@@ -99,18 +100,14 @@ class Resolver(metaclass=ABCMeta):
 
   @classmethod
   @abstractmethod
-  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None,
-                  follow_symlink_dirs=False):
+  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
     """Normalize and resolve artifact URIs."""
     resolver = _get_resolver(generic_uri)
-    return resolver.resolve_uri_to_other_uris(
-        generic_uri, exclude_patterns, follow_symlink_dirs)
+    return resolver.resolve_uri_to_uris(generic_uri, exclude_patterns)
 
   @classmethod
   @abstractmethod
-  def get_hashable_representation(cls, resolved_uri,
-                                  normalize_line_endings=False):
+  def get_hashable_representation(cls, resolved_uri):
     """Return hashable representation of the artifact."""
     resolver = _get_resolver(resolved_uri)
-    return resolver.get_hashable_representation(resolved_uri,
-                                                normalize_line_endings)
+    return resolver.get_hashable_representation(resolved_uri)

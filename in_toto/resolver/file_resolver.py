@@ -28,7 +28,7 @@ import logging
 
 from securesystemslib.storage import FilesystemBackend
 
-from in_toto.resolver._resolver import Resolver
+from in_toto.resolver.resolver import (Resolver, RESOLVER_PARAMS)
 
 LOG = logging.getLogger(__name__)
 
@@ -39,10 +39,11 @@ class FileResolver(Resolver):
   SCHEME = "file"
 
   @classmethod
-  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None,
-                  follow_symlink_dirs=False):
+  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
     """Get all file names from the generic_uri.
     """
+    follow_symlink_dirs = RESOLVER_PARAMS.get("follow_symlink_dirs", False)
+
     if generic_uri.startswith(cls.SCHEME + ":"):
       generic_uri = generic_uri[len(cls.SCHEME)+1:]
 
@@ -94,8 +95,7 @@ class FileResolver(Resolver):
     return norm_paths
 
   @classmethod
-  def get_hashable_representation(cls, resolved_uri,
-                                  normalize_line_endings=False):
+  def get_hashable_representation(cls, resolved_uri):
     """Takes a filename and obtain a hashable representation of the file
     contents."""
 
@@ -104,7 +104,7 @@ class FileResolver(Resolver):
     with FilesystemBackend().get(resolved_uri) as file_object:
       data = file_object.read()
 
-      if normalize_line_endings:
+      if RESOLVER_PARAMS.get("normalize_line_endings", False):
         data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
     return data

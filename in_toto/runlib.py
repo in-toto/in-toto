@@ -45,7 +45,7 @@ from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 
-from in_toto.resolver import Resolver
+from in_toto.resolver import (Resolver, RESOLVER_PARAMS)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -192,7 +192,6 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   else:
     base_path = in_toto.settings.ARTIFACT_BASE_PATH
 
-
   # Temporarily change into base path dir if set
   if base_path:
     original_cwd = os.getcwd()
@@ -214,13 +213,16 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
+  # Set resolver configs
+  RESOLVER_PARAMS["follow_symlink_dirs"] = follow_symlink_dirs
+  RESOLVER_PARAMS["normalize_line_endings"] = normalize_line_endings
+
   # Normalize passed paths
   resolved_artifacts = []
   for artifact in artifacts:
     resolved_artifacts.extend(Resolver.resolve_uri_to_uris(
       artifact,
-      exclude_patterns=exclude_patterns,
-      follow_symlink_dirs=follow_symlink_dirs))
+      exclude_patterns=exclude_patterns))
 
   # Check if any of the prefixes passed for left stripping is a left substring
   # of another
@@ -235,7 +237,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   for artifact in resolved_artifacts:
     key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
     artifacts_dict[key] = _hash_artifact(
-        Resolver.get_hashable_representation(artifact, normalize_line_endings))
+        Resolver.get_hashable_representation(artifact))
 
   # Change back to where original current working dir
   if base_path:

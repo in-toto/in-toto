@@ -23,7 +23,7 @@
 
 import unittest
 from in_toto.resolver import (Resolver, FileResolver)
-from in_toto.resolver._resolver import _get_resolver
+from in_toto.resolver.resolver import _get_resolver
 
 
 class TestGetResolver(unittest.TestCase):

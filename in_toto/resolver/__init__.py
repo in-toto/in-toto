@@ -19,10 +19,11 @@
 
 """
 
-from in_toto.resolver._file_resolver import FileResolver
-from in_toto.resolver._resolver import (
+from in_toto.resolver.file_resolver import FileResolver
+from in_toto.resolver.resolver import (
   DEFAULT_SCHEME,
   RESOLVER_FOR_URI_SCHEME,
+  RESOLVER_PARAMS,
   Resolver,
 )
 
