@@ -39,7 +39,7 @@ class FileResolver(Resolver):
   SCHEME = "file"
 
   @classmethod
-  def resolve_uri(cls, generic_uri, exclude_patterns=None,
+  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None,
                   follow_symlink_dirs=False):
     """Get all file names from the generic_uri.
     """

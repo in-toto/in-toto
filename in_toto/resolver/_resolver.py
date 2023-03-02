@@ -83,8 +83,11 @@ class Resolver(metaclass=ABCMeta):
   """Interface for resolvers."""
 
   @classmethod
-  def apply_exclude_patterns(cls, names, exclude_patterns):
+  def apply_exclude_patterns(cls, names, exclude_patterns=None):
     """Exclude matched patterns from passed names."""
+    if not exclude_patterns:
+      return names
+
     included = set(names)
 
     exclude_patterns = PathSpec.from_lines('gitwildmatch', exclude_patterns)
@@ -96,11 +99,11 @@ class Resolver(metaclass=ABCMeta):
 
   @classmethod
   @abstractmethod
-  def resolve_uri(cls, generic_uri, exclude_patterns=None,
+  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None,
                   follow_symlink_dirs=False):
     """Normalize and resolve artifact URIs."""
     resolver = _get_resolver(generic_uri)
-    return resolver.resolve_uri(
+    return resolver.resolve_uri_to_other_uris(
         generic_uri, exclude_patterns, follow_symlink_dirs)
 
   @classmethod

@@ -467,7 +467,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
   def test_hash_artifact_passing_algorithm(self):
     """Test _hash_artifact passing hash algorithm. """
-    self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"])))
+    self.assertTrue("sha256" in list(_hash_artifact("foo".encode('utf-8'), ["sha256"])))
 
 
 class TestLinkCmdExecTimeoutSetting(unittest.TestCase):

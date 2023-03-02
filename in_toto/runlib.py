@@ -63,9 +63,6 @@ def _hash_artifact(hashable_representation, hash_algorithms=None):
   if not hash_algorithms:
     hash_algorithms = ['sha256']
 
-  if not isinstance(hashable_representation, bytes):
-    hashable_representation = hashable_representation.encode('utf-8')
-
   securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
   hash_dict = {}
 
@@ -220,14 +217,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Normalize passed paths
   resolved_artifacts = []
   for artifact in artifacts:
-    resolved_artifacts.extend(Resolver.resolve_uri(
+    resolved_artifacts.extend(Resolver.resolve_uri_to_uris(
       artifact,
       exclude_patterns=exclude_patterns,
       follow_symlink_dirs=follow_symlink_dirs))
-
-  if exclude_patterns:
-    resolved_artifacts = Resolver.apply_exclude_patterns(
-        resolved_artifacts, exclude_patterns)
 
   # Check if any of the prefixes passed for left stripping is a left substring
   # of another
