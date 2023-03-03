@@ -696,7 +696,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
       filename = os.path.join(metadata_directory, filename)
 
     LOG.info("Storing link metadata to '{}'...".format(filename))
-    link_metadata.dump(filename, compact=compact_json)
+    link_metadata.dump(filename)
 
   return link_metadata
 

@@ -22,7 +22,6 @@
 """
 
 import os
-import shutil
 import unittest
 
 from in_toto.models.metadata import Envelope
@@ -58,14 +57,8 @@ class TestMetablockValidator(unittest.TestCase, TmpDirMixin):
     demo_dsse_files = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "../demo_dsse_files")
 
-    self.set_up_test_dir()
-
-    # Copy demo DSSE files to temp dir
-    for file_path in os.listdir(demo_dsse_files):
-      shutil.copy(os.path.join(demo_dsse_files, file_path), self.test_dir)
-
-    layout_path = "demo.layout.template"
-    link_path = "package.2f89b927.link"
+    layout_path = os.path.join(demo_dsse_files, "demo.layout.template")
+    link_path = os.path.join(demo_dsse_files, "package.2f89b927.link")
 
     # Load layout metadata.
     env = Envelope.load(layout_path)

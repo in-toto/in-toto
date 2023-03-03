@@ -377,7 +377,7 @@ class TestLayoutValidator(unittest.TestCase):
     self.layout.steps.append(Step(
         name=name, pubkeys=[functionary_key["keyid"]]))
 
-    with self.assertRaises(in_toto.exceptions.InvalidMetadata):
+    with self.assertRaises(securesystemslib.exceptions.FormatError):
       in_toto.verifylib.load_links_for_layout(self.layout, ".")
 
     # Clean up

@@ -85,25 +85,18 @@ class Metadata:
 
     return cls.from_dict(data)
 
-  def dump(self, path, compact=False):
+  def dump(self, path):
     """Writes the JSON string representation of the instance to disk.
 
     Arguments:
       path: The path to write the file to.
-      compact (optional): A boolean indicating if the dump method should write
-        a compact JSON string representation of the metadata.
 
     Raises:
       IOError: File cannot be written.
 
     """
-    indent = None if compact else 1
-    separators = (',', ':') if compact else (',', ': ')
-
     json_bytes = json.dumps(
       self.to_dict(),
-      indent=indent,
-      separators=separators,
       sort_keys=True,
     ).encode("utf-8")
 
@@ -244,6 +237,20 @@ class Metablock(Metadata, ValidationMixin):
       )
 
 
+  def dump(self, path):
+    """Writes the JSON string representation of the instance to disk.
+
+    Arguments:
+      path: The path to write the file to.
+
+    Raises:
+      IOError: File cannot be written.
+
+    """
+    with open(path, "wb") as fp:
+      fp.write("{}".format(self).encode("utf-8"))
+
+
   @classmethod
   def from_dict(cls, data):
     """Creates a Metablock object from its JSON/dict representation."""
@@ -259,7 +266,7 @@ class Metablock(Metadata, ValidationMixin):
       signed = Layout.read(signed_data)
 
     else:
-      raise InvalidMetadata("Invalid Metadata format")
+      raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
 
     return cls(signatures=signatures, signed=signed)
 
