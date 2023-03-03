@@ -48,8 +48,8 @@ class Metadata:
   """A Metadata abstraction between DSSE Envelope and Metablock."""
 
   @classmethod
-  def from_dict(cls, data: dict) -> Union["Envelope", "Metablock"]:
-    """Loads DSSE or Traditional Metadata."""
+  def from_dict(cls, data):
+    """Loads DSSE or Traditional Metadata from its JSON/dict representation."""
 
     if "payload" in data:
       if data.get("payloadType") == ENVELOPE_PAYLOAD_TYPE:
@@ -60,12 +60,12 @@ class Metadata:
 
     raise InvalidMetadata
 
-  def to_dict(self) -> dict:
+  def to_dict(self):
     """Returns the JSON-serializable dictionary representation of self."""
     raise NotImplementedError  # pragma: no cover
 
   @classmethod
-  def load(cls, path) -> "Metadata":
+  def load(cls, path):
     """Loads the JSON string representation of metadata from disk.
 
     Arguments:
@@ -126,7 +126,7 @@ class Metadata:
     """
     raise NotImplementedError  # pragma: no cover
 
-  def verify_signature(self, verification_key: dict):
+  def verify_signature(self, verification_key):
     """Verifies a signature over signable in signatures with verification_key.
 
     Arguments:
@@ -171,7 +171,7 @@ class Envelope(SSlibEnvelope, Metadata):
 
     return super().sign(signer)
 
-  def verify_signature(self, verification_key: dict):
+  def verify_signature(self, verification_key):
     key = SSlibKey.from_securesystemslib_key(verification_key)
     try:
       super().verify(
@@ -245,7 +245,7 @@ class Metablock(Metadata, ValidationMixin):
 
 
   @classmethod
-  def from_dict(cls, data: dict) -> "Metablock":
+  def from_dict(cls, data):
     """Creates a Metablock object from its JSON/dict representation."""
 
     signatures = data.get("signatures", [])
@@ -264,13 +264,14 @@ class Metablock(Metadata, ValidationMixin):
     return cls(signatures=signatures, signed=signed)
 
 
-  def to_dict(self) -> dict:
+  def to_dict(self):
     """Returns the JSON-serializable dictionary representation of self."""
 
     return {
       "signatures": self.signatures,
       "signed": attr.asdict(self.signed)
     }
+
 
   @property
   def type_(self):
@@ -348,7 +349,7 @@ class Metablock(Metadata, ValidationMixin):
     return signature
 
 
-  def verify_signature(self, verification_key: dict):
+  def verify_signature(self, verification_key):
     """Verifies a signature over signable in signatures with verification_key.
 
     Uses the UTF-8 encoded canonical JSON byte representation of the signable
