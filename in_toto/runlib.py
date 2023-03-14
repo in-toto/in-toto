@@ -24,7 +24,7 @@
     - Execute command
       - Capture stdout/stderr/return value of the executed command
     - Record state of product (files after the command was executed)
-    - Return Metablock containing a Link object which can be can be signed
+    - Return Metadata containing a Link object which can be can be signed
       and stored to disk
 """
 import glob

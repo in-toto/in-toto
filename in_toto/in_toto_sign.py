@@ -29,6 +29,7 @@ import logging
 from in_toto import exceptions
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metadata
+from in_toto.models._signer import GPGSigner
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
@@ -40,7 +41,7 @@ import securesystemslib.formats
 import securesystemslib.exceptions
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
-from securesystemslib.signer import GPGSigner, SSlibSigner
+from securesystemslib.signer import SSlibSigner
 
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -54,7 +55,7 @@ def _sign_and_dump_metadata(metadata, args):
 
   <Arguments>
     metadata:
-            Metablock object (contains Link or Layout object)
+            Metadata object (contains Link or Layout object)
     args:
             see argparser
 
@@ -139,7 +140,7 @@ def _verify_metadata(metadata, args):
 
   <Arguments>
     metadata:
-            Metablock object (contains Link or Layout object)
+            Metadata object (contains Link or Layout object)
     args:
             see argparser
 
@@ -181,7 +182,7 @@ def _verify_metadata(metadata, args):
 def _load_metadata(file_path):
   """
   <Purpose>
-    Loads Metablock (link or layout metadata) file from disk
+    Loads Metadata (link or layout metadata) file from disk
 
   <Arguments>
     file_path:
@@ -191,7 +192,7 @@ def _load_metadata(file_path):
     SystemExit(2) if any exception occurs
 
   <Returns>
-    in-toto Metablock object (contains Link or Layout object)
+    in-toto Metadata object (contains Link or Layout object)
 
   """
   try:
