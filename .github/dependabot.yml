@@ -8,11 +8,8 @@ updates:
   allow:
   - dependency-type: direct
   - dependency-type: indirect
-  ignore:
-  - dependency-name: cryptography
-    versions:
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10   - 3.4.1
+  open-pull-requests-limit: 10
