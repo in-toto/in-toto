@@ -39,7 +39,7 @@ dependencies = [
     "iso8601",
     "pathspec",
     "python-dateutil",
-    "securesystemslib[crypto]>=0.18.0",
+    "securesystemslib[crypto]>=0.27.0",
 ]
 dynamic = ["version"]
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.2
+
+### Added
+* Moved subprocess execution wrapper to in-toto from securesystemslib (#544)
+* Support for in-toto flavoured GPGSigner and GPGKey for use with securesystemlib's new signer API (#538)
+* Acknowledgement to Purdue University (#526)
+
+### Changed
+* Invocation of bandit linter (#541)
+* Link to in-toto specification in README (#551)
+* Dependency updates (#543, #549)
+
 ## v1.3.1
 
 ### Fixed
