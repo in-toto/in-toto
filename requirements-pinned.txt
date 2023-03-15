@@ -14,7 +14,7 @@ cryptography==39.0.2
     # via securesystemslib
 iso8601==1.1.0
     # via -r requirements.txt
-pathspec==0.11.0
+pathspec==0.11.1
     # via -r requirements.txt
 pycparser==2.21
     # via cffi
