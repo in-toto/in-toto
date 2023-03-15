@@ -60,7 +60,9 @@ exclude_patterns = []
 #
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-  'logo_only': True
+  'logo_only': True,
+  'collapse_navigation': False,
+  'navigation_depth': 3,
 }
 html_logo = 'in-toto-horizontal-white.png'
 html_favicon = 'in-toto-icon-color.png'

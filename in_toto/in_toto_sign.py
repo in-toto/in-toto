@@ -28,7 +28,8 @@ import logging
 
 from in_toto import exceptions
 from in_toto.models.link import FILENAME_FORMAT
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import Metadata
+from in_toto.models._signer import GPGSigner
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
     sort_action_groups)
@@ -37,8 +38,10 @@ from in_toto import (
     KEY_TYPE_ECDSA)
 
 import securesystemslib.formats
+import securesystemslib.exceptions
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
+from securesystemslib.signer import SSlibSigner
 
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -52,7 +55,7 @@ def _sign_and_dump_metadata(metadata, args):
 
   <Arguments>
     metadata:
-            Metablock object (contains Link or Layout object)
+            Metadata object (contains Link or Layout object)
     args:
             see argparser
 
@@ -75,12 +78,14 @@ def _sign_and_dump_metadata(metadata, args):
       # If `--gpg` was passed without argument we sign with the default key
       # Excluded so that coverage does not vary in different test environments
       if len(args.gpg) == 0: # pragma: no cover
-        signature = metadata.sign_gpg(gpg_keyid=None, gpg_home=args.gpg_home)
+        signature = metadata.create_signature(
+          GPGSigner(None, homedir=args.gpg_home))
 
       # Otherwise we sign with each passed keyid
       for keyid in args.gpg:
         securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
-        signature = metadata.sign_gpg(gpg_keyid=keyid, gpg_home=args.gpg_home)
+        signature = metadata.create_signature(
+            GPGSigner(keyid, homedir=args.gpg_home))
 
     # Alternatively we iterate over passed private key paths `--key KEYPATH
     # ...` load the corresponding key from disk and sign with it
@@ -97,7 +102,10 @@ def _sign_and_dump_metadata(metadata, args):
       for idx, key_path in enumerate(args.key):
         key = interface.import_privatekey_from_file(
             key_path, key_type=args.key_type[idx], prompt=args.prompt)
-        signature = metadata.sign(key)
+        signature = metadata.create_signature(SSlibSigner(key))
+
+    payload = metadata.get_payload()
+    _type = payload.type_
 
     # If `--output` was specified we store the signed link or layout metadata
     # to that location no matter what
@@ -106,17 +114,15 @@ def _sign_and_dump_metadata(metadata, args):
 
     # Otherwise, in case of links, we build the filename using the link/step
     # name and the keyid of the created signature (there is only one for links)
-    elif metadata.type_ == "link":
-      securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
-      keyid = signature["keyid"]
-      out_path = FILENAME_FORMAT.format(step_name=metadata.signed.name,
-          keyid=keyid)
+    elif _type == "link":
+      keyid = signature.keyid
+      out_path = FILENAME_FORMAT.format(step_name=payload.name, keyid=keyid)
 
     # In case of layouts we just override the input file.
-    elif metadata.type_ == "layout": # pragma: no branch
+    elif _type == "layout": # pragma: no branch
       out_path = args.file
 
-    LOG.info("Dumping {0} to '{1}'...".format(metadata.type_, out_path))
+    LOG.info("Dumping {0} to '{1}'...".format(_type, out_path))
 
     metadata.dump(out_path)
     sys.exit(0)
@@ -134,7 +140,7 @@ def _verify_metadata(metadata, args):
 
   <Arguments>
     metadata:
-            Metablock object (contains Link or Layout object)
+            Metadata object (contains Link or Layout object)
     args:
             see argparser
 
@@ -176,7 +182,7 @@ def _verify_metadata(metadata, args):
 def _load_metadata(file_path):
   """
   <Purpose>
-    Loads Metablock (link or layout metadata) file from disk
+    Loads Metadata (link or layout metadata) file from disk
 
   <Arguments>
     file_path:
@@ -186,11 +192,11 @@ def _load_metadata(file_path):
     SystemExit(2) if any exception occurs
 
   <Returns>
-    in-toto Metablock object (contains Link or Layout object)
+    in-toto Metadata object (contains Link or Layout object)
 
   """
   try:
-    return Metablock.load(file_path)
+    return Metadata.load(file_path)
 
   except Exception as e:
     LOG.error("The following error occurred while loading the file '{}': "
@@ -348,7 +354,8 @@ def main():
   metadata = _load_metadata(args.file)
 
   # Specific command line argument restrictions if we deal with links
-  if metadata.type_ == "link":
+  payload = metadata.get_payload()
+  if payload.type_ == "link":
     # Above we check that it's either `--key ...` or `--gpg ...`
     # Here we check that it is not more than one in each case when dealing
     # with links

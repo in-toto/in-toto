@@ -31,7 +31,7 @@ import subprocess
 
 import in_toto.settings
 import in_toto.exceptions
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import Envelope, Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
@@ -772,6 +772,14 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
           True, self.key, metadata_directory=tmp_dir)
     os.rmdir(tmp_dir)
 
+  def test_in_toto_for_dsse(self):
+    """Test metadata generation using dsse."""
+
+    link_metadata = in_toto_run(self.step_name, None, None,
+        ["python", "--version"], True, self.key, use_dsse=True)
+    self.assertIsInstance(link_metadata, Envelope)
+    link_metadata.verify_signature(self.key)
+
 
 class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
   """"Test in_toto_record_start(step_name, key, material_list). """
@@ -809,7 +817,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     self.assertEqual(list(link.signed.materials.keys()), [self.test_material])
     os.remove(self.link_name_unfinished)
 
-  def test_create_unfininished_metadata_verify_signature(self):
+  def test_create_unfinished_metadata_verify_signature(self):
     """Test record start creates metadata with expected signature. """
     in_toto_record_start(
         self.step_name, [self.test_material], self.key)
@@ -823,6 +831,14 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
       in_toto_record_start(
           self.step_name, [], signing_key=None, gpg_keyid=None,
           gpg_use_default=False)
+
+  def test_create_unfinished_metadata_using_dsse(self):
+    """Test record start creates metadata using dsse."""
+    in_toto_record_start(
+        self.step_name, [self.test_material], self.key, use_dsse=True)
+    link_metadata = Envelope.load(self.link_name_unfinished)
+    link_metadata.verify_signature(self.key)
+    os.remove(self.link_name_unfinished)
 
 class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
   """"Test in_toto_record_stop(step_name, key, product_list). """
@@ -994,6 +1010,18 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
       in_toto_record_stop(self.step_name, [], self.key,
           metadata_directory=tmp_dir)
     os.rmdir(tmp_dir)
+
+  def test_created_metadata_using_dsse(self):
+    """Test record stop records created metadata with dsse."""
+    in_toto_record_start(self.step_name, [], self.key, use_dsse=True)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key)
+
+    link_metadata = Envelope.load(self.link_name)
+    link_metadata.verify_signature(self.key)
+
+    link = link_metadata.get_payload()
+    self.assertEqual(list(link.products.keys()), [self.test_product])
+    os.remove(self.link_name)
 
 
 if __name__ == "__main__":

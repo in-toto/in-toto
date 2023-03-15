@@ -39,7 +39,8 @@ from in_toto.common_args import (EXCLUDE_ARGS, EXCLUDE_KWARGS, BASE_PATH_ARGS,
     GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS, VERBOSE_KWARGS, QUIET_ARGS,
     QUIET_KWARGS, METADATA_DIRECTORY_ARGS, METADATA_DIRECTORY_KWARGS,
     KEY_PASSWORD_ARGS, KEY_PASSWORD_KWARGS, parse_password_and_prompt_args,
-    sort_action_groups, title_case_action_groups, OPTS_TITLE)
+    sort_action_groups, title_case_action_groups, OPTS_TITLE, DSSE_ARGS,
+    DSSE_KWARGS)
 
 from securesystemslib import interface
 
@@ -112,6 +113,7 @@ file to the target directory (on stop).
   parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
   parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
   parent_parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
+  parent_parser.add_argument(*DSSE_ARGS, **DSSE_KWARGS)
 
   verbosity_args = parent_parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -201,7 +203,7 @@ def main():
           signing_key=key, gpg_keyid=gpg_keyid,
           gpg_use_default=gpg_use_default, gpg_home=args.gpg_home,
           exclude_patterns=args.exclude_patterns, base_path=args.base_path,
-          lstrip_paths=args.lstrip_paths)
+          lstrip_paths=args.lstrip_paths, use_dsse=args.use_dsse)
 
     # Mutually exclusiveness is guaranteed by argparser
     else: # args.command == "stop":

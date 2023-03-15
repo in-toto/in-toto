@@ -29,7 +29,8 @@ import sys
 import argparse
 import logging
 import in_toto.runlib
-from in_toto.common_args import title_case_action_groups, sort_action_groups
+from in_toto.common_args import (title_case_action_groups, sort_action_groups,
+    DSSE_ARGS, DSSE_KWARGS)
 from in_toto import __version__
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -80,6 +81,8 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
       " '<name>.link'. It is also used to associate the link with a step"
       " defined in an in-toto layout."))
 
+  parser.add_argument(*DSSE_ARGS, **DSSE_KWARGS)
+
   # FIXME: This is not yet ideal.
   # What should we do with tokens like > or ; ?
   parser.add_argument("link_cmd", nargs="+", metavar="<command>",
@@ -106,7 +109,7 @@ def main():
   LOG.setLevel(logging.INFO)
 
   try:
-    in_toto.runlib.in_toto_mock(args.name, args.link_cmd)
+    in_toto.runlib.in_toto_mock(args.name, args.link_cmd, args.use_dsse)
 
   except Exception as e:
     LOG.error("(in-toto-mock) {0}: {1}".format(type(e).__name__, e))

@@ -162,6 +162,14 @@ METADATA_DIRECTORY_KWARGS = {
            " is not passed, the current working direcotry is used.")
 }
 
+DSSE_ARGS = ["--use-dsse"]
+DSSE_KWARGS = {
+  "dest": "use_dsse",
+  "default": False,
+  "action": "store_true",
+  "help": ("generate metadata using dsse (experimental)."),
+}
+
 
 def title_case_action_groups(parser):
   """Capitalize the first character of all words in the title of each action

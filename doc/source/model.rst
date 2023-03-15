@@ -10,6 +10,17 @@ and read or write in-toto conformant metadata (see
 :doc:`layout-creation-example`).
 
 
+Metadata
+-----------
+.. autoclass:: in_toto.models.metadata.Metadata
+  :inherited-members:
+  :members:
+
+DSSE Envelope
+-------------
+.. autoclass:: in_toto.models.metadata.Envelope
+  :inherited-members:
+  :members:
 
 Metablock
 ---------

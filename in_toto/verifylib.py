@@ -39,12 +39,14 @@ import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
-from in_toto.models.metadata import Metablock
+from in_toto.models.metadata import Metadata
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
     SignatureVerificationError)
-from securesystemslib.gpg.exceptions import KeyExpirationError
 import in_toto.rulelib
+
+import securesystemslib.formats
+from securesystemslib.gpg.exceptions import KeyExpirationError
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -122,7 +124,7 @@ def load_links_for_layout(layout, link_dir_path):
 
     {
       <step name> : {
-        <functionary key id> : <Metablock containing a Link or Layout object>,
+        <functionary key id> : <Metadata containing a Link or Layout object>,
         ...
       }, ...
     }
@@ -148,7 +150,7 @@ def load_links_for_layout(layout, link_dir_path):
         filepath = os.path.join(link_dir_path, filename)
 
         try:
-          metadata = Metablock.load(filepath)
+          metadata = Metadata.load(filepath)
           links_per_step[keyid] = metadata
 
         except IOError:
@@ -172,8 +174,7 @@ def run_all_inspections(layout, persist_inspection_links):
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
     iteratively runs each command defined in the Inspection's `run` field using
-    `runlib.in_toto_run`, which returns a Metablock object containing a Link
-    object.
+    `runlib.in_toto_run`, which returns a Link object.
 
     If a link command returns non-zero the verification is aborted.
 
@@ -194,7 +195,7 @@ def run_all_inspections(layout, persist_inspection_links):
 
     {
       <inspection name> : {
-        <Metablock containing a Link object>,
+        <Link object>,
         ...
       }, ...
     }
@@ -222,7 +223,7 @@ def run_all_inspections(layout, persist_inspection_links):
         link.signed.byproducts.get("return-value"),
         inspection.run)
 
-    inspection_links_dict[inspection.name] = link
+    inspection_links_dict[inspection.name] = link.signed
 
     # If client requests persistent inspection links,
     # Dump the inspection link file for auditing
@@ -338,18 +339,18 @@ def substitute_parameters(layout, parameter_dictionary):
 
 
 
-def verify_layout_signatures(layout_metablock, keys_dict):
+def verify_metadata_signatures(metadata, keys_dict):
   """
   <Purpose>
-    Iteratively verifies the signatures of a Metablock object containing
+    Iteratively verifies the signatures of a Metadata object containing
     a Layout object for every verification key in the passed keys dictionary.
 
     Requires at least one key to be passed and requires every passed key to
     find a valid signature.
 
   <Arguments>
-    layout_metablock:
-            A Metablock object containing a Layout whose signatures are
+    metadata:
+            A Metadata object containing a Layout whose signatures are
             verified.
 
     keys_dict:
@@ -377,16 +378,16 @@ def verify_layout_signatures(layout_metablock, keys_dict):
 
   # Fail if any of the passed keys can't verify a signature on the Layout
   for junk, verify_key in keys_dict.items():
-    layout_metablock.verify_signature(verify_key)
+    metadata.verify_signature(verify_key)
 
 
-def verify_link_signature_thresholds(layout, chain_link_dict):
+def verify_link_signature_thresholds(layout, steps_metadata):
   """
   <Purpose>
     Verify that for each step of the layout there are at least `threshold`
-    links, signed by different authorized functionaries and return the chain
-    link dictionary containing only authorized links whose signatures
-    were successfully verified.
+    links metadata, signed by different authorized functionaries and return the
+    verified link metadata dictionary containing only authorized links metadata
+    whose signatures were successfully verified.
 
     NOTE: If the layout's key store (`layout.keys`) lists a (master) key `K`,
     with a subkey `K'`, then `K'` is authorized implicitly, to sign any link
@@ -397,12 +398,12 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     layout:
             A Layout object whose Steps are extracted and verified.
 
-    chain_link_dict:
+    steps_metadata:
             A dictionary containing link metadata per functionary per step,
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link or Layout
+                <functionary key id> : <Metadata containing a Link or Layout
                                         object>,
                 ...
               }, ...
@@ -415,7 +416,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
             functionaries.
 
   <Returns>
-    A chain_link_dict containing only links with valid signatures created by
+    A steps_metadata containing only links with valid signatures created by
     authorized functionaries.
 
   """
@@ -430,7 +431,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
       main_keys_for_subkeys[sub_keyid] = main_key
 
   # Dict for valid and authorized links of all steps of the layout
-  verfied_chain_link_dict = {}
+  verified_steps_metadata = {}
 
   # For each step of the layout check the signatures of corresponding links.
   # Consider only links where the signature is valid and keys are authorized,
@@ -446,7 +447,7 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
     used_main_keyids = []
 
     # Do per step link threshold verification
-    for link_keyid, link in chain_link_dict.get(step.name, {}).items():
+    for link_keyid, link in steps_metadata.get(step.name, {}).items():
       # Iterate over authorized keyids to find a key or subkey corresponding
       # to the given link and check if the link's keyid is authorized.
       # Subkeys of authorized main keys are authorized implicitly.
@@ -516,11 +517,11 @@ def verify_link_signature_thresholds(layout, chain_link_dict):
           valid_authorized_links_cnt))
 
     # Add all good links of this step to the dictionary of links of all steps
-    verfied_chain_link_dict[step.name] = verified_key_link_dict
+    verified_steps_metadata[step.name] = verified_key_link_dict
 
   # Threshold verification succeeded, return valid and authorized links for
   # further verification
-  return verfied_chain_link_dict
+  return verified_steps_metadata
 
 def verify_command_alignment(command, expected_command):
   """
@@ -572,7 +573,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -596,7 +597,7 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
           in_toto.models.link.FILENAME_FORMAT.format(step_name=step.name,
               keyid=keyid)))
 
-      command = link.signed.command
+      command = link.command
       verify_command_alignment(command, expected_command)
 
 
@@ -631,7 +632,7 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a link object>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -653,7 +654,7 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     return consumed
 
   # Extract destination artifacts from destination link
-  dest_artifacts = getattr(dest_link.signed, rule_data["dest_type"])
+  dest_artifacts = getattr(dest_link, rule_data["dest_type"])
 
   # Filter part 1 - Filter artifacts using optional source prefix, and subtract
   # prefix before filtering with rule pattern (see filter part 2) to prevent
@@ -1002,7 +1003,7 @@ def verify_item_rules(source_name, source_type, rules, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a link>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -1027,8 +1028,8 @@ def verify_item_rules(source_name, source_type, rules, links):
 
   # Create shortcuts to item's materials and products (including hashes),
   # required to verify "modify" and "match" rules.
-  materials_dict = links[source_name].signed.materials
-  products_dict = links[source_name].signed.products
+  materials_dict = links[source_name].materials
+  products_dict = links[source_name].products
 
   # All other rules only require materials or products paths (without hashes)
   materials_paths = set(materials_dict.keys())
@@ -1037,7 +1038,7 @@ def verify_item_rules(source_name, source_type, rules, links):
   # Depending on the source type we create the artifact queue from the item's
   # materials or products and use it to keep track of (not) consumed artifacts.
   # The queue also only contains aritfact keys (without hashes)
-  artifacts = getattr(links[source_name].signed, source_type)
+  artifacts = getattr(links[source_name], source_type)
   artifacts_queue = set(artifacts.keys())
 
   # Reset and re-populate rule traceback info dict for a rich error message
@@ -1115,7 +1116,7 @@ def verify_all_item_rules(items, links):
     links:
             A dictionary containing link metadata per step or inspection, e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Link object>,
               ...
             }
 
@@ -1154,7 +1155,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -1200,8 +1201,8 @@ def verify_threshold_constraints(layout, chain_link_dict):
     for keyid, link in key_link_dict.items():
       # TODO: Do we only care for artifacts, or do we want to
       # assert equality of other properties as well?
-      if (reference_link.signed.materials != link.signed.materials or
-          reference_link.signed.products != link.signed.products):
+      if (reference_link.materials != link.materials or
+          reference_link.products != link.products):
         raise ThresholdVerificationError("Links '{0}' and '{1}' have different"
             " artifacts!".format(
                 in_toto.models.link.FILENAME_FORMAT.format(
@@ -1228,7 +1229,7 @@ def reduce_chain_links(chain_link_dict):
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link object>,
+                <functionary key id> : <Link object>,
                 ...
               }, ...
             }
@@ -1256,23 +1257,24 @@ def reduce_chain_links(chain_link_dict):
   return reduced_chain_link_dict
 
 
-def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
+def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
   """
   <Purpose>
-    Checks if any step has been delegated by the functionary, recurses into
-    the delegation and replaces the layout object in the chain_link_dict
-    by an equivalent link object.
+    Extracts link or layout object for each step in steps_metadata. Checks if
+    any step has been delegated by the functionary, recurses into the
+    delegation, and replaces the layout object with an equivalent link object.
+    Returns the extracted link objects in a dict called chain_link_dict.
 
   <Arguments>
     layout:
             The layout specified by the project owner.
 
-    chain_link_dict:
+    steps_metadata:
             A dictionary containing link metadata per functionary per step,
             e.g.:
             {
               <link name> : {
-                <functionary key id> : <Metablock containing a Link or Layout
+                <functionary key id> : <Metadata containing a Link or Layout
                                           object>,
                 ...
               }, ...
@@ -1291,22 +1293,28 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
     None.
 
   <Returns>
-    The passed dictionary containing link metadata per functionary per step,
-    with layouts replaced with summary links.
+    The passed dictionary containing Link objects instead of metadata per
+    functionary per step, with layouts replaced with summary links.
     e.g.:
     {
       <link name> : {
-        <functionary key id> : <Metablock containing a Link object>,
+        <functionary key id> : <Link object>,
         ...
       }, ...
     }
 
   """
-  for step_name, key_link_dict in chain_link_dict.items():
+  chain_link_dict = {}
 
-    for keyid, link in key_link_dict.items():
+  for step_name, metadata_dict in steps_metadata.items():
 
-      if link.type_ == "layout":
+    key_link_dict = {}
+    for keyid, metadata in metadata_dict.items():
+
+      payload = metadata.get_payload()
+
+      if payload.type_ == "layout":
+
         LOG.info("Verifying sublayout {}...".format(step_name))
         layout_key_dict = {}
 
@@ -1326,12 +1334,15 @@ def verify_sublayouts(layout, chain_link_dict, superlayout_link_dir_path):
 
         # Make a recursive call to in_toto_verify with the
         # layout and the extracted key object
-        summary_link = in_toto_verify(link, layout_key_dict,
+        summary_link = in_toto_verify(metadata, layout_key_dict,
             link_dir_path=sublayout_link_dir_path, step_name=step_name)
 
-        # Replace the layout object in the passed chain_link_dict
-        # with the link file returned by in-toto-verify
-        key_link_dict[keyid] = summary_link
+        # Replace the layout object with the link object returned
+        # by in-toto-verify
+        payload = summary_link
+
+      key_link_dict[keyid] = payload
+    chain_link_dict[step_name] = key_link_dict
 
   return chain_link_dict
 
@@ -1356,7 +1367,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
             A dictionary containing link metadata per step,
             e.g.:
             {
-              <link name> : <Metablock containing a Link object>,
+              <link name> : <Link object>,
               ...
             }
     name:
@@ -1369,8 +1380,8 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
     None.
 
   <Returns>
-    A Metablock object containing a Link which summarizes the materials and
-    products of the overall software supply chain.
+    A Link object which summarizes the materials and products of the overall
+    software supply chain.
 
   """
   # Create empty link object
@@ -1382,17 +1393,17 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
     first_step_link = reduced_chain_link_dict[layout.steps[0].name]
     last_step_link = reduced_chain_link_dict[layout.steps[-1].name]
 
-    summary_link.materials = first_step_link.signed.materials
+    summary_link.materials = first_step_link.materials
     summary_link.name = name
 
-    summary_link.products = last_step_link.signed.products
-    summary_link.byproducts = last_step_link.signed.byproducts
-    summary_link.command = last_step_link.signed.command
+    summary_link.products = last_step_link.products
+    summary_link.byproducts = last_step_link.byproducts
+    summary_link.command = last_step_link.command
 
-  return Metablock(signed=summary_link)
+  return summary_link
 
 
-def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
+def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
     substitution_parameters=None, step_name="",
     persist_inspection_links=True):
   """Performs complete in-toto supply chain verification for a final product.
@@ -1416,7 +1427,7 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
   11. Process inspection product and material rules
 
   Arguments:
-    layout: A Metablock object that contains a Layout object to be verified.
+    metadata: A Metadata object that contains a Layout object to be verified.
 
     layout_key_dict: A public key dictionary. The verification routine requires
         at least one key, and a valid signature on the layout for each key.
@@ -1465,18 +1476,20 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     Runs inspection commands in subprocess.
 
   Returns:
-    A Metablock object that contains a Link object, which summarizes the
-    materials and products of the overall software supply chain. This is mostly
-    useful during recursive sublayout verification.
+    A Link object, which summarizes the materials and products of the overall
+    software supply chain. This is mostly useful during recursive sublayout
+    verification.
 
   """
-  LOG.info("Verifying layout signatures...")
-  verify_layout_signatures(layout, layout_key_dict)
+
+  LOG.info("Verifying layout metadata signatures...")
+  verify_metadata_signatures(metadata, layout_key_dict)
 
   # For the rest of the verification we only care about the layout payload
   # (Layout) that carries all the information and not about the layout
   # container (Metablock) that also carries the signatures
-  layout = layout.signed
+  LOG.info("Extracting layout from metadata...")
+  layout = metadata.get_payload()
 
   LOG.info("Verifying layout expiration...")
   verify_layout_expiration(layout)
@@ -1487,13 +1500,13 @@ def in_toto_verify(layout, layout_key_dict, link_dir_path=".",
     substitute_parameters(layout, substitution_parameters)
 
   LOG.info("Reading link metadata files...")
-  chain_link_dict = load_links_for_layout(layout, link_dir_path)
+  steps_metadata = load_links_for_layout(layout, link_dir_path)
 
   LOG.info("Verifying link metadata signatures...")
-  chain_link_dict = verify_link_signature_thresholds(layout, chain_link_dict)
+  steps_metadata = verify_link_signature_thresholds(layout, steps_metadata)
 
   LOG.info("Verifying sublayouts...")
-  chain_link_dict = verify_sublayouts(layout, chain_link_dict, link_dir_path)
+  chain_link_dict = verify_sublayouts(layout, steps_metadata, link_dir_path)
 
   LOG.info("Verifying alignment of reported commands...")
   verify_all_steps_command_alignment(layout, chain_link_dict)

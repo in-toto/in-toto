@@ -227,5 +227,65 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin)
     self.assert_cli_sys_exit(["stop"] + args, 1)
 
 
+class TestInTotoRecordToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
+  """Test in_toto_record's main() with --use-dsse argument - requires sys.argv
+  patching; and in_toto_record_start/in_toto_record_stop - calls runlib and
+  error logs/exits on Exception. """
+  cli_main_func = staticmethod(in_toto_record_main)
+
+  @classmethod
+  def setUpClass(self):
+    """Create and change into temporary directory,
+    generate key pair, dummy artifact and base arguments. """
+    self.set_up_test_dir()
+    self.set_up_keys()
+
+    self.test_artifact1 = "test_artifact1"
+    self.test_artifact2 = "test_artifact2"
+    Path(self.test_artifact1).touch()
+    Path(self.test_artifact2).touch()
+
+
+  @classmethod
+  def tearDownClass(self):
+    self.tear_down_test_dir()
+
+
+  def test_start_stop(self):
+    """Test CLI command record start/stop with various arguments. """
+
+    # Start/stop recording using rsa key
+    args = ["--step-name", "test1", "--key", self.rsa_key_path, "--use-dsse"]
+    self.assert_cli_sys_exit(["start"] + args, 0)
+    self.assert_cli_sys_exit(["stop"] + args, 0)
+
+    # Start/stop with recording one artifact using rsa key
+    args = ["--step-name", "test2", "--key", self.rsa_key_path, "--use-dsse"]
+    self.assert_cli_sys_exit(["start"] + args + ["--materials",
+      self.test_artifact1], 0)
+    self.assert_cli_sys_exit(["stop"] + args + ["--products",
+      self.test_artifact1], 0)
+
+    # Start/stop with excluding one artifact using rsa key
+    args = ["--step-name", "test2.5", "--key", self.rsa_key_path, "--use-dsse"]
+    self.assert_cli_sys_exit(["start"] + args + ["--materials",
+      self.test_artifact1, "--exclude", "test*"], 0)
+    self.assert_cli_sys_exit(["stop"] + args + ["--products",
+      self.test_artifact1, "--exclude", "test*"], 0)
+
+    # Start/stop with base-path using rsa key
+    args = ["--step-name", "test2.6", "--key", self.rsa_key_path, "--base-path",
+      self.test_dir, "--use-dsse"]
+    self.assert_cli_sys_exit(["start"] + args, 0)
+    self.assert_cli_sys_exit(["stop"] + args, 0)
+
+    # Start/stop with recording multiple artifacts using rsa key
+    args = ["--step-name", "test3", "--key", self.rsa_key_path, "--use-dsse"]
+    self.assert_cli_sys_exit(["start"] + args + ["--materials",
+      self.test_artifact1, self.test_artifact2], 0)
+    self.assert_cli_sys_exit(["stop"] + args + ["--products",
+      self.test_artifact2, self.test_artifact2], 0)
+
+
 if __name__ == '__main__':
   unittest.main()

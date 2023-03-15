@@ -24,19 +24,177 @@
 
 import attr
 import json
+from typing import Union
 
 import securesystemslib.keys
 import securesystemslib.formats
 import securesystemslib.exceptions
 import securesystemslib.gpg.functions
+from securesystemslib.exceptions import VerificationError
+from securesystemslib.signer import Signature, Signer, SSlibKey
+from securesystemslib.dsse import Envelope as SSlibEnvelope
 
-from in_toto.models.common import ValidationMixin
+from in_toto.exceptions import InvalidMetadata, SignatureVerificationError
+from in_toto.models._signer import GPGSigner
+from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.link import Link
 from in_toto.models.layout import Layout
-from in_toto.exceptions import SignatureVerificationError
+
+
+ENVELOPE_PAYLOAD_TYPE = "application/vnd.in-toto+json"
+
+
+class Metadata:
+  """A Metadata abstraction between DSSE Envelope and Metablock."""
+
+  @classmethod
+  def from_dict(cls, data):
+    """Loads DSSE or Traditional Metadata from its JSON/dict representation."""
+
+    if "payload" in data:
+      if data.get("payloadType") == ENVELOPE_PAYLOAD_TYPE:
+        return Envelope.from_dict(data)
+
+    elif "signed" in data:
+      return Metablock.from_dict(data)
+
+    raise InvalidMetadata
+
+  def to_dict(self):
+    """Returns the JSON-serializable dictionary representation of self."""
+    raise NotImplementedError  # pragma: no cover
+
+  @classmethod
+  def load(cls, path):
+    """Loads the JSON string representation of metadata from disk.
+
+    Arguments:
+      path: The path to read the file from.
+
+    Raises:
+      IOError: The file cannot be read.
+      InvalidMetadata: Metadata format is invalid.
+      securesystemslib.exceptions.FormatError: Metadata format is invalid.
+
+    Returns:
+      A Metadata containing a Link or Layout object.
+
+    """
+    with open(path, "r", encoding="utf8") as fp:
+      data = json.load(fp)
+
+    return cls.from_dict(data)
+
+  def dump(self, path):
+    """Writes the JSON string representation of the instance to disk.
+
+    Arguments:
+      path: The path to write the file to.
+
+    Raises:
+      IOError: File cannot be written.
+
+    """
+    json_bytes = json.dumps(
+      self.to_dict(),
+      sort_keys=True,
+    ).encode("utf-8")
+
+    with open(path, "wb") as fp:
+      fp.write(json_bytes)
+
+  def create_signature(self, signer: Signer) -> Signature:
+    """Creates signature over signable with Signer and adds it to signatures.
+
+    Arguments:
+      signer: A "Signer" class instance to create signature.
+
+    Raises:
+      securesystemslib.exceptions.CryptoError, \
+              securesystemslib.exceptions.UnsupportedAlgorithmError:
+          Signing errors.
+
+    Returns:
+      The signature. A securesystemslib.signer.Signature type.
+    """
+    raise NotImplementedError  # pragma: no cover
+
+  def verify_signature(self, verification_key):
+    """Verifies a signature over signable in signatures with verification_key.
+
+    Arguments:
+      verification_key: A verification key. The format is
+          securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.
+
+    Raises:
+      securesystemslib.exceptions.FormatError: The passed key is malformed.
+
+      SignatureVerificationError: No signature keyid matches
+          the verification key keyid, or the matching signature is malformed,
+          or the matching signature is invalid.
+    """
+    raise NotImplementedError  # pragma: no cover
+
+  def get_payload(self):
+    """Returns ``Link`` or ``Layout``."""
+    raise NotImplementedError  # pragma: no cover
+
+
+class Envelope(SSlibEnvelope, Metadata):
+  """DSSE Envelope for in-toto payloads."""
+
+  @classmethod
+  def from_signable(cls, signable: Signable) -> "Envelope":
+    """Creates DSSE envelope with signable bytes as payload."""
+
+    json_bytes = json.dumps(
+      attr.asdict(signable),
+      sort_keys=True,
+    ).encode("utf-8")
+
+    return cls(
+      payload=json_bytes,
+      payload_type=ENVELOPE_PAYLOAD_TYPE,
+      signatures=[]
+    )
+
+  def create_signature(self, signer: Signer) -> Signature:
+    if isinstance(signer, GPGSigner):
+      raise NotImplementedError("GPG Signing is not implemented")
+
+    return super().sign(signer)
+
+  def verify_signature(self, verification_key):
+    key = SSlibKey.from_securesystemslib_key(verification_key)
+    try:
+      super().verify(
+        keys=[key], threshold=1
+      )
+    except VerificationError as exc:
+      raise SignatureVerificationError from exc
+
+  def get_payload(self) -> Union[Link, Layout]:
+    """Parse DSSE payload into Link or Layout object.
+
+      Raises:
+          InvalidMetadata: If type in payload is not ``link`` or ``layout``.
+
+      Returns:
+          Link or Layout.
+    """
+
+    data = json.loads(self.payload.decode("utf-8"))
+    _type = data.get("_type")
+    if _type == "link":
+      return Link.read(data)
+    if _type == "layout":
+      return Layout.read(data)
+
+    raise InvalidMetadata
+
 
 @attr.s(repr=False, init=False)
-class Metablock(ValidationMixin):
+class Metablock(Metadata, ValidationMixin):
   """A container for signed in-toto metadata.
 
   Provides methods for metadata JSON (de-)serialization, reading from and
@@ -93,24 +251,9 @@ class Metablock(ValidationMixin):
       fp.write("{}".format(self).encode("utf-8"))
 
 
-  @staticmethod
-  def load(path):
-    """Loads the JSON string representation of in-toto metadata from disk.
-
-    Arguments:
-      path: The path to read the file from.
-
-    Raises:
-      IOError: The file cannot be read.
-      securesystemslib.exceptions.FormatError: Metadata format is invalid.
-
-    Returns:
-      A Metablock object whose signable attribute is either a Link or a Layout
-      object.
-
-    """
-    with open(path, "r", encoding="utf8") as fp:
-      data = json.load(fp)
+  @classmethod
+  def from_dict(cls, data):
+    """Creates a Metablock object from its JSON/dict representation."""
 
     signatures = data.get("signatures", [])
     signed_data = data.get("signed", {})
@@ -125,7 +268,16 @@ class Metablock(ValidationMixin):
     else:
       raise securesystemslib.exceptions.FormatError("Invalid Metadata format")
 
-    return Metablock(signatures=signatures, signed=signed)
+    return cls(signatures=signatures, signed=signed)
+
+
+  def to_dict(self):
+    """Returns the JSON-serializable dictionary representation of self."""
+
+    return {
+      "signatures": self.signatures,
+      "signed": attr.asdict(self.signed)
+    }
 
 
   @property
@@ -136,6 +288,12 @@ class Metablock(ValidationMixin):
     # with Python's type keyword.
     return self.signed.type_
 
+
+  def create_signature(self, signer: Signer):
+    signature = signer.sign(self.signed.signable_bytes)
+    self.signatures.append(signature.to_dict())
+
+    return signature
 
   def sign(self, key):
     """Creates signature over signable with key and adds it to signatures.
@@ -282,3 +440,8 @@ class Metablock(ValidationMixin):
 
     for signature in self.signatures:
       securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+
+  def get_payload(self):
+    """Returns signed of the Metablock."""
+
+    return self.signed
