@@ -21,26 +21,14 @@ jobs:
 
     steps:
       - name: Checkout in-toto
-        uses: actions/checkout@v3
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Find pip cache dir
-        id: pip-cache
-        run: echo "::set-output name=dir::$(pip cache dir)"
-
-      - name: pip cache
-        uses: actions/cache@v2
-        with:
-          # Use the os dependent pip cache directory found above
-          path: ${{ steps.pip-cache.outputs.dir }}
-          # A match with 'key' counts as cache hit
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
-          # A match with 'restore-keys' is used as fallback
-          restore-keys: ${{ runner.os }}-pip-
+          cache: 'pip'
+          cache-dependency-path: 'requirements*.txt'
 
       - name: Install dependencies
         run: |
