@@ -855,7 +855,8 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
 def in_toto_record_stop(step_name, product_list, signing_key=None,
     gpg_keyid=None, gpg_use_default=False, gpg_home=None,
     exclude_patterns=None, base_path=None, normalize_line_endings=False,
-    lstrip_paths=None, metadata_directory=None):
+    lstrip_paths=None, metadata_directory=None, command=None, byproducts=None,
+    environment=None):
   """Finalizes preliminary link metadata generated with in_toto_record_start.
 
   Loads preliminary link metadata file, verifies its signature, and records
@@ -903,6 +904,22 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     metadata_directory (optional): A directory path to write the resulting link
         metadata file to. Default destination is the current working directory.
+
+    command (optional): A list consisting of a command and arguments executed
+        between in_toto_record_start() and in_toto_record_stop() to capture
+        the command ran in the resulting link metadata.
+
+    byproducts (optional): A dictionary that lists byproducts of the link
+        command execution. It should have at least the following entries
+        "stdout" (str), "stderr" (str) and "return-value" (int).
+
+    environment (optional): A dictionary to capture information about
+        the environment to be added in the resulting link metadata eg.::
+            {
+              "variables": "<list of env var KEY=value pairs>",
+              "filesystem": "<filesystem info>",
+              "workdir": "<CWD when executing link command>"
+            }
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
@@ -1033,6 +1050,15 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
       product_list, exclude_patterns=exclude_patterns, base_path=base_path,
       follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
       lstrip_paths=lstrip_paths)
+
+  if command:
+    link.command = command
+
+  if byproducts:
+    link.byproducts = byproducts
+
+  if environment:
+    link.environment = environment
 
   if isinstance(link_metadata, Metablock):
     LOG.info("Generating link metadata using Metablock...")

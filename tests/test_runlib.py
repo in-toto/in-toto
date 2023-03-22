@@ -1023,6 +1023,24 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     self.assertEqual(list(link.products.keys()), [self.test_product])
     os.remove(self.link_name)
 
+  def test_create_metadata_with_command_byproducts_environment(self):
+    """Test record stop records expected product. """
+    command = ["cp", "src", "dest"]
+    byproducts = {"stdout": "success", "stderr": "errors", "return-value": 0}
+    environment = {
+              "variables": "ENV_NAME=ENV_VALUE",
+              "filesystem": "<filesystem info>",
+              "workdir": "./"
+            }
+
+    in_toto_record_start(self.step_name, [], self.key, record_environment=True)
+    in_toto_record_stop(self.step_name, [self.test_product], self.key, command=command,
+      byproducts=byproducts, environment=environment)
+    link = Metablock.load(self.link_name)
+    self.assertEqual(link.signed.command, command)
+    self.assertDictEqual(link.signed.byproducts, byproducts)
+    self.assertDictEqual(link.signed.environment, environment)
+    os.remove(self.link_name)
 
 if __name__ == "__main__":
   unittest.main()
