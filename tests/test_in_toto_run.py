@@ -153,11 +153,11 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         link_metadata = Metablock.load(self.test_link_rsa)
         self.assertListEqual(
             list(link_metadata.signed.materials.keys()),
-            [self.test_artifact[len(strip_prefix) :]],
+            [self.test_artifact[len(strip_prefix):]],
         )
         self.assertListEqual(
             list(link_metadata.signed.products.keys()),
-            [self.test_artifact[len(strip_prefix) :]],
+            [self.test_artifact[len(strip_prefix):]],
         )
 
     def test_main_with_metadata_directory(self):
@@ -474,11 +474,11 @@ class TestInTotoRunToolWithDSSE(
         link = Metadata.load(self.test_link_rsa).get_payload()
         self.assertListEqual(
             list(link.materials.keys()),
-            [self.test_artifact[len(strip_prefix) :]],
+            [self.test_artifact[len(strip_prefix):]],
         )
         self.assertListEqual(
             list(link.products.keys()),
-            [self.test_artifact[len(strip_prefix) :]],
+            [self.test_artifact[len(strip_prefix):]],
         )
 
     def test_main_with_default_gpg_key(self):

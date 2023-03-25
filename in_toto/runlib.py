@@ -27,6 +27,32 @@
     - Return Metadata containing a Link object which can be can be signed
       and stored to disk
 """
+from in_toto.resolver import (
+    RESOLVER_FOR_URI_SCHEME,
+    FileResolver,
+    OSTreeResolver,
+    Resolver,
+)
+from in_toto.models.metadata import Envelope, Metablock, Metadata
+from in_toto.models.link import (
+    FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT,
+    UNFINISHED_FILENAME_FORMAT,
+    UNFINISHED_FILENAME_FORMAT_GLOB,
+)
+from securesystemslib.signer import Signature, SSlibSigner
+import securesystemslib.gpg
+import securesystemslib.exceptions
+import securesystemslib.hash
+import securesystemslib.formats
+from in_toto.models.statement import Statement
+from in_toto.models.metadata import (Metadata, Envelope, Metablock)
+from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
+                                 FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
+from in_toto.models._signer import GPGSigner
+import in_toto.exceptions
+import in_toto.settings
+from pathspec import PathSpec
 import glob
 import io
 import logging
@@ -36,30 +62,6 @@ import sys
 import tempfile
 import time
 from collections import defaultdict
-
-import securesystemslib.exceptions
-import securesystemslib.formats
-import securesystemslib.gpg
-import securesystemslib.hash
-from securesystemslib.signer import Signature, SSlibSigner
-
-import in_toto.exceptions
-import in_toto.settings
-from in_toto.models._signer import GPGSigner
-from in_toto.models.link import (
-    FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT,
-    UNFINISHED_FILENAME_FORMAT,
-    UNFINISHED_FILENAME_FORMAT_GLOB,
-)
-from in_toto.models.metadata import Envelope, Metablock, Metadata
-from in_toto.resolver import (
-    RESOLVER_FOR_URI_SCHEME,
-    DirectoryResolver,
-    FileResolver,
-    OSTreeResolver,
-    Resolver,
-)
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -586,9 +588,29 @@ def in_toto_run(
         environment=environment,
     )
 
+    LOG.info("Creating statement...")
+
+    statement_subjects = []
+
+    for product_name, product_hashes in link.products.items():
+
+        subject = {
+            "name": product_name,
+            "digest": {}
+        }
+
+        for algorithm, hash in product_hashes.items():
+            subject["digest"][algorithm] = hash
+
+        statement_subjects.append(subject)
+
+    # TODO: correct predicate_type
+    statement = Statement(subject=statement_subjects,
+                          predicate_type="http://in-toto.io/attestation/human-review/vcs/v0.1", predicate={})
+
     if use_dsse:
         LOG.info("Generating link metadata using DSSE...")
-        link_metadata = Envelope.from_signable(link)
+        link_metadata = Envelope.from_signable(statement)
     else:
         LOG.info("Generating link metadata using Metablock...")
         link_metadata = Metablock(signed=link, compact_json=compact_json)
