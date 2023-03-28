@@ -89,6 +89,11 @@ to that sublayout must exist. The sublayout itself must be in the same
 directory as the other links of the superlayout. (i.e. '<step name>.<keyid
 prefix>.link')
 
+The verification workflow is performed in isolation and does not rely on
+information about keys that are available through external sources. For example,
+in-toto does not rely on the creation time, revocation status, and usage flags
+for PGP keys.
+
 The command returns 2 if it is called with wrong arguments, 1 if in-toto
 verification fails and 0 if verification passes. """,
     )
