@@ -29,7 +29,6 @@ import re
 
 DEFAULT_SCHEME = "default"
 RESOLVER_FOR_URI_SCHEME = {}
-RESOLVER_PARAMS = {}
 
 
 def _get_scheme(uri):

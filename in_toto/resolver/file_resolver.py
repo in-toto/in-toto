@@ -28,7 +28,7 @@ import logging
 
 from securesystemslib.storage import FilesystemBackend
 
-from in_toto.resolver.resolver import (Resolver, RESOLVER_PARAMS)
+from in_toto.resolver.resolver import Resolver
 
 LOG = logging.getLogger(__name__)
 
@@ -36,14 +36,14 @@ LOG = logging.getLogger(__name__)
 class FileResolver(Resolver):
   """Resolver for files"""
 
+  follow_symlink_dirs = False
+  normalize_line_endings = False
   SCHEME = "file"
 
   @classmethod
   def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
     """Get all file names from the generic_uri.
     """
-    follow_symlink_dirs = RESOLVER_PARAMS.get("follow_symlink_dirs", False)
-
     if generic_uri.startswith(cls.SCHEME + ":"):
       generic_uri = generic_uri[len(cls.SCHEME)+1:]
 
@@ -61,7 +61,7 @@ class FileResolver(Resolver):
       return norm_paths
 
     for root, dirs, files in os.walk(norm_path,
-        followlinks=follow_symlink_dirs):
+                                     followlinks=cls.follow_symlink_dirs):
 
       # Create a list of normalized dirpaths
       dirpaths = []
@@ -104,7 +104,7 @@ class FileResolver(Resolver):
     with FilesystemBackend().get(resolved_uri) as file_object:
       data = file_object.read()
 
-      if RESOLVER_PARAMS.get("normalize_line_endings", False):
+      if cls.normalize_line_endings:
         data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
 
     return data

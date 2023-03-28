@@ -45,7 +45,7 @@ from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 
-from in_toto.resolver import (Resolver, RESOLVER_PARAMS)
+from in_toto.resolver import (Resolver, resolver_set_params)
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -213,9 +213,10 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
-  # Set resolver configs
-  RESOLVER_PARAMS["follow_symlink_dirs"] = follow_symlink_dirs
-  RESOLVER_PARAMS["normalize_line_endings"] = normalize_line_endings
+  # Set resolver parameters
+  resolver_set_params(
+      follow_symlink_dirs=follow_symlink_dirs,
+      normalize_line_endings=normalize_line_endings)
 
   # Normalize passed paths
   resolved_artifacts = []
