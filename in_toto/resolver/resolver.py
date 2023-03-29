@@ -31,7 +31,7 @@ DEFAULT_SCHEME = "default"
 RESOLVER_FOR_URI_SCHEME = {}
 
 
-def _get_scheme(uri):
+def get_scheme(uri):
   """Obtain the resolver scheme from the generic URI.
 
   Arguments:
@@ -70,7 +70,7 @@ def _get_resolver(uri):
     The resolver class for the URI passed.
 
   """
-  scheme = _get_scheme(uri)
+  scheme = get_scheme(uri)
 
   if scheme not in RESOLVER_FOR_URI_SCHEME:
     raise ValueError(

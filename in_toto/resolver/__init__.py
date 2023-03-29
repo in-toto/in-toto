@@ -24,6 +24,7 @@ from in_toto.resolver.resolver import (
   DEFAULT_SCHEME,
   RESOLVER_FOR_URI_SCHEME,
   Resolver,
+  get_scheme,
 )
 
 RESOLVER_FOR_URI_SCHEME.update(
@@ -33,7 +34,7 @@ RESOLVER_FOR_URI_SCHEME.update(
     }
 )
 
-def resolver_set_params(**kwargs):
+def set_params(**kwargs):
   """Set the parameters for the resolvers."""
   FileResolver.follow_symlink_dirs = kwargs.get("follow_symlink_dirs", False)
   FileResolver.normalize_line_endings = kwargs.get("normalize_line_endings",

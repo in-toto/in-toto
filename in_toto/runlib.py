@@ -45,7 +45,7 @@ from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 
-from in_toto.resolver import (Resolver, resolver_set_params)
+from in_toto import resolver
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -76,25 +76,32 @@ def _hash_artifact(hashable_representation, hash_algorithms=None):
   return hash_dict
 
 
-def _apply_left_strip(artifact_filepath, artifacts_dict, lstrip_paths=None):
+def _apply_left_strip(artifact_uri, artifacts_dict, lstrip_paths=None):
   """ Internal helper function to left strip dictionary keys based on
   prefixes passed by the user. """
+  scheme = resolver.get_scheme(artifact_uri)
+  if scheme != resolver.DEFAULT_SCHEME:
+    artifact_uri = artifact_uri[len(scheme) + 1:]
+    scheme += ":"
+  else:
+    scheme = ""
+
   if lstrip_paths:
     # If a prefix is passed using the argument --lstrip-paths,
-    # that prefix is left stripped from the filepath passed.
+    # that prefix is left stripped from the uri passed.
     # Note: if the prefix doesn't include a trailing /, the dictionary key
     # may include an unexpected /.
     for prefix in lstrip_paths:
-      if artifact_filepath.startswith(prefix):
-        artifact_filepath = artifact_filepath[len(prefix):]
+      if artifact_uri.startswith(prefix):
+        artifact_uri = artifact_uri[len(prefix):]
         break
 
-    if artifact_filepath in artifacts_dict:
+    if scheme + artifact_uri in artifacts_dict:
       raise in_toto.exceptions.PrefixError("Prefix selection has "
           "resulted in non unique dictionary key '{}'"
-          .format(artifact_filepath))
+          .format(artifact_uri))
 
-  return artifact_filepath
+  return scheme + artifact_uri
 
 
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
@@ -214,14 +221,14 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
   # Set resolver parameters
-  resolver_set_params(
+  resolver.set_params(
       follow_symlink_dirs=follow_symlink_dirs,
       normalize_line_endings=normalize_line_endings)
 
   # Normalize passed paths
   resolved_artifacts = []
   for artifact in artifacts:
-    resolved_artifacts.extend(Resolver.resolve_uri_to_uris(
+    resolved_artifacts.extend(resolver.Resolver.resolve_uri_to_uris(
       artifact,
       exclude_patterns=exclude_patterns))
 
@@ -238,7 +245,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   for artifact in resolved_artifacts:
     key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
     artifacts_dict[key] = _hash_artifact(
-        Resolver.get_hashable_representation(artifact))
+        resolver.Resolver.get_hashable_representation(artifact))
 
   # Change back to where original current working dir
   if base_path:
