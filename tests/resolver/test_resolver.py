@@ -22,8 +22,35 @@
 """
 
 import unittest
-from in_toto.resolver import (Resolver, FileResolver)
+from in_toto.resolver import (Resolver, FileResolver, RESOLVER_FOR_URI_SCHEME)
 from in_toto.resolver.resolver import _get_resolver
+from in_toto.exceptions import ResolverGetRepresentationError
+
+import securesystemslib.hash
+
+
+class MockResolver(Resolver):
+
+  SCHEME = "mock"
+
+  @classmethod
+  def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
+    return generic_uri
+
+  @classmethod
+  def hash_artifact(cls, resolved_uri):
+
+    digest_object = securesystemslib.hash.digest('sha256')
+    digest_object.update(resolved_uri.encode('utf-8'))
+
+    return {'sha256': digest_object.hexdigest()}
+
+
+RESOLVER_FOR_URI_SCHEME.update(
+  {
+    MockResolver.SCHEME: MockResolver,
+  }
+)
 
 
 class TestGetResolver(unittest.TestCase):
@@ -94,6 +121,26 @@ class TestResolverApplyExcludePatterns(unittest.TestCase):
     expected = ["barfoo"]
     result = Resolver.apply_exclude_patterns(names, patterns)
     self.assertListEqual(result, expected)
+
+
+class TestResolverInterface(unittest.TestCase):
+  """Test Resolver interface."""
+
+  def test_resolver_get_hashable_representation_not_impl(self):
+    self.assertRaises(ResolverGetRepresentationError,
+                      Resolver.get_hashable_representation, "mock:uri")
+
+  def test_resolver_hash_artifact(self):
+    self.assertTrue(
+        "sha256" in list(Resolver.hash_artifact("mock:uri")))
+
+
+class TestResolverHashBytes(unittest.TestCase):
+  """Test Resolver.hash_bytes()."""
+
+  def test_hash_artifact_passing_algorithm(self):
+    self.assertTrue(
+        "sha256" in list(Resolver.hash_bytes("foo".encode('utf-8'), ["sha256"])))
 
 
 if __name__ == "__main__":

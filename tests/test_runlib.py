@@ -34,7 +34,7 @@ import in_toto.exceptions
 from in_toto.models.metadata import Envelope, Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
-    in_toto_record_stop, record_artifacts_as_dict, _hash_artifact,
+    in_toto_record_stop, record_artifacts_as_dict,
     _subprocess_run_duplicate_streams, _apply_left_strip)
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
@@ -47,6 +47,19 @@ import securesystemslib.exceptions
 
 from tests.common import TmpDirMixin
 from pathlib import Path
+
+
+class TestApplyLeftStrip(unittest.TestCase):
+
+  def test_apply_left_strip_no_scheme(self):
+    uri = "lstrip-value/name"
+    lstrip_paths = ["lstrip-value/"]
+    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "name")
+
+  def test_apply_left_strip_with_scheme(self):
+    uri = "file:lstrip-value/name"
+    lstrip_paths = ["lstrip-value/"]
+    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "file:name")
 
 
 class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
@@ -464,10 +477,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
       with self.assertRaises(securesystemslib.exceptions.FormatError):
         record_artifacts_as_dict(["."])
-
-  def test_hash_artifact_passing_algorithm(self):
-    """Test _hash_artifact passing hash algorithm. """
-    self.assertTrue("sha256" in list(_hash_artifact("foo".encode('utf-8'), ["sha256"])))
 
 
 class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
@@ -1012,16 +1021,6 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     self.assertDictEqual(link.signed.byproducts, byproducts)
     self.assertDictEqual(link.signed.environment, environment)
     os.remove(self.link_name)
-
-  def test_apply_left_strip_no_scheme(self):
-    uri = "lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "name")
-
-  def test_apply_left_strip_with_scheme(self):
-    uri = "file:lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "file:name")
 
 if __name__ == "__main__":
   unittest.main()

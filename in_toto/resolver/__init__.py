@@ -28,10 +28,10 @@ from in_toto.resolver.resolver import (
 )
 
 RESOLVER_FOR_URI_SCHEME.update(
-    {
-      DEFAULT_SCHEME: FileResolver,
-      FileResolver.SCHEME: FileResolver,
-    }
+  {
+    DEFAULT_SCHEME: FileResolver,
+    FileResolver.SCHEME: FileResolver,
+  }
 )
 
 def set_params(**kwargs):

@@ -32,3 +32,6 @@ class PrefixError(Error):
 
 class InvalidMetadata(Error):
   """Indicates that the metadata is not valid."""
+
+class ResolverGetRepresentationError(Error):
+  """Indicates that resolver does not implement get_hashable_representation."""

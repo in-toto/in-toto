@@ -27,6 +27,11 @@ from abc import ABCMeta, abstractmethod
 from pathspec import PathSpec
 import re
 
+from in_toto.exceptions import ResolverGetRepresentationError
+
+import securesystemslib.formats
+import securesystemslib.hash
+
 DEFAULT_SCHEME = "default"
 RESOLVER_FOR_URI_SCHEME = {}
 
@@ -98,6 +103,25 @@ class Resolver(metaclass=ABCMeta):
     return sorted(included)
 
   @classmethod
+  def hash_bytes(cls, hashable_representation, hash_algorithms=None):
+    """Return a hash of the represenation in securesystemslib format.
+    """
+    if not hash_algorithms:
+      hash_algorithms = ['sha256']
+
+    securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
+    hash_dict = {}
+
+    for algorithm in hash_algorithms:
+      digest_object = securesystemslib.hash.digest(algorithm)
+      digest_object.update(hashable_representation)
+      hash_dict.update({algorithm: digest_object.hexdigest()})
+
+    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+
+    return hash_dict
+
+  @classmethod
   @abstractmethod
   def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
     """Normalize and resolve artifact URIs."""
@@ -105,8 +129,22 @@ class Resolver(metaclass=ABCMeta):
     return resolver.resolve_uri_to_uris(generic_uri, exclude_patterns)
 
   @classmethod
-  @abstractmethod
   def get_hashable_representation(cls, resolved_uri):
     """Return hashable representation of the artifact."""
+    raise ResolverGetRepresentationError
+
+  @classmethod
+  def hash_artifact(cls, resolved_uri):
+    """Return hashes of the artifact."""
     resolver = _get_resolver(resolved_uri)
-    return resolver.get_hashable_representation(resolved_uri)
+
+    try:
+      representation = resolver.get_hashable_representation(resolved_uri)
+      return cls.hash_bytes(representation)
+    except ResolverGetRepresentationError:
+      pass
+
+    hash_dict =  resolver.hash_artifact(resolved_uri)
+    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
+
+    return hash_dict

@@ -48,7 +48,6 @@ from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 from in_toto import resolver
 
 import securesystemslib.formats
-import securesystemslib.hash
 import securesystemslib.exceptions
 import securesystemslib.gpg
 from securesystemslib.signer import SSlibSigner, Signature
@@ -57,23 +56,6 @@ from securesystemslib.signer import SSlibSigner, Signature
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
-
-
-def _hash_artifact(hashable_representation, hash_algorithms=None):
-  if not hash_algorithms:
-    hash_algorithms = ['sha256']
-
-  securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
-  hash_dict = {}
-
-  for algorithm in hash_algorithms:
-    digest_object = securesystemslib.hash.digest(algorithm)
-    digest_object.update(hashable_representation)
-    hash_dict.update({algorithm: digest_object.hexdigest()})
-
-  securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
-
-  return hash_dict
 
 
 def _apply_left_strip(artifact_uri, artifacts_dict, lstrip_paths=None):
@@ -244,8 +226,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
     key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
-    artifacts_dict[key] = _hash_artifact(
-        resolver.Resolver.get_hashable_representation(artifact))
+    artifacts_dict[key] = resolver.Resolver.hash_artifact(artifact)
 
   # Change back to where original current working dir
   if base_path:
