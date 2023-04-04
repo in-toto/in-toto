@@ -504,8 +504,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
     # For each step, verify that we have enough validly signed links from
     # distinct authorized functionaries. Links signed by different subkeys of
     # the same main key are counted only once towards the threshold.
-    valid_authorized_links_cnt = (len(verified_key_link_dict) -
-        (len(used_main_keyids) - len(set(used_main_keyids))))
+    valid_authorized_links_cnt = len(set(used_main_keyids))
     # TODO: To guarantee that links are signed by different functionaries
     # we rely on the layout to not carry duplicate verification keys under
     # different dictionary keys, e.g. {keyid1: KEY1, keyid2: KEY1}
