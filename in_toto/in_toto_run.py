@@ -32,7 +32,6 @@ import sys
 
 from securesystemslib import interface
 
-import in_toto.user_settings
 from in_toto import __version__, runlib
 from in_toto.common_args import (
     BASE_PATH_ARGS,
@@ -253,9 +252,6 @@ def main():
     args = parser.parse_args()
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
-
-    # Override defaults in settings.py with environment variables and RCfiles
-    in_toto.user_settings.set_settings()
 
     # Regular signing and GPG signing are mutually exclusive
     if (args.key is None) == (args.gpg is None):

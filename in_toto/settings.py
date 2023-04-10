@@ -25,14 +25,8 @@
      import in_toto.settings
      in_toto.settings.ARTIFACT_BASE_PATH = "/home/user/project"
      ```
-  - or, when using in-toto via command line tooling, with environment variables
-    or RCfiles, see the `in_toto.user_settings` module
-
 """
 # The debug setting is used to set to the in-toto base logger to logging.DEBUG
-# TODO: This setting is currently not available via environment variables or
-# rcfiles, partially because at the moment it is read before we parse
-# envvars/rcfiles. Do we want to make it available to those as well?
 DEBUG = False
 
 # See docstring of `in-toto.record_artifacts_as_dict` for how this is used
