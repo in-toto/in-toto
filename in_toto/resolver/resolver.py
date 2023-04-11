@@ -151,6 +151,11 @@ class Resolver(metaclass=ABCMeta):
 
   @classmethod
   @abstractmethod
+  def get_key_from_uri(cls, resolved_uri):
+    """Get dictionary key for the output from the resolved URI."""
+
+  @classmethod
+  @abstractmethod
   def get_artifact_hashdict(cls, resolved_uri):
     """Get hashdict of the artifact that will pass the schema check."""
 
@@ -162,4 +167,4 @@ class Resolver(metaclass=ABCMeta):
     hash_dict = resolver.get_artifact_hashdict(resolved_uri)
     securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 
-    return hash_dict
+    return resolver.get_key_from_uri(resolved_uri), hash_dict

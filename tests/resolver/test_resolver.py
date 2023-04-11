@@ -37,6 +37,10 @@ class MockResolver(Resolver):
     return generic_uri
 
   @classmethod
+  def get_key_from_uri(cls, resolved_uri):
+    return resolved_uri
+
+  @classmethod
   def get_artifact_hashdict(cls, resolved_uri):
 
     digest_object = securesystemslib.hash.digest('sha256')
@@ -139,8 +143,10 @@ class TestResolverInterface(unittest.TestCase):
   """Test Resolver interface."""
 
   def test_resolver_hash_artifact(self):
+    key, hash_dict = Resolver.hash_artifact("mock:uri")
     self.assertTrue(
-        "sha256" in list(Resolver.hash_artifact("mock:uri")))
+        "sha256" in list(hash_dict))
+    self.assertEqual(key, "mock:uri")
 
 
 class TestResolverHashBytes(unittest.TestCase):

@@ -38,6 +38,7 @@ class FileResolver(Resolver):
 
   follow_symlink_dirs = False
   normalize_line_endings = False
+  lstrip_paths = None
   SCHEME = "file"
 
   @classmethod
@@ -95,6 +96,10 @@ class FileResolver(Resolver):
         norm_paths.append(prepend + normalized_filepath)
 
     return norm_paths
+
+  @classmethod
+  def get_key_from_uri(cls, resolved_uri):
+    return super().apply_left_strip(resolved_uri, cls.lstrip_paths)
 
   @classmethod
   def get_artifact_hashdict(cls, resolved_uri):

@@ -173,17 +173,6 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   if exclude_patterns:
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
-  # Set resolver parameters
-  resolver.FileResolver.follow_symlink_dirs = follow_symlink_dirs
-  resolver.FileResolver.normalize_line_endings = normalize_line_endings
-
-  # Normalize passed paths
-  resolved_artifacts = []
-  for artifact in artifacts:
-    resolved_artifacts.extend(resolver.Resolver.resolve_uri_to_uris(
-      artifact,
-      exclude_patterns=exclude_patterns))
-
   # Check if any of the prefixes passed for left stripping is a left substring
   # of another
   if lstrip_paths:
@@ -193,15 +182,27 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
         raise in_toto.exceptions.PrefixError("'{}' and '{}' "
             "triggered a left substring error".format(prefix_one, prefix_two))
 
+  # Set resolver parameters
+  resolver.FileResolver.follow_symlink_dirs = follow_symlink_dirs
+  resolver.FileResolver.normalize_line_endings = normalize_line_endings
+  resolver.FileResolver.lstrip_paths = lstrip_paths
+
+  # Normalize passed paths
+  resolved_artifacts = []
+  for artifact in artifacts:
+    resolved_artifacts.extend(resolver.Resolver.resolve_uri_to_uris(
+      artifact,
+      exclude_patterns=exclude_patterns))
+
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
-    key = resolver.Resolver.apply_left_strip(artifact, lstrip_paths)
+    key, hash_dict = resolver.Resolver.hash_artifact(artifact)
 
     if key in artifacts_dict:
       raise in_toto.exceptions.PrefixError("Prefix selection has "
           "resulted in non unique dictionary key '{}'".format(key))
 
-    artifacts_dict[key] = resolver.Resolver.hash_artifact(artifact)
+    artifacts_dict[key] = hash_dict
 
   # Change back to where original current working dir
   if base_path:
