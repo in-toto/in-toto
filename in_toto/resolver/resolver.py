@@ -27,8 +27,6 @@ from abc import ABCMeta, abstractmethod
 from pathspec import PathSpec
 import re
 
-from in_toto.exceptions import ResolverGetRepresentationError
-
 import securesystemslib.formats
 import securesystemslib.hash
 
@@ -152,23 +150,16 @@ class Resolver(metaclass=ABCMeta):
     return resolver.resolve_uri_to_uris(generic_uri, exclude_patterns)
 
   @classmethod
-  def get_hashable_representation(cls, resolved_uri):
-    """Return hashable representation of the artifact."""
-    raise ResolverGetRepresentationError
+  @abstractmethod
+  def get_artifact_hashdict(cls, resolved_uri):
+    """Get hashdict of the artifact that will pass the schema check."""
 
   @classmethod
-  @abstractmethod
   def hash_artifact(cls, resolved_uri):
     """Return hashes of the artifact."""
     resolver = _get_resolver(resolved_uri)
 
-    try:
-      representation = resolver.get_hashable_representation(resolved_uri)
-      return cls.hash_bytes(representation)
-    except ResolverGetRepresentationError:
-      pass
-
-    hash_dict =  resolver.hash_artifact(resolved_uri)
+    hash_dict = resolver.get_artifact_hashdict(resolved_uri)
     securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
 
     return hash_dict

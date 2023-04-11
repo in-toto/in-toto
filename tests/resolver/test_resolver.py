@@ -24,7 +24,6 @@
 import unittest
 from in_toto.resolver import (Resolver, FileResolver, RESOLVER_FOR_URI_SCHEME)
 from in_toto.resolver.resolver import _get_resolver
-from in_toto.exceptions import ResolverGetRepresentationError
 
 import securesystemslib.hash
 
@@ -38,7 +37,7 @@ class MockResolver(Resolver):
     return generic_uri
 
   @classmethod
-  def hash_artifact(cls, resolved_uri):
+  def get_artifact_hashdict(cls, resolved_uri):
 
     digest_object = securesystemslib.hash.digest('sha256')
     digest_object.update(resolved_uri.encode('utf-8'))
@@ -138,10 +137,6 @@ class TestResolverApplyExcludePatterns(unittest.TestCase):
 
 class TestResolverInterface(unittest.TestCase):
   """Test Resolver interface."""
-
-  def test_resolver_get_hashable_representation_not_impl(self):
-    self.assertRaises(ResolverGetRepresentationError,
-                      Resolver.get_hashable_representation, "mock:uri")
 
   def test_resolver_hash_artifact(self):
     self.assertTrue(

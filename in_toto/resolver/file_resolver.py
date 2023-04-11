@@ -97,7 +97,7 @@ class FileResolver(Resolver):
     return norm_paths
 
   @classmethod
-  def hash_artifact(cls, resolved_uri):
+  def get_artifact_hashdict(cls, resolved_uri):
     """Takes a filename and obtain a hashable representation of the file
     contents."""
     if resolved_uri.startswith(cls.SCHEME + ":"):
