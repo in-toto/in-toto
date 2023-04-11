@@ -33,9 +33,3 @@ RESOLVER_FOR_URI_SCHEME.update(
     FileResolver.SCHEME: FileResolver,
   }
 )
-
-def set_params(**kwargs):
-  """Set the parameters for the resolvers."""
-  FileResolver.follow_symlink_dirs = kwargs.get("follow_symlink_dirs", False)
-  FileResolver.normalize_line_endings = kwargs.get("normalize_line_endings",
-                                                   False)

@@ -203,9 +203,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
   # Set resolver parameters
-  resolver.set_params(
-      follow_symlink_dirs=follow_symlink_dirs,
-      normalize_line_endings=normalize_line_endings)
+  resolver.FileResolver.follow_symlink_dirs = follow_symlink_dirs
+  resolver.FileResolver.normalize_line_endings = normalize_line_endings
 
   # Normalize passed paths
   resolved_artifacts = []
