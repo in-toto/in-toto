@@ -103,6 +103,29 @@ class Resolver(metaclass=ABCMeta):
     return sorted(included)
 
   @classmethod
+  def apply_left_strip(cls, artifact_uri, lstrip_paths=None):
+    """Internal helper function to left strip dictionary keys based on
+    prefixes passed by the user."""
+    scheme = get_scheme(artifact_uri)
+    if scheme != DEFAULT_SCHEME:
+      artifact_uri = artifact_uri[len(scheme) + 1:]
+      scheme += ":"
+    else:
+      scheme = ""
+
+    if lstrip_paths:
+      # If a prefix is passed using the argument --lstrip-paths,
+      # that prefix is left stripped from the uri passed.
+      # Note: if the prefix doesn't include a trailing /, the dictionary key
+      # may include an unexpected /.
+      for prefix in lstrip_paths:
+        if artifact_uri.startswith(prefix):
+          artifact_uri = artifact_uri[len(prefix):]
+          break
+
+    return scheme + artifact_uri
+
+  @classmethod
   def hash_bytes(cls, hashable_representation, hash_algorithms=None):
     """Return a hash of the represenation in securesystemslib format.
     """

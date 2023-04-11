@@ -57,29 +57,6 @@ from securesystemslib.signer import SSlibSigner, Signature
 LOG = logging.getLogger(__name__)
 
 
-def _apply_left_strip(artifact_uri, lstrip_paths=None):
-  """ Internal helper function to left strip dictionary keys based on
-  prefixes passed by the user. """
-  scheme = resolver.get_scheme(artifact_uri)
-  if scheme != resolver.DEFAULT_SCHEME:
-    artifact_uri = artifact_uri[len(scheme) + 1:]
-    scheme += ":"
-  else:
-    scheme = ""
-
-  if lstrip_paths:
-    # If a prefix is passed using the argument --lstrip-paths,
-    # that prefix is left stripped from the uri passed.
-    # Note: if the prefix doesn't include a trailing /, the dictionary key
-    # may include an unexpected /.
-    for prefix in lstrip_paths:
-      if artifact_uri.startswith(prefix):
-        artifact_uri = artifact_uri[len(prefix):]
-        break
-
-  return scheme + artifact_uri
-
-
 def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
     lstrip_paths=None):
@@ -218,7 +195,7 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
-    key = _apply_left_strip(artifact, lstrip_paths)
+    key = resolver.Resolver.apply_left_strip(artifact, lstrip_paths)
 
     if key in artifacts_dict:
       raise in_toto.exceptions.PrefixError("Prefix selection has "

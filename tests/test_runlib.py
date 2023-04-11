@@ -35,7 +35,7 @@ from in_toto.models.metadata import Envelope, Metablock
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict,
-    _subprocess_run_duplicate_streams, _apply_left_strip)
+    _subprocess_run_duplicate_streams)
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
     import_rsa_privatekey_from_file,
@@ -47,19 +47,6 @@ import securesystemslib.exceptions
 
 from tests.common import TmpDirMixin
 from pathlib import Path
-
-
-class TestApplyLeftStrip(unittest.TestCase):
-
-  def test_apply_left_strip_no_scheme(self):
-    uri = "lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, lstrip_paths), "name")
-
-  def test_apply_left_strip_with_scheme(self):
-    uri = "file:lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, lstrip_paths), "file:name")
 
 
 class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
