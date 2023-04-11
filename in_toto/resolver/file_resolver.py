@@ -26,7 +26,7 @@
 import os
 import logging
 
-from securesystemslib.storage import FilesystemBackend
+import securesystemslib.hash
 
 from in_toto.resolver.resolver import Resolver
 
@@ -44,8 +44,10 @@ class FileResolver(Resolver):
   def resolve_uri_to_uris(cls, generic_uri, exclude_patterns=None):
     """Get all file names from the generic_uri.
     """
+    prepend = ""
     if generic_uri.startswith(cls.SCHEME + ":"):
-      generic_uri = generic_uri[len(cls.SCHEME)+1:]
+      prepend, generic_uri = generic_uri.split(":", 1)
+      prepend += ":"
 
     norm_paths = super().apply_exclude_patterns(
         [os.path.normpath(generic_uri)], exclude_patterns)
@@ -54,7 +56,7 @@ class FileResolver(Resolver):
     norm_path = norm_paths.pop()
 
     if os.path.isfile(norm_path):
-      return [norm_path.replace('\\', '/')]
+      return [prepend + norm_path.replace('\\', '/')]
 
     if not os.path.isdir(norm_path):
       LOG.info("path: {} does not exist, skipping..".format(norm_path))
@@ -90,21 +92,19 @@ class FileResolver(Resolver):
 
       for filepath in filepaths:
         normalized_filepath = filepath.replace("\\", "/")
-        norm_paths.append(normalized_filepath)
+        norm_paths.append(prepend + normalized_filepath)
 
     return norm_paths
 
   @classmethod
-  def get_hashable_representation(cls, resolved_uri):
+  def hash_artifact(cls, resolved_uri):
     """Takes a filename and obtain a hashable representation of the file
     contents."""
+    if resolved_uri.startswith(cls.SCHEME + ":"):
+      _, resolved_uri = resolved_uri.split(":", 1)
 
-    data = b""
+    digest_object = securesystemslib.hash.digest_filename(
+      resolved_uri, 'sha256',
+      normalize_line_endings=cls.normalize_line_endings)
 
-    with FilesystemBackend().get(resolved_uri) as file_object:
-      data = file_object.read()
-
-      if cls.normalize_line_endings:
-        data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-
-    return data
+    return {'sha256': digest_object.hexdigest()}

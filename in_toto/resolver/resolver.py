@@ -134,6 +134,7 @@ class Resolver(metaclass=ABCMeta):
     raise ResolverGetRepresentationError
 
   @classmethod
+  @abstractmethod
   def hash_artifact(cls, resolved_uri):
     """Return hashes of the artifact."""
     resolver = _get_resolver(resolved_uri)
