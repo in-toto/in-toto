@@ -53,12 +53,11 @@ import securesystemslib.gpg
 from securesystemslib.signer import SSlibSigner, Signature
 
 
-
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
 
 
-def _apply_left_strip(artifact_uri, artifacts_dict, lstrip_paths=None):
+def _apply_left_strip(artifact_uri, lstrip_paths=None):
   """ Internal helper function to left strip dictionary keys based on
   prefixes passed by the user. """
   scheme = resolver.get_scheme(artifact_uri)
@@ -77,11 +76,6 @@ def _apply_left_strip(artifact_uri, artifacts_dict, lstrip_paths=None):
       if artifact_uri.startswith(prefix):
         artifact_uri = artifact_uri[len(prefix):]
         break
-
-    if scheme + artifact_uri in artifacts_dict:
-      raise in_toto.exceptions.PrefixError("Prefix selection has "
-          "resulted in non unique dictionary key '{}'"
-          .format(artifact_uri))
 
   return scheme + artifact_uri
 
@@ -224,7 +218,12 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
 
   # Iterate over remaining normalized artifact paths
   for artifact in resolved_artifacts:
-    key = _apply_left_strip(artifact, artifacts_dict, lstrip_paths)
+    key = _apply_left_strip(artifact, lstrip_paths)
+
+    if key in artifacts_dict:
+      raise in_toto.exceptions.PrefixError("Prefix selection has "
+          "resulted in non unique dictionary key '{}'".format(key))
+
     artifacts_dict[key] = resolver.Resolver.hash_artifact(artifact)
 
   # Change back to where original current working dir

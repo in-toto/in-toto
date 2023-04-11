@@ -33,9 +33,6 @@ from in_toto.in_toto_record import main as in_toto_record_main
 
 from tests.common import CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin
 
-import securesystemslib.interface # pylint: disable=unused-import
-
-
 
 class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
   """Test in_toto_record's main() - requires sys.argv patching; and
@@ -110,7 +107,7 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin)
     self.assert_cli_sys_exit(["start"] + args + ["--materials",
       self.test_artifact1, self.test_artifact2], 0)
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
-      self.test_artifact2, self.test_artifact2], 0)
+      self.test_artifact1, self.test_artifact2], 0)
 
     # Start/stop recording using ed25519 key
     args = ["--step-name", "test4", "--key", self.ed25519_key_path, "--key-type", "ed25519"]
@@ -156,7 +153,7 @@ class TestInTotoRecordTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin)
     self.assert_cli_sys_exit(["start"] + args + ["--materials",
       self.test_artifact1, self.test_artifact2], 0)
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
-      self.test_artifact2, self.test_artifact2], 0)
+      self.test_artifact1, self.test_artifact2], 0)
 
     # Start/stop sign with specified gpg keyid
     args = ["--step-name", "test7", "--gpg", self.gpg_key_768C43, "--gpg-home",
@@ -284,7 +281,7 @@ class TestInTotoRecordToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKe
     self.assert_cli_sys_exit(["start"] + args + ["--materials",
       self.test_artifact1, self.test_artifact2], 0)
     self.assert_cli_sys_exit(["stop"] + args + ["--products",
-      self.test_artifact2, self.test_artifact2], 0)
+      self.test_artifact1, self.test_artifact2], 0)
 
 
 if __name__ == '__main__':

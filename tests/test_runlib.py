@@ -54,12 +54,12 @@ class TestApplyLeftStrip(unittest.TestCase):
   def test_apply_left_strip_no_scheme(self):
     uri = "lstrip-value/name"
     lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "name")
+    self.assertEqual(_apply_left_strip(uri, lstrip_paths), "name")
 
   def test_apply_left_strip_with_scheme(self):
     uri = "file:lstrip-value/name"
     lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(_apply_left_strip(uri, {}, lstrip_paths), "file:name")
+    self.assertEqual(_apply_left_strip(uri, lstrip_paths), "file:name")
 
 
 class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
