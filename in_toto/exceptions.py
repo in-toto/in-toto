@@ -32,3 +32,6 @@ class PrefixError(Error):
 
 class InvalidMetadata(Error):
   """Indicates that the metadata is not valid."""
+
+class HashMismatchError(Error):
+  """Indicates that an artifact has a different hash than what was expected. """

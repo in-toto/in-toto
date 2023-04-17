@@ -27,7 +27,9 @@
 
 import os
 import datetime
+import copy
 import iso8601
+import itertools
 import fnmatch
 import logging
 from dateutil import tz
@@ -35,14 +37,15 @@ from dateutil import tz
 import securesystemslib.exceptions
 
 import in_toto.settings
-import in_toto.runlib
 import in_toto.models.layout
 import in_toto.models.link
 import in_toto.formats
 from in_toto.models.metadata import Metadata
+from in_toto.runlib import (in_toto_run, record_artifacts_as_dict,
+    _apply_left_strip)
 from in_toto.exceptions import (RuleVerificationError, LayoutExpiredError,
     ThresholdVerificationError, BadReturnValueError,
-    SignatureVerificationError)
+    SignatureVerificationError, HashMismatchError)
 import in_toto.rulelib
 
 import securesystemslib.formats
@@ -216,7 +219,7 @@ def run_all_inspections(layout, persist_inspection_links):
     # If so, we should probably make it a default in run_link
     # We could use artifact rule paths.
     material_list = product_list = ["."]
-    link = in_toto.runlib.in_toto_run(inspection.name, material_list,
+    link = in_toto_run(inspection.name, material_list,
         product_list, inspection.run)
 
     _raise_on_bad_retval(
@@ -1537,3 +1540,45 @@ def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
   # This is mostly relevant if the currently verified supply chain is embedded
   # in another supply chain
   return get_summary_link(layout, reduced_chain_link_dict, step_name)
+
+
+def match_products(link_metadata, target_artifacts=None, lstrip_paths=None):
+  """Allows users to easily match the contents of a link's products with locally
+  available artifacts.
+  """
+
+  if not target_artifacts:
+    target_artifacts = ["."]
+
+  products = link_metadata.products
+
+  new_products = {}
+  if lstrip_paths:
+    for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
+      if prefix_one.startswith(prefix_two) or \
+          prefix_two.startswith(prefix_one):
+        raise in_toto.exceptions.PrefixError("'{}' and '{}' "
+            "triggered a left substring error".format(prefix_one, prefix_two))
+
+    for p in products:
+      new_path = _apply_left_strip(p, products, lstrip_paths=lstrip_paths)
+      new_products[new_path] = copy.deepcopy(products[p])
+  else:
+    new_products = products
+
+  local_artifacts = record_artifacts_as_dict(target_artifacts)
+  processed = 0
+  for p in new_products:
+    if p not in local_artifacts:
+      LOG.warning("artifact '{}' not found locally".format(p))
+
+    if new_products[p] != local_artifacts[p]:
+      raise HashMismatchError(
+          f"artifact {p} has different hash than recorded in metadata")
+
+    processed += 1
+
+  if len(local_artifacts) > processed:
+    for p in local_artifacts:
+      if p not in new_products:
+        LOG.warning("local artifact '{}' not recorded in link".format(p))
