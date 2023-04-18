@@ -3,7 +3,7 @@
 
 """
 <Program Name>
-  _resolver.py
+  resolver.py
 
 <Author>
   Alan Chung Ma <achungma@purdue.edu>
