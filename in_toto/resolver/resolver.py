@@ -24,7 +24,6 @@
 """
 
 from abc import ABCMeta, abstractmethod
-from pathspec import PathSpec
 import re
 
 import securesystemslib.formats
@@ -84,63 +83,6 @@ def _get_resolver(uri):
 
 class Resolver(metaclass=ABCMeta):
   """Interface for resolvers."""
-
-  @classmethod
-  def apply_exclude_patterns(cls, names, exclude_patterns=None):
-    """Exclude matched patterns from passed names."""
-    if not exclude_patterns:
-      return names
-
-    included = set(names)
-
-    exclude_patterns = PathSpec.from_lines('gitwildmatch', exclude_patterns)
-
-    for excluded in exclude_patterns.match_files(names):
-      included.discard(excluded)
-
-    return sorted(included)
-
-  @classmethod
-  def apply_left_strip(cls, artifact_uri, lstrip_paths=None):
-    """Internal helper function to left strip dictionary keys based on
-    prefixes passed by the user."""
-    scheme = get_scheme(artifact_uri)
-    if scheme != DEFAULT_SCHEME:
-      artifact_uri = artifact_uri[len(scheme) + 1:]
-      scheme += ":"
-    else:
-      scheme = ""
-
-    if lstrip_paths:
-      # If a prefix is passed using the argument --lstrip-paths,
-      # that prefix is left stripped from the uri passed.
-      # Note: if the prefix doesn't include a trailing /, the dictionary key
-      # may include an unexpected /.
-      for prefix in lstrip_paths:
-        if artifact_uri.startswith(prefix):
-          artifact_uri = artifact_uri[len(prefix):]
-          break
-
-    return scheme + artifact_uri
-
-  @classmethod
-  def hash_bytes(cls, hashable_representation, hash_algorithms=None):
-    """Return a hash of the represenation in securesystemslib format.
-    """
-    if not hash_algorithms:
-      hash_algorithms = ['sha256']
-
-    securesystemslib.formats.HASHALGORITHMS_SCHEMA.check_match(hash_algorithms)
-    hash_dict = {}
-
-    for algorithm in hash_algorithms:
-      digest_object = securesystemslib.hash.digest(algorithm)
-      digest_object.update(hashable_representation)
-      hash_dict.update({algorithm: digest_object.hexdigest()})
-
-    securesystemslib.formats.HASHDICT_SCHEMA.check_match(hash_dict)
-
-    return hash_dict
 
   @classmethod
   @abstractmethod

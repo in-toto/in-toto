@@ -56,19 +56,6 @@ RESOLVER_FOR_URI_SCHEME.update(
 )
 
 
-class TestApplyLeftStrip(unittest.TestCase):
-
-  def test_apply_left_strip_no_scheme(self):
-    uri = "lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(Resolver.apply_left_strip(uri, lstrip_paths), "name")
-
-  def test_apply_left_strip_with_scheme(self):
-    uri = "file:lstrip-value/name"
-    lstrip_paths = ["lstrip-value/"]
-    self.assertEqual(Resolver.apply_left_strip(uri, lstrip_paths), "file:name")
-
-
 class TestGetResolver(unittest.TestCase):
   """Test _get_resolver(uri) """
 
@@ -93,52 +80,6 @@ class TestGetResolver(unittest.TestCase):
       _get_resolver(uri)
 
 
-class TestResolverApplyExcludePatterns(unittest.TestCase):
-  """Test Resolver.apply_exclude_patterns(names, exclude_patterns) """
-
-  def test_resolver_apply_exclude_explict(self):
-    names = ["foo", "bar", "baz"]
-    patterns = ["foo", "bar"]
-    expected = ["baz"]
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(sorted(result), sorted(expected))
-
-  def test_resolver_apply_exclude_all(self):
-    names = ["foo", "bar", "baz"]
-    patterns = ["*"]
-    expected = []
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(sorted(result), sorted(expected))
-
-  def test_resolver_apply_exclude_multiple_star(self):
-    names = ["foo", "bar", "baz"]
-    patterns = ["*a*"]
-    expected = ["foo"]
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(result, expected)
-
-  def test_resolver_apply_exclude_question_mark(self):
-    names = ["foo", "bazfoo", "barfoo"]
-    patterns = ["ba?foo"]
-    expected = ["foo"]
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(result, expected)
-
-  def test_resolver_apply_exclude_seq(self):
-    names = ["baxfoo", "bazfoo", "barfoo"]
-    patterns = ["ba[xz]foo"]
-    expected = ["barfoo"]
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(result, expected)
-
-  def test_resolver_apply_exclude_neg_seq(self):
-    names = ["baxfoo", "bazfoo", "barfoo"]
-    patterns = ["ba[!r]foo"]
-    expected = ["barfoo"]
-    result = Resolver.apply_exclude_patterns(names, patterns)
-    self.assertListEqual(result, expected)
-
-
 class TestResolverInterface(unittest.TestCase):
   """Test Resolver interface."""
 
@@ -147,14 +88,6 @@ class TestResolverInterface(unittest.TestCase):
     self.assertTrue(
         "sha256" in list(hash_dict))
     self.assertEqual(key, "mock:uri")
-
-
-class TestResolverHashBytes(unittest.TestCase):
-  """Test Resolver.hash_bytes()."""
-
-  def test_hash_artifact_passing_algorithm(self):
-    self.assertTrue(
-        "sha256" in list(Resolver.hash_bytes("foo".encode('utf-8'), ["sha256"])))
 
 
 if __name__ == "__main__":
