@@ -21,10 +21,9 @@
 
 from in_toto.resolver.file_resolver import FileResolver
 from in_toto.resolver.resolver import (
-  DEFAULT_SCHEME,
   RESOLVER_FOR_URI_SCHEME,
+  DEFAULT_SCHEME,
   Resolver,
-  get_scheme,
 )
 
 RESOLVER_FOR_URI_SCHEME.update(

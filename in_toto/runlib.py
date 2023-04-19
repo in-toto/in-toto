@@ -44,8 +44,7 @@ from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
-
-from in_toto import resolver
+from in_toto.resolver import Resolver
 
 import securesystemslib.formats
 import securesystemslib.exceptions
@@ -56,159 +55,17 @@ from securesystemslib.signer import SSlibSigner, Signature
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
 
+def record_artifacts_as_dict(uris, **kwargs):
+  # TODO: docstring
+  hashed_artifacts = {}
 
-def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
-    lstrip_paths=None):
-  """
-  <Purpose>
-    Hashes each file in the passed path list. If the path list contains
-    paths to directories the directory tree(s) are traversed.
+  for uri in uris:
+    resolver = Resolver.for_uri(uri)
 
-    The files a link command is executed on are called materials.
-    The files that result form a link command execution are called
-    products.
+    hashed_artifacts.update(resolver.hash_artifacts(**kwargs))
 
-    Paths are normalized for matching and storing by left stripping "./"
+  return hashed_artifacts
 
-    NOTE on exclude patterns:
-      - Uses PathSpec to compile gitignore-style patterns, making use of the
-        GitWildMatchPattern class (registered as 'gitwildmatch')
-
-      - Patterns are checked for match against the full path relative to each
-        path passed in the artifacts list
-
-      - If a directory is excluded, all its files and subdirectories are also
-        excluded
-
-      - How it differs from .gitignore
-            - No need to escape #
-            - No ignoring of trailing spaces
-            - No general negation with exclamation mark !
-            - No special treatment of slash /
-            - No special treatment of consecutive asterisks **
-
-      - Exclude patterns are likely to become command line arguments or part of
-        a config file.
-
-  <Arguments>
-    artifacts:
-            A list of file or directory paths used as materials or products for
-            the link command.
-
-    exclude_patterns: (optional)
-            Artifacts matched by the pattern are excluded from the result.
-            Exclude patterns can be passed as argument or specified via
-            ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
-            via envvars or rcfiles (see `in_toto.user_settings`).
-            If passed, patterns specified via settings are overriden.
-
-    base_path: (optional)
-            Change to base_path and record artifacts relative from there.
-            If not passed, current working directory is used as base_path.
-            NOTE: The base_path part of the recorded artifact is not included
-            in the returned paths.
-
-    follow_symlink_dirs: (optional)
-            Follow symlinked dirs if the linked dir exists (default is False).
-            The recorded path contains the symlink name, not the resolved name.
-            NOTE: This parameter toggles following linked directories only,
-            linked files are always recorded, independently of this parameter.
-            NOTE: Beware of infinite recursions that can occur if a symlink
-            points to a parent directory or itself.
-
-    normalize_line_endings: (optional)
-            If True, replaces windows and mac line endings with unix line
-            endings before hashing the content of the passed files, for
-            cross-platform support.
-
-    lstrip_paths: (optional)
-            If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix.
-
-  <Exceptions>
-    in_toto.exceptions.ValueError,
-        if we cannot change to base path directory
-
-    in_toto.exceptions.FormatError,
-        if the list of exlcude patterns does not match format
-        securesystemslib.formats.NAMES_SCHEMA
-
-  <Side Effects>
-    Calls functions to generate cryptographic hashes.
-
-  <Returns>
-    A dictionary with file paths as keys and the files' hashes as values.
-  """
-
-  artifacts_dict = {}
-
-  if not artifacts:
-    return artifacts_dict
-
-  if base_path:
-    LOG.info("Overriding setting ARTIFACT_BASE_PATH with passed"
-        " base path.")
-  else:
-    base_path = in_toto.settings.ARTIFACT_BASE_PATH
-
-  # Temporarily change into base path dir if set
-  if base_path:
-    original_cwd = os.getcwd()
-    try:
-      os.chdir(base_path)
-
-    except Exception as e:
-      raise ValueError("Could not use '{}' as base path: '{}'".format(
-          base_path, e)) from  e
-
-  # Passed exclude patterns take precedence over exclude pattern settings
-  if exclude_patterns:
-    LOG.info("Overriding setting ARTIFACT_EXCLUDE_PATTERNS with passed"
-        " exclude patterns.")
-  else:
-    # TODO: Do we want to keep the exclude pattern setting?
-    exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
-
-  if exclude_patterns:
-    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
-
-  # Check if any of the prefixes passed for left stripping is a left substring
-  # of another
-  if lstrip_paths:
-    for prefix_one, prefix_two in itertools.combinations(lstrip_paths, 2):
-      if prefix_one.startswith(prefix_two) or \
-          prefix_two.startswith(prefix_one):
-        raise in_toto.exceptions.PrefixError("'{}' and '{}' "
-            "triggered a left substring error".format(prefix_one, prefix_two))
-
-  # Set resolver parameters
-  resolver.FileResolver.follow_symlink_dirs = follow_symlink_dirs
-  resolver.FileResolver.normalize_line_endings = normalize_line_endings
-  resolver.FileResolver.lstrip_paths = lstrip_paths
-
-  # Normalize passed paths
-  resolved_artifacts = []
-  for artifact in artifacts:
-    resolved_artifacts.extend(resolver.Resolver.resolve_uri_to_uris(
-      artifact,
-      exclude_patterns=exclude_patterns))
-
-  # Iterate over remaining normalized artifact paths
-  for artifact in resolved_artifacts:
-    key, hash_dict = resolver.Resolver.hash_artifact(artifact)
-
-    if key in artifacts_dict:
-      raise in_toto.exceptions.PrefixError("Prefix selection has "
-          "resulted in non unique dictionary key '{}'".format(key))
-
-    artifacts_dict[key] = hash_dict
-
-  # Change back to where original current working dir
-  if base_path:
-    os.chdir(original_cwd)
-
-  return artifacts_dict
 
 def _subprocess_run_duplicate_streams(cmd, timeout):
   """Helper to run subprocess and both print and capture standards streams.
