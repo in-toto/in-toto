@@ -32,7 +32,7 @@ import logging
 from in_toto import verifylib
 from in_toto.common_args import (GPG_HOME_ARGS, GPG_HOME_KWARGS, VERBOSE_ARGS,
     VERBOSE_KWARGS, QUIET_ARGS, QUIET_KWARGS, title_case_action_groups,
-    sort_action_groups, OPTS_TITLE)
+    sort_action_groups, OPTS_TITLE, DSSE_ARGS, DSSE_KWARGS)
 from in_toto.models.metadata import Metadata
 from in_toto import (
     __version__, SUPPORTED_KEY_TYPES, KEY_TYPE_RSA, KEY_TYPE_ED25519,
@@ -147,6 +147,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
           " loaded from the current working directory."))
 
   parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
+  parser.add_argument(*DSSE_ARGS, **DSSE_KWARGS)
 
   verbosity_args = parser.add_mutually_exclusive_group(required=False)
   verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -191,7 +192,8 @@ def main():
           gpg_interface.export_pubkeys(
               args.gpg, homedir=args.gpg_home))
 
-    verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
+    verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir,
+       use_dsse=args.use_dsse)
 
   except Exception as e:
     LOG.error("(in-toto-verify) {0}: {1}".format(type(e).__name__, e))

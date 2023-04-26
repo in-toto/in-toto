@@ -169,7 +169,7 @@ def load_links_for_layout(layout, link_dir_path):
   return steps_metadata
 
 
-def run_all_inspections(layout, persist_inspection_links):
+def run_all_inspections(layout, persist_inspection_links, use_dsse=False):
   """
   <Purpose>
     Extracts all inspections from a passed Layout's inspect field and
@@ -185,6 +185,9 @@ def run_all_inspections(layout, persist_inspection_links):
     persist_inspection_links:
             A boolean indicating whether link metadata files for inspection
             are written to cwd.
+
+    use_dsse (optional):
+            A boolean indicating if inspection link metadata must use DSSE.
 
   <Exceptions>
     Calls function that raises BadReturnValueError if an inspection returned
@@ -217,7 +220,7 @@ def run_all_inspections(layout, persist_inspection_links):
     # We could use artifact rule paths.
     material_list = product_list = ["."]
     link = in_toto.runlib.in_toto_run(inspection.name, material_list,
-        product_list, inspection.run)
+        product_list, inspection.run, use_dsse=use_dsse)
 
     _raise_on_bad_retval(
         link.signed.byproducts.get("return-value"),
@@ -1404,7 +1407,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
 
 def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
     substitution_parameters=None, step_name="",
-    persist_inspection_links=True):
+    persist_inspection_links=True, use_dsse=False):
   """Performs complete in-toto supply chain verification for a final product.
 
   The verification procedure consists of the following activities, performed in
@@ -1447,6 +1450,9 @@ def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
 
     persist_inspection_links (optional): A boolean that determines whether or
         not link metadata files for inspection are written to cwd.
+
+    use_dsse (optional): Use DSSE for link metadata files generated for
+        inspections.
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed parameters are malformed.
@@ -1521,7 +1527,8 @@ def in_toto_verify(metadata, layout_key_dict, link_dir_path=".",
   verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
   LOG.info("Executing Inspection commands...")
-  inspection_link_dict = run_all_inspections(layout, persist_inspection_links)
+  inspection_link_dict = run_all_inspections(layout, persist_inspection_links,
+      use_dsse=use_dsse)
 
   LOG.info("Verifying Inspection rules...")
   # Artifact rules for inspections can reference links that correspond to
