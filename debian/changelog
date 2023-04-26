@@ -1,3 +1,11 @@
+in-toto (1.4.0-1) unstable; urgency=medium
+
+  * New upstream release includes among other things:
+    - DSSE support in metadata generation tools
+    - Ability to set command, byproducts, environment in in_toto_record APIs
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Wed, 26 Apr 2023 18:15:05 +0200
+
 in-toto (1.3.1-1) unstable; urgency=medium
 
   * New upstream release includes among other things:
