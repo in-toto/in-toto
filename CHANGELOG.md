@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.0
+
+### Added
+* Support for DSSE in metadata generation tools (#503, #577)
+* Ability to set command, byproducts, environment in the in_toto_record APIs (#564)
+
+### Changed
+* Various dependency updates and dependabot changes
+* Simplified link threshold check (#573)
+
 ## v1.3.2
 
 ### Added
