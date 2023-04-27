@@ -1,6 +1,7 @@
 """Resolver interface and default file resolver implementation. """
 import logging
 import os
+from abc import ABCMeta, abstractmethod
 from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
 
@@ -14,8 +15,29 @@ logger = logging.getLogger(__name__)
 
 _HASH_ALGORITHM = "sha256"
 
+RESOLVER_FOR_URI_SCHEME = {}
 
-class FileResolver:
+
+class Resolver(metaclass=ABCMeta):
+    """Resolver interface and factory."""
+
+    @classmethod
+    def for_uri(cls, uri):
+        """Return registered resolver instance for passed URI."""
+        scheme, _, _ = uri.partition(":")
+
+        if scheme not in RESOLVER_FOR_URI_SCHEME:
+            scheme = FileResolver.SCHEME
+
+        return RESOLVER_FOR_URI_SCHEME[scheme]
+
+    @abstractmethod
+    def hash_artifacts(self, uris):
+        """Return hash dictionary for passed list of artifact URIs."""
+        raise NotImplementedError
+
+
+class FileResolver(Resolver):
     """File resolver implementation.
 
     Provides a ``hash_artifacts`` method to generate hashes for passed file
@@ -113,7 +135,6 @@ class FileResolver:
         return path, prefix
 
     def hash_artifacts(self, uris):
-        """Return hash dictionary for passed list of artifact URIs."""
         hashes = {}
 
         if self._base_path:

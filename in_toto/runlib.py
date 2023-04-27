@@ -35,6 +35,7 @@ import subprocess  # nosec
 import sys
 import tempfile
 import time
+from collections import defaultdict
 
 import in_toto.settings
 import in_toto.exceptions
@@ -43,7 +44,7 @@ from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
     FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
-from in_toto.resolver import FileResolver
+from in_toto.resolver import Resolver, FileResolver, RESOLVER_FOR_URI_SCHEME
 
 import securesystemslib.formats
 import securesystemslib.hash
@@ -154,10 +155,24 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   if not exclude_patterns:
     exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
-  resolver = FileResolver(exclude_patterns, base_path, follow_symlink_dirs,
-      normalize_line_endings, lstrip_paths)
+  # Configure resolver with resolver specific arguments
+  # FIXME: This could happen closer to the user boundary, where
+  # resolver-specific config arguments are passed.
+  RESOLVER_FOR_URI_SCHEME[FileResolver.SCHEME] = FileResolver(exclude_patterns,
+      base_path, follow_symlink_dirs, normalize_line_endings, lstrip_paths)
 
-  artifact_hashes = resolver.hash_artifacts(artifacts)
+  # Aggregate artifacts per resolver
+  resolver_for_uris = defaultdict(list)
+  for artifact in artifacts:
+    resolver = Resolver.for_uri(artifact)
+    resolver_for_uris[resolver].append(artifact)
+
+  # Hash artifacts in a batch per resolver
+  # FIXME: The behavior may change if we hash each artifact individually,
+  # because the left-prefix duplicate check in FileResolver only works for the
+  # artifacts hashed in one batch.
+  for resolver, uris in resolver_for_uris.items():
+    artifact_hashes.update(resolver.hash_artifacts(uris))
 
   return artifact_hashes
 
