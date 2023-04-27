@@ -8,7 +8,7 @@ from os.path import exists, isdir, isfile, join, normpath
 from pathspec import GitIgnoreSpec
 from securesystemslib.hash import digest_filename
 
-from in_toto.exceptions import PrefixError
+from in_toto.exceptions import PrefixError, OSTreeRefNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +197,67 @@ class FileResolver(Resolver):
                         _name = self._mangle(filepath, hashes, prefix)
                         _hashes = self._hash(filepath)
                         hashes[_name] = _hashes
+
+        # Change back to original current working dir
+        if self._base_path:
+            os.chdir(original_cwd)
+
+        return hashes
+
+
+class OSTreeResolver(Resolver):
+    """Resolver for OSTree repositories."""
+
+    SCHEME = "ostree"
+
+    # defining this separately as it should be pinned to OSTree's default
+    # rather than in-toto's
+    _HASH_ALGORITHM = "sha256"
+
+    def __init__(self, base_path=None):
+        self._base_path = base_path
+
+    def _strip_scheme_prefix(self, path):
+        """Helper to strip OSTree resolver scheme prefix from path."""
+
+        return path[len(self.SCHEME + ":") :]
+
+    def _add_scheme_prefix(self, path):
+        """Helper to add scheme back after recording the hash."""
+
+        return f"{self.SCHEME}:{path}"
+
+    def _hash(self, path):
+        """Helper to hash OSTree commits."""
+
+        ref_path = os.path.join("refs", "heads", path)
+        if not os.path.exists(ref_path):
+            raise OSTreeRefNotFound(f"OSTree ref '{path}' not found")
+
+        with open(ref_path, "r") as ref:  # pylint: disable=unspecified-encoding
+            ref_contents = ref.read()
+        ref_contents = ref_contents.strip("\n")
+
+        object_path = os.path.join(
+            "objects", ref_contents[:2], f"{ref_contents[2:]}.commit"
+        )
+
+        digest = digest_filename(object_path, algorithm=self._HASH_ALGORITHM)
+
+        return {self._HASH_ALGORITHM: digest.hexdigest()}
+
+    def hash_artifacts(self, uris):
+        hashes = {}
+
+        if self._base_path:
+            original_cwd = os.getcwd()
+            os.chdir(self._base_path)
+
+        for path in uris:
+            # Remove scheme prefix, but preserver to re-add later
+            path = self._strip_scheme_prefix(path)
+            _hashes = self._hash(path)
+            hashes[self._add_scheme_prefix(path)] = _hashes
 
         # Change back to original current working dir
         if self._base_path:
