@@ -23,6 +23,8 @@ class FileResolver:
 
     """
 
+    SCHEME = "file"
+
     def __init__(
         self,
         exclude_patterns=None,
@@ -75,7 +77,7 @@ class FileResolver:
         )
         return {_HASH_ALGORITHM: digest.hexdigest()}
 
-    def _mangle(self, path, existing_paths):
+    def _mangle(self, path, existing_paths, scheme_prefix):
         """Helper for path mangling."""
 
         # Normalize slashes for cross-platform metadata consistency
@@ -94,7 +96,21 @@ class FileResolver:
                 f"'{path}'"
             )
 
+        # Prepend passed scheme prefix
+        path = scheme_prefix + path
+
         return path
+
+    def _strip_scheme_prefix(self, path):
+        """Helper to strip file resolver scheme prefix from path."""
+
+        prefix = self.SCHEME + ":"
+        if path.startswith(prefix):
+            path = path[len(prefix) :]
+        else:
+            prefix = ""
+
+        return path, prefix
 
     def hash_artifacts(self, uris):
         """Return hash dictionary for passed list of artifact URIs."""
@@ -111,6 +127,9 @@ class FileResolver:
                 ) from e
 
         for path in uris:
+            # Remove scheme prefix, but preserver to re-add later (see _mangle)
+            path, prefix = self._strip_scheme_prefix(path)
+
             # Normalize URI before filtering and returning them
             # FIXME: Is this expected behavior? Does this make exclude patterns
             # with slashes platform-dependent? Check how 'gitwildmatch' treats
@@ -125,7 +144,7 @@ class FileResolver:
                 continue
 
             if isfile(path):
-                _name = self._mangle(path, hashes)
+                _name = self._mangle(path, hashes, prefix)
                 _hashes = self._hash(path)
                 hashes[_name] = _hashes
 
@@ -158,7 +177,7 @@ class FileResolver:
                             )
                             continue
 
-                        _name = self._mangle(filepath, hashes)
+                        _name = self._mangle(filepath, hashes, prefix)
                         _hashes = self._hash(filepath)
                         hashes[_name] = _hashes
 
