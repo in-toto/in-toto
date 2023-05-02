@@ -125,6 +125,12 @@ def main():
   parser = create_parser()
   args = parser.parse_args()
 
+  if args.type != KEY_TYPE_RSA:
+    if args.bits is not None:
+      parser.print_help()
+      parser.error("wrong arguments: bits specified,"
+        " only Type RSA supports Bits as a parameter")
+
   try:
     if args.type == KEY_TYPE_RSA:
       interface._generate_and_write_rsa_keypair( # pylint: disable=protected-access
