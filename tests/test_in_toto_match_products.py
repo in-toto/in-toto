@@ -8,7 +8,7 @@ import in_toto.in_toto_match_products as cli
 from in_toto.models.metadata import Metadata
 
 
-class InTotoMatchProducts(unittest.TestCase):
+class TestInTotoMatchProducts(unittest.TestCase):
     """Basic tests for in_toto_match_products cli.
 
     Only tests cli <-> api interaction, api itself is tested in runlib.

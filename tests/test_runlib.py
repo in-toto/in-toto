@@ -1044,7 +1044,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     os.remove(self.link_name)
 
 
-class InTotoMatchProducts(TmpDirMixin, unittest.TestCase):
+class TestInTotoMatchProducts(TmpDirMixin, unittest.TestCase):
   """Basic tests for in_toto_match_products.
 
   More comprehensive tests for `record_artifacts_as_dict` args exist above.
