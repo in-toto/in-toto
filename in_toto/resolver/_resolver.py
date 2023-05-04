@@ -8,7 +8,7 @@ from os.path import exists, isdir, isfile, join, normpath
 from pathspec import GitIgnoreSpec
 from securesystemslib.hash import digest_filename
 
-from in_toto.exceptions import PrefixError, OSTreeRefNotFound
+from in_toto.exceptions import PrefixError
 
 logger = logging.getLogger(__name__)
 
@@ -231,8 +231,6 @@ class OSTreeResolver(Resolver):
         """Helper to hash OSTree commits."""
 
         ref_path = os.path.join("refs", "heads", path)
-        if not os.path.exists(ref_path):
-            raise OSTreeRefNotFound(f"OSTree ref '{path}' not found")
 
         with open(ref_path, "r") as ref:  # pylint: disable=unspecified-encoding
             ref_contents = ref.read()
