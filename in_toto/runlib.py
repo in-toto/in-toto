@@ -915,6 +915,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     environment (optional): A dictionary to capture information about
         the environment to be added in the resulting link metadata eg.::
+
             {
               "variables": "<list of env var KEY=value pairs>",
               "filesystem": "<filesystem info>",
@@ -1088,3 +1089,45 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)
+
+
+def in_toto_match_products(
+  link, paths=None, exclude_patterns=None, lstrip_paths=None
+):
+  """Check if local artifacts match products in passed link.
+
+  NOTE: Does not check integrity or authenticity of passed link!
+
+  Arguments:
+    link: The Link object to match.
+
+  See ``in_toto_run`` for details about arguments, and exceptions that may
+  occur while recording artifact hashes.
+
+  Returns:
+    A 3-tuple with artifact names that are
+    - only in products,
+    - not in products,
+    - have different hashes.
+  """
+  if paths is None:
+    paths = ["."]
+
+  artifacts = record_artifacts_as_dict(
+      paths,
+      exclude_patterns=exclude_patterns,
+      lstrip_paths=lstrip_paths
+    )
+
+  artifact_names = artifacts.keys()
+  product_names = link.products.keys()
+
+  only_products = product_names - artifact_names
+  not_in_products = artifact_names - product_names
+  differ = {
+    name
+    for name in product_names & artifact_names
+    if link.products[name] != artifacts[name]
+  }
+
+  return only_products, not_in_products, differ

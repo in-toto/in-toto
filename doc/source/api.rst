@@ -13,6 +13,7 @@ Evidence Generation
 .. autofunction:: in_toto.runlib.in_toto_run
 .. autofunction:: in_toto.runlib.in_toto_record_start
 .. autofunction:: in_toto.runlib.in_toto_record_stop
+.. autofunction:: in_toto.runlib.in_toto_match_products
 
 
 Supply Chain Verification
