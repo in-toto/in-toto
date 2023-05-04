@@ -14,6 +14,7 @@ Evidence Generation
 
   in-toto-run: generate signed link metadata <in-toto-run>
   in-toto-record: generate signed link metadata in multiple steps <in-toto-record>
+  in-toto-check-materials: match local materials against existing link metadata <in-toto-check-materials>
 
 Supply Chain Verification
 -------------------------
