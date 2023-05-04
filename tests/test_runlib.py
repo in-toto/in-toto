@@ -32,10 +32,11 @@ import subprocess
 import in_toto.settings
 import in_toto.exceptions
 from in_toto.models.metadata import Envelope, Metablock
+from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
     in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
-    _hash_artifact, _subprocess_run_duplicate_streams)
+    _hash_artifact, _subprocess_run_duplicate_streams, in_toto_check_materials)
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
     import_rsa_privatekey_from_file,
@@ -1041,6 +1042,86 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     self.assertDictEqual(link.signed.byproducts, byproducts)
     self.assertDictEqual(link.signed.environment, environment)
     os.remove(self.link_name)
+
+
+class InTotoCheckMaterials(TmpDirMixin, unittest.TestCase):
+  """Basic tests for in_toto_check_materials.
+
+  More comprehensive tests for `record_artifacts_as_dict` args exist above.
+  """
+  @classmethod
+  def setUpClass(cls):
+    # Create link with some products and some local materials in tmp dir:
+    # - 'foo' is only in products
+    # - 'quux' is only in materials
+    # - 'baz' is in both, with different hashes
+    # - 'bar' is in both, with matching hashes
+    cls.set_up_test_dir() # teardown is called implicitly
+
+    cls.link = Link(products={
+      "foo": {
+        "sha256": "8a51c03f1ff77c2b8e76da512070c23c5e69813d5c61732b3025199e5f0c14d5"
+      },
+      "bar": {
+        "sha256": "bb97edb3507a35b119539120526d00da595f14575da261cd856389ecd89d3186"
+      },
+      "baz": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    })
+    Path("bar").touch()
+    Path("baz").touch()
+    Path("quux").touch()
+
+
+  def test_check(self):
+    """Match local materials with link products for different kwargs. """
+    # Test data:
+    # [
+    #   (
+    #     <passed kwargs>,
+    #     <expected return values (only products, only materials, differ)>
+    #   ),
+    #   ...
+    # ]
+    test_data = [
+      (
+        {},
+        ({"foo"}, {"quux"}, {"bar"})
+      ),
+      (
+        {
+          "exclude_patterns": ["ba*"]
+        },
+        ({"foo", "bar", "baz"}, {"quux"}, set())
+      ),
+      (
+        {
+          "material_paths": ["baz"]
+        },
+        ({"foo", "bar"}, set(), set())
+      ),
+      (
+        {
+          "material_paths": [Path("baz").absolute()],
+          "lstrip_paths": [
+              # NOTE: normalize lstrip path to match normalized artifact path
+              # (see in-toto/in-toto#565)
+              f"{Path('baz').absolute().parent}/".replace('\\', '/')
+            ]
+        },
+        ({"foo", "bar"}, set(), set())
+      )
+    ]
+
+    for kwargs, expected_return_value in test_data:
+      self.assertTupleEqual(
+        in_toto_check_materials(self.link, **kwargs),
+        expected_return_value,
+        f"unexpected result for **kwargs: {kwargs})"
+      )
+
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -1088,3 +1088,45 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
   LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
   os.remove(unfinished_fn)
+
+
+def in_toto_check_materials(
+  link, material_paths=None, exclude_patterns=None, lstrip_paths=None
+):
+  """Check if local materials match products in passed link.
+
+  NOTE: Does not check integrity or authenticity of passed link!
+
+  Arguments:
+    link: The Link object to match.
+
+  See ``in_toto_run`` for details about arguments, and exceptions that may
+  occur while recording local material hashes.
+
+  Returns:
+    A 3-tuple with artifact names that are
+    - only products,
+    - only materials,
+    - have different hashes.
+  """
+  if material_paths is None:
+    material_paths = ["."]
+
+  materials = record_artifacts_as_dict(
+      material_paths,
+      exclude_patterns=exclude_patterns,
+      lstrip_paths=lstrip_paths
+    )
+
+  material_names = materials.keys()
+  product_names = link.products.keys()
+
+  only_products = product_names - material_names
+  only_materials = material_names - product_names
+  differ = {
+    name
+    for name in product_names & material_names
+    if link.products[name] != materials[name]
+  }
+
+  return only_products, only_materials, differ
