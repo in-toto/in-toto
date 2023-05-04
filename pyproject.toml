@@ -61,7 +61,7 @@ in-toto-record = "in_toto.in_toto_record:main"
 in-toto-run = "in_toto.in_toto_run:main"
 in-toto-sign = "in_toto.in_toto_sign:main"
 in-toto-verify = "in_toto.in_toto_verify:main"
-in-toto-check-materials = "in_toto.in_toto_check_materials:main"
+in-toto-match-products = "in_toto.in_toto_match_products:main"
 
 [project.urls]
 "Bug Reports" = "https://github.com/in-toto/in-toto/issues"

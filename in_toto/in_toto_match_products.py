@@ -3,7 +3,7 @@
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
-"""CLI to check local materials.
+"""CLI to check local artifacts.
 """
 # TODO: Remove with in-toto/in-toto#580
 # pylint: disable=bad-indentation
@@ -21,7 +21,7 @@ from in_toto.common_args import (
   title_case_action_groups,
 )
 from in_toto.models.metadata import Metadata
-from in_toto.runlib import in_toto_check_materials as check_materials
+from in_toto.runlib import in_toto_match_products as match_products
 
 LOG = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def create_parser():
     """Create parser."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="Check if local materials match products in passed link.",
+        description="Check if local artifacts match products in passed link.",
     )
     required = parser.add_argument_group("required named arguments")
     required.add_argument(
@@ -42,13 +42,13 @@ def create_parser():
         help="path to link metadata file.",
     )
     parser.add_argument(
-        "-m",
-        "--materials",
+        "-p",
+        "--paths",
         type=str,
         required=False,
         nargs="+",
         metavar="<path>",
-        help="file or directory paths to local materials. Default is CWD.",
+        help="file or directory paths to local artifacts. Default is CWD.",
     )
 
     parser.add_argument(
@@ -57,7 +57,7 @@ def create_parser():
         required=False,
         metavar="<pattern>",
         nargs="+",
-        help="gitignore-style patterns to exclude materials from matching.",
+        help="gitignore-style patterns to exclude artifacts from matching.",
     )
 
     parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
@@ -75,21 +75,21 @@ def main():
     args = parser.parse_args()
 
     metadata = Metadata.load(args.link)
-    only_products, only_materials, differ = check_materials(
+    only_products, not_in_products, differ = match_products(
         metadata.signed,
-        material_paths=args.materials,
+        paths=args.paths,
         exclude_patterns=args.exclude,
         lstrip_paths=args.lstrip_paths,
     )
     # raise Exception("test")
-    if only_products or only_materials or differ:
+    if only_products or not_in_products or differ:
         if args.verbose:
-            print("Local materials don't match products in passed link.")
+            print("Local artifacts don't match products in passed link.")
             for name in only_products:
                 print(f"Only in products: {name}")
 
-            for name in only_materials:
-                print(f"Only in materials: {name}")
+            for name in not_in_products:
+                print(f"Not in products: {name}")
 
             for name in differ:
                 print(f"Hashes differ: {name}")
@@ -97,7 +97,7 @@ def main():
         sys.exit(1)
 
     if args.verbose:
-        print("Local materials match products in passed link.")
+        print("Local artifacts match products in passed link.")
     sys.exit(0)
 
 

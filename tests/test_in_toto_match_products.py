@@ -4,12 +4,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import in_toto.in_toto_check_materials as cli
+import in_toto.in_toto_match_products as cli
 from in_toto.models.metadata import Metadata
 
 
-class InTotoCheckMaterials(unittest.TestCase):
-    """Basic tests for in_toto_check_materials cli.
+class InTotoMatchProducts(unittest.TestCase):
+    """Basic tests for in_toto_match_products cli.
 
     Only tests cli <-> api interaction, api itself is tested in runlib.
     """
@@ -24,7 +24,7 @@ class InTotoCheckMaterials(unittest.TestCase):
         args = [
             "--link",
             self.link,
-            "--materials",
+            "--paths",
             "foo",
             "bar",
             "--exclude",
@@ -36,7 +36,7 @@ class InTotoCheckMaterials(unittest.TestCase):
         ]
         expected_arg = Metadata.load(self.link).signed
         expected_kwargs = {
-            "material_paths": ["foo", "bar"],
+            "paths": ["foo", "bar"],
             "exclude_patterns": ["f*", "b*"],
             "lstrip_paths": ["f", "b"],
         }
@@ -44,7 +44,7 @@ class InTotoCheckMaterials(unittest.TestCase):
         # Mock sys.argv in cli tool to mock cli invocation, and mock api
         # function to only check how it is called, w/o executing.
         with patch.object(cli.sys, "argv", ["<cmd>"] + args), patch.object(
-            cli, "check_materials", return_value=(set(),) * 3
+            cli, "match_products", return_value=(set(),) * 3
         ) as api, self.assertRaises(SystemExit):
             cli.main()
 
@@ -65,7 +65,7 @@ class InTotoCheckMaterials(unittest.TestCase):
             with patch.object(
                 cli.sys, "argv", ["<cmd>", "-l", self.link]
             ), patch.object(
-                cli, "check_materials", return_value=api_return_value
+                cli, "match_products", return_value=api_return_value
             ), self.assertRaises(
                 SystemExit
             ) as error_ctx:
