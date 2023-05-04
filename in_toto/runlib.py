@@ -915,6 +915,7 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
 
     environment (optional): A dictionary to capture information about
         the environment to be added in the resulting link metadata eg.::
+
             {
               "variables": "<list of env var KEY=value pairs>",
               "filesystem": "<filesystem info>",
