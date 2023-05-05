@@ -156,8 +156,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
     exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
 
   # Configure resolver with resolver specific arguments
-  # FIXME: This could happen closer to the user boundary, where
-  # resolver-specific config arguments are passed.
+  # FIXME: This should happen closer to the user boundary, where
+  # resolver-specific config arguments are passed and global state is managed.
   RESOLVER_FOR_URI_SCHEME[FileResolver.SCHEME] = FileResolver(exclude_patterns,
       base_path, follow_symlink_dirs, normalize_line_endings, lstrip_paths)
 
@@ -173,6 +173,11 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
   # artifacts hashed in one batch.
   for resolver, uris in resolver_for_uris.items():
     artifact_hashes.update(resolver.hash_artifacts(uris))
+
+  # Clear resolvers to not preserve global state change beyond this function.
+  # FIXME: This also clears resolver registered elsewhere. For now we
+  # assume that we only modify RESOLVER_FOR_URI_SCHEME in this function.
+  RESOLVER_FOR_URI_SCHEME.clear()
 
   return artifact_hashes
 
