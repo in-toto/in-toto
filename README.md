@@ -150,22 +150,13 @@ You can read more about how in-toto works by taking a look at the
 
 
 ## Security Issues and Bugs
-See [SECURITY.md](https://github.com/in-toto/in-toto/blob/develop/SECURITY.md)
+See [SECURITY.md](SECURITY.md).
 
-## Instructions for Contributors
-Development of in-toto occurs on the "develop" branch of this repository.
-Contributions can be made by submitting GitHub *Pull Requests*. Take a look at
-our [development
-guidelines](https://github.com/secure-systems-lab/lab-guidelines/blob/master/dev-workflow.md)
-for detailed instructions. Submitted code should follow our [style
-guidelines](https://github.com/secure-systems-lab/code-style-guidelines) and
-must be unit tested.
 
-Contributors must also indicate acceptance of the [Developer Certificate of
-Origin (DCO)](https://developercertificate.org/) by appending a `Signed-off-by:
-Your Name <example@domain.com>` to each git commit message (see [`git commit
---signoff`](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff)).
+## Governance and Contributing
 
+For information about in-toto's governance and contributing guidelines, see
+[GOVERNANCE.md](GOVERNANCE.md).
 
 ## Acknowledgments
 This project is managed by Prof. Santiago Torres-Arias at Purdue University.

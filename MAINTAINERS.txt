@@ -1,14 +1,12 @@
-The project is currently managed by Santiago Torres at Purdue.
-Please see GOVERNANCE.md for the project's governance and maintainership.
+The project is managed by the
+in-toto Steering Committee <https://github.com/in-toto/community/blob/main/GOVERNANCE.md>.
 
-Consensus Builder:
-
+Maintainers:
   Santiago Torres
     Email: santiagotorres@purdue.edu
     GitHub username: @SantiagoTorres
     PGP fingerprint: 903B AB73 640E B6D6 5533  EFF3 468F 122C E816 2295
 
-Maintainers:
   Lukas Puehringer
     Email: lukas.puehringer@nyu.edu
     GitHub username: @lukpueh
