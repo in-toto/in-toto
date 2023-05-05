@@ -1109,7 +1109,7 @@ class TestInTotoMatchProducts(TmpDirMixin, unittest.TestCase):
       ),
       (
         {
-          "paths": [Path("baz").absolute()],
+          "paths": [str(Path("baz").absolute())],
           "lstrip_paths": [
               # NOTE: normalize lstrip path to match normalized artifact path
               # (see in-toto/in-toto#565)
