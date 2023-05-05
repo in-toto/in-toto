@@ -1,4 +1,6 @@
 """Resolver interface and default file resolver implementation. """
+# TODO: Remove with in-toto/in-toto#580
+# pylint: disable=bad-indentation
 import logging
 import os
 from abc import ABCMeta, abstractmethod
