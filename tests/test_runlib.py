@@ -35,19 +35,29 @@ from in_toto.models.metadata import Envelope, Metablock
 from in_toto.models.link import Link
 from in_toto.exceptions import SignatureVerificationError
 from in_toto.runlib import (in_toto_run, in_toto_record_start,
-    in_toto_record_stop, record_artifacts_as_dict, _apply_exclude_patterns,
-    _hash_artifact, _subprocess_run_duplicate_streams, in_toto_match_products)
+    in_toto_record_stop, record_artifacts_as_dict,
+    _subprocess_run_duplicate_streams, in_toto_match_products)
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
     import_rsa_privatekey_from_file,
     import_rsa_publickey_from_file)
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT
 
+from in_toto.resolver import FileResolver
+
 import securesystemslib.formats
 import securesystemslib.exceptions
 
 from tests.common import TmpDirMixin
 from pathlib import Path
+
+def _apply_exclude_patterns(names, patterns):
+  """Temporary bridge from old `runlib._apply_exclude_patterns` with new
+ `FileResolver._exclude`.
+
+  TODO: Replace tist once resolver interface evolves
+  """
+  return [n for n in names if not FileResolver(exclude_patterns=patterns)._exclude(n)]
 
 
 class Test_ApplyExcludePatterns(unittest.TestCase):
@@ -494,10 +504,6 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
       with self.assertRaises(securesystemslib.exceptions.FormatError):
         record_artifacts_as_dict(["."])
-
-  def test_hash_artifact_passing_algorithm(self):
-    """Test _hash_artifact passing hash algorithm. """
-    self.assertTrue("sha256" in list(_hash_artifact("foo", ["sha256"])))
 
 
 class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
@@ -1103,7 +1109,7 @@ class TestInTotoMatchProducts(TmpDirMixin, unittest.TestCase):
       ),
       (
         {
-          "paths": [Path("baz").absolute()],
+          "paths": [str(Path("baz").absolute())],
           "lstrip_paths": [
               # NOTE: normalize lstrip path to match normalized artifact path
               # (see in-toto/in-toto#565)
