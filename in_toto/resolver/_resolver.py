@@ -26,9 +26,9 @@ class Resolver(metaclass=ABCMeta):
     @classmethod
     def for_uri(cls, uri):
         """Return registered resolver instance for passed URI."""
-        scheme, _, _ = uri.partition(":")
+        scheme, match, _ = uri.partition(":")
 
-        if scheme not in RESOLVER_FOR_URI_SCHEME:
+        if not match or scheme not in RESOLVER_FOR_URI_SCHEME:
             scheme = FileResolver.SCHEME
 
         return RESOLVER_FOR_URI_SCHEME[scheme]
