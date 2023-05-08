@@ -130,12 +130,8 @@ def record_artifacts_as_dict(artifacts, exclude_patterns=None,
             the path of every artifact that contains the prefix.
 
   <Exceptions>
-    in_toto.exceptions.ValueError,
-        if we cannot change to base path directory
-
-    in_toto.exceptions.FormatError,
-        if the list of exlcude patterns does not match format
-        securesystemslib.formats.NAMES_SCHEMA
+    OSError: cannot change to base path directory.
+    ValueError: arguments are malformed.
 
   <Side Effects>
     Calls functions to generate cryptographic hashes.
@@ -439,7 +435,7 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
 
-    ValueError: Cannot change to base path directory.
+    OSError: Cannot change to base path directory.
 
     securesystemslib.exceptions.StorageError: Cannot hash artifacts.
 

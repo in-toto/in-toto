@@ -157,11 +157,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     """Raise exception with bogus base path settings. """
     for base_path in ["path/does/not/exist", 12345, True]:
       in_toto.settings.ARTIFACT_BASE_PATH = base_path
-      with self.assertRaises(ValueError):
+      with self.assertRaises((OSError, ValueError)):
         record_artifacts_as_dict(["."])
       in_toto.settings.ARTIFACT_BASE_PATH = None
 
-      with self.assertRaises(ValueError):
+      with self.assertRaises((OSError, ValueError)):
         record_artifacts_as_dict(["."], base_path=base_path)
 
 
@@ -502,7 +502,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     """Raise exception with bogus artifact exclude patterns settings. """
     for setting in ["not a list of settings", 12345, True]:
       in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = setting
-      with self.assertRaises(securesystemslib.exceptions.FormatError):
+      with self.assertRaises(ValueError):
         record_artifacts_as_dict(["."])
 
 
