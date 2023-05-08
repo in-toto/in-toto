@@ -8,7 +8,6 @@ from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
 
 from pathspec import GitIgnoreSpec
-from securesystemslib.exceptions import FormatError
 from securesystemslib.hash import digest_filename
 
 from in_toto.exceptions import PrefixError
@@ -63,6 +62,10 @@ class FileResolver(Resolver):
         if not lstrip_paths:
             lstrip_paths = []
 
+        if base_path is not None:
+            if not isinstance(base_path, str):
+                raise ValueError("'base_path' must be string")
+
         for name, val in [
             ("exclude_patterns", exclude_patterns),
             ("lstrip_paths", lstrip_paths),
@@ -70,8 +73,7 @@ class FileResolver(Resolver):
             if not isinstance(val, list) or not all(
                 isinstance(i, str) for i in val
             ):
-                # FIXME: FormatError for backwards-compat; should be ValueError
-                raise FormatError(f"'{name}' must be list of strings")
+                raise ValueError(f"'{name}' must be list of strings")
 
         for _a, _b in combinations(lstrip_paths, 2):
             if _a.startswith(_b) or _b.startswith(_a):
@@ -141,13 +143,7 @@ class FileResolver(Resolver):
 
         if self._base_path:
             original_cwd = os.getcwd()
-            # FIXME: Re-raise for backwards-compat; should remove try/except
-            try:
-                os.chdir(self._base_path)
-            except Exception as e:
-                raise ValueError(
-                    f"Could not use '{self._base_path}' as base path: '{e}'"
-                ) from e
+            os.chdir(self._base_path)
 
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later (see _mangle)
