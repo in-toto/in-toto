@@ -79,3 +79,11 @@ include = [
     "/tox.ini",
     "/requirements*.txt",
 ]
+
+[tool.black]
+line-length=80
+
+[tool.isort]
+profile="black"
+line_length=80
+known_first_party = ["in_toto"]

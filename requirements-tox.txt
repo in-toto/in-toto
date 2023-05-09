@@ -5,3 +5,5 @@
 pylint
 bandit
 coverage
+black
+isort
