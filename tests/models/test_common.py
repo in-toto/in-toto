@@ -21,16 +21,19 @@
 
 """
 
-import unittest
 import json
+import unittest
+
 from in_toto.models.common import Signable
 
-class TestSignable(unittest.TestCase):
-  """ Verifies Signable class. """
 
-  def test_load_repr_string_as_json(self):
-    """Test load string returned by `Signable.repr` as JSON  """
-    json.loads(repr(Signable()))
+class TestSignable(unittest.TestCase):
+    """Verifies Signable class."""
+
+    def test_load_repr_string_as_json(self):
+        """Test load string returned by `Signable.repr` as JSON"""
+        json.loads(repr(Signable()))
+
 
 if __name__ == "__main__":
-  unittest.main()
+    unittest.main()

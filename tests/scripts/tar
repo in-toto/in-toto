@@ -25,8 +25,8 @@
   <Date>
     1527623020
 """
-import tarfile
 import sys
+import tarfile
 
 tarfile.open(sys.argv[2], "r:*").extractall()
 sys.exit(0)

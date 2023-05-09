@@ -26,4 +26,5 @@
     1527623020
 """
 import sys
+
 sys.exit(1)

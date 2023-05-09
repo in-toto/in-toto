@@ -1,5 +1,3 @@
-# TODO: Remove with in-toto/in-toto#580
-# pylint: disable=bad-indentation
 import unittest
 from pathlib import Path
 from unittest.mock import patch

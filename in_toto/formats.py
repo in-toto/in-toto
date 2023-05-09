@@ -31,7 +31,7 @@
 """
 import securesystemslib.schema as ssl_schema
 
-PARAMETER_DICTIONARY_KEY = ssl_schema.RegularExpression(r'[a-zA-Z0-9_-]+')
+PARAMETER_DICTIONARY_KEY = ssl_schema.RegularExpression(r"[a-zA-Z0-9_-]+")
 PARAMETER_DICTIONARY_SCHEMA = ssl_schema.DictOf(
-    key_schema = PARAMETER_DICTIONARY_KEY,
-    value_schema = ssl_schema.AnyString())
+    key_schema=PARAMETER_DICTIONARY_KEY, value_schema=ssl_schema.AnyString()
+)

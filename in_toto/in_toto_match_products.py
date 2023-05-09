@@ -5,20 +5,17 @@
 
 """CLI to check local artifacts.
 """
-# TODO: Remove with in-toto/in-toto#580
-# pylint: disable=bad-indentation
-
 import argparse
 import logging
 import sys
 
 from in_toto.common_args import (
-  LSTRIP_PATHS_ARGS,
-  LSTRIP_PATHS_KWARGS,
-  VERBOSE_ARGS,
-  VERBOSE_KWARGS,
-  sort_action_groups,
-  title_case_action_groups,
+    LSTRIP_PATHS_ARGS,
+    LSTRIP_PATHS_KWARGS,
+    VERBOSE_ARGS,
+    VERBOSE_KWARGS,
+    sort_action_groups,
+    title_case_action_groups,
 )
 from in_toto.models.metadata import Metadata
 from in_toto.runlib import in_toto_match_products as match_products
