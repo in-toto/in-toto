@@ -5,9 +5,6 @@
 
 """CLI to check local artifacts.
 """
-# TODO: Remove with in-toto/in-toto#580
-# pylint: disable=bad-indentation
-
 import argparse
 import logging
 import sys

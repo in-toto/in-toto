@@ -62,9 +62,9 @@ class TestArgparseActionGroupHelpers(unittest.TestCase):
 
         # Assert parser has the protected member "_action_groups" and it is a list
         # NOTE: argparse could remove this at any time without notice
-        self.assertTrue(
-            type(getattr(self.parser, "_action_groups", None)) == list
-        )  # pylint: disable=unidiomatic-typecheck
+        self.assertIsInstance(
+            getattr(self.parser, "_action_groups", None), list
+        )
 
         # Assert default action groups with default titles' case and default order
         self.assertListEqual(

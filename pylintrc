@@ -27,6 +27,4 @@ disable= fixme, logging-format-interpolation, logging-not-lazy, design, broad-ex
 dummy-variables-rgx= _+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_|junk
 
 [FORMAT]
-indent-string="  "
-max-line-length=79
 max-module-lines=2000

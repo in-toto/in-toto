@@ -384,7 +384,7 @@ def verify_metadata_signatures(metadata, keys_dict):
     # Fail if an empty verification key dictionary was passed
     if len(keys_dict) < 1:
         raise SignatureVerificationError(
-            "Layout signature verification" " requires at least one key."
+            "Layout signature verification requires at least one key."
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout

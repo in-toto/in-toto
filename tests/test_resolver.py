@@ -1,6 +1,4 @@
 """Test cases for resolver.py."""
-# TODO: Remove with in-toto/in-toto#580
-# pylint: disable=bad-indentation
 from pathlib import Path
 from unittest import TestCase, main
 
