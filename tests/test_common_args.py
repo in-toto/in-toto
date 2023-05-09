@@ -33,7 +33,7 @@ from in_toto.common_args import (
 
 class TestCommonArgs(unittest.TestCase):
     def test_parse_password_and_prompt_args(self):
-        """ "Test parse -P/--password optional arg (nargs=?, const=True)."""
+        """Test parse -P/--password optional arg (nargs=?, const=True)."""
         parser = argparse.ArgumentParser()
         parser.add_argument(*KEY_PASSWORD_ARGS, **KEY_PASSWORD_KWARGS)
 
