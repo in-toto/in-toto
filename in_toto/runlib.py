@@ -53,7 +53,12 @@ from in_toto.models.link import (
     UNFINISHED_FILENAME_FORMAT_GLOB,
 )
 from in_toto.models.metadata import Envelope, Metablock, Metadata
-from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
+from in_toto.resolver import (
+    RESOLVER_FOR_URI_SCHEME,
+    FileResolver,
+    OSTreeResolver,
+    Resolver,
+)
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
@@ -165,6 +170,9 @@ def record_artifacts_as_dict(
         normalize_line_endings,
         lstrip_paths,
     )
+
+    # Configure resolver for OSTree
+    RESOLVER_FOR_URI_SCHEME[OSTreeResolver.SCHEME] = OSTreeResolver(base_path)
 
     # Aggregate artifacts per resolver
     resolver_for_uris = defaultdict(list)
