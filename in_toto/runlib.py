@@ -28,348 +28,379 @@
       and stored to disk
 """
 import glob
+import io
 import logging
 import os
-import io
 import subprocess  # nosec
 import sys
 import tempfile
 import time
 from collections import defaultdict
 
-import in_toto.settings
-import in_toto.exceptions
-
-from in_toto.models._signer import GPGSigner
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
-from in_toto.models.metadata import (Metadata, Envelope, Metablock)
-from in_toto.resolver import Resolver, FileResolver, RESOLVER_FOR_URI_SCHEME
-
-import securesystemslib.formats
-import securesystemslib.hash
 import securesystemslib.exceptions
+import securesystemslib.formats
 import securesystemslib.gpg
-from securesystemslib.signer import SSlibSigner, Signature
+import securesystemslib.hash
+from securesystemslib.signer import Signature, SSlibSigner
 
-
+import in_toto.exceptions
+import in_toto.settings
+from in_toto.models._signer import GPGSigner
+from in_toto.models.link import (
+    FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT,
+    UNFINISHED_FILENAME_FORMAT,
+    UNFINISHED_FILENAME_FORMAT_GLOB,
+)
+from in_toto.models.metadata import Envelope, Metablock, Metadata
+from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
 
 
+def record_artifacts_as_dict(
+    artifacts,
+    exclude_patterns=None,
+    base_path=None,
+    follow_symlink_dirs=False,
+    normalize_line_endings=False,
+    lstrip_paths=None,
+):
+    """
+    <Purpose>
+      Hashes each file in the passed path list. If the path list contains
+      paths to directories the directory tree(s) are traversed.
 
+      The files a link command is executed on are called materials.
+      The files that result form a link command execution are called
+      products.
 
-def record_artifacts_as_dict(artifacts, exclude_patterns=None,
-    base_path=None, follow_symlink_dirs=False, normalize_line_endings=False,
-    lstrip_paths=None):
-  """
-  <Purpose>
-    Hashes each file in the passed path list. If the path list contains
-    paths to directories the directory tree(s) are traversed.
+      Paths are normalized for matching and storing by left stripping "./"
 
-    The files a link command is executed on are called materials.
-    The files that result form a link command execution are called
-    products.
+      NOTE on exclude patterns:
+        - Uses PathSpec to compile gitignore-style patterns, making use of the
+          GitWildMatchPattern class (registered as 'gitwildmatch')
 
-    Paths are normalized for matching and storing by left stripping "./"
+        - Patterns are checked for match against the full path relative to each
+          path passed in the artifacts list
 
-    NOTE on exclude patterns:
-      - Uses PathSpec to compile gitignore-style patterns, making use of the
-        GitWildMatchPattern class (registered as 'gitwildmatch')
+        - If a directory is excluded, all its files and subdirectories are also
+          excluded
 
-      - Patterns are checked for match against the full path relative to each
-        path passed in the artifacts list
+        - How it differs from .gitignore
+              - No need to escape #
+              - No ignoring of trailing spaces
+              - No general negation with exclamation mark !
+              - No special treatment of slash /
+              - No special treatment of consecutive asterisks **
 
-      - If a directory is excluded, all its files and subdirectories are also
-        excluded
+        - Exclude patterns are likely to become command line arguments or part of
+          a config file.
 
-      - How it differs from .gitignore
-            - No need to escape #
-            - No ignoring of trailing spaces
-            - No general negation with exclamation mark !
-            - No special treatment of slash /
-            - No special treatment of consecutive asterisks **
+    <Arguments>
+      artifacts:
+              A list of file or directory paths used as materials or products for
+              the link command.
 
-      - Exclude patterns are likely to become command line arguments or part of
-        a config file.
+      exclude_patterns: (optional)
+              Artifacts matched by the pattern are excluded from the result.
+              Exclude patterns can be passed as argument or specified via
+              ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
+              via envvars or rcfiles (see `in_toto.user_settings`).
+              If passed, patterns specified via settings are overriden.
 
-  <Arguments>
-    artifacts:
-            A list of file or directory paths used as materials or products for
-            the link command.
+      base_path: (optional)
+              Change to base_path and record artifacts relative from there.
+              If not passed, current working directory is used as base_path.
+              NOTE: The base_path part of the recorded artifact is not included
+              in the returned paths.
 
-    exclude_patterns: (optional)
-            Artifacts matched by the pattern are excluded from the result.
-            Exclude patterns can be passed as argument or specified via
-            ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
-            via envvars or rcfiles (see `in_toto.user_settings`).
-            If passed, patterns specified via settings are overriden.
+      follow_symlink_dirs: (optional)
+              Follow symlinked dirs if the linked dir exists (default is False).
+              The recorded path contains the symlink name, not the resolved name.
+              NOTE: This parameter toggles following linked directories only,
+              linked files are always recorded, independently of this parameter.
+              NOTE: Beware of infinite recursions that can occur if a symlink
+              points to a parent directory or itself.
 
-    base_path: (optional)
-            Change to base_path and record artifacts relative from there.
-            If not passed, current working directory is used as base_path.
-            NOTE: The base_path part of the recorded artifact is not included
-            in the returned paths.
+      normalize_line_endings: (optional)
+              If True, replaces windows and mac line endings with unix line
+              endings before hashing the content of the passed files, for
+              cross-platform support.
 
-    follow_symlink_dirs: (optional)
-            Follow symlinked dirs if the linked dir exists (default is False).
-            The recorded path contains the symlink name, not the resolved name.
-            NOTE: This parameter toggles following linked directories only,
-            linked files are always recorded, independently of this parameter.
-            NOTE: Beware of infinite recursions that can occur if a symlink
-            points to a parent directory or itself.
+      lstrip_paths: (optional)
+              If a prefix path is passed, the prefix is left stripped from
+              the path of every artifact that contains the prefix.
 
-    normalize_line_endings: (optional)
-            If True, replaces windows and mac line endings with unix line
-            endings before hashing the content of the passed files, for
-            cross-platform support.
+    <Exceptions>
+      OSError: cannot change to base path directory.
+      ValueError: arguments are malformed.
 
-    lstrip_paths: (optional)
-            If a prefix path is passed, the prefix is left stripped from
-            the path of every artifact that contains the prefix.
+    <Side Effects>
+      Calls functions to generate cryptographic hashes.
 
-  <Exceptions>
-    OSError: cannot change to base path directory.
-    ValueError: arguments are malformed.
+    <Returns>
+      A dictionary with file paths as keys and the files' hashes as values.
 
-  <Side Effects>
-    Calls functions to generate cryptographic hashes.
+    """
+    artifact_hashes = {}
 
-  <Returns>
-    A dictionary with file paths as keys and the files' hashes as values.
+    if not artifacts:
+        return artifact_hashes
 
-  """
-  artifact_hashes = {}
+    if not base_path:
+        base_path = in_toto.settings.ARTIFACT_BASE_PATH
 
-  if not artifacts:
+    if not exclude_patterns:
+        exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
+
+    # Configure resolver with resolver specific arguments
+    # FIXME: This should happen closer to the user boundary, where
+    # resolver-specific config arguments are passed and global state is managed.
+    RESOLVER_FOR_URI_SCHEME[FileResolver.SCHEME] = FileResolver(
+        exclude_patterns,
+        base_path,
+        follow_symlink_dirs,
+        normalize_line_endings,
+        lstrip_paths,
+    )
+
+    # Aggregate artifacts per resolver
+    resolver_for_uris = defaultdict(list)
+    for artifact in artifacts:
+        resolver = Resolver.for_uri(artifact)
+        resolver_for_uris[resolver].append(artifact)
+
+    # Hash artifacts in a batch per resolver
+    # FIXME: The behavior may change if we hash each artifact individually,
+    # because the left-prefix duplicate check in FileResolver only works for the
+    # artifacts hashed in one batch.
+    for resolver, uris in resolver_for_uris.items():
+        artifact_hashes.update(resolver.hash_artifacts(uris))
+
+    # Clear resolvers to not preserve global state change beyond this function.
+    # FIXME: This also clears resolver registered elsewhere. For now we
+    # assume that we only modify RESOLVER_FOR_URI_SCHEME in this function.
+    RESOLVER_FOR_URI_SCHEME.clear()
+
     return artifact_hashes
-
-  if not base_path:
-    base_path = in_toto.settings.ARTIFACT_BASE_PATH
-
-  if not exclude_patterns:
-    exclude_patterns = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
-
-  # Configure resolver with resolver specific arguments
-  # FIXME: This should happen closer to the user boundary, where
-  # resolver-specific config arguments are passed and global state is managed.
-  RESOLVER_FOR_URI_SCHEME[FileResolver.SCHEME] = FileResolver(exclude_patterns,
-      base_path, follow_symlink_dirs, normalize_line_endings, lstrip_paths)
-
-  # Aggregate artifacts per resolver
-  resolver_for_uris = defaultdict(list)
-  for artifact in artifacts:
-    resolver = Resolver.for_uri(artifact)
-    resolver_for_uris[resolver].append(artifact)
-
-  # Hash artifacts in a batch per resolver
-  # FIXME: The behavior may change if we hash each artifact individually,
-  # because the left-prefix duplicate check in FileResolver only works for the
-  # artifacts hashed in one batch.
-  for resolver, uris in resolver_for_uris.items():
-    artifact_hashes.update(resolver.hash_artifacts(uris))
-
-  # Clear resolvers to not preserve global state change beyond this function.
-  # FIXME: This also clears resolver registered elsewhere. For now we
-  # assume that we only modify RESOLVER_FOR_URI_SCHEME in this function.
-  RESOLVER_FOR_URI_SCHEME.clear()
-
-  return artifact_hashes
 
 
 def _subprocess_run_duplicate_streams(cmd, timeout):
-  """Helper to run subprocess and both print and capture standards streams.
+    """Helper to run subprocess and both print and capture standards streams.
 
-  Caveat:
-  * Might behave unexpectedly with interactive commands.
-  * Might not duplicate output in real time, if the command buffers it (see
-    e.g. `print("foo")` vs. `print("foo", flush=True)`).
-  * Possible race condition on Windows when removing temporary files.
+    Caveat:
+    * Might behave unexpectedly with interactive commands.
+    * Might not duplicate output in real time, if the command buffers it (see
+      e.g. `print("foo")` vs. `print("foo", flush=True)`).
+    * Possible race condition on Windows when removing temporary files.
 
-  """
-  # Use temporary files as targets for child process standard stream redirects
-  # They seem to work better (i.e. do not hang) than pipes, when using
-  # interactive commands like `vi`.
-  stdout_fd, stdout_name = tempfile.mkstemp()
-  stderr_fd, stderr_name = tempfile.mkstemp()
-  try:
-    with io.open(  # pylint: disable=unspecified-encoding
-      stdout_name, "r"
-    ) as stdout_reader, os.fdopen(  # pylint: disable=unspecified-encoding
-      stdout_fd, "w"
-    ) as stdout_writer, io.open(  # pylint: disable=unspecified-encoding
-      stderr_name, "r"
-    ) as stderr_reader, os.fdopen(
-      stderr_fd, "w"
-    ) as stderr_writer:
+    """
+    # Use temporary files as targets for child process standard stream redirects
+    # They seem to work better (i.e. do not hang) than pipes, when using
+    # interactive commands like `vi`.
+    stdout_fd, stdout_name = tempfile.mkstemp()
+    stderr_fd, stderr_name = tempfile.mkstemp()
+    try:
+        with io.open(  # pylint: disable=unspecified-encoding
+            stdout_name, "r"
+        ) as stdout_reader, os.fdopen(  # pylint: disable=unspecified-encoding
+            stdout_fd, "w"
+        ) as stdout_writer, io.open(  # pylint: disable=unspecified-encoding
+            stderr_name, "r"
+        ) as stderr_reader, os.fdopen(
+            stderr_fd, "w"
+        ) as stderr_writer:
+            # Store stream results in mutable dict to update it inside nested helper
+            _std = {"out": "", "err": ""}
 
-      # Store stream results in mutable dict to update it inside nested helper
-      _std = {"out": "", "err": ""}
+            def _duplicate_streams():
+                """Helper to read from child process standard streams, write their
+                contents to parent process standard streams, and build up return values
+                for outer function.
+                """
+                # Read until EOF but at most `io.DEFAULT_BUFFER_SIZE` bytes per call.
+                # Reading and writing in reasonably sized chunks prevents us from
+                # subverting a timeout, due to being busy for too long or indefinitely.
+                stdout_part = stdout_reader.read(io.DEFAULT_BUFFER_SIZE)
+                stderr_part = stderr_reader.read(io.DEFAULT_BUFFER_SIZE)
+                sys.stdout.write(stdout_part)
+                sys.stderr.write(stderr_part)
+                sys.stdout.flush()
+                sys.stderr.flush()
+                _std["out"] += stdout_part
+                _std["err"] += stderr_part
 
-      def _duplicate_streams():
-        """Helper to read from child process standard streams, write their
-        contents to parent process standard streams, and build up return values
-        for outer function.
-        """
-        # Read until EOF but at most `io.DEFAULT_BUFFER_SIZE` bytes per call.
-        # Reading and writing in reasonably sized chunks prevents us from
-        # subverting a timeout, due to being busy for too long or indefinitely.
-        stdout_part = stdout_reader.read(io.DEFAULT_BUFFER_SIZE)
-        stderr_part = stderr_reader.read(io.DEFAULT_BUFFER_SIZE)
-        sys.stdout.write(stdout_part)
-        sys.stderr.write(stderr_part)
-        sys.stdout.flush()
-        sys.stderr.flush()
-        _std["out"] += stdout_part
-        _std["err"] += stderr_part
+            # Start child process, writing its standard streams to temporary files
+            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
+                cmd,
+                stdout=stdout_writer,
+                stderr=stderr_writer,
+                universal_newlines=True,
+            )
+            proc_start_time = time.time()
 
-      # Start child process, writing its standard streams to temporary files
-      proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
-        cmd,
-        stdout=stdout_writer,
-        stderr=stderr_writer,
-        universal_newlines=True,
-      )
-      proc_start_time = time.time()
+            # Duplicate streams until the process exits (or times out)
+            while proc.poll() is None:
+                # Time out as Python's `subprocess.run` would do it
+                if (
+                    timeout is not None
+                    and time.time() > proc_start_time + timeout
+                ):
+                    proc.kill()
+                    proc.wait()
+                    raise subprocess.TimeoutExpired(cmd, timeout)
 
-      # Duplicate streams until the process exits (or times out)
-      while proc.poll() is None:
-        # Time out as Python's `subprocess.run` would do it
-        if (
-          timeout is not None
-          and time.time() > proc_start_time + timeout
-        ):
-          proc.kill()
-          proc.wait()
-          raise subprocess.TimeoutExpired(cmd, timeout)
+                _duplicate_streams()
 
-        _duplicate_streams()
+            # Read/write once more to grab everything that the process wrote between
+            # our last read in the loop and exiting, i.e. breaking the loop.
+            _duplicate_streams()
 
-      # Read/write once more to grab everything that the process wrote between
-      # our last read in the loop and exiting, i.e. breaking the loop.
-      _duplicate_streams()
+    finally:
+        # The work is done or was interrupted, the temp files can be removed
+        os.remove(stdout_name)
+        os.remove(stderr_name)
 
-  finally:
-    # The work is done or was interrupted, the temp files can be removed
-    os.remove(stdout_name)
-    os.remove(stderr_name)
+    # Return process exit code and captured streams
+    return proc.poll(), _std["out"], _std["err"]
 
-  # Return process exit code and captured streams
-  return proc.poll(), _std["out"], _std["err"]
 
 def execute_link(link_cmd_args, record_streams):
-  """
-  <Purpose>
-    Executes the passed command plus arguments in a subprocess and returns
-    the return value of the executed command. If the specified standard output
-    and standard error of the command are recorded and also returned to the
-    caller.
+    """
+    <Purpose>
+      Executes the passed command plus arguments in a subprocess and returns
+      the return value of the executed command. If the specified standard output
+      and standard error of the command are recorded and also returned to the
+      caller.
 
-  <Arguments>
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    record_streams:
-            A bool that specifies whether to redirect standard output and
-            and standard error to a temporary file which is returned to the
-            caller (True) or not (False).
+    <Arguments>
+      link_cmd_args:
+              A list where the first element is a command and the remaining
+              elements are arguments passed to that command.
+      record_streams:
+              A bool that specifies whether to redirect standard output and
+              and standard error to a temporary file which is returned to the
+              caller (True) or not (False).
 
-  <Exceptions>
-    OSError:
-            The given command is not present or non-executable
+    <Exceptions>
+      OSError:
+              The given command is not present or non-executable
 
-    subprocess.TimeoutExpired:
-            The execution of the given command times (see
-            in_toto.settings.LINK_CMD_EXEC_TIMEOUT).
+      subprocess.TimeoutExpired:
+              The execution of the given command times (see
+              in_toto.settings.LINK_CMD_EXEC_TIMEOUT).
 
-  <Side Effects>
-    Executes passed command in a subprocess and redirects stdout and stderr
-    if specified.
+    <Side Effects>
+      Executes passed command in a subprocess and redirects stdout and stderr
+      if specified.
 
-  <Returns>
-    - A dictionary containing standard output and standard error of the
-      executed command, called by-products.
-      Note: If record_streams is False, the dict values are empty strings.
-    - The return value of the executed command.
-  """
-  if record_streams:
-    return_code, stdout_str, stderr_str = \
-        _subprocess_run_duplicate_streams(
+    <Returns>
+      - A dictionary containing standard output and standard error of the
+        executed command, called by-products.
+        Note: If record_streams is False, the dict values are empty strings.
+      - The return value of the executed command.
+    """
+    if record_streams:
+        return_code, stdout_str, stderr_str = _subprocess_run_duplicate_streams(
+            link_cmd_args, timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT)
+        )
+
+    else:
+        process = subprocess.run(
             link_cmd_args,
-            timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT))
+            check=False,  # nosec
+            timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        stdout_str = stderr_str = ""
+        return_code = process.returncode
 
-  else:
-    process = subprocess.run(link_cmd_args, check=False,  # nosec
-      timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
-      stdout=subprocess.DEVNULL,
-      stderr=subprocess.DEVNULL)
-    stdout_str = stderr_str = ""
-    return_code = process.returncode
-
-  return {
-      "stdout": stdout_str,
-      "stderr": stderr_str,
-      "return-value": return_code
+    return {
+        "stdout": stdout_str,
+        "stderr": stderr_str,
+        "return-value": return_code,
     }
 
 
 def in_toto_mock(name, link_cmd_args, use_dsse=False):
-  """
-  <Purpose>
-    in_toto_run with defaults
-     - Records materials and products in current directory
-     - Does not sign resulting link file
-     - Stores resulting link file under "<name>.link"
+    """
+    <Purpose>
+      in_toto_run with defaults
+       - Records materials and products in current directory
+       - Does not sign resulting link file
+       - Stores resulting link file under "<name>.link"
 
-  <Arguments>
-    name:
-            A unique name to relate mock link metadata with a step or
-            inspection defined in the layout.
-    link_cmd_args:
-            A list where the first element is a command and the remaining
-            elements are arguments passed to that command.
-    use_dsse (optional):
-            A boolean indicating if DSSE should be used to generate metadata.
+    <Arguments>
+      name:
+              A unique name to relate mock link metadata with a step or
+              inspection defined in the layout.
+      link_cmd_args:
+              A list where the first element is a command and the remaining
+              elements are arguments passed to that command.
+      use_dsse (optional):
+              A boolean indicating if DSSE should be used to generate metadata.
 
-  <Exceptions>
-    None.
+    <Exceptions>
+      None.
 
-  <Side Effects>
-    Writes newly created link metadata file to disk using the filename scheme
-    from link.FILENAME_FORMAT_SHORT
+    <Side Effects>
+      Writes newly created link metadata file to disk using the filename scheme
+      from link.FILENAME_FORMAT_SHORT
 
-  <Returns>
-    Newly created Metadata object containing a Link object
+    <Returns>
+      Newly created Metadata object containing a Link object
 
-  """
-  link_metadata = in_toto_run(name, ["."], ["."], link_cmd_args,
-      record_streams=True, use_dsse=use_dsse)
+    """
+    link_metadata = in_toto_run(
+        name,
+        ["."],
+        ["."],
+        link_cmd_args,
+        record_streams=True,
+        use_dsse=use_dsse,
+    )
 
-  filename = FILENAME_FORMAT_SHORT.format(step_name=name)
-  LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
-  link_metadata.dump(filename)
-  return link_metadata
+    filename = FILENAME_FORMAT_SHORT.format(step_name=name)
+    LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
+    link_metadata.dump(filename)
+    return link_metadata
 
 
 def _check_match_signing_key(signing_key):
-  """ Helper method to check if the signing_key has securesystemslib's
-  KEY_SCHEMA and the private part is not empty.
-  # FIXME: Add private key format check to formats
-  """
-  securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
-  if not signing_key["keyval"].get("private"):
-    raise securesystemslib.exceptions.FormatError(
-        "Signing key needs to be a private key.")
+    """Helper method to check if the signing_key has securesystemslib's
+    KEY_SCHEMA and the private part is not empty.
+    # FIXME: Add private key format check to formats
+    """
+    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
+    if not signing_key["keyval"].get("private"):
+        raise securesystemslib.exceptions.FormatError(
+            "Signing key needs to be a private key."
+        )
 
 
-def in_toto_run(name, material_list, product_list, link_cmd_args,
-    record_streams=False, signing_key=None, gpg_keyid=None,
-    gpg_use_default=False, gpg_home=None, exclude_patterns=None,
-    base_path=None, compact_json=False, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None, metadata_directory=None,
-    use_dsse=False):
-  """Performs a supply chain step or inspection generating link metadata.
+def in_toto_run(
+    name,
+    material_list,
+    product_list,
+    link_cmd_args,
+    record_streams=False,
+    signing_key=None,
+    gpg_keyid=None,
+    gpg_use_default=False,
+    gpg_home=None,
+    exclude_patterns=None,
+    base_path=None,
+    compact_json=False,
+    record_environment=False,
+    normalize_line_endings=False,
+    lstrip_paths=None,
+    metadata_directory=None,
+    use_dsse=False,
+):
+    """Performs a supply chain step or inspection generating link metadata.
 
   Executes link_cmd_args, recording paths and hashes of files before and after
   command execution (aka. artifacts) in a link metadata file. The metadata is
@@ -464,98 +495,122 @@ def in_toto_run(name, material_list, product_list, link_cmd_args,
     A Metadata object that contains the resulting link object.
 
   """
-  LOG.info("Running '{}'...".format(name))
+    LOG.info("Running '{}'...".format(name))
 
-  # Check key formats to fail early
-  if signing_key:
-    _check_match_signing_key(signing_key)
-  if gpg_keyid:
-    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+    # Check key formats to fail early
+    if signing_key:
+        _check_match_signing_key(signing_key)
+    if gpg_keyid:
+        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
-  if exclude_patterns:
-    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+    if exclude_patterns:
+        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
-  if base_path:
-    securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+    if base_path:
+        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
-  if metadata_directory:
-    securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+    if metadata_directory:
+        securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
 
-  if material_list:
-    LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
+    if material_list:
+        LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
 
-  materials_dict = record_artifacts_as_dict(material_list,
-      exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
-      lstrip_paths=lstrip_paths)
+    materials_dict = record_artifacts_as_dict(
+        material_list,
+        exclude_patterns=exclude_patterns,
+        base_path=base_path,
+        follow_symlink_dirs=True,
+        normalize_line_endings=normalize_line_endings,
+        lstrip_paths=lstrip_paths,
+    )
 
-  if link_cmd_args:
-    securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(
-        link_cmd_args)
-    LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
-    byproducts = execute_link(link_cmd_args, record_streams)
-  else:
-    byproducts = {}
+    if link_cmd_args:
+        securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(
+            link_cmd_args
+        )
+        LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
+        byproducts = execute_link(link_cmd_args, record_streams)
+    else:
+        byproducts = {}
 
-  if product_list:
-    securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
-    LOG.info("Recording products '{}'...".format(", ".join(product_list)))
+    if product_list:
+        securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
+        LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
-  products_dict = record_artifacts_as_dict(product_list,
-      exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
-      lstrip_paths=lstrip_paths)
+    products_dict = record_artifacts_as_dict(
+        product_list,
+        exclude_patterns=exclude_patterns,
+        base_path=base_path,
+        follow_symlink_dirs=True,
+        normalize_line_endings=normalize_line_endings,
+        lstrip_paths=lstrip_paths,
+    )
 
-  LOG.info("Creating link metadata...")
-  environment = {}
-  if record_environment:
-    environment['workdir'] = os.getcwd().replace('\\', '/')
+    LOG.info("Creating link metadata...")
+    environment = {}
+    if record_environment:
+        environment["workdir"] = os.getcwd().replace("\\", "/")
 
-  link = in_toto.models.link.Link(name=name,
-      materials=materials_dict, products=products_dict, command=link_cmd_args,
-      byproducts=byproducts, environment=environment)
+    link = in_toto.models.link.Link(
+        name=name,
+        materials=materials_dict,
+        products=products_dict,
+        command=link_cmd_args,
+        byproducts=byproducts,
+        environment=environment,
+    )
 
-  if use_dsse:
-    LOG.info("Generating link metadata using DSSE...")
-    link_metadata = Envelope.from_signable(link)
-  else:
-    LOG.info("Generating link metadata using Metablock...")
-    link_metadata = Metablock(signed=link, compact_json=compact_json)
+    if use_dsse:
+        LOG.info("Generating link metadata using DSSE...")
+        link_metadata = Envelope.from_signable(link)
+    else:
+        LOG.info("Generating link metadata using Metablock...")
+        link_metadata = Metablock(signed=link, compact_json=compact_json)
 
-  signer = None
-  if signing_key:
-    LOG.info("Signing link metadata using passed key...")
-    signer = SSlibSigner(signing_key)
+    signer = None
+    if signing_key:
+        LOG.info("Signing link metadata using passed key...")
+        signer = SSlibSigner(signing_key)
 
-  elif gpg_keyid:
-    LOG.info("Signing link metadata using passed GPG keyid...")
-    signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
+    elif gpg_keyid:
+        LOG.info("Signing link metadata using passed GPG keyid...")
+        signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
 
-  elif gpg_use_default:
-    LOG.info("Signing link metadata using default GPG key ...")
-    signer = GPGSigner(keyid=None, homedir=gpg_home)
+    elif gpg_use_default:
+        LOG.info("Signing link metadata using default GPG key ...")
+        signer = GPGSigner(keyid=None, homedir=gpg_home)
 
-  # We need the signature's keyid to write the link to keyid infix'ed filename
-  if signer:
-    signature = link_metadata.create_signature(signer)
-    signing_keyid = signature.keyid
+    # We need the signature's keyid to write the link to keyid infix'ed filename
+    if signer:
+        signature = link_metadata.create_signature(signer)
+        signing_keyid = signature.keyid
 
-    filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
+        filename = FILENAME_FORMAT.format(step_name=name, keyid=signing_keyid)
 
-    if metadata_directory is not None:
-      filename = os.path.join(metadata_directory, filename)
+        if metadata_directory is not None:
+            filename = os.path.join(metadata_directory, filename)
 
-    LOG.info("Storing link metadata to '{}'...".format(filename))
-    link_metadata.dump(filename)
+        LOG.info("Storing link metadata to '{}'...".format(filename))
+        link_metadata.dump(filename)
 
-  return link_metadata
+    return link_metadata
 
 
-def in_toto_record_start(step_name, material_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None, record_environment=False,
-    normalize_line_endings=False, lstrip_paths=None, use_dsse=False):
-  """Generates preliminary link metadata.
+def in_toto_record_start(
+    step_name,
+    material_list,
+    signing_key=None,
+    gpg_keyid=None,
+    gpg_use_default=False,
+    gpg_home=None,
+    exclude_patterns=None,
+    base_path=None,
+    record_environment=False,
+    normalize_line_endings=False,
+    lstrip_paths=None,
+    use_dsse=False,
+):
+    """Generates preliminary link metadata.
 
   Records paths and hashes of materials in a preliminary link metadata file.
   The metadata is signed with the passed signing_key, a gpg key identified by
@@ -634,80 +689,103 @@ def in_toto_record_start(step_name, material_list, signing_key=None,
     Writes preliminary link metadata file to disk.
 
   """
-  LOG.info("Start recording '{}'...".format(step_name))
+    LOG.info("Start recording '{}'...".format(step_name))
 
-  # Fail if there is no signing key arg at all
-  if not signing_key and not gpg_keyid and not gpg_use_default:
-    raise ValueError("Pass either a signing key, a gpg keyid or set"
-        " gpg_use_default to True!")
+    # Fail if there is no signing key arg at all
+    if not signing_key and not gpg_keyid and not gpg_use_default:
+        raise ValueError(
+            "Pass either a signing key, a gpg keyid or set"
+            " gpg_use_default to True!"
+        )
 
-  # Check key formats to fail early
-  if signing_key:
-    _check_match_signing_key(signing_key)
-  if gpg_keyid:
-    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+    # Check key formats to fail early
+    if signing_key:
+        _check_match_signing_key(signing_key)
+    if gpg_keyid:
+        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
-  if exclude_patterns:
-    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+    if exclude_patterns:
+        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
-  if base_path:
-    securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+    if base_path:
+        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
-  if material_list:
-    LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
+    if material_list:
+        LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
 
-  materials_dict = record_artifacts_as_dict(material_list,
-      exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
-      lstrip_paths=lstrip_paths)
+    materials_dict = record_artifacts_as_dict(
+        material_list,
+        exclude_patterns=exclude_patterns,
+        base_path=base_path,
+        follow_symlink_dirs=True,
+        normalize_line_endings=normalize_line_endings,
+        lstrip_paths=lstrip_paths,
+    )
 
-  LOG.info("Creating preliminary link metadata...")
-  environment = {}
-  if record_environment:
-    environment['workdir'] = os.getcwd().replace('\\', '/')
+    LOG.info("Creating preliminary link metadata...")
+    environment = {}
+    if record_environment:
+        environment["workdir"] = os.getcwd().replace("\\", "/")
 
-  link = in_toto.models.link.Link(name=step_name,
-          materials=materials_dict, products={}, command=[], byproducts={},
-          environment=environment)
+    link = in_toto.models.link.Link(
+        name=step_name,
+        materials=materials_dict,
+        products={},
+        command=[],
+        byproducts={},
+        environment=environment,
+    )
 
-  if use_dsse:
-    LOG.info("Generating link metadata using DSSE...")
-    link_metadata = Envelope.from_signable(link)
-  else:
-    LOG.info("Generating link metadata using Metablock...")
-    link_metadata = Metablock(signed=link)
+    if use_dsse:
+        LOG.info("Generating link metadata using DSSE...")
+        link_metadata = Envelope.from_signable(link)
+    else:
+        LOG.info("Generating link metadata using Metablock...")
+        link_metadata = Metablock(signed=link)
 
-  if signing_key:
-    LOG.info("Signing link metadata using passed key...")
-    signer = SSlibSigner(signing_key)
+    if signing_key:
+        LOG.info("Signing link metadata using passed key...")
+        signer = SSlibSigner(signing_key)
 
-  elif gpg_keyid:
-    LOG.info("Signing link metadata using passed GPG keyid...")
-    signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
+    elif gpg_keyid:
+        LOG.info("Signing link metadata using passed GPG keyid...")
+        signer = GPGSigner(keyid=gpg_keyid, homedir=gpg_home)
 
-  else:  # (gpg_use_default)
-    LOG.info("Signing link metadata using default GPG key ...")
-    signer = GPGSigner(keyid=None, homedir=gpg_home)
+    else:  # (gpg_use_default)
+        LOG.info("Signing link metadata using default GPG key ...")
+        signer = GPGSigner(keyid=None, homedir=gpg_home)
 
-  signature = link_metadata.create_signature(signer)
-  # We need the signature's keyid to write the link to keyid infix'ed filename
-  signing_keyid = signature.keyid
+    signature = link_metadata.create_signature(signer)
+    # We need the signature's keyid to write the link to keyid infix'ed filename
+    signing_keyid = signature.keyid
 
-  unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
-    keyid=signing_keyid)
+    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(
+        step_name=step_name, keyid=signing_keyid
+    )
 
-  LOG.info(
-      "Storing preliminary link metadata to '{}'...".format(unfinished_fn))
-  link_metadata.dump(unfinished_fn)
+    LOG.info(
+        "Storing preliminary link metadata to '{}'...".format(unfinished_fn)
+    )
+    link_metadata.dump(unfinished_fn)
 
 
-
-def in_toto_record_stop(step_name, product_list, signing_key=None,
-    gpg_keyid=None, gpg_use_default=False, gpg_home=None,
-    exclude_patterns=None, base_path=None, normalize_line_endings=False,
-    lstrip_paths=None, metadata_directory=None, command=None, byproducts=None,
-    environment=None):
-  """Finalizes preliminary link metadata generated with in_toto_record_start.
+def in_toto_record_stop(
+    step_name,
+    product_list,
+    signing_key=None,
+    gpg_keyid=None,
+    gpg_use_default=False,
+    gpg_home=None,
+    exclude_patterns=None,
+    base_path=None,
+    normalize_line_endings=False,
+    lstrip_paths=None,
+    metadata_directory=None,
+    command=None,
+    byproducts=None,
+    environment=None,
+):
+    """Finalizes preliminary link metadata generated with in_toto_record_start.
 
   Loads preliminary link metadata file, verifies its signature, and records
   paths and hashes as products, thus finalizing the link metadata. The metadata
@@ -805,179 +883,196 @@ def in_toto_record_stop(step_name, product_list, signing_key=None,
     Removes preliminary link metadata file from disk.
 
   """
-  LOG.info("Stop recording '{}'...".format(step_name))
+    LOG.info("Stop recording '{}'...".format(step_name))
 
-  # Check that we have something to sign and if the formats are right
-  if not signing_key and not gpg_keyid and not gpg_use_default:
-    raise ValueError("Pass either a signing key, a gpg keyid or set"
-        " gpg_use_default to True")
+    # Check that we have something to sign and if the formats are right
+    if not signing_key and not gpg_keyid and not gpg_use_default:
+        raise ValueError(
+            "Pass either a signing key, a gpg keyid or set"
+            " gpg_use_default to True"
+        )
 
-  if signing_key:
-    _check_match_signing_key(signing_key)
-  if gpg_keyid:
-    securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+    if signing_key:
+        _check_match_signing_key(signing_key)
+    if gpg_keyid:
+        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
 
-  if exclude_patterns:
-    securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+    if exclude_patterns:
+        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
 
-  if base_path:
-    securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+    if base_path:
+        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
-  if metadata_directory:
-    securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+    if metadata_directory:
+        securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
 
-  # Load preliminary link file
-  # If we have a signing key we can use the keyid to construct the name
-  if signing_key:
-    unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(step_name=step_name,
-        keyid=signing_key["keyid"])
+    # Load preliminary link file
+    # If we have a signing key we can use the keyid to construct the name
+    if signing_key:
+        unfinished_fn = UNFINISHED_FILENAME_FORMAT.format(
+            step_name=step_name, keyid=signing_key["keyid"]
+        )
 
-  # FIXME: Currently there is no way to know the default GPG key's keyid and
-  # so we glob for preliminary link files
-  else:
-    unfinished_fn_glob = UNFINISHED_FILENAME_FORMAT_GLOB.format(
-        step_name=step_name, pattern="*")
-    unfinished_fn_list = glob.glob(unfinished_fn_glob)
-
-    if not len(unfinished_fn_list):
-      raise in_toto.exceptions.LinkNotFoundError("Could not find a preliminary"
-          " link for step '{}' in the current working directory.".format(
-          step_name))
-
-    if len(unfinished_fn_list) > 1:
-      raise in_toto.exceptions.LinkNotFoundError("Found more than one"
-          " preliminary links for step '{}' in the current working directory:"
-          " {}. We need exactly one to stop recording.".format(
-          step_name, ", ".join(unfinished_fn_list)))
-
-    unfinished_fn = unfinished_fn_list[0]
-
-  LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
-  link_metadata = Metadata.load(unfinished_fn)
-
-  # The file must have been signed by the same key
-  # If we have a signing_key we use it for verification as well
-  if signing_key:
-    LOG.info(
-        "Verifying preliminary link signature using passed signing key...")
-    keyid = signing_key["keyid"]
-    verification_key = signing_key
-
-  elif gpg_keyid:
-    LOG.info("Verifying preliminary link signature using passed gpg key...")
-    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
-        gpg_keyid, gpg_home)
-    keyid = gpg_pubkey["keyid"]
-    verification_key = gpg_pubkey
-
-  else: # must be gpg_use_default
-    # FIXME: Currently there is no way to know the default GPG key's keyid
-    # before signing. As a workaround we extract the keyid of the preliminary
-    # Link file's signature and try to export a pubkey from the gpg
-    # home directory. We do this even if a gpg_keyid was specified, because gpg
-    # accepts many different ids (mail, name, parts of an id, ...) but we
-    # need a specific format.
-    LOG.info("Verifying preliminary link signature using default gpg key...")
-    # signatures are objects in DSSE.
-    sig = link_metadata.signatures[0]
-    if isinstance(sig, Signature):
-      keyid = sig.keyid
+    # FIXME: Currently there is no way to know the default GPG key's keyid and
+    # so we glob for preliminary link files
     else:
-      keyid = sig["keyid"]
-    gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
-        keyid, gpg_home)
-    verification_key = gpg_pubkey
+        unfinished_fn_glob = UNFINISHED_FILENAME_FORMAT_GLOB.format(
+            step_name=step_name, pattern="*"
+        )
+        unfinished_fn_list = glob.glob(unfinished_fn_glob)
 
-  link_metadata.verify_signature(verification_key)
+        if not len(unfinished_fn_list):
+            raise in_toto.exceptions.LinkNotFoundError(
+                "Could not find a preliminary"
+                " link for step '{}' in the current working directory.".format(
+                    step_name
+                )
+            )
 
-  LOG.info("Extracting Link from metadata...")
-  link = link_metadata.get_payload()
+        if len(unfinished_fn_list) > 1:
+            raise in_toto.exceptions.LinkNotFoundError(
+                "Found more than one"
+                " preliminary links for step '{}' in the current working directory:"
+                " {}. We need exactly one to stop recording.".format(
+                    step_name, ", ".join(unfinished_fn_list)
+                )
+            )
 
-  # Record products if a product path list was passed
-  if product_list:
-    LOG.info("Recording products '{}'...".format(", ".join(product_list)))
+        unfinished_fn = unfinished_fn_list[0]
 
-  link.products = record_artifacts_as_dict(
-      product_list, exclude_patterns=exclude_patterns, base_path=base_path,
-      follow_symlink_dirs=True, normalize_line_endings=normalize_line_endings,
-      lstrip_paths=lstrip_paths)
+    LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
+    link_metadata = Metadata.load(unfinished_fn)
 
-  if command:
-    link.command = command
+    # The file must have been signed by the same key
+    # If we have a signing_key we use it for verification as well
+    if signing_key:
+        LOG.info(
+            "Verifying preliminary link signature using passed signing key..."
+        )
+        keyid = signing_key["keyid"]
+        verification_key = signing_key
 
-  if byproducts:
-    link.byproducts = byproducts
+    elif gpg_keyid:
+        LOG.info("Verifying preliminary link signature using passed gpg key...")
+        gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+            gpg_keyid, gpg_home
+        )
+        keyid = gpg_pubkey["keyid"]
+        verification_key = gpg_pubkey
 
-  if environment:
-    link.environment = environment
+    else:  # must be gpg_use_default
+        # FIXME: Currently there is no way to know the default GPG key's keyid
+        # before signing. As a workaround we extract the keyid of the preliminary
+        # Link file's signature and try to export a pubkey from the gpg
+        # home directory. We do this even if a gpg_keyid was specified, because gpg
+        # accepts many different ids (mail, name, parts of an id, ...) but we
+        # need a specific format.
+        LOG.info(
+            "Verifying preliminary link signature using default gpg key..."
+        )
+        # signatures are objects in DSSE.
+        sig = link_metadata.signatures[0]
+        if isinstance(sig, Signature):
+            keyid = sig.keyid
+        else:
+            keyid = sig["keyid"]
+        gpg_pubkey = securesystemslib.gpg.functions.export_pubkey(
+            keyid, gpg_home
+        )
+        verification_key = gpg_pubkey
 
-  if isinstance(link_metadata, Metablock):
-    LOG.info("Generating link metadata using Metablock...")
-    link_metadata = Metablock(signed=link)
-  else:
-    LOG.info("Generating link metadata using DSSE...")
-    link_metadata = Envelope.from_signable(link)
+    link_metadata.verify_signature(verification_key)
 
-  if signing_key:
-    LOG.info("Updating signature with key '{:.8}...'...".format(keyid))
-    signer = SSlibSigner(signing_key)
+    LOG.info("Extracting Link from metadata...")
+    link = link_metadata.get_payload()
 
-  else: # gpg_keyid or gpg_use_default
-    # In both cases we use the keyid we got from verifying the preliminary
-    # link signature above.
-    LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
-    signer = GPGSigner(keyid=keyid, homedir=gpg_home)
+    # Record products if a product path list was passed
+    if product_list:
+        LOG.info("Recording products '{}'...".format(", ".join(product_list)))
 
-  link_metadata.create_signature(signer)
-  fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
+    link.products = record_artifacts_as_dict(
+        product_list,
+        exclude_patterns=exclude_patterns,
+        base_path=base_path,
+        follow_symlink_dirs=True,
+        normalize_line_endings=normalize_line_endings,
+        lstrip_paths=lstrip_paths,
+    )
 
-  if metadata_directory is not None:
-    fn = os.path.join(metadata_directory, fn)
+    if command:
+        link.command = command
 
-  LOG.info("Storing link metadata to '{}'...".format(fn))
-  link_metadata.dump(fn)
+    if byproducts:
+        link.byproducts = byproducts
 
-  LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
-  os.remove(unfinished_fn)
+    if environment:
+        link.environment = environment
+
+    if isinstance(link_metadata, Metablock):
+        LOG.info("Generating link metadata using Metablock...")
+        link_metadata = Metablock(signed=link)
+    else:
+        LOG.info("Generating link metadata using DSSE...")
+        link_metadata = Envelope.from_signable(link)
+
+    if signing_key:
+        LOG.info("Updating signature with key '{:.8}...'...".format(keyid))
+        signer = SSlibSigner(signing_key)
+
+    else:  # gpg_keyid or gpg_use_default
+        # In both cases we use the keyid we got from verifying the preliminary
+        # link signature above.
+        LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
+        signer = GPGSigner(keyid=keyid, homedir=gpg_home)
+
+    link_metadata.create_signature(signer)
+    fn = FILENAME_FORMAT.format(step_name=step_name, keyid=keyid)
+
+    if metadata_directory is not None:
+        fn = os.path.join(metadata_directory, fn)
+
+    LOG.info("Storing link metadata to '{}'...".format(fn))
+    link_metadata.dump(fn)
+
+    LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
+    os.remove(unfinished_fn)
 
 
 def in_toto_match_products(
-  link, paths=None, exclude_patterns=None, lstrip_paths=None
+    link, paths=None, exclude_patterns=None, lstrip_paths=None
 ):
-  """Check if local artifacts match products in passed link.
+    """Check if local artifacts match products in passed link.
 
-  NOTE: Does not check integrity or authenticity of passed link!
+    NOTE: Does not check integrity or authenticity of passed link!
 
-  Arguments:
-    link: The Link object to match.
+    Arguments:
+      link: The Link object to match.
 
-  See ``in_toto_run`` for details about arguments, and exceptions that may
-  occur while recording artifact hashes.
+    See ``in_toto_run`` for details about arguments, and exceptions that may
+    occur while recording artifact hashes.
 
-  Returns:
-    A 3-tuple with artifact names that are
-    - only in products,
-    - not in products,
-    - have different hashes.
-  """
-  if paths is None:
-    paths = ["."]
+    Returns:
+      A 3-tuple with artifact names that are
+      - only in products,
+      - not in products,
+      - have different hashes.
+    """
+    if paths is None:
+        paths = ["."]
 
-  artifacts = record_artifacts_as_dict(
-      paths,
-      exclude_patterns=exclude_patterns,
-      lstrip_paths=lstrip_paths
+    artifacts = record_artifacts_as_dict(
+        paths, exclude_patterns=exclude_patterns, lstrip_paths=lstrip_paths
     )
 
-  artifact_names = artifacts.keys()
-  product_names = link.products.keys()
+    artifact_names = artifacts.keys()
+    product_names = link.products.keys()
 
-  only_products = product_names - artifact_names
-  not_in_products = artifact_names - product_names
-  differ = {
-    name
-    for name in product_names & artifact_names
-    if link.products[name] != artifacts[name]
-  }
+    only_products = product_names - artifact_names
+    not_in_products = artifact_names - product_names
+    differ = {
+        name
+        for name in product_names & artifact_names
+        if link.products[name] != artifacts[name]
+    }
 
-  return only_products, not_in_products, differ
+    return only_products, not_in_products, differ

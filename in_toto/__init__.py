@@ -5,8 +5,9 @@
 Configure base logger for in_toto (see in_toto.log for details).
 
 """
+from securesystemslib import KEY_TYPE_ECDSA, KEY_TYPE_ED25519, KEY_TYPE_RSA
+
 import in_toto.log
-from securesystemslib import KEY_TYPE_RSA, KEY_TYPE_ED25519, KEY_TYPE_ECDSA
 
 SUPPORTED_KEY_TYPES = [KEY_TYPE_RSA, KEY_TYPE_ED25519, KEY_TYPE_ECDSA]
 

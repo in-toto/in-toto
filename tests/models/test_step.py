@@ -22,90 +22,87 @@
 """
 
 import unittest
-from in_toto.models.layout import Step
-import securesystemslib.keys
+
 import securesystemslib.exceptions
+import securesystemslib.keys
+
+from in_toto.models.layout import Step
+
 
 class TestStepValidator(unittest.TestCase):
-  """Test verifylib.verify_delete_rule(rule, artifact_queue) """
+    """Test verifylib.verify_delete_rule(rule, artifact_queue)"""
 
+    def setUp(self):
+        """Populate a base layout that we can use."""
+        self.step = Step(name="this-step")
 
-  def setUp(self):
-    """Populate a base layout that we can use."""
-    self.step = Step(name="this-step")
+    def test_wrong_type(self):
+        """Test the type field within Validate()."""
 
+        self.step._type = "wrong"
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step._validate_type()
 
-  def test_wrong_type(self):
-    """Test the type field within Validate()."""
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step.validate()
 
-    self.step._type = "wrong"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_type()
+        self.step._type = "step"
+        self.step._validate_type()
 
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
+    def test_wrong_threshold(self):
+        """Test that the threshold value is correctly checked."""
 
-    self.step._type = "step"
-    self.step._validate_type()
+        # no, python is not *this* smart
+        self.step.threshold = "Ten"
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step._validate_threshold()
 
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step.validate()
 
-  def test_wrong_threshold(self):
-    """Test that the threshold value is correctly checked."""
+        self.step.threshold = 10
+        self.step._validate_threshold()
+        self.step.validate()
 
-    # no, python is not *this* smart
-    self.step.threshold = "Ten"
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_threshold()
+    def test_wrong_pubkeys(self):
+        # FIXME: generating keys for each test are expensive processes, maybe we
+        # should have an asset/fixture folder/loader?
 
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
+        rsa_key_one = securesystemslib.keys.generate_rsa_key()
+        rsa_key_two = securesystemslib.keys.generate_rsa_key()
 
-    self.step.threshold = 10
-    self.step._validate_threshold()
-    self.step.validate()
+        self.step.pubkeys = ["bad-keyid"]
 
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step._validate_pubkeys()
 
-  def test_wrong_pubkeys(self):
-    # FIXME: generating keys for each test are expensive processes, maybe we
-    # should have an asset/fixture folder/loader?
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step.validate()
 
-    rsa_key_one = securesystemslib.keys.generate_rsa_key()
-    rsa_key_two = securesystemslib.keys.generate_rsa_key()
+        self.step.pubkeys = [rsa_key_one["keyid"], rsa_key_two["keyid"]]
+        self.step._validate_pubkeys()
+        self.step.validate()
 
-    self.step.pubkeys = ['bad-keyid']
+    def test_wrong_expected_command(self):
+        """Test that the expected command validator catches malformed ones."""
 
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_pubkeys()
+        self.step.expected_command = -1
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step._validate_expected_command()
 
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.step.validate()
 
-    self.step.pubkeys = [rsa_key_one['keyid'], rsa_key_two['keyid']]
-    self.step._validate_pubkeys()
-    self.step.validate()
+        self.step.expected_command = ["somecommand"]
+        self.step._validate_expected_command()
+        self.step.validate()
 
-
-  def test_wrong_expected_command(self):
-    """Test that the expected command validator catches malformed ones."""
-
-    self.step.expected_command = -1
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step._validate_expected_command()
-
-    with self.assertRaises(securesystemslib.exceptions.FormatError):
-      self.step.validate()
-
-    self.step.expected_command = ["somecommand"]
-    self.step._validate_expected_command()
-    self.step.validate()
-
-
-  def test_set_expected_command_from_string(self):
-    """Test shelx parse command string to list. """
-    step = Step()
-    step.set_expected_command_from_string("echo 'foo bar'")
-    self.assertListEqual(step.expected_command, ["echo", "foo bar"])
+    def test_set_expected_command_from_string(self):
+        """Test shelx parse command string to list."""
+        step = Step()
+        step.set_expected_command_from_string("echo 'foo bar'")
+        self.assertListEqual(step.expected_command, ["echo", "foo bar"])
 
 
 if __name__ == "__main__":
-  unittest.main()
+    unittest.main()

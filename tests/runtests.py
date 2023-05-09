@@ -22,8 +22,8 @@
   framework.
 """
 
-from unittest import defaultTestLoader, TextTestRunner
 import sys
+from unittest import TextTestRunner, defaultTestLoader
 
 suite = defaultTestLoader.discover(start_dir=".")
 result = TextTestRunner(verbosity=2, buffer=True).run(suite)
