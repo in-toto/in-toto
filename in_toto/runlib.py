@@ -111,8 +111,7 @@ def record_artifacts_as_dict(
       exclude_patterns: (optional)
               Artifacts matched by the pattern are excluded from the result.
               Exclude patterns can be passed as argument or specified via
-              ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`) or
-              via envvars or rcfiles (see `in_toto.user_settings`).
+              ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`).
               If passed, patterns specified via settings are overriden.
 
       base_path: (optional)
