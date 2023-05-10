@@ -240,30 +240,30 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 _std["err"] += stderr_part
 
             # Start child process, writing its standard streams to temporary files
-            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
+            with subprocess.Popen(  # nosec
                 cmd,
                 stdout=stdout_writer,
                 stderr=stderr_writer,
                 universal_newlines=True,
-            )
-            proc_start_time = time.time()
+            ) as proc:
+                proc_start_time = time.time()
 
-            # Duplicate streams until the process exits (or times out)
-            while proc.poll() is None:
-                # Time out as Python's `subprocess.run` would do it
-                if (
-                    timeout is not None
-                    and time.time() > proc_start_time + timeout
-                ):
-                    proc.kill()
-                    proc.wait()
-                    raise subprocess.TimeoutExpired(cmd, timeout)
+                # Duplicate streams until the process exits (or times out)
+                while proc.poll() is None:
+                    # Time out as Python's `subprocess.run` would do it
+                    if (
+                        timeout is not None
+                        and time.time() > proc_start_time + timeout
+                    ):
+                        proc.kill()
+                        proc.wait()
+                        raise subprocess.TimeoutExpired(cmd, timeout)
 
+                    _duplicate_streams()
+
+                # Read/write once more to grab everything that the process wrote between
+                # our last read in the loop and exiting, i.e. breaking the loop.
                 _duplicate_streams()
-
-            # Read/write once more to grab everything that the process wrote between
-            # our last read in the loop and exiting, i.e. breaking the loop.
-            _duplicate_streams()
 
     finally:
         # The work is done or was interrupted, the temp files can be removed
