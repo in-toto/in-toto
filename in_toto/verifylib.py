@@ -1504,6 +1504,16 @@ def in_toto_verify(
     10. Execute inspection commands and generate inspection links
     11. Process inspection product and material rules
 
+    Note: in-toto's verification workflow directly uses the key for verifying
+    signatures. It does not communicate with external sources of information for
+    specific attributes about keys. This ensures that verification can be
+    performed in isolation. It is the supply chain owner's responsibility to
+    consider such attributes before using the key to sign the layout or adding
+    it to the layout. For example, in-toto does not rely on the creation time,
+    revocation status, and usage flags for PGP keys. To revoke or otherwise
+    affect the usage of a key, the supply chain owner must sign a new layout
+    with the corresponding changes.
+
     Arguments:
       metadata: A Metadata object that contains a Layout object to be verified.
 
