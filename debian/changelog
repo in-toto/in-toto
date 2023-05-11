@@ -1,3 +1,15 @@
+in-toto (2.0.0-1) unstable; urgency=medium
+
+  * New upstream release includes among other things:
+    - important security fixes
+    - ITE-4 resolver interface
+
+  * d/control: Change gnupg2 to gnupg (Closes: #1055401)
+  * d/patches: Adopt upstream reformat with black
+  * d/Dockerfile: Add dockerfile used to build this release on macOS
+
+ -- Lukas Puehringer <lukas.puehringer@nyu.edu>  Wed, 08 Nov 2023 15:50:00 +0100
+
 in-toto (1.4.0-1) unstable; urgency=medium
 
   * New upstream release includes among other things:

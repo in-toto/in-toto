@@ -21,7 +21,7 @@ Build-Depends:
  python3-cryptography,
  python3-nacl,
  python3-securesystemslib (>= 0.26.0),
- gnupg2,
+ gnupg,
 Standards-Version: 4.6.2
 Rules-Requires-Root: no
 Homepage: https://in-toto.io
@@ -37,7 +37,7 @@ Depends:
   ${python3:Depends},
   ${misc:Depends},
 Recommends:
- gnupg2,
+ gnupg,
 Description: software supply chain security framework
  in-toto provides tools both for software developers to authenticate operations
  in the supply chain, as well as for end-users to verify the authentication
