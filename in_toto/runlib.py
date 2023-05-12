@@ -267,8 +267,13 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
 
     finally:
         # The work is done or was interrupted, the temp files can be removed
-        os.remove(stdout_name)
-        os.remove(stderr_name)
+        # FIXME: retry failed file removal once to maybe work around #547
+        for name in (stdout_name, stderr_name):
+            try:
+                os.remove(name)
+            except PermissionError:  # pragma: no cover
+                time.sleep(0.01)
+                os.remove(name)
 
     # Return process exit code and captured streams
     return proc.poll(), _std["out"], _std["err"]
