@@ -13,8 +13,7 @@ This implementation adheres to
 Pull requests must be submitted to the `develop` branch where they undergo
 review and automated testing, including, but not limited to:
 * Unit and build testing via [Tox](https://tox.readthedocs.io/en/latest/) on
-  [GitHub Actions](https://github.com/in-toto/in-toto/actions) and
-  [AppVeyor](https://ci.appveyor.com/project/in-toto/in-toto)
+  [GitHub Actions](https://github.com/in-toto/in-toto/actions)
 * Static code analysis via [Pylint](https://www.pylint.org/) and
   [Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
 * Checks for *Signed-off-by* commits via
