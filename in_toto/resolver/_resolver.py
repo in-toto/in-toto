@@ -4,9 +4,13 @@ import os
 from abc import ABCMeta, abstractmethod
 from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
+from urllib.parse import urlunparse
+import json
+import http.client
 
 from pathspec import GitIgnoreSpec
 from securesystemslib.hash import digest_filename
+from securesystemslib.hash import digest_fileobject
 
 from in_toto.exceptions import PrefixError
 
@@ -260,5 +264,142 @@ class OSTreeResolver(Resolver):
         # Change back to original current working dir
         if self._base_path:
             os.chdir(original_cwd)
+
+        return hashes
+
+
+class GithubResolver(Resolver):
+    """Resolver for Github entities."""
+
+    SCHEME = "github"
+
+    ENTITY_PR = 'pulls'
+    ENTITY_COMMITS = 'commits'
+
+    def __init__(
+        self,
+        org_name,
+        repo_name,
+        github_entity_id,
+        is_github_pr=False,
+        is_github_commit=False,
+    ):
+        if not is_github_pr and not is_github_commit:
+            raise ValueError("Please choose one github entity")
+
+        if org_name is not None:
+            if not isinstance(org_name, str):
+                raise ValueError("'org_name' must be string")
+        if repo_name is not None:
+            if not isinstance(repo_name, str):
+                raise ValueError("'repo_name' must be string")
+        if github_entity_id is not None:
+            if not isinstance(github_entity_id, str):
+                raise ValueError("'github_entity_id' must be string")
+
+        if is_github_pr:
+            github_entity = self.ENTITY_PR
+        elif is_github_commit:
+            github_entity = self.ENTITY_COMMITS
+
+        path = 'repos/{}/{}/{}'.format(
+            org_name+'/'+repo_name,
+            github_entity,
+            github_entity_id)
+
+        self._github_entity = github_entity
+        self._url = urlunparse(scheme='https',
+                               netloc='api.github.com',
+                               path=path)
+
+    def _hash_review_representation(self, review):
+        """
+        Capture representative fields in a review and return its hash. We may want to
+        be able to retrieve each status of the comment, such as CHANGES_REQUESTED and
+        APPROVED. We may also want to know who reviewed the PR and approved it.
+        some possible policies of reviews:
+        - Reviews should be done by authorized personnel (such as the memeber of the
+            organization)
+        - The code should not be pushed unless it has an APPROVED state
+        We can incorporate ITE-4 there for review attestations. This could be a part
+        of the statement's subject.
+        Args:
+            Review response data from Github API calls
+        Returns:
+            A hash that represent a Github review
+        """
+        review_representation = {}
+        review_representation['id'] = review['id']
+        review_representation['author'] = review['user']['login']
+        review_representation['author_association'] = review['author_association']
+        review_representation['state'] = review['state']
+
+        object = json.dumps(review_representation, sort_keys=True).encode()
+        digest = digest_fileobject(object, algorithm=_HASH_ALGORITHM)
+        hash_artifact = digest.hexdigest()
+
+        return hash_artifact
+
+    def _get_hashable_representation(self):
+        """
+        Obtain a dict that helps provide attestationns about a GitHub entity
+        Returns:
+            A dictionary that represent a Github enitty
+        """
+        conn = http.client.HTTPSConnection(self._url)
+        conn.request("GET", "/", headers={
+            'User-Agent': 'in-toto Reference Implementation'})
+        response = conn.getresponse()
+        response_data = json.loads(response.data)
+
+        representation_object = {}
+        representation_object['type'] = self._github_entity
+
+        if self._github_entity == self.ENTITY_COMMITS:
+            representation_object['commit_id'] = response_data['sha']
+            representation_object['author'] = response_data['author']['login']
+            representation_object['tree'] = response_data['commit']['tree']['sha']
+
+            return representation_object
+
+        elif self._github_entity == self.ENTITY_PR:
+            representation_object['user'] = response_data['user']['login']
+            representation_object['head'] = response_data['head']['label']
+            representation_object['base'] = response_data['base']['label']
+
+            representation_object['commits'] = []
+            commits_url = response_data['commits_url']
+            commits_conn = http.client.HTTPSConnection(str(commits_url))
+            commits_conn.request("GET", "/", headers={
+                'User-Agent': 'in-toto Reference Implementation'})
+            commits_response = commits_conn.getresponse()
+            commits_response_data = json.loads(commits_response.data)
+            for commit in commits_response_data:
+                representation_object['commits'].append(commit['sha'])
+
+            representation_object['reviews'] = []
+            review_url = str(self._url) + '/reviews'
+            reviews_conn = http.client.HTTPSConnection(str(review_url))
+            reviews_conn.request("GET", "/", headers={
+                'User-Agent': 'in-toto Reference Implementation'})
+            reviews_response = reviews_conn.getresponse()
+            review_response_data = json.loads(reviews_response.data)
+            for review in review_response_data:
+                representation_object['reviews'].append(
+                    self._hash_review_representation(review))
+
+    def hash_artifacts(self):
+        """
+        Obtain a hash from a GitHub abstract entity
+        Returns:
+        A hash that represent a Github enitty
+        """
+        hashes = {}
+
+        representation_object = json.dumps(self._get_hashable_representation(),
+                                           sort_keys=True).encode()
+        digest = digest_fileobject(representation_object,
+                                   algorithm=_HASH_ALGORITHM)
+        hashes[f"{self.SCHEME}:{self._url}"] = digest.hexdigest()
 
         return hashes
