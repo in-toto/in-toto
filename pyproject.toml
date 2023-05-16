@@ -88,3 +88,54 @@ line-length=80
 profile="black"
 line_length=80
 known_first_party = ["in_toto"]
+
+# Minimal pylint configuration file for secure systems lab code style guide
+# https://github.com/secure-systems-lab/code-style-guidelines. See
+# http://pylint.pycqa.org/en/latest/technical_reference/features.html for
+# defaults.
+
+# NOTE: Not all default values have been reviewed. If new code breaks the
+# linter (for good reasons) consider updating this config file, or disable
+# checks via `# pylint: disable=XYZ` in a module or via `--disable` in tox.ini.
+
+[tool.pylint.main]
+# no-self-use has been moved to an optional plugin which needs to be explicitly
+# loaded.
+# https://pylint.pycqa.org/en/latest/whatsnew/2/2.14/summary.html#removed-checkers.
+load-plugins="pylint.extensions.no_self_use"
+
+[tool.pylint.basic]
+good-names=["e", "fn", "fp"]
+
+[tool.pylint.message_control]
+# Disable checks that seem too strict or require too big of a refactor
+# TODO: Enable W0703 (broad-except) with in-toto/in-toto#126 and consider
+# enabling C0411, C0412, C0413, R0401 (import related checkers) with
+# in-toto/in-toto#145.
+disable = [
+    "fixme",
+    "logging-format-interpolation",
+    "logging-not-lazy",
+    "design",
+    "broad-except",
+    "wrong-import-order",
+    "ungrouped-imports",
+    "wrong-import-position",
+    "cyclic-import",
+    "len-as-condition",
+    "literal-comparison",
+    "useless-object-inheritance",
+    "consider-merging-isinstance",
+    "duplicate-code",
+    "inconsistent-return-statements",
+    "no-self-use",
+    "bad-classmethod-argument",
+    "super-with-arguments",
+    "consider-using-f-string"
+]
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_|junk"
+
+[tool.pylint.format]
+max-module-lines = 2000
