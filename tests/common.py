@@ -154,7 +154,7 @@ class CliTestCase(unittest.TestCase):
         file_path = inspect.getmodule(self.cli_main_func).__file__
         self.file_name = os.path.basename(file_path)
 
-        super(CliTestCase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def assert_cli_sys_exit(self, cli_args, status):
         """Test helper to mock command line call and assert return value.

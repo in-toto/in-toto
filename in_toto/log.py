@@ -97,7 +97,7 @@ class InTotoLogger(_LOGGER_CLASS):
             None,
             None,
         )
-        return super(InTotoLogger, self).error(msg, exc_info=show_stacktrace)
+        return super().error(msg, exc_info=show_stacktrace)
 
     # Allow non snake_case function name for consistency with logging library
     def setLevelVerboseOrQuiet(

@@ -88,7 +88,7 @@ class Layout(Signable):
     readme = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Layout, self).__init__()
+        super().__init__()
         self._type = "layout"
         self.steps = kwargs.get("steps", [])
         self.inspect = kwargs.get("inspect", [])
@@ -507,7 +507,7 @@ class SupplyChainItem(ValidationMixin):
     expected_products = attr.ib()
 
     def __init__(self, **kwargs):
-        super(SupplyChainItem, self).__init__()
+        super().__init__()
         self.name = kwargs.get("name")
         self.expected_materials = kwargs.get("expected_materials", [])
         self.expected_products = kwargs.get("expected_products", [])
@@ -602,7 +602,7 @@ class Step(SupplyChainItem):
     threshold = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Step, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._type = "step"
         self.pubkeys = kwargs.get("pubkeys", [])
         self.expected_command = kwargs.get("expected_command", [])
@@ -691,7 +691,7 @@ class Inspection(SupplyChainItem):
     run = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Inspection, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._type = "inspection"
         self.run = kwargs.get("run", [])
 
