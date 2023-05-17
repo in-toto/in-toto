@@ -44,22 +44,6 @@ from securesystemslib.interface import (
 )
 
 
-def run_with_portable_scripts(decorated):
-    print("patching...")
-    scripts_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "scripts"
-    )
-    print("scripts are located in {}".format(scripts_path))
-
-    @patch.dict(
-        os.environ, {"PATH": "{};{}".format(scripts_path, os.environ["PATH"])}
-    )
-    class Patched(decorated):
-        pass
-
-    return Patched
-
-
 class TmpDirMixin:
     """Mixin with classmethods to create and change into a temporary directory,
     and to change back to the original CWD and remove the temporary directory.
