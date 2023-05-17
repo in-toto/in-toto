@@ -507,6 +507,8 @@ def in_toto_run(
     A Metadata object that contains the resulting link object.
 
   """
+    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
+
     LOG.info("Running '%s'...", name)
 
     # Check key formats to fail early
@@ -701,6 +703,8 @@ def in_toto_record_start(
     Writes preliminary link metadata file to disk.
 
   """
+    # pylint: disable=too-many-locals
+
     LOG.info("Start recording '%s'...", step_name)
 
     # Fail if there is no signing key arg at all
@@ -893,6 +897,7 @@ def in_toto_record_stop(
     Removes preliminary link metadata file from disk.
 
   """
+    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     LOG.info("Stop recording '%s'...", step_name)
 
     # Check that we have something to sign and if the formats are right

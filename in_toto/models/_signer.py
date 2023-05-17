@@ -155,6 +155,8 @@ class GPGKey(Key):
       subkeys: A dictionary containing keyid and GPG subkey.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     type: str
     method: str
     hashes: List[str]

@@ -60,6 +60,7 @@ class TestInTotoRecordTool(
 
     def test_start_stop(self):
         """Test CLI command record start/stop with various arguments."""
+        # pylint: disable=too-many-statements
 
         # Start/stop recording using rsa key
         args = ["--step-name", "test1", "--key", self.rsa_key_path]

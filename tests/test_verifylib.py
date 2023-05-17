@@ -903,6 +903,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
         ...and dumps various layouts for different test scenarios
         """
+        # pylint: disable=too-many-statements
 
         # Find demo files
         demo_files = os.path.join(

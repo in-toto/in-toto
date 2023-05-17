@@ -429,6 +429,8 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       authorized functionaries.
 
     """
+    # pylint: disable=too-many-branches, too-many-locals
+
     # Create an inverse keys-subkeys dictionary, with subkey keyids as
     # dictionary keys and main keys as dictionary values. This will be
     # required below to assess main-subkey trust delegations.

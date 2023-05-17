@@ -80,6 +80,7 @@ class Layout(Signable):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
     _type = attr.ib()
     steps = attr.ib()
     inspect = attr.ib()

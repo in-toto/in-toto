@@ -121,6 +121,8 @@ class TestApplyExcludePatterns(unittest.TestCase):
 class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     """Test record_artifacts_as_dict(artifacts)."""
 
+    # pylint: disable=too-many-public-methods
+
     @classmethod
     def setUpClass(cls):
         """Create and change into temp test directory with dummy artifacts.
