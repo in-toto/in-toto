@@ -162,13 +162,9 @@ class CliTestCase(unittest.TestCase):
         function, to be used as first argument when patching sys.argv in
         self.assert_cli_sys_exit.
         """
-        if not callable(self.cli_main_func):
-            raise Exception(
-                "Subclasses of `CliTestCase` need to assign the main"
-                " function of the cli tool to test using `staticmethod()`: {}".format(
-                    self.__class__.__name__
-                )
-            )
+        # subclasses of `CliTestCase` must assign the main function of the
+        # tested cli tool using `staticmethod()`
+        assert callable(self.cli_main_func)
 
         file_path = inspect.getmodule(self.cli_main_func).__file__
         self.file_name = os.path.basename(file_path)
