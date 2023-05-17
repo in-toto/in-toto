@@ -266,7 +266,7 @@ class TestInTotoRecordTool(
             "--step-name",
             "test7",
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]
@@ -291,7 +291,7 @@ class TestInTotoRecordTool(
             "--step-name",
             "test-no-glob",
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]
@@ -312,7 +312,7 @@ class TestInTotoRecordTool(
             "--step-name",
             name,
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]

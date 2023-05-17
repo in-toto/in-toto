@@ -211,13 +211,13 @@ file to the target directory (on stop).
         version="{} {}".format(parser.prog, __version__),
     )
 
-    for _parser, _order in [
+    for parser_, order in [
         (parser, ["Positional Arguments", OPTS_TITLE]),
         (subparser_start, None),
         (subparser_stop, None),
     ]:
-        title_case_action_groups(_parser)
-        sort_action_groups(_parser, _order)
+        title_case_action_groups(parser_)
+        sort_action_groups(parser_, order)
 
     return parser
 

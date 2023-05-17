@@ -481,7 +481,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
         layout_template = Metadata.load("demo.layout.template")
 
         cls.layout_path = "gpg_signed.layout"
-        layout_template.sign_gpg(cls.gpg_key_0C8A17, cls.gnupg_home)
+        layout_template.sign_gpg(cls.gpg_key_0c8a17, cls.gnupg_home)
         layout_template.dump(cls.layout_path)
 
     @classmethod
@@ -495,7 +495,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--layout",
             self.layout_path,
             "--gpg",
-            self.gpg_key_0C8A17,
+            self.gpg_key_0c8a17,
             "--gpg-home",
             self.gnupg_home,
         ]

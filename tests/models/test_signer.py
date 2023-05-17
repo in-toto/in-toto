@@ -45,8 +45,8 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         cls.test_data = b"test_data"
         cls.wrong_data = b"something malicious"
 
-        cls.default_keyid = cls.gpg_key_0C8A17
-        cls.signing_subkey_keyid = cls.gpg_key_D924E9
+        cls.default_keyid = cls.gpg_key_0c8a17
+        cls.signing_subkey_keyid = cls.gpg_key_d92439
         cls.expired_keyid = "e8ac80c924116dabb51d4b987cb07d6d2c199c7c"
 
         cls.default_key_dict = export_pubkey(cls.default_keyid, cls.gnupg_home)

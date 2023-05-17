@@ -220,7 +220,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
             stderr_fd, "w"
         ) as stderr_writer:
             # Store stream results in mutable dict to update it inside nested helper
-            _std = {"out": "", "err": ""}
+            streams = {"out": "", "err": ""}
 
             def _duplicate_streams():
                 """Helper to read from child process standard streams, write their
@@ -236,8 +236,8 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 sys.stderr.write(stderr_part)
                 sys.stdout.flush()
                 sys.stderr.flush()
-                _std["out"] += stdout_part
-                _std["err"] += stderr_part
+                streams["out"] += stdout_part
+                streams["err"] += stderr_part
 
             # Start child process, writing its standard streams to temporary files
             proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
@@ -276,7 +276,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 os.remove(name)
 
     # Return process exit code and captured streams
-    return proc.poll(), _std["out"], _std["err"]
+    return proc.poll(), streams["out"], streams["err"]
 
 
 def execute_link(link_cmd_args, record_streams):

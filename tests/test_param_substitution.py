@@ -41,7 +41,7 @@ from in_toto.verifylib import in_toto_verify, substitute_parameters
 from tests.common import TmpDirMixin
 
 
-class Test_SubstituteArtifacts(unittest.TestCase):
+class TestSubstituteArtifacts(unittest.TestCase):
     """Test parameter substitution on artifact rules."""
 
     def setUp(self):
@@ -115,7 +115,7 @@ class Test_SubstituteArtifacts(unittest.TestCase):
             substitute_parameters(self.layout, {})
 
 
-class Test_SubstituteRunField(unittest.TestCase):
+class TestSubstituteRunField(unittest.TestCase):
     """Test substitution on the run field of the layout"""
 
     def setUp(self):
@@ -149,7 +149,7 @@ class Test_SubstituteRunField(unittest.TestCase):
             substitute_parameters(self.layout, {})
 
 
-class Test_SubstituteExpectedCommand(unittest.TestCase):
+class TestSubstituteExpectedCommand(unittest.TestCase):
     """Test verifylib.verify_command_alignment(command, expected_command)"""
 
     def setUp(self):
@@ -179,7 +179,7 @@ class Test_SubstituteExpectedCommand(unittest.TestCase):
             substitute_parameters(self.layout, {"NOEDITOR": "vim"})
 
 
-class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
+class TestSubstituteOnVerify(unittest.TestCase, TmpDirMixin):
     """Test verifylib.verify_command_alignment(command, expected_command)"""
 
     @classmethod

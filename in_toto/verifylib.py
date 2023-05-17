@@ -1106,7 +1106,7 @@ def verify_item_rules(source_name, source_type, rules, links):
         # Parse the rule and create two shortcuts to contained rule data
         rule_data = in_toto.rulelib.unpack_rule(rule)
         _type = rule_data["rule_type"]
-        _pattern = rule_data["pattern"]
+        pattern = rule_data["pattern"]
 
         # Initialize empty consumed set as fallback for rules that do not consume
         # artifacts. All rules except "disallow" and "require" consume artifacts.
@@ -1119,29 +1119,29 @@ def verify_item_rules(source_name, source_type, rules, links):
 
         elif _type == "create":
             consumed = verify_create_rule(
-                _pattern, artifacts_queue, materials_paths, products_paths
+                pattern, artifacts_queue, materials_paths, products_paths
             )
 
         elif _type == "delete":
             consumed = verify_delete_rule(
-                _pattern, artifacts_queue, materials_paths, products_paths
+                pattern, artifacts_queue, materials_paths, products_paths
             )
 
         elif _type == "modify":
             consumed = verify_modify_rule(
-                _pattern, artifacts_queue, materials_dict, products_dict
+                pattern, artifacts_queue, materials_dict, products_dict
             )
 
         elif _type == "allow":
-            consumed = verify_allow_rule(_pattern, artifacts_queue)
+            consumed = verify_allow_rule(pattern, artifacts_queue)
 
         # It's up to the "disallow" and "require" rule to raise an error if
         # artifacts were not consumed as intended
         elif _type == "disallow":
-            verify_disallow_rule(_pattern, artifacts_queue)
+            verify_disallow_rule(pattern, artifacts_queue)
 
         elif _type == "require":
-            verify_require_rule(_pattern, artifacts_queue)
+            verify_require_rule(pattern, artifacts_queue)
 
         else:  # pragma: no cover (unreachable)
             raise securesystemslib.exceptions.FormatError(

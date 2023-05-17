@@ -73,10 +73,10 @@ class FileResolver(Resolver):
             ):
                 raise ValueError(f"'{name}' must be list of strings")
 
-        for _a, _b in combinations(lstrip_paths, 2):
-            if _a.startswith(_b) or _b.startswith(_a):
+        for a_, b_ in combinations(lstrip_paths, 2):
+            if a_.startswith(b_) or b_.startswith(a_):
                 raise PrefixError(
-                    f"'{_a}' and '{_b}' triggered a left substring error"
+                    f"'{a_}' and '{b_}' triggered a left substring error"
                 )
 
         # Compile gitignore-style patterns
@@ -161,9 +161,8 @@ class FileResolver(Resolver):
                 continue
 
             if isfile(path):
-                _name = self._mangle(path, hashes, prefix)
-                _hashes = self._hash(path)
-                hashes[_name] = _hashes
+                name = self._mangle(path, hashes, prefix)
+                hashes[name] = self._hash(path)
 
             if isdir(path):
                 for base, dirs, names in os.walk(
@@ -194,9 +193,8 @@ class FileResolver(Resolver):
                             )
                             continue
 
-                        _name = self._mangle(filepath, hashes, prefix)
-                        _hashes = self._hash(filepath)
-                        hashes[_name] = _hashes
+                        name = self._mangle(filepath, hashes, prefix)
+                        hashes[name] = self._hash(filepath)
 
         # Change back to original current working dir
         if self._base_path:
@@ -254,8 +252,7 @@ class OSTreeResolver(Resolver):
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later
             path = self._strip_scheme_prefix(path)
-            _hashes = self._hash(path)
-            hashes[self._add_scheme_prefix(path)] = _hashes
+            hashes[self._add_scheme_prefix(path)] = self._hash(path)
 
         # Change back to original current working dir
         if self._base_path:

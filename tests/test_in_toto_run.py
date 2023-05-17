@@ -258,7 +258,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
             "-n",
             self.test_step,
             "--gpg",
-            self.gpg_key_85DA58,
+            self.gpg_key_85da58,
             "--gpg-home",
             self.gnupg_home,
             "--",
@@ -268,7 +268,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
 
         self.assert_cli_sys_exit(args, 0)
         link_filename = FILENAME_FORMAT.format(
-            step_name=self.test_step, keyid=self.gpg_key_85DA58
+            step_name=self.test_step, keyid=self.gpg_key_85da58
         )
 
         self.assertTrue(os.path.exists(link_filename))
@@ -289,7 +289,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         self.assert_cli_sys_exit(args, 0)
 
         link_filename = FILENAME_FORMAT.format(
-            step_name=self.test_step, keyid=self.gpg_key_D924E9
+            step_name=self.test_step, keyid=self.gpg_key_d92439
         )
 
         self.assertTrue(os.path.exists(link_filename))

@@ -159,7 +159,7 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         )
 
         layout.add_functionary_keys_from_gpg_keyids(
-            [self.gpg_key_768C43, self.gpg_key_85DA58], gpg_home=self.gnupg_home
+            [self.gpg_key_768c43, self.gpg_key_85da58], gpg_home=self.gnupg_home
         )
 
         layout._validate_keys()

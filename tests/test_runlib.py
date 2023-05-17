@@ -72,7 +72,7 @@ def _apply_exclude_patterns(names, patterns):
     ]
 
 
-class Test_ApplyExcludePatterns(unittest.TestCase):
+class TestApplyExcludePatterns(unittest.TestCase):
     """Test _apply_exclude_patterns(names, exclude_patterns)"""
 
     def test_apply_exclude_explict(self):
@@ -1111,9 +1111,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         cls.key2 = import_rsa_privatekey_from_file(cls.key_path2)
 
         cls.step_name = "test-step"
-        cls.link_name = "{}.{:.8}.link".format(
-            cls.step_name, cls.key["keyid"]
-        )
+        cls.link_name = "{}.{:.8}.link".format(cls.step_name, cls.key["keyid"])
         cls.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
             step_name=cls.step_name, keyid=cls.key["keyid"]
         )
