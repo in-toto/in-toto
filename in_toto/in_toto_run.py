@@ -310,7 +310,7 @@ def main():
         )
 
     except Exception as e:
-        LOG.error("(in-toto-run) {0}: {1}".format(type(e).__name__, e))
+        LOG.error("(in-toto-run) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
     sys.exit(0)

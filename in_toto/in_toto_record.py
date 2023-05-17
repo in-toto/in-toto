@@ -291,9 +291,7 @@ def main():
 
     except Exception as e:
         LOG.error(
-            "(in-toto-record {0}) {1}: {2}".format(
-                args.command, type(e).__name__, e
-            )
+            "(in-toto-record %s) %s: %s", args.command, type(e).__name__, e
         )
         sys.exit(1)
 

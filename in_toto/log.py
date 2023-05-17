@@ -89,7 +89,7 @@ class InTotoLogger(_LOGGER_CLASS):
 
     QUIET = logging.CRITICAL + 1
 
-    def error(self, msg):
+    def error(self, msg, *args):
         """Show stacktrace depending on its availability and the logger's log
         level, i.e. only show stacktrace in DEBUG level."""
         show_stacktrace = self.level == logging.DEBUG and sys.exc_info() != (
@@ -97,7 +97,7 @@ class InTotoLogger(_LOGGER_CLASS):
             None,
             None,
         )
-        return super().error(msg, exc_info=show_stacktrace)
+        return super().error(msg, *args, exc_info=show_stacktrace)
 
     # Allow non snake_case function name for consistency with logging library
     def setLevelVerboseOrQuiet(

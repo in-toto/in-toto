@@ -137,13 +137,13 @@ def _sign_and_dump_metadata(metadata, args):
         elif _type == "layout":  # pragma: no branch
             out_path = args.file
 
-        LOG.info("Dumping {0} to '{1}'...".format(_type, out_path))
+        LOG.info("Dumping %s to '%s'...", _type, out_path)
 
         metadata.dump(out_path)
         sys.exit(0)
 
     except Exception as e:
-        LOG.error("The following error occurred while signing: " "{}".format(e))
+        LOG.error("The following error occurred while signing: %s", e)
         sys.exit(2)
 
 
@@ -177,20 +177,17 @@ def _verify_metadata(metadata, args):
 
         for keyid, verification_key in pub_key_dict.items():
             metadata.verify_signature(verification_key)
-            LOG.info(
-                "Signature verification passed for keyid '{}'".format(keyid)
-            )
+            LOG.info("Signature verification passed for keyid '%s'", keyid)
 
         sys.exit(0)
 
     except exceptions.SignatureVerificationError as e:
-        LOG.error("Signature verification failed: {}".format(e))
+        LOG.error("Signature verification failed: %s", e)
         sys.exit(1)
 
     except Exception as e:
         LOG.error(
-            "The following error occurred while verifying signatures: "
-            "{}".format(e)
+            "The following error occurred while verifying signatures: %s", e
         )
         sys.exit(2)
 
@@ -216,8 +213,9 @@ def _load_metadata(file_path):
 
     except Exception as e:
         LOG.error(
-            "The following error occurred while loading the file '{}': "
-            "{}".format(file_path, e)
+            "The following error occurred while loading the file '%s': %s",
+            file_path,
+            e,
         )
         sys.exit(2)
 

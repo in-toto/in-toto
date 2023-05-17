@@ -35,6 +35,7 @@ import securesystemslib.exceptions
 import securesystemslib.gpg.functions
 from dateutil.relativedelta import relativedelta
 from securesystemslib.gpg.constants import have_gpg
+from securesystemslib.gpg.exceptions import KeyExpirationError
 from securesystemslib.interface import (
     import_publickeys_from_file,
     import_rsa_privatekey_from_file,
@@ -212,10 +213,9 @@ class TestVerifyCommandAlignment(unittest.TestCase):
         with patch("in_toto.verifylib.LOG") as mock_logging:
             verify_command_alignment(self.command, expected_command)
             mock_logging.warning.assert_called_with(
-                "Run command '{0}'"
-                " differs from expected command '{1}'".format(
-                    self.command, expected_command
-                )
+                "Run command '%s' differs from expected command '%s'",
+                self.command,
+                expected_command,
             )
 
     def test_commands_do_not_align_at_all_log_warning(self):
@@ -225,10 +225,9 @@ class TestVerifyCommandAlignment(unittest.TestCase):
         with patch("in_toto.verifylib.LOG") as mock_logging:
             verify_command_alignment(self.command, expected_command)
             mock_logging.warning.assert_called_with(
-                "Run command '{0}'"
-                " differs from expected command '{1}'".format(
-                    self.command, expected_command
-                )
+                "Run command '%s' differs from expected command '%s'",
+                self.command,
+                expected_command,
             )
 
 
@@ -1483,11 +1482,8 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
         ) as mock_log:
             verify_link_signature_thresholds(layout, chain_link_dict)
 
-        msg = mock_log.info.call_args[0][0]
-        self.assertTrue(
-            "Skipping link" in msg and "expired" in msg,
-            "Unexpected log message: {}".format(msg),
-        )
+        self.assertEqual(mock_log.info.call_args[0][0], "Skipping link. %s")
+        self.assertIsInstance(mock_log.info.call_args[0][1], KeyExpirationError)
 
 
 class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
