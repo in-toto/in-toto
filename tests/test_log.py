@@ -25,6 +25,8 @@ import in_toto.log
 
 
 class TestInTotoLogger(unittest.TestCase):
+    """Test custom logger class."""
+
     def test_set_level_verbose_or_quiet(self):
         """Test set level convenience method."""
         logger = in_toto.log.InTotoLogger("test-in-toto-logger")

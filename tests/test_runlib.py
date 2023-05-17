@@ -647,6 +647,8 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
 
 
 class TestSubprocess(unittest.TestCase):
+    """Test subprocess standard stream duplication."""
+
     def test_run_duplicate_streams(self):
         """Test output indeed duplicated."""
         # Command that prints 'foo' to stdout and 'bar' to stderr.

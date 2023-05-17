@@ -32,6 +32,8 @@ from in_toto.common_args import (
 
 
 class TestCommonArgs(unittest.TestCase):
+    """Test CLI utils."""
+
     def test_parse_password_and_prompt_args(self):
         """Test parse -P/--password optional arg (nargs=?, const=True)."""
         parser = argparse.ArgumentParser()
@@ -52,6 +54,8 @@ class TestCommonArgs(unittest.TestCase):
 
 
 class TestArgparseActionGroupHelpers(unittest.TestCase):
+    """Test functions to hack cli output."""
+
     # pylint: disable=protected-access
 
     def setUp(self):
