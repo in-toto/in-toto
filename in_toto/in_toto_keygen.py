@@ -176,7 +176,7 @@ def main():
             sys.exit(1)
         sys.exit(0)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error("(in-toto-keygen) %s: %s", type(e).__name__, e)
         sys.exit(1)
 

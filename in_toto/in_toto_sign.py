@@ -142,7 +142,7 @@ def _sign_and_dump_metadata(metadata, args):
         metadata.dump(out_path)
         sys.exit(0)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error("The following error occurred while signing: %s", e)
         sys.exit(2)
 
@@ -185,7 +185,7 @@ def _verify_metadata(metadata, args):
         LOG.error("Signature verification failed: %s", e)
         sys.exit(1)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error(
             "The following error occurred while verifying signatures: %s", e
         )
@@ -211,7 +211,7 @@ def _load_metadata(file_path):
     try:
         return Metadata.load(file_path)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error(
             "The following error occurred while loading the file '%s': %s",
             file_path,

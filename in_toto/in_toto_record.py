@@ -289,7 +289,7 @@ def main():
                 metadata_directory=args.metadata_directory,
             )
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error(
             "(in-toto-record %s) %s: %s", args.command, type(e).__name__, e
         )

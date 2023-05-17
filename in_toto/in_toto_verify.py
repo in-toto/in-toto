@@ -257,7 +257,7 @@ def main():
 
         verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error("(in-toto-verify) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
