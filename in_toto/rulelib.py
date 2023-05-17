@@ -203,6 +203,7 @@ def unpack_rule(rule):
             "dest_type": dest_type,
             "dest_name": dest_name,
         }
+    return None
 
 
 def pack_rule(

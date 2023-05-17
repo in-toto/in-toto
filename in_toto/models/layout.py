@@ -200,6 +200,7 @@ class Layout(Signable):
         for step in self.steps:  # pragma: no branch
             if step.name == step_name:
                 return step
+        return None
 
     def remove_step_by_name(self, step_name):
         """Removes steps identified by step_name from the layout.
@@ -254,6 +255,7 @@ class Layout(Signable):
         for inspection in self.inspect:  # pragma: no branch
             if inspection.name == inspection_name:
                 return inspection
+        return None
 
     def remove_inspection_by_name(self, inspection_name):
         """Removes inspections identified by inspection_name from the layout.
