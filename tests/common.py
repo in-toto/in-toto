@@ -108,6 +108,7 @@ class GenKeysMixin:
 
     @classmethod
     def set_up_keys(cls):
+        """Generate securesystemslib test keys and write to CWD."""
         # Generated unencrypted keys
         cls.rsa_key_path = generate_and_write_unencrypted_rsa_keypair()
         cls.rsa_key_id = os.path.basename(cls.rsa_key_path)

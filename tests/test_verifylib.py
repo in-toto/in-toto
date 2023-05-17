@@ -1354,6 +1354,7 @@ class TestInTotoVerifyThresholdsGpgSubkeys(
         self.tear_down_test_dir()
 
     def _verify_link_signature_tresholds(self, sig_id, auth_id, key_id):
+        """Helper to generate layout and signed links."""
         metablock = Metablock(signed=Link(name=self.step_name))
         metablock.sign_gpg(sig_id, self.gnupg_home)  # SIG
 
