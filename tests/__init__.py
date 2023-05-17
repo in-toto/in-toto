@@ -7,6 +7,8 @@ import sys
 
 import in_toto
 
+# pylint: disable=protected-access
+
 
 class CapturableStreamHandler(logging.StreamHandler):
     """Override logging.StreamHandler's stream property to always write log

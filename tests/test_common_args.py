@@ -18,6 +18,8 @@
   Test in_toto/common_args.py
 
 """
+# pylint: disable=protected-access
+
 import argparse
 import unittest
 

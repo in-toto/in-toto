@@ -21,6 +21,8 @@
   Test runlib functions.
 
 """
+# pylint: disable=protected-access
+
 import os
 import shutil
 import stat

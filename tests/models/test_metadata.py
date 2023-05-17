@@ -20,6 +20,8 @@
   Test in_toto.models.metadata.Metablock class methods.
 
 """
+# pylint: disable=protected-access
+
 
 import os
 import unittest

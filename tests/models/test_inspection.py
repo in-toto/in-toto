@@ -20,6 +20,8 @@
   Test inspection class functions.
 
 """
+# pylint: disable=protected-access
+
 
 import unittest
 

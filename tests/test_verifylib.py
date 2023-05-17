@@ -20,6 +20,7 @@
   Test verifylib functions.
 
 """
+# pylint: disable=protected-access
 
 import copy
 import glob
