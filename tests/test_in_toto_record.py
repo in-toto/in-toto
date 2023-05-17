@@ -27,8 +27,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import securesystemslib.interface  # pylint: disable=unused-import
-
 from in_toto.in_toto_record import main as in_toto_record_main
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from tests.common import CliTestCase, GenKeysMixin, GPGKeysMixin, TmpDirMixin

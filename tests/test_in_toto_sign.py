@@ -21,8 +21,6 @@ import shutil
 import unittest
 from unittest import mock
 
-import securesystemslib.interface  # pylint: disable=unused-import
-
 from in_toto.in_toto_sign import main as in_toto_sign_main
 from tests.common import CliTestCase, GenKeysMixin, GPGKeysMixin, TmpDirMixin
 
