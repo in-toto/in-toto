@@ -388,7 +388,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout
-    for junk, verify_key in keys_dict.items():
+    for _, verify_key in keys_dict.items():
         metadata.verify_signature(verify_key)
 
 
