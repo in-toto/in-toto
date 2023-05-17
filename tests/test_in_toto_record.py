@@ -44,21 +44,21 @@ class TestInTotoRecordTool(
     cli_main_func = staticmethod(in_toto_record_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory,
         generate key pair, dummy artifact and base arguments."""
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
+        cls.set_up_keys()
 
-        self.test_artifact1 = "test_artifact1"
-        self.test_artifact2 = "test_artifact2"
-        Path(self.test_artifact1).touch()
-        Path(self.test_artifact2).touch()
+        cls.test_artifact1 = "test_artifact1"
+        cls.test_artifact2 = "test_artifact2"
+        Path(cls.test_artifact1).touch()
+        Path(cls.test_artifact2).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_start_stop(self):
         """Test CLI command record start/stop with various arguments."""
@@ -372,20 +372,20 @@ class TestInTotoRecordToolWithDSSE(
     cli_main_func = staticmethod(in_toto_record_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory,
         generate key pair, dummy artifact and base arguments."""
-        self.set_up_test_dir()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_keys()
 
-        self.test_artifact1 = "test_artifact1"
-        self.test_artifact2 = "test_artifact2"
-        Path(self.test_artifact1).touch()
-        Path(self.test_artifact2).touch()
+        cls.test_artifact1 = "test_artifact1"
+        cls.test_artifact2 = "test_artifact2"
+        Path(cls.test_artifact1).touch()
+        Path(cls.test_artifact2).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_start_stop(self):
         """Test CLI command record start/stop with various arguments."""

@@ -183,9 +183,9 @@ class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
     """Test verifylib.verify_command_alignment(command, expected_command)"""
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         # Create layout with one inspection
-        self.layout = Layout.read(
+        cls.layout = Layout.read(
             {
                 "_type": "layout",
                 "inspect": [],
@@ -203,19 +203,19 @@ class Test_SubstituteOnVerify(unittest.TestCase, TmpDirMixin):
             os.path.dirname(os.path.realpath(__file__)), "demo_files"
         )
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Copy demo files to temp dir
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         # load alice's key
-        self.alice = import_rsa_privatekey_from_file("alice")
-        self.alice_pub_dict = import_publickeys_from_file(["alice.pub"])
+        cls.alice = import_rsa_privatekey_from_file("alice")
+        cls.alice_pub_dict = import_publickeys_from_file(["alice.pub"])
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_substitute(self):
         """Do a simple substitution on the expected_command field"""

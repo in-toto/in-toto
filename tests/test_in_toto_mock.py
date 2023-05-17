@@ -39,27 +39,27 @@ class TestInTotoMockTool(CliTestCase, TmpDirMixin):
     cli_main_func = staticmethod(in_toto_mock_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory,
         dummy artifact and base arguments."""
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Below tests override the base logger ('in_toto') log level to
         # `logging.INFO`. We cache the original log level before running the tests
         # to restore it afterwards.
-        self._base_log_level = logger.level
+        cls._base_log_level = logger.level
 
-        self.test_step = "test_step"
-        self.test_link = self.test_step + ".link"
-        self.test_artifact = "test_artifact"
-        Path(self.test_artifact).touch()
+        cls.test_step = "test_step"
+        cls.test_link = cls.test_step + ".link"
+        cls.test_artifact = "test_artifact"
+        Path(cls.test_artifact).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
         # Restore log level to what it was before running in-toto-mock
-        logger.setLevel(self._base_log_level)
+        logger.setLevel(cls._base_log_level)
 
     def tearDown(self):
         try:

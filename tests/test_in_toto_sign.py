@@ -34,35 +34,35 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
     cli_main_func = staticmethod(in_toto_sign_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         # Find demo files
         demo_files = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "demo_files"
         )
 
         # Create and change into temporary directory
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
+        cls.set_up_keys()
 
         # Copy demo files to temp dir
         for file_path in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
+            shutil.copy(os.path.join(demo_files, file_path), cls.test_dir)
 
-        self.layout_path = "demo.layout.template"
-        self.link_path = "package.2f89b927.link"
-        self.alice_path = "alice"
-        self.alice_pub_path = "alice.pub"
-        self.bob_path = "bob"
-        self.bob_pub_path = "bob.pub"
-        self.carl_path = "carl"
-        self.carl_pub_path = "carl.pub"
-        self.danny_path = "danny"
-        self.danny_pub_path = "danny.pub"
+        cls.layout_path = "demo.layout.template"
+        cls.link_path = "package.2f89b927.link"
+        cls.alice_path = "alice"
+        cls.alice_pub_path = "alice.pub"
+        cls.bob_path = "bob"
+        cls.bob_pub_path = "bob.pub"
+        cls.carl_path = "carl"
+        cls.carl_pub_path = "carl.pub"
+        cls.danny_path = "danny"
+        cls.danny_pub_path = "danny.pub"
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_sign_and_verify(self):
         """Test signing and verifying Layout and Link metadata with
@@ -469,7 +469,7 @@ class TestInTotoSignToolWithDSSE(
     cli_main_func = staticmethod(in_toto_sign_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         # Find demo files
         demo_files = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "demo_files"
@@ -481,32 +481,32 @@ class TestInTotoSignToolWithDSSE(
         )
 
         # Create and change into temporary directory
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
+        cls.set_up_keys()
 
         # Copy demo files to temp dir
         for file_path in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, file_path), self.test_dir)
+            shutil.copy(os.path.join(demo_files, file_path), cls.test_dir)
 
         # Copy demo DSSE files to temp dir
         for file_path in os.listdir(demo_dsse_files):
-            shutil.copy(os.path.join(demo_dsse_files, file_path), self.test_dir)
+            shutil.copy(os.path.join(demo_dsse_files, file_path), cls.test_dir)
 
-        self.layout_path = "demo.layout.template"
-        self.link_path = "package.2f89b927.link"
-        self.alice_path = "alice"
-        self.alice_pub_path = "alice.pub"
-        self.bob_path = "bob"
-        self.bob_pub_path = "bob.pub"
-        self.carl_path = "carl"
-        self.carl_pub_path = "carl.pub"
-        self.danny_path = "danny"
-        self.danny_pub_path = "danny.pub"
+        cls.layout_path = "demo.layout.template"
+        cls.link_path = "package.2f89b927.link"
+        cls.alice_path = "alice"
+        cls.alice_pub_path = "alice.pub"
+        cls.bob_path = "bob"
+        cls.bob_pub_path = "bob.pub"
+        cls.carl_path = "carl"
+        cls.carl_pub_path = "carl.pub"
+        cls.danny_path = "danny"
+        cls.danny_pub_path = "danny.pub"
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_sign_and_verify(self):
         """Test signing and verifying Layout and Link metadata with

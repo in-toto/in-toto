@@ -55,7 +55,7 @@ class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
     cli_main_func = staticmethod(in_toto_verify_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -75,11 +75,11 @@ class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
             os.path.dirname(os.path.realpath(__file__)), "scripts"
         )
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Copy demo files to temp dir
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         shutil.copytree(scripts_directory, "scripts")
 
@@ -87,25 +87,25 @@ class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
         layout_template = Metadata.load("demo.layout.template")
 
         # Store layout paths to be used in tests
-        self.layout_single_signed_path = "single-signed.layout"
-        self.layout_double_signed_path = "double-signed.layout"
+        cls.layout_single_signed_path = "single-signed.layout"
+        cls.layout_double_signed_path = "double-signed.layout"
 
         # Import layout signing keys
         alice = import_rsa_privatekey_from_file("alice")
         bob = import_rsa_privatekey_from_file("bob")
-        self.alice_path = "alice.pub"
-        self.bob_path = "bob.pub"
+        cls.alice_path = "alice.pub"
+        cls.bob_path = "bob.pub"
 
         # dump a single signed layout
         layout_template.sign(alice)
-        layout_template.dump(self.layout_single_signed_path)
+        layout_template.dump(cls.layout_single_signed_path)
         # dump a double signed layout
         layout_template.sign(bob)
-        layout_template.dump(self.layout_double_signed_path)
+        layout_template.dump(cls.layout_double_signed_path)
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_main_required_args(self):
         """Test in-toto-verify CLI tool with required arguments."""
@@ -189,7 +189,7 @@ class TestInTotoVerifyToolWithDSSE(CliTestCase, TmpDirMixin):
     cli_main_func = staticmethod(in_toto_verify_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -215,14 +215,14 @@ class TestInTotoVerifyToolWithDSSE(CliTestCase, TmpDirMixin):
             os.path.dirname(os.path.realpath(__file__)), "scripts"
         )
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Copy demo files to temp dir
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         for fn in os.listdir(demo_dsse_files):
-            shutil.copy(os.path.join(demo_dsse_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_dsse_files, fn), cls.test_dir)
 
         shutil.copytree(scripts_directory, "scripts")
 
@@ -230,25 +230,25 @@ class TestInTotoVerifyToolWithDSSE(CliTestCase, TmpDirMixin):
         layout_template = Metadata.load("demo.layout.template")
 
         # Store layout paths to be used in tests
-        self.layout_single_signed_path = "single-signed.layout"
-        self.layout_double_signed_path = "double-signed.layout"
+        cls.layout_single_signed_path = "single-signed.layout"
+        cls.layout_double_signed_path = "double-signed.layout"
 
         # Import layout signing keys
         alice = import_rsa_privatekey_from_file("alice")
         bob = import_rsa_privatekey_from_file("bob")
-        self.alice_path = "alice.pub"
-        self.bob_path = "bob.pub"
+        cls.alice_path = "alice.pub"
+        cls.bob_path = "bob.pub"
 
         # dump a single signed layout
         layout_template.create_signature(SSlibSigner(alice))
-        layout_template.dump(self.layout_single_signed_path)
+        layout_template.dump(cls.layout_single_signed_path)
         # dump a double signed layout
         layout_template.create_signature(SSlibSigner(bob))
-        layout_template.dump(self.layout_double_signed_path)
+        layout_template.dump(cls.layout_double_signed_path)
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_main_required_args(self):
         """Test in-toto-verify CLI tool with required arguments."""
@@ -305,7 +305,7 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
     cli_main_func = staticmethod(in_toto_verify_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -324,11 +324,11 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
             os.path.dirname(os.path.realpath(__file__)), "scripts"
         )
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Copy demo files to temp dir
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         shutil.copytree(scripts_directory, "scripts")
 
@@ -336,22 +336,22 @@ class TestInTotoVerifyToolMixedKeys(CliTestCase, TmpDirMixin):
         layout_template = Metadata.load("demo.layout.template")
 
         # Store layout paths to be used in tests
-        self.layout_double_signed_path = "double-signed.layout"
+        cls.layout_double_signed_path = "double-signed.layout"
 
         # Import layout signing keys
         alice = import_rsa_privatekey_from_file("alice")
         danny = import_ed25519_privatekey_from_file("danny")
-        self.alice_path = "alice.pub"
-        self.danny_path = "danny.pub"
+        cls.alice_path = "alice.pub"
+        cls.danny_path = "danny.pub"
 
         # dump a double signed layout
         layout_template.sign(alice)
         layout_template.sign(danny)
-        layout_template.dump(self.layout_double_signed_path)
+        layout_template.dump(cls.layout_double_signed_path)
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_main_multiple_keys(self):
         """Test in-toto-verify CLI tool with multiple keys."""
@@ -375,7 +375,7 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
     cli_main_func = staticmethod(in_toto_verify_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -400,14 +400,14 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
             os.path.dirname(os.path.realpath(__file__)), "scripts"
         )
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Copy demo files to temp dir
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         for fn in os.listdir(demo_dsse_files):
-            shutil.copy(os.path.join(demo_dsse_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_dsse_files, fn), cls.test_dir)
 
         shutil.copytree(scripts_directory, "scripts")
 
@@ -415,22 +415,22 @@ class TestInTotoVerifyToolMixedKeysWithDSSE(CliTestCase, TmpDirMixin):
         layout_template = Metadata.load("demo.layout.template")
 
         # Store layout paths to be used in tests
-        self.layout_double_signed_path = "double-signed.layout"
+        cls.layout_double_signed_path = "double-signed.layout"
 
         # Import layout signing keys
         alice = import_rsa_privatekey_from_file("alice")
         danny = import_ed25519_privatekey_from_file("danny")
-        self.alice_path = "alice.pub"
-        self.danny_path = "danny.pub"
+        cls.alice_path = "alice.pub"
+        cls.danny_path = "danny.pub"
 
         # dump a double signed layout
         layout_template.create_signature(SSlibSigner(alice))
         layout_template.create_signature(SSlibSigner(danny))
-        layout_template.dump(self.layout_double_signed_path)
+        layout_template.dump(cls.layout_double_signed_path)
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_main_multiple_keys(self):
         """Test in-toto-verify CLI tool with multiple keys."""
@@ -455,7 +455,7 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
     cli_main_func = staticmethod(in_toto_verify_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Copy test gpg rsa keyring, gpg demo metadata files and demo final
         product to tmp test dir."""
         # Copy gpg demo metadata files
@@ -468,11 +468,11 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
             os.path.dirname(os.path.realpath(__file__)), "scripts"
         )
 
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
 
         for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), self.test_dir)
+            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
 
         # Change into test dir
         shutil.copytree(scripts_directory, "scripts")
@@ -480,13 +480,13 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
         # Sign layout template with gpg key
         layout_template = Metadata.load("demo.layout.template")
 
-        self.layout_path = "gpg_signed.layout"
-        layout_template.sign_gpg(self.gpg_key_0C8A17, self.gnupg_home)
-        layout_template.dump(self.layout_path)
+        cls.layout_path = "gpg_signed.layout"
+        layout_template.sign_gpg(cls.gpg_key_0C8A17, cls.gnupg_home)
+        layout_template.dump(cls.layout_path)
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_gpg_signed_layout_with_gpg_functionary_keys(self):
         """Successfully test demo supply chain where the layout lists gpg keys
