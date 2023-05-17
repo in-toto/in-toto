@@ -933,7 +933,7 @@ def in_toto_record_stop(
         )
         unfinished_fn_list = glob.glob(unfinished_fn_glob)
 
-        if not len(unfinished_fn_list):
+        if not unfinished_fn_list:
             raise in_toto.exceptions.LinkNotFoundError(
                 "Could not find a preliminary"
                 " link for step '{}' in the current working directory.".format(

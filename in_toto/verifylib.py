@@ -941,7 +941,7 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
     """
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
-    if len(filtered_artifacts):
+    if filtered_artifacts:
         raise RuleVerificationError(
             "'DISALLOW {}' matched the following "
             "artifacts: {}\n{}".format(
