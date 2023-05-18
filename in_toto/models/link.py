@@ -91,7 +91,7 @@ class Link(Signable):
     environment = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Link, self).__init__()
+        super().__init__()
 
         self._type = "link"
         self.name = kwargs.get("name")

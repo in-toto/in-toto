@@ -106,7 +106,6 @@ def unpack_rule(rule):
 
     # Type is one of "CREATE", "MODIFY", "DELETE", "ALLOW", "DISALLOW"
     if rule_type in GENERIC_RULES:
-        # pylint: disable=no-else-raise
         if rule_len != 2:
             raise securesystemslib.exceptions.FormatError(
                 "Wrong rule format,"
@@ -119,16 +118,13 @@ def unpack_rule(rule):
                 "REQUIRE <file>\n"
                 "Got:\n\t{}".format(rule)
             )
-        else:
-            return {
-                "rule_type": rule_type,
-                "pattern": pattern,
-            }
+        return {
+            "rule_type": rule_type,
+            "pattern": pattern,
+        }
 
     # Type is "MATCH"
-    # NOTE: Can't reach `else` branch, if the rule is neither in GENERIC_RULES
-    # nor in COMPLEX_RULES an exception is raised earlier.
-    elif rule_type in COMPLEX_RULES:  # pragma: no branch
+    if rule_type in COMPLEX_RULES:
         # ... IN <source-path-prefix> WITH (MATERIALS|PRODUCTS)
         # IN <destination-path-prefix> FROM <step>
         if (
@@ -203,6 +199,7 @@ def unpack_rule(rule):
             "dest_type": dest_type,
             "dest_name": dest_name,
         }
+    return None
 
 
 def pack_rule(

@@ -172,16 +172,12 @@ def main():
                 filepath=args.name, prompt=args.prompt
             )
         else:  # pragma: no cover
-            LOG.error(
-                "(in-toto-keygen) Unsupported keytype: {0}".format(
-                    str(args.type)
-                )
-            )
+            LOG.error("(in-toto-keygen) Unsupported keytype: %s", args.type)
             sys.exit(1)
         sys.exit(0)
 
-    except Exception as e:
-        LOG.error("(in-toto-keygen) {0}: {1}".format(type(e).__name__, e))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        LOG.error("(in-toto-keygen) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
 

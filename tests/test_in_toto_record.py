@@ -27,8 +27,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import securesystemslib.interface  # pylint: disable=unused-import
-
 from in_toto.in_toto_record import main as in_toto_record_main
 from in_toto.models.link import UNFINISHED_FILENAME_FORMAT
 from tests.common import CliTestCase, GenKeysMixin, GPGKeysMixin, TmpDirMixin
@@ -44,24 +42,25 @@ class TestInTotoRecordTool(
     cli_main_func = staticmethod(in_toto_record_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory,
         generate key pair, dummy artifact and base arguments."""
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
+        cls.set_up_keys()
 
-        self.test_artifact1 = "test_artifact1"
-        self.test_artifact2 = "test_artifact2"
-        Path(self.test_artifact1).touch()
-        Path(self.test_artifact2).touch()
+        cls.test_artifact1 = "test_artifact1"
+        cls.test_artifact2 = "test_artifact2"
+        Path(cls.test_artifact1).touch()
+        Path(cls.test_artifact2).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_start_stop(self):
         """Test CLI command record start/stop with various arguments."""
+        # pylint: disable=too-many-statements
 
         # Start/stop recording using rsa key
         args = ["--step-name", "test1", "--key", self.rsa_key_path]
@@ -266,7 +265,7 @@ class TestInTotoRecordTool(
             "--step-name",
             "test7",
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]
@@ -291,7 +290,7 @@ class TestInTotoRecordTool(
             "--step-name",
             "test-no-glob",
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]
@@ -312,7 +311,7 @@ class TestInTotoRecordTool(
             "--step-name",
             name,
             "--gpg",
-            self.gpg_key_768C43,
+            self.gpg_key_768c43,
             "--gpg-home",
             self.gnupg_home,
         ]
@@ -372,20 +371,20 @@ class TestInTotoRecordToolWithDSSE(
     cli_main_func = staticmethod(in_toto_record_main)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory,
         generate key pair, dummy artifact and base arguments."""
-        self.set_up_test_dir()
-        self.set_up_keys()
+        cls.set_up_test_dir()
+        cls.set_up_keys()
 
-        self.test_artifact1 = "test_artifact1"
-        self.test_artifact2 = "test_artifact2"
-        Path(self.test_artifact1).touch()
-        Path(self.test_artifact2).touch()
+        cls.test_artifact1 = "test_artifact1"
+        cls.test_artifact2 = "test_artifact2"
+        Path(cls.test_artifact1).touch()
+        Path(cls.test_artifact2).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_start_stop(self):
         """Test CLI command record start/stop with various arguments."""

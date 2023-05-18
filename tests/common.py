@@ -44,22 +44,6 @@ from securesystemslib.interface import (
 )
 
 
-def run_with_portable_scripts(decorated):
-    print("patching...")
-    scripts_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "scripts"
-    )
-    print("scripts are located in {}".format(scripts_path))
-
-    @patch.dict(
-        os.environ, {"PATH": "{};{}".format(scripts_path, os.environ["PATH"])}
-    )
-    class Patched(decorated):
-        pass
-
-    return Patched
-
-
 class TmpDirMixin:
     """Mixin with classmethods to create and change into a temporary directory,
     and to change back to the original CWD and remove the temporary directory.
@@ -87,10 +71,10 @@ class GPGKeysMixin:
     """
 
     gnupg_home = "rsa"
-    gpg_key_768C43 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
-    gpg_key_85DA58 = "8288ef560ed3795f9df2c0db56193089b285da58"
-    gpg_key_0C8A17 = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
-    gpg_key_D924E9 = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
+    gpg_key_768c43 = "7b3abb26b97b655ab9296bd15b0bd02e1c768c43"
+    gpg_key_85da58 = "8288ef560ed3795f9df2c0db56193089b285da58"
+    gpg_key_0c8a17 = "8465a1e2e0fb2b40adb2478e18fb3f537e0c8a17"
+    gpg_key_d92439 = "c5a0abe6ec19d0d65f85e2c39be9df5131d924e9"
 
     @classmethod
     def set_up_gpg_keys(cls):
@@ -108,6 +92,7 @@ class GenKeysMixin:
 
     @classmethod
     def set_up_keys(cls):
+        """Generate securesystemslib test keys and write to CWD."""
         # Generated unencrypted keys
         cls.rsa_key_path = generate_and_write_unencrypted_rsa_keypair()
         cls.rsa_key_id = os.path.basename(cls.rsa_key_path)
@@ -162,18 +147,14 @@ class CliTestCase(unittest.TestCase):
         function, to be used as first argument when patching sys.argv in
         self.assert_cli_sys_exit.
         """
-        if not callable(self.cli_main_func):
-            raise Exception(
-                "Subclasses of `CliTestCase` need to assign the main"
-                " function of the cli tool to test using `staticmethod()`: {}".format(
-                    self.__class__.__name__
-                )
-            )
+        # subclasses of `CliTestCase` must assign the main function of the
+        # tested cli tool using `staticmethod()`
+        assert callable(self.cli_main_func)
 
         file_path = inspect.getmodule(self.cli_main_func).__file__
         self.file_name = os.path.basename(file_path)
 
-        super(CliTestCase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def assert_cli_sys_exit(self, cli_args, status):
         """Test helper to mock command line call and assert return value.

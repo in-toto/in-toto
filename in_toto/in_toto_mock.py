@@ -133,8 +133,8 @@ def main():
     try:
         in_toto.runlib.in_toto_mock(args.name, args.link_cmd, args.use_dsse)
 
-    except Exception as e:
-        LOG.error("(in-toto-mock) {0}: {1}".format(type(e).__name__, e))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        LOG.error("(in-toto-mock) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
     sys.exit(0)

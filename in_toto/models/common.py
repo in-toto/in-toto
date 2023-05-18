@@ -27,7 +27,7 @@ import attr
 import securesystemslib.formats
 
 
-class ValidationMixin(object):
+class ValidationMixin:
     """The validation mixin provides a self-inspecting method, validate, to
     allow in-toto's objects to check that they are proper."""
 

@@ -155,6 +155,8 @@ class GPGKey(Key):
       subkeys: A dictionary containing keyid and GPG subkey.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     type: str
     method: str
     hashes: List[str]
@@ -175,8 +177,8 @@ class GPGKey(Key):
         gpg_subkeys = None
         if subkeys_dict:
             gpg_subkeys = {
-                _keyid: GPGKey.from_dict(_keyid, subkey_dict)
-                for (_keyid, subkey_dict) in subkeys_dict.items()
+                keyid_: GPGKey.from_dict(keyid_, subkey_dict)
+                for (keyid_, subkey_dict) in subkeys_dict.items()
             }
 
         return cls(

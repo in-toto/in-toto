@@ -211,13 +211,13 @@ file to the target directory (on stop).
         version="{} {}".format(parser.prog, __version__),
     )
 
-    for _parser, _order in [
+    for parser_, order in [
         (parser, ["Positional Arguments", OPTS_TITLE]),
         (subparser_start, None),
         (subparser_stop, None),
     ]:
-        title_case_action_groups(_parser)
-        sort_action_groups(_parser, _order)
+        title_case_action_groups(parser_)
+        sort_action_groups(parser_, order)
 
     return parser
 
@@ -289,11 +289,9 @@ def main():
                 metadata_directory=args.metadata_directory,
             )
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.error(
-            "(in-toto-record {0}) {1}: {2}".format(
-                args.command, type(e).__name__, e
-            )
+            "(in-toto-record %s) %s: %s", args.command, type(e).__name__, e
         )
         sys.exit(1)
 

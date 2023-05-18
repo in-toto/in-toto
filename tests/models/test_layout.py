@@ -20,6 +20,7 @@
   Test layout class functions.
 
 """
+# pylint: disable=protected-access
 
 import os
 import shutil
@@ -39,28 +40,28 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
     """Test Layout methods."""
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create temporary test directory and copy gpg keychain, and rsa keys from
         demo files."""
         demo_files = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "..", "demo_files"
         )
 
-        self.set_up_test_dir()
-        self.set_up_gpg_keys()
+        cls.set_up_test_dir()
+        cls.set_up_gpg_keys()
 
         # Copy keys to temp test dir
         key_names = ["bob", "bob.pub", "carl.pub"]
         for name in key_names:
             shutil.copy(os.path.join(demo_files, name), name)
 
-        self.key_path = os.path.join(self.test_dir, "bob")
-        self.pubkey_path1 = os.path.join(self.test_dir, "bob.pub")
-        self.pubkey_path2 = os.path.join(self.test_dir, "carl.pub")
+        cls.key_path = os.path.join(cls.test_dir, "bob")
+        cls.pubkey_path1 = os.path.join(cls.test_dir, "bob.pub")
+        cls.pubkey_path2 = os.path.join(cls.test_dir, "carl.pub")
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_set_relative_expiration(self):
         """Test adding expiration date relative from today."""
@@ -159,7 +160,7 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         )
 
         layout.add_functionary_keys_from_gpg_keyids(
-            [self.gpg_key_768C43, self.gpg_key_85DA58], gpg_home=self.gnupg_home
+            [self.gpg_key_768c43, self.gpg_key_85da58], gpg_home=self.gnupg_home
         )
 
         layout._validate_keys()

@@ -220,7 +220,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
             stderr_fd, "w"
         ) as stderr_writer:
             # Store stream results in mutable dict to update it inside nested helper
-            _std = {"out": "", "err": ""}
+            streams = {"out": "", "err": ""}
 
             def _duplicate_streams():
                 """Helper to read from child process standard streams, write their
@@ -236,8 +236,8 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 sys.stderr.write(stderr_part)
                 sys.stdout.flush()
                 sys.stderr.flush()
-                _std["out"] += stdout_part
-                _std["err"] += stderr_part
+                streams["out"] += stdout_part
+                streams["err"] += stderr_part
 
             # Start child process, writing its standard streams to temporary files
             proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
@@ -276,7 +276,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 os.remove(name)
 
     # Return process exit code and captured streams
-    return proc.poll(), _std["out"], _std["err"]
+    return proc.poll(), streams["out"], streams["err"]
 
 
 def execute_link(link_cmd_args, record_streams):
@@ -376,7 +376,7 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     )
 
     filename = FILENAME_FORMAT_SHORT.format(step_name=name)
-    LOG.info("Storing unsigned link metadata to '{}'...".format(filename))
+    LOG.info("Storing unsigned link metadata to '%s'...", filename)
     link_metadata.dump(filename)
     return link_metadata
 
@@ -507,7 +507,9 @@ def in_toto_run(
     A Metadata object that contains the resulting link object.
 
   """
-    LOG.info("Running '{}'...".format(name))
+    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
+
+    LOG.info("Running '%s'...", name)
 
     # Check key formats to fail early
     if signing_key:
@@ -525,7 +527,7 @@ def in_toto_run(
         securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
 
     if material_list:
-        LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
+        LOG.info("Recording materials '%s'...", ", ".join(material_list))
 
     materials_dict = record_artifacts_as_dict(
         material_list,
@@ -540,14 +542,14 @@ def in_toto_run(
         securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(
             link_cmd_args
         )
-        LOG.info("Running command '{}'...".format(" ".join(link_cmd_args)))
+        LOG.info("Running command '%s'...", " ".join(link_cmd_args))
         byproducts = execute_link(link_cmd_args, record_streams)
     else:
         byproducts = {}
 
     if product_list:
         securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
-        LOG.info("Recording products '{}'...".format(", ".join(product_list)))
+        LOG.info("Recording products '%s'...", ", ".join(product_list))
 
     products_dict = record_artifacts_as_dict(
         product_list,
@@ -602,7 +604,7 @@ def in_toto_run(
         if metadata_directory is not None:
             filename = os.path.join(metadata_directory, filename)
 
-        LOG.info("Storing link metadata to '{}'...".format(filename))
+        LOG.info("Storing link metadata to '%s'...", filename)
         link_metadata.dump(filename)
 
     return link_metadata
@@ -701,7 +703,9 @@ def in_toto_record_start(
     Writes preliminary link metadata file to disk.
 
   """
-    LOG.info("Start recording '{}'...".format(step_name))
+    # pylint: disable=too-many-locals
+
+    LOG.info("Start recording '%s'...", step_name)
 
     # Fail if there is no signing key arg at all
     if not signing_key and not gpg_keyid and not gpg_use_default:
@@ -723,7 +727,7 @@ def in_toto_record_start(
         securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
 
     if material_list:
-        LOG.info("Recording materials '{}'...".format(", ".join(material_list)))
+        LOG.info("Recording materials '%s'...", ", ".join(material_list))
 
     materials_dict = record_artifacts_as_dict(
         material_list,
@@ -775,9 +779,7 @@ def in_toto_record_start(
         step_name=step_name, keyid=signing_keyid
     )
 
-    LOG.info(
-        "Storing preliminary link metadata to '{}'...".format(unfinished_fn)
-    )
+    LOG.info("Storing preliminary link metadata to '%s'...", unfinished_fn)
     link_metadata.dump(unfinished_fn)
 
 
@@ -895,7 +897,8 @@ def in_toto_record_stop(
     Removes preliminary link metadata file from disk.
 
   """
-    LOG.info("Stop recording '{}'...".format(step_name))
+    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
+    LOG.info("Stop recording '%s'...", step_name)
 
     # Check that we have something to sign and if the formats are right
     if not signing_key and not gpg_keyid and not gpg_use_default:
@@ -933,7 +936,7 @@ def in_toto_record_stop(
         )
         unfinished_fn_list = glob.glob(unfinished_fn_glob)
 
-        if not len(unfinished_fn_list):
+        if not unfinished_fn_list:
             raise in_toto.exceptions.LinkNotFoundError(
                 "Could not find a preliminary"
                 " link for step '{}' in the current working directory.".format(
@@ -952,7 +955,7 @@ def in_toto_record_stop(
 
         unfinished_fn = unfinished_fn_list[0]
 
-    LOG.info("Loading preliminary link metadata '{}'...".format(unfinished_fn))
+    LOG.info("Loading preliminary link metadata '%s'...", unfinished_fn)
     link_metadata = Metadata.load(unfinished_fn)
 
     # The file must have been signed by the same key
@@ -1000,7 +1003,7 @@ def in_toto_record_stop(
 
     # Record products if a product path list was passed
     if product_list:
-        LOG.info("Recording products '{}'...".format(", ".join(product_list)))
+        LOG.info("Recording products '%s'...", ", ".join(product_list))
 
     link.products = record_artifacts_as_dict(
         product_list,
@@ -1043,10 +1046,10 @@ def in_toto_record_stop(
     if metadata_directory is not None:
         fn = os.path.join(metadata_directory, fn)
 
-    LOG.info("Storing link metadata to '{}'...".format(fn))
+    LOG.info("Storing link metadata to '%s'...", fn)
     link_metadata.dump(fn)
 
-    LOG.info("Removing unfinished link metadata '{}'...".format(unfinished_fn))
+    LOG.info("Removing unfinished link metadata '%s'...", unfinished_fn)
     os.remove(unfinished_fn)
 
 

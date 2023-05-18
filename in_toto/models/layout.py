@@ -80,6 +80,7 @@ class Layout(Signable):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
     _type = attr.ib()
     steps = attr.ib()
     inspect = attr.ib()
@@ -88,7 +89,7 @@ class Layout(Signable):
     readme = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Layout, self).__init__()
+        super().__init__()
         self._type = "layout"
         self.steps = kwargs.get("steps", [])
         self.inspect = kwargs.get("inspect", [])
@@ -200,6 +201,7 @@ class Layout(Signable):
         for step in self.steps:  # pragma: no branch
             if step.name == step_name:
                 return step
+        return None
 
     def remove_step_by_name(self, step_name):
         """Removes steps identified by step_name from the layout.
@@ -254,6 +256,7 @@ class Layout(Signable):
         for inspection in self.inspect:  # pragma: no branch
             if inspection.name == inspection_name:
                 return inspection
+        return None
 
     def remove_inspection_by_name(self, inspection_name):
         """Removes inspections identified by inspection_name from the layout.
@@ -505,7 +508,7 @@ class SupplyChainItem(ValidationMixin):
     expected_products = attr.ib()
 
     def __init__(self, **kwargs):
-        super(SupplyChainItem, self).__init__()
+        super().__init__()
         self.name = kwargs.get("name")
         self.expected_materials = kwargs.get("expected_materials", [])
         self.expected_products = kwargs.get("expected_products", [])
@@ -600,7 +603,7 @@ class Step(SupplyChainItem):
     threshold = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Step, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._type = "step"
         self.pubkeys = kwargs.get("pubkeys", [])
         self.expected_command = kwargs.get("expected_command", [])
@@ -689,7 +692,7 @@ class Inspection(SupplyChainItem):
     run = attr.ib()
 
     def __init__(self, **kwargs):
-        super(Inspection, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._type = "inspection"
         self.run = kwargs.get("run", [])
 

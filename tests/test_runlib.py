@@ -21,6 +21,8 @@
   Test runlib functions.
 
 """
+# pylint: disable=protected-access
+
 import os
 import shutil
 import stat
@@ -72,7 +74,7 @@ def _apply_exclude_patterns(names, patterns):
     ]
 
 
-class Test_ApplyExcludePatterns(unittest.TestCase):
+class TestApplyExcludePatterns(unittest.TestCase):
     """Test _apply_exclude_patterns(names, exclude_patterns)"""
 
     def test_apply_exclude_explict(self):
@@ -121,8 +123,10 @@ class Test_ApplyExcludePatterns(unittest.TestCase):
 class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
     """Test record_artifacts_as_dict(artifacts)."""
 
+    # pylint: disable=too-many-public-methods
+
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temp test directory with dummy artifacts.
         |-- bar
         |-- foo
@@ -134,18 +138,18 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         """
 
         # Backup and clear user set exclude patterns and base path
-        self.artifact_exclude_orig = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
-        self.artifact_base_path_orig = in_toto.settings.ARTIFACT_BASE_PATH
+        cls.artifact_exclude_orig = in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS
+        cls.artifact_base_path_orig = in_toto.settings.ARTIFACT_BASE_PATH
         in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
         # Create files on 3 levels
         os.mkdir("subdir")
         os.mkdir("subdir/subsubdir")
 
-        self.full_file_path_list = [
+        cls.full_file_path_list = [
             "foo",
             "bar",
             "#esc!",
@@ -154,16 +158,16 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             "subdir/subsubdir/foosubsub",
         ]
 
-        for path in self.full_file_path_list:
+        for path in cls.full_file_path_list:
             with open(path, "w", encoding="utf8") as fp:
                 fp.write(path)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
         """Change back to working dir, remove temp directory, restore settings."""
-        self.tear_down_test_dir()
-        in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = self.artifact_exclude_orig
-        in_toto.settings.ARTIFACT_BASE_PATH = self.artifact_base_path_orig
+        cls.tear_down_test_dir()
+        in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = cls.artifact_exclude_orig
+        in_toto.settings.ARTIFACT_BASE_PATH = cls.artifact_base_path_orig
 
     def tearDown(self):
         """Clear the ARTIFACT_EXLCUDES after every test."""
@@ -647,6 +651,8 @@ class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
 
 
 class TestSubprocess(unittest.TestCase):
+    """Test subprocess standard stream duplication."""
+
     def test_run_duplicate_streams(self):
         """Test output indeed duplicated."""
         # Command that prints 'foo' to stdout and 'bar' to stderr.
@@ -723,23 +729,23 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     """
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory, generate key pair and dummy
         material, read key pair."""
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
-        self.step_name = "test_step"
-        self.key_path = "test_key"
-        generate_and_write_unencrypted_rsa_keypair(self.key_path)
-        self.key = import_rsa_privatekey_from_file(self.key_path)
-        self.key_pub = import_rsa_publickey_from_file(self.key_path + ".pub")
+        cls.step_name = "test_step"
+        cls.key_path = "test_key"
+        generate_and_write_unencrypted_rsa_keypair(cls.key_path)
+        cls.key = import_rsa_privatekey_from_file(cls.key_path)
+        cls.key_pub = import_rsa_publickey_from_file(cls.key_path + ".pub")
 
-        self.test_artifact = "test_artifact"
-        Path(self.test_artifact).touch()
+        cls.test_artifact = "test_artifact"
+        Path(cls.test_artifact).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def tearDown(self):
         """Remove link file if it was created."""
@@ -1025,26 +1031,26 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
     """ "Test in_toto_record_start(step_name, key, material_list)."""
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory, generate key pair and dummy
         material, read key pair."""
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
-        self.key_path = "test_key"
-        generate_and_write_unencrypted_rsa_keypair(self.key_path)
-        self.key = import_rsa_privatekey_from_file(self.key_path)
+        cls.key_path = "test_key"
+        generate_and_write_unencrypted_rsa_keypair(cls.key_path)
+        cls.key = import_rsa_privatekey_from_file(cls.key_path)
 
-        self.step_name = "test_step"
-        self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
-            step_name=self.step_name, keyid=self.key["keyid"]
+        cls.step_name = "test_step"
+        cls.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+            step_name=cls.step_name, keyid=cls.key["keyid"]
         )
 
-        self.test_material = "test_material"
-        Path(self.test_material).touch()
+        cls.test_material = "test_material"
+        Path(cls.test_material).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_UNFINISHED_FILENAME_FORMAT(self):
         """Test if the unfinished filname format."""
@@ -1096,32 +1102,30 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
     """ "Test in_toto_record_stop(step_name, key, product_list)."""
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         """Create and change into temporary directory, generate two key pairs
         and dummy product."""
-        self.set_up_test_dir()
+        cls.set_up_test_dir()
 
-        self.key_path = "test-key"
-        self.key_path2 = "test-key2"
-        generate_and_write_unencrypted_rsa_keypair(self.key_path)
-        generate_and_write_unencrypted_rsa_keypair(self.key_path2)
-        self.key = import_rsa_privatekey_from_file(self.key_path)
-        self.key2 = import_rsa_privatekey_from_file(self.key_path2)
+        cls.key_path = "test-key"
+        cls.key_path2 = "test-key2"
+        generate_and_write_unencrypted_rsa_keypair(cls.key_path)
+        generate_and_write_unencrypted_rsa_keypair(cls.key_path2)
+        cls.key = import_rsa_privatekey_from_file(cls.key_path)
+        cls.key2 = import_rsa_privatekey_from_file(cls.key_path2)
 
-        self.step_name = "test-step"
-        self.link_name = "{}.{:.8}.link".format(
-            self.step_name, self.key["keyid"]
-        )
-        self.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
-            step_name=self.step_name, keyid=self.key["keyid"]
+        cls.step_name = "test-step"
+        cls.link_name = "{}.{:.8}.link".format(cls.step_name, cls.key["keyid"])
+        cls.link_name_unfinished = UNFINISHED_FILENAME_FORMAT.format(
+            step_name=cls.step_name, keyid=cls.key["keyid"]
         )
 
-        self.test_product = "test_product"
-        Path(self.test_product).touch()
+        cls.test_product = "test_product"
+        Path(cls.test_product).touch()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_create_metadata_with_expected_product(self):
         """Test record stop records expected product."""

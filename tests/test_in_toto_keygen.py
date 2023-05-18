@@ -27,12 +27,12 @@ class TestInTotoKeyGenTool(unittest.TestCase, TmpDirMixin):
     logs/exits on Exception."""
 
     @classmethod
-    def setUpClass(self):
-        self.set_up_test_dir()
+    def setUpClass(cls):
+        cls.set_up_test_dir()
 
     @classmethod
-    def tearDownClass(self):
-        self.tear_down_test_dir()
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
 
     def test_main_required_args(self):
         """Test in-toto-keygen CLI tool with required arguments."""

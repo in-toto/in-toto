@@ -210,9 +210,7 @@ def run_all_inspections(layout, persist_inspection_links):
     """
     inspection_links_dict = {}
     for inspection in layout.inspect:
-        LOG.info(
-            "Executing command for inspection '{}'...".format(inspection.name)
-        )
+        LOG.info("Executing command for inspection '%s'...", inspection.name)
 
         # FIXME: We don't want to use the base path for runlib so we patch this
         # for now. This will not stay!
@@ -388,7 +386,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout
-    for junk, verify_key in keys_dict.items():
+    for _, verify_key in keys_dict.items():
         metadata.verify_signature(verify_key)
 
 
@@ -431,6 +429,8 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       authorized functionaries.
 
     """
+    # pylint: disable=too-many-branches, too-many-locals
+
     # Create an inverse keys-subkeys dictionary, with subkey keyids as
     # dictionary keys and main keys as dictionary values. This will be
     # required below to assess main-subkey trust delegations.
@@ -488,8 +488,10 @@ def verify_link_signature_thresholds(layout, steps_metadata):
 
             else:
                 LOG.info(
-                    "Skipping link. Keyid '{0}' is not authorized to sign links"
-                    " for step '{1}'".format(link_keyid, step.name)
+                    "Skipping link. Keyid '%s' is not authorized to sign links"
+                    " for step '%s'",
+                    link_keyid,
+                    step.name,
                 )
                 continue
 
@@ -499,23 +501,25 @@ def verify_link_signature_thresholds(layout, steps_metadata):
 
             except SignatureVerificationError:
                 LOG.info(
-                    "Skipping link. Broken link signature with keyid '{0}'"
-                    " for step '{1}'".format(link_keyid, step.name)
+                    "Skipping link. Broken link signature with keyid '%s'"
+                    " for step '%s'",
+                    link_keyid,
+                    step.name,
                 )
                 continue
 
             except KeyExpirationError as e:
-                LOG.info("Skipping link. {}".format(e))
+                LOG.info("Skipping link. %s", e)
                 continue
 
             # Warn if there are links signed by different subkeys of same main key
             if verification_key["keyid"] in used_main_keyids:
                 LOG.warning(
                     "Found links signed by different subkeys of the same main"
-                    " key '{}' for step '{}'. Only one of them is counted towards the"
-                    " step threshold.".format(
-                        verification_key["keyid"], step.name
-                    )
+                    " key '%s' for step '%s'. Only one of them is counted towards the"
+                    " step threshold.",
+                    verification_key["keyid"],
+                    step.name,
                 )
 
             used_main_keyids.append(verification_key["keyid"])
@@ -579,9 +583,9 @@ def verify_command_alignment(command, expected_command):
     # We chose the simplest solution for now, i.e. Warn if they do not align.
     if command != expected_command:
         LOG.warning(
-            "Run command '{0}' differs from expected command '{1}'".format(
-                command, expected_command
-            )
+            "Run command '%s' differs from expected command '%s'",
+            command,
+            expected_command,
         )
 
 
@@ -622,11 +626,10 @@ def verify_all_steps_command_alignment(layout, chain_link_dict):
         # providing that we verify command alignment AFTER threshold equality
         for keyid, link in key_link_dict.items():
             LOG.info(
-                "Verifying command alignment for '{0}'...".format(
-                    in_toto.models.link.FILENAME_FORMAT.format(
-                        step_name=step.name, keyid=keyid
-                    )
-                )
+                "Verifying command alignment for '%s'...",
+                in_toto.models.link.FILENAME_FORMAT.format(
+                    step_name=step.name, keyid=keyid
+                ),
             )
 
             command = link.command
@@ -941,7 +944,7 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
     """
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
-    if len(filtered_artifacts):
+    if filtered_artifacts:
         raise RuleVerificationError(
             "'DISALLOW {}' matched the following "
             "artifacts: {}\n{}".format(
@@ -1101,12 +1104,12 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     # Process rules and remove consumed items from queue in each iteration
     for rule in rules:
-        LOG.info("Verifying '{}'...".format(" ".join(rule)))
+        LOG.info("Verifying '%s'...", " ".join(rule))
 
         # Parse the rule and create two shortcuts to contained rule data
         rule_data = in_toto.rulelib.unpack_rule(rule)
         _type = rule_data["rule_type"]
-        _pattern = rule_data["pattern"]
+        pattern = rule_data["pattern"]
 
         # Initialize empty consumed set as fallback for rules that do not consume
         # artifacts. All rules except "disallow" and "require" consume artifacts.
@@ -1119,29 +1122,29 @@ def verify_item_rules(source_name, source_type, rules, links):
 
         elif _type == "create":
             consumed = verify_create_rule(
-                _pattern, artifacts_queue, materials_paths, products_paths
+                pattern, artifacts_queue, materials_paths, products_paths
             )
 
         elif _type == "delete":
             consumed = verify_delete_rule(
-                _pattern, artifacts_queue, materials_paths, products_paths
+                pattern, artifacts_queue, materials_paths, products_paths
             )
 
         elif _type == "modify":
             consumed = verify_modify_rule(
-                _pattern, artifacts_queue, materials_dict, products_dict
+                pattern, artifacts_queue, materials_dict, products_dict
             )
 
         elif _type == "allow":
-            consumed = verify_allow_rule(_pattern, artifacts_queue)
+            consumed = verify_allow_rule(pattern, artifacts_queue)
 
         # It's up to the "disallow" and "require" rule to raise an error if
         # artifacts were not consumed as intended
         elif _type == "disallow":
-            verify_disallow_rule(_pattern, artifacts_queue)
+            verify_disallow_rule(pattern, artifacts_queue)
 
         elif _type == "require":
-            verify_require_rule(_pattern, artifacts_queue)
+            verify_require_rule(pattern, artifacts_queue)
 
         else:  # pragma: no cover (unreachable)
             raise securesystemslib.exceptions.FormatError(
@@ -1181,12 +1184,12 @@ def verify_all_item_rules(items, links):
 
     """
     for item in items:
-        LOG.info("Verifying material rules for '{}'...".format(item.name))
+        LOG.info("Verifying material rules for '%s'...", item.name)
         verify_item_rules(
             item.name, "materials", item.expected_materials, links
         )
 
-        LOG.info("Verifying product rules for '{}'...".format(item.name))
+        LOG.info("Verifying product rules for '%s'...", item.name)
         verify_item_rules(item.name, "products", item.expected_products, links)
 
 
@@ -1233,14 +1236,17 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Skip steps that don't require multiple functionaries
         if step.threshold <= 1:
             LOG.info(
-                "Skipping threshold verification for step '{0}' with"
-                " threshold '{1}'...".format(step.name, step.threshold)
+                "Skipping threshold verification for step '%s' with"
+                " threshold '%s'...",
+                step.name,
+                step.threshold,
             )
             continue
 
         LOG.info(
-            "Verifying threshold for step '{0}' with"
-            " threshold '{1}'...".format(step.name, step.threshold)
+            "Verifying threshold for step '%s' with threshold '%s'...",
+            step.name,
+            step.threshold,
         )
         # Extract the key_link_dict for this step from the passed chain_link_dict
         key_link_dict = chain_link_dict[step.name]
@@ -1380,7 +1386,7 @@ def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
             payload = metadata.get_payload()
 
             if payload.type_ == "layout":
-                LOG.info("Verifying sublayout {}...".format(step_name))
+                LOG.info("Verifying sublayout %s...", step_name)
                 layout_key_dict = {}
 
                 # Retrieve the entire key object for the keyid
