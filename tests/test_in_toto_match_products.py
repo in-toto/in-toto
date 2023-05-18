@@ -1,4 +1,4 @@
-"""Test in_toto_match_products.py """
+"""Test in_toto_match_products.py."""
 
 import unittest
 from pathlib import Path
