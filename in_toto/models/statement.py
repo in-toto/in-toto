@@ -28,6 +28,7 @@ import securesystemslib.formats
 import in_toto_attestation.v1.statement_pb2 as statementpb
 import in_toto_attestation.v1.resource_descriptor_pb2 as rdpb
 
+
 from google.protobuf.json_format import MessageToDict
 from in_toto.models.common import Signable
 
@@ -66,7 +67,9 @@ class Statement(Signable):
       omitted if predicate_type fully describes the predicate.
     """
     _type = attr.ib()
-    statement = attr.ib()
+    predicateType = attr.ib()
+    predicate = attr.ib()
+    subject = attr.ib()
     MODEL_NAME = "Statement"
 
     def __init__(self, **kwargs):
@@ -78,24 +81,23 @@ class Statement(Signable):
         statement.predicate.update(
             {'NOT_YET_SUPPORTED': "NOT_YET_SUPPORTED"})
 
-        for product_name, product_hashes in kwargs.get("subjects"):
-            rd = rdpb.ResourceDescriptor()
-            rd.name = product_name
+        for subject in kwargs.get("subject"):
+            if not isinstance(subject, rdpb.ResourceDescriptor):
+                subject = rdpb.ResourceDescriptor(**subject)
 
-            for algorithm, hash in product_hashes.items():
-                rd.digest[algorithm] = hash
-
-            o = MessageToDict(rd)
-
-            statement.subject.append(o)
-
-        # for subject in kwargs.get("subjects"):
-        #     statement.subject.append(subject)
+            statement.subject.append(subject)
 
         # NOTE: We need to serialize the protobuf into JSON
         # so that we can sign the contents downstream
-        self.statement = MessageToDict(statement)
-        self._type = STATEMENT_TYPE
+        serialized_statement = MessageToDict(statement)
+
+        # This is to assign attributes onto the class
+        # itself so the properties are directly accessible.
+        for k, v in serialized_statement.items():
+            setattr(self, k, v)
+
+        if hasattr(self, 'subject') == False:
+            self.subject = []
 
     @property
     def type_(self):
@@ -122,12 +124,12 @@ class Statement(Signable):
         """
         return Statement(**data)
 
-    def _validate_type(self):
-        """Private method to check that `_type` is set correctly."""
-        if self._type != STATEMENT_TYPE:
-            raise securesystemslib.exceptions.FormatError(
-                "Invalid {}: field `_type` must be set to '{}', got: {}"
-                .format(self.MODEL_NAME, STATEMENT_TYPE, self._type))
+    # def _validate_type(self):
+    #     """Private method to check that `_type` is set correctly."""
+    #     if self._type != STATEMENT_TYPE:
+    #         raise securesystemslib.exceptions.FormatError(
+    #             "Invalid {}: field `_type` must be set to '{}', got: {}"
+    #             .format(self.MODEL_NAME, STATEMENT_TYPE, self._type))
 
     # def _validate_statement(self):
     #     """Private method to check that `subject` is a `list` of `HASHDICTs`."""

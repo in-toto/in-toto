@@ -445,23 +445,21 @@ class TestInTotoRunToolWithDSSE(
         args1 = named_args + positional_args
         self.assert_cli_sys_exit(args1, 0)
         metadata = Metadata.load(self.test_link_rsa)
-        link = metadata.get_payload()
-        self.assertTrue(self.test_artifact in list(link.materials.keys()))
-        self.assertTrue(self.test_artifact in list(link.products.keys()))
+        statement = metadata.get_payload()
+        self.assertTrue(self.test_artifact == statement.subject[0]["name"])
 
         # Test and assert exlcuded artifacts
         args2 = named_args + ["--exclude", "*test*"] + positional_args
         self.assert_cli_sys_exit(args2, 0)
-        link = Metadata.load(self.test_link_rsa).get_payload()
-        self.assertFalse(link.materials)
-        self.assertFalse(link.products)
+        statement = Metadata.load(self.test_link_rsa).get_payload()
+        self.assertTrue(len(statement.subject) == 0)
+        # self.assertFalse(link.products)
 
         # Test with base path
         args3 = named_args + ["--base-path", self.test_dir] + positional_args
         self.assert_cli_sys_exit(args3, 0)
-        link = Metadata.load(self.test_link_rsa).get_payload()
-        self.assertListEqual(list(link.materials.keys()), [self.test_artifact])
-        self.assertListEqual(list(link.products.keys()), [self.test_artifact])
+        statement = Metadata.load(self.test_link_rsa).get_payload()
+        self.assertTrue(self.test_artifact == statement.subject[0]["name"])
 
         # Test with bogus base path
         args4 = named_args + ["--base-path", "bogus/path"] + positional_args
@@ -471,15 +469,9 @@ class TestInTotoRunToolWithDSSE(
         strip_prefix = self.test_artifact[:-1]
         args5 = named_args + ["--lstrip-paths", strip_prefix] + positional_args
         self.assert_cli_sys_exit(args5, 0)
-        link = Metadata.load(self.test_link_rsa).get_payload()
-        self.assertListEqual(
-            list(link.materials.keys()),
-            [self.test_artifact[len(strip_prefix):]],
-        )
-        self.assertListEqual(
-            list(link.products.keys()),
-            [self.test_artifact[len(strip_prefix):]],
-        )
+        statement = Metadata.load(self.test_link_rsa).get_payload()
+        self.assertTrue(self.test_artifact[len(
+            strip_prefix):] == statement.subject[0]["name"])
 
     def test_main_with_default_gpg_key(self):
         """Test CLI command with default gpg key."""

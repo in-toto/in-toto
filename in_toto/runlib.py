@@ -594,19 +594,18 @@ def in_toto_run(
 
     LOG.info("Creating statement...")
 
-    # statement_subjects = []
+    statement_subjects = []
 
-    # for product_name, product_hashes in link.products.items():
-    #     subject = rdpb.ResourceDescriptor()
-    #     subject.name = product_name
+    for product_name, product_hashes in link.products.items():
+        subject = rdpb.ResourceDescriptor()
+        subject.name = product_name
 
-    #     for algorithm, hash in product_hashes.items():
-    #         subject.digest[algorithm] = hash
+        for algorithm, hash in product_hashes.items():
+            subject.digest[algorithm] = hash
 
-    #     statement_subjects.append(subject)
+        statement_subjects.append(subject)
 
-    # signable_statement = Statement(subjects=statement_subjects)
-    signable_statement = Statement(subjects=link.products.items())
+    signable_statement = Statement(subject=statement_subjects)
 
     if use_dsse:
         LOG.info("Generating link metadata using DSSE...")
