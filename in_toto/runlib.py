@@ -45,6 +45,9 @@ import securesystemslib.gpg
 import securesystemslib.exceptions
 import securesystemslib.hash
 import securesystemslib.formats
+import in_toto_attestation.v1.statement_pb2 as statementpb
+import in_toto_attestation.v1.resource_descriptor_pb2 as rdpb
+from in_toto.models.common import Signable
 from in_toto.models.statement import Statement
 from in_toto.models.metadata import (Metadata, Envelope, Metablock)
 from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
@@ -65,6 +68,7 @@ from collections import defaultdict
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
+STATEMENT_TYPE_URI = 'https://in-toto.io/Statement/v1'
 
 
 def record_artifacts_as_dict(
@@ -590,27 +594,23 @@ def in_toto_run(
 
     LOG.info("Creating statement...")
 
-    statement_subjects = []
+    # statement_subjects = []
 
-    for product_name, product_hashes in link.products.items():
+    # for product_name, product_hashes in link.products.items():
+    #     subject = rdpb.ResourceDescriptor()
+    #     subject.name = product_name
 
-        subject = {
-            "name": product_name,
-            "digest": {}
-        }
+    #     for algorithm, hash in product_hashes.items():
+    #         subject.digest[algorithm] = hash
 
-        for algorithm, hash in product_hashes.items():
-            subject["digest"][algorithm] = hash
+    #     statement_subjects.append(subject)
 
-        statement_subjects.append(subject)
-
-    # TODO: correct predicate_type
-    statement = Statement(subject=statement_subjects,
-                          predicate_type="http://in-toto.io/attestation/human-review/vcs/v0.1", predicate={})
+    # signable_statement = Statement(subjects=statement_subjects)
+    signable_statement = Statement(subjects=link.products.items())
 
     if use_dsse:
         LOG.info("Generating link metadata using DSSE...")
-        link_metadata = Envelope.from_signable(statement)
+        link_metadata = Envelope.from_signable(signable_statement)
     else:
         LOG.info("Generating link metadata using Metablock...")
         link_metadata = Metablock(signed=link, compact_json=compact_json)
