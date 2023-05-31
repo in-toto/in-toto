@@ -395,6 +395,21 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     return link_metadata
 
 
+def _create_resource_descriptors(resources={}):
+    rds = []
+
+    for name, item_hash in resources.items():
+        rd = rdpb.ResourceDescriptor()
+        rd.name = name
+
+        for algorithm, hash in item_hash.items():
+            rd.digest[algorithm] = hash
+
+        rds.append(rd)
+
+    return rds
+
+
 def _check_match_signing_key(signing_key):
     """Helper method to check if the signing_key has securesystemslib's
     KEY_SCHEMA and the private part is not empty.
@@ -578,39 +593,26 @@ def in_toto_run(
         lstrip_paths=lstrip_paths,
     )
 
-    LOG.info("Creating link metadata...")
-    environment = {}
-    if record_environment:
-        environment["workdir"] = os.getcwd().replace("\\", "/")
-
-    link = in_toto.models.link.Link(
-        name=name,
-        materials=materials_dict,
-        products=products_dict,
-        command=link_cmd_args,
-        byproducts=byproducts,
-        environment=environment,
-    )
-
-    LOG.info("Creating statement...")
-
-    statement_subjects = []
-
-    for product_name, product_hashes in link.products.items():
-        subject = rdpb.ResourceDescriptor()
-        subject.name = product_name
-
-        for algorithm, hash in product_hashes.items():
-            subject.digest[algorithm] = hash
-
-        statement_subjects.append(subject)
-
-    signable_statement = Statement(subject=statement_subjects)
 
     if use_dsse:
+        LOG.info("Creating statement...")
+        signable_statement = Statement(
+            subject=_create_resource_descriptors(products_dict))
         LOG.info("Generating link metadata using DSSE...")
         link_metadata = Envelope.from_signable(signable_statement)
     else:
+        LOG.info("Creating link metadata...")
+        environment = {}
+        if record_environment:
+            environment["workdir"] = os.getcwd().replace("\\", "/")
+        materials = _create_resource_descriptors(materials_dict)
+        link = in_toto.models.link.Link(
+            name=name,
+            materials=materials,
+            command=link_cmd_args,
+            byproducts=byproducts,
+            environment=environment,
+        )
         LOG.info("Generating link metadata using Metablock...")
         link_metadata = Metablock(signed=link, compact_json=compact_json)
 
