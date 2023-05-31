@@ -57,6 +57,8 @@ from in_toto.common_args import (
     OPTS_TITLE,
     QUIET_ARGS,
     QUIET_KWARGS,
+    RUN_TIMEOUT_ARGS,
+    RUN_TIMEOUT_KWARGS,
     VERBOSE_ARGS,
     VERBOSE_KWARGS,
     parse_password_and_prompt_args,
@@ -216,6 +218,7 @@ e.g. 'document.pdf'.
     parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
     parser.add_argument(*METADATA_DIRECTORY_ARGS, **METADATA_DIRECTORY_KWARGS)
     parser.add_argument(*DSSE_ARGS, **DSSE_KWARGS)
+    parser.add_argument(*RUN_TIMEOUT_ARGS, **RUN_TIMEOUT_KWARGS)
 
     verbosity_args = parser.add_mutually_exclusive_group(required=False)
     verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -307,6 +310,7 @@ def main():
             lstrip_paths=args.lstrip_paths,
             metadata_directory=args.metadata_directory,
             use_dsse=args.use_dsse,
+            timeout=args.run_timeout,
         )
 
     except Exception as e:  # pylint: disable=broad-exception-caught

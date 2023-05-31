@@ -622,32 +622,25 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 record_artifacts_as_dict(["."])
 
 
-class TestLinkCmdExecTimeoutSetting(unittest.TestCase):
-    """Tests LINK_CMD_EXEC_TIMEOUT setting in settings.py file."""
+class TestLinkCmdExecTimeout(unittest.TestCase):
+    """Tests execute_link timing out correctly."""
 
-    def test_timeout_setting(self):
-        # Save the old timeout and make sure it's saved properly
-        timeout_old = in_toto.settings.LINK_CMD_EXEC_TIMEOUT
-
-        # Modify timeout
-        in_toto.settings.LINK_CMD_EXEC_TIMEOUT = 0.1
+    def test_timeout(self):
+        timeout = 1
 
         # check if exception is raised
         with self.assertRaises(subprocess.TimeoutExpired):
             # Call execute_link to see if new timeout is respected
             in_toto.runlib.execute_link(
-                [sys.executable, "-c", "while True: pass"], True
+                [sys.executable, "-c", "while True: pass"], True, timeout
             )
 
         # check if exception is raised
         with self.assertRaises(subprocess.TimeoutExpired):
             # Call execute_link to see if new timeout is respected
             in_toto.runlib.execute_link(
-                [sys.executable, "-c", "while True: pass"], False
+                [sys.executable, "-c", "while True: pass"], False, timeout
             )
-
-        # Restore original timeout
-        in_toto.settings.LINK_CMD_EXEC_TIMEOUT = timeout_old
 
 
 class TestSubprocess(unittest.TestCase):

@@ -7,4 +7,4 @@ globals directly in source code or at runtime. This method is discouraged. Inste
 CLI/API arguments should be used.
 
 .. note::
-  The globals ``DEBUG`` and ``LINK_CMD_EXEC_TIMEOUT`` can only be configured directly.
+  The global ``DEBUG`` can only be configured directly.
