@@ -36,6 +36,7 @@ from in_toto import (
     KEY_TYPE_RSA,
     SUPPORTED_KEY_TYPES,
 )
+from in_toto.settings import LINK_CMD_EXEC_TIMEOUT
 
 EXCLUDE_ARGS = ["--exclude"]
 EXCLUDE_KWARGS = {
@@ -193,6 +194,19 @@ DSSE_KWARGS = {
     "default": False,
     "action": "store_true",
     "help": ("generate metadata using dsse (experimental)."),
+}
+
+RUN_TIMEOUT_ARGS = ["--run-timeout"]
+RUN_TIMEOUT_KWARGS = {
+    "dest": "run_timeout",
+    "default": LINK_CMD_EXEC_TIMEOUT,
+    "help": (
+        "integer that represents the max timeout in seconds for the "
+        "   in-toto-run command."
+        "   Default is '{timeout}' seconds.".format(
+            timeout=LINK_CMD_EXEC_TIMEOUT
+        )
+    ),
 }
 
 

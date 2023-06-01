@@ -279,7 +279,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
     return proc.poll(), streams["out"], streams["err"]
 
 
-def execute_link(link_cmd_args, record_streams):
+def execute_link(link_cmd_args, record_streams, timeout):
     """
     <Purpose>
       Executes the passed command plus arguments in a subprocess and returns
@@ -301,8 +301,7 @@ def execute_link(link_cmd_args, record_streams):
               The given command is not present or non-executable
 
       subprocess.TimeoutExpired:
-              The execution of the given command times (see
-              in_toto.settings.LINK_CMD_EXEC_TIMEOUT).
+              The execution of the given command times.
 
     <Side Effects>
       Executes passed command in a subprocess and redirects stdout and stderr
@@ -316,14 +315,14 @@ def execute_link(link_cmd_args, record_streams):
     """
     if record_streams:
         return_code, stdout_str, stderr_str = _subprocess_run_duplicate_streams(
-            link_cmd_args, timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT)
+            link_cmd_args, timeout=timeout
         )
 
     else:
         process = subprocess.run(
             link_cmd_args,
             check=False,  # nosec
-            timeout=float(in_toto.settings.LINK_CMD_EXEC_TIMEOUT),
+            timeout=timeout,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -411,6 +410,7 @@ def in_toto_run(
     lstrip_paths=None,
     metadata_directory=None,
     use_dsse=False,
+    timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
 ):
     """Performs a supply chain step or inspection generating link metadata.
 
@@ -474,6 +474,9 @@ def in_toto_run(
 
     use_dsse (optional): A boolean indicating if DSSE should be used to
         generate metadata.
+
+    timeout (optional): An integer indicating the max timeout in seconds 
+        for this command. Default is 10 seconds.
 
   Raises:
     securesystemslib.exceptions.FormatError: Passed arguments are malformed.
@@ -543,7 +546,7 @@ def in_toto_run(
             link_cmd_args
         )
         LOG.info("Running command '%s'...", " ".join(link_cmd_args))
-        byproducts = execute_link(link_cmd_args, record_streams)
+        byproducts = execute_link(link_cmd_args, record_streams, timeout)
     else:
         byproducts = {}
 
