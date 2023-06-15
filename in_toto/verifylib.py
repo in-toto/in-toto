@@ -29,6 +29,7 @@ import datetime
 import fnmatch
 import logging
 import os
+import re
 
 import iso8601
 import securesystemslib.exceptions
@@ -552,11 +553,12 @@ def verify_link_signature_thresholds(layout, steps_metadata):
     return verified_steps_metadata
 
 
-def verify_command_alignment(command, expected_command):
+def verify_command_alignment(command, expected_command="", regex=None):
     """
     <Purpose>
       Checks if a run command aligns with an expected command. The commands align
-      if all of their elements are equal. If alignment fails, a warning is
+      if all of their elements are equal or, in the case of a regex expected command, 
+      matches the expected regex. If alignment fails, a warning is
       printed.
 
       Note:
@@ -568,6 +570,9 @@ def verify_command_alignment(command, expected_command):
               A command list, e.g. ["vi", "foo.py"]
       expected_command:
               A command list, e.g. ["make", "install"]
+      regex:
+              A regex expression that if passed will be used to compare to the command,
+              e.g. 
 
     <Exceptions>
       None.
@@ -581,12 +586,23 @@ def verify_command_alignment(command, expected_command):
     # https://github.com/in-toto/in-toto/issues/46 and
     # https://github.com/in-toto/in-toto/pull/47
     # We chose the simplest solution for now, i.e. Warn if they do not align.
-    if command != expected_command:
-        LOG.warning(
-            "Run command '%s' differs from expected command '%s'",
-            command,
-            expected_command,
-        )
+    if regex:
+        regular_expression_object = re.compile(regex)
+        joined_command = ' '.join([str(elem) for elem in command])
+        if not regular_expression_object.match(joined_command):
+            print("Run command '%s' differs from expected regex '%s'", command, regex)
+            LOG.warning(
+                "Run command '%s' differs from expected regex '%s'",
+                command,
+                regex,
+            )
+    else:
+        if command != expected_command:
+            LOG.warning(
+                "Run command '%s' differs from expected command '%s'",
+                command,
+                expected_command,
+            )
 
 
 def verify_all_steps_command_alignment(layout, chain_link_dict):
