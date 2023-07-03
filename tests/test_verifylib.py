@@ -932,6 +932,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # Store various layout paths to be used in tests
         cls.layout_single_signed_path = "single-signed.layout"
         cls.layout_double_signed_path = "double-signed.layout"
+        cls.layout_current_date_expiry_path = "current-date-expiry.layout"
         cls.layout_bad_sig = "bad-sig.layout"
         cls.layout_expired_path = "expired.layout"
         cls.layout_failing_step_rule_path = "failing-step-rule.layout"
@@ -959,6 +960,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.sign(alice)
         layout.sign(bob)
         layout.dump(cls.layout_double_signed_path)
+
+        # dump layout with current date expiry
+        layout = copy.deepcopy(layout_template)
+        layout.signed.expires = (
+            datetime.today()
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        layout.sign(alice)
+        layout.dump(cls.layout_current_date_expiry_path)
 
         # dump layout with bad signature
         layout = copy.deepcopy(layout_template)
@@ -1022,6 +1031,12 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout_key_dict = import_publickeys_from_file(
             [self.alice_path, self.bob_path]
         )
+        in_toto_verify(layout, layout_key_dict)
+
+    def test_verify_passing_layout_current_date(self):
+        """Test pass verification with current date expiry layout."""
+        layout = Metablock.load(self.layout_current_date_expiry_path)
+        layout_key_dict = import_publickeys_from_file([self.alice_path])
         in_toto_verify(layout, layout_key_dict)
 
     def test_verify_passing_empty_layout(self):
