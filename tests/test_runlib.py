@@ -36,9 +36,12 @@ import securesystemslib.exceptions
 import securesystemslib.formats
 from securesystemslib.interface import (
     generate_and_write_unencrypted_rsa_keypair,
+    import_ed25519_privatekey_from_file,
+    import_ed25519_publickey_from_file,
     import_rsa_privatekey_from_file,
     import_rsa_publickey_from_file,
 )
+from securesystemslib.signer import CryptoSigner, Signer
 
 import in_toto.exceptions
 import in_toto.settings
@@ -1396,6 +1399,93 @@ class TestInTotoMatchProducts(TmpDirMixin, unittest.TestCase):
                 expected_return_value,
                 f"unexpected result for **kwargs: {kwargs})",
             )
+
+
+class TestSigner(unittest.TestCase, TmpDirMixin):
+    """Test signer argument in runlib API functions (run, record)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.set_up_test_dir()  # teardown is called implicitly
+        keys = Path(__file__).parent / "demo_files"
+
+        rsa = "alice"
+        rsa_priv = import_rsa_privatekey_from_file(str(keys / rsa))
+        cls.rsa_pub = import_rsa_publickey_from_file(str(keys / f"{rsa}.pub"))
+        cls.rsa_signer = CryptoSigner.from_securesystemslib_key(rsa_priv)
+
+        ed = "danny"
+        ed_priv = import_ed25519_privatekey_from_file(str(keys / ed))
+        cls.ed_pub = import_ed25519_publickey_from_file(str(keys / f"{ed}.pub"))
+        cls.ed_signer = CryptoSigner.from_securesystemslib_key(ed_priv)
+
+    def test_run(self):
+        # Successfully create, sign and verify link
+        link = in_toto_run("foo", [], [], [], signer=self.rsa_signer)
+        self.assertIsNone(link.verify_signature(self.rsa_pub))
+
+        # Fail with wrong verification key
+        with self.assertRaises(SignatureVerificationError):
+            link.verify_signature(self.ed_pub)
+
+        # Fail with bad signer arg
+        class NoSigner:
+            pass
+
+        with self.assertRaises(ValueError):
+            link = in_toto_run("foo", [], [], [], signer=NoSigner())
+
+        # Fail with incompatible signers
+        class BadSigner(Signer):
+            """Signer implementation w/o public_key attribute.
+            secure-systems-lab/securesystemslib#605
+            """
+
+            @classmethod
+            def from_priv_key_uri(
+                cls,
+                priv_key_uri,
+                public_key,
+                secrets_handler=None,
+            ):
+                pass
+
+            def sign(self, payload):
+                pass
+
+        # Fail with missing public_key attribute.
+        bad_signer = BadSigner()
+        with self.assertRaises(ValueError):
+            link = in_toto_run("foo", [], [], [], signer=bad_signer)
+
+        class NoKey:
+            pass
+
+        # Fail with wrong tpe on public_key attribute
+        bad_signer.public_key = (  # pylint: disable=attribute-defined-outside-init
+            NoKey()
+        )
+        with self.assertRaises(ValueError):
+            link = in_toto_run("foo", [], [], [], signer=bad_signer)
+
+    def test_record(self):
+        # Successfully create, sign and verify link
+        in_toto_record_start("bar", [], signer=self.ed_signer)
+        in_toto_record_stop("bar", [], signer=self.ed_signer)
+        link_name = FILENAME_FORMAT.format(
+            step_name="bar", keyid=self.ed_signer.public_key.keyid
+        )
+        link = Metablock.load(link_name)
+        self.assertIsNone(link.verify_signature(self.ed_pub))
+
+        # Fail with wrong verification key
+        with self.assertRaises(SignatureVerificationError):
+            link.verify_signature(self.rsa_pub)
+
+        # Fail with different signer in start and stop
+        in_toto_record_start("baz", [], signer=self.ed_signer)
+        with self.assertRaises(OSError):
+            in_toto_record_stop("baz", [], signer=self.rsa_signer)
 
 
 if __name__ == "__main__":
