@@ -81,7 +81,7 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
-from common import GPGKeysMixin, TmpDirMixin
+from tests.common import GPGKeysMixin, TmpDirMixin
 
 
 class TestRaiseOnBadRetval(unittest.TestCase):
@@ -964,7 +964,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump layout with current date expiry
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.now() + relativedelta(seconds=+3)
+            datetime.now() + relativedelta(minutes=+1)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.sign(alice)
         layout.dump(cls.layout_current_date_expiry_path)
