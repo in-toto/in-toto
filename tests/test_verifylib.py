@@ -81,6 +81,7 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
+from freezegun import freeze_time
 from tests.common import GPGKeysMixin, TmpDirMixin
 
 
@@ -962,9 +963,11 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.dump(cls.layout_double_signed_path)
 
         # dump layout with current date expiry
+
+
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.now() + relativedelta(minutes=+1)
+            datetime.now()
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.sign(alice)
         layout.dump(cls.layout_current_date_expiry_path)
@@ -978,7 +981,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump expired layout
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.today() + relativedelta(months=-1)
+            datetime.now() + relativedelta(seconds=-1)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.sign(alice)
         layout.dump(cls.layout_expired_path)
@@ -1035,9 +1038,13 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     def test_verify_passing_layout_current_date(self):
         """Test pass verification with current date expiry layout."""
+        freezer = freeze_time("2023-01-14 12:00:01")
+        freezer.start()
         layout = Metablock.load(self.layout_current_date_expiry_path)
         layout_key_dict = import_publickeys_from_file([self.alice_path])
         in_toto_verify(layout, layout_key_dict)
+        freezer.stop()
+    
 
     def test_verify_passing_empty_layout(self):
         """Test pass verification of layout without steps or inspections."""
@@ -1061,10 +1068,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     def test_verify_failing_layout_expired(self):
         """Test fail verification with expired layout."""
+        freezer = freeze_time("2023-01-14 12:00:01")
+        freezer.start()
         layout = Metablock.load(self.layout_expired_path)
         layout_key_dict = import_publickeys_from_file([self.alice_path])
+        freezer.stop()
         with self.assertRaises(LayoutExpiredError):
             in_toto_verify(layout, layout_key_dict)
+
 
     def test_verify_failing_link_metadata_files(self):
         """Test fail verification with link metadata files not found."""
@@ -1834,3 +1845,4 @@ class TestGetSummaryLink(unittest.TestCase, TmpDirMixin):
 
 if __name__ == "__main__":
     unittest.main()
+
