@@ -81,9 +81,9 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
-from freezegun import freeze_time
 from tests.common import GPGKeysMixin, TmpDirMixin
-
+import datetime
+from datetime import date
 
 class TestRaiseOnBadRetval(unittest.TestCase):
     """Tests internal function that raises an exception if the passed
@@ -933,7 +933,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # Store various layout paths to be used in tests
         cls.layout_single_signed_path = "single-signed.layout"
         cls.layout_double_signed_path = "double-signed.layout"
-        cls.layout_current_date_expiry_path = "current-date-expiry.layout"
+        cls.layout_current_datetime_expiry_path = "current-datetime-expiry.layout"
         cls.layout_bad_sig = "bad-sig.layout"
         cls.layout_expired_path = "expired.layout"
         cls.layout_failing_step_rule_path = "failing-step-rule.layout"
@@ -963,28 +963,27 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.dump(cls.layout_double_signed_path)
 
         # dump layout with current date expiry
-
-
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.now()
+            datetime.datetime.now() +
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.sign(alice)
-        layout.dump(cls.layout_current_date_expiry_path)
-
+        layout.dump(cls.layout_current_datetime_expiry_path)
+        # dump expired layout
+        layout = copy.deepcopy(layout_template)
+        layout.signed.expires = (
+            datetime.datetime.now() + relativedelta( months=-4)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        layout.sign(alice)
+        layout.dump(cls.layout_expired_path)
+       
         # dump layout with bad signature
         layout = copy.deepcopy(layout_template)
         layout.sign(alice)
         layout.signed.readme = "this breaks the signature"
         layout.dump(cls.layout_bad_sig)
 
-        # dump expired layout
-        layout = copy.deepcopy(layout_template)
-        layout.signed.expires = (
-            datetime.now() + relativedelta(seconds=-1)
-        ).strftime("%Y-%m-%dT%H:%M:%SZ")
-        layout.sign(alice)
-        layout.dump(cls.layout_expired_path)
+
 
         # dump layout with failing step rule
         layout = copy.deepcopy(layout_template)
@@ -1035,15 +1034,19 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
             [self.alice_path, self.bob_path]
         )
         in_toto_verify(layout, layout_key_dict)
+    
+    def test_verify_failing_layout_current_datetime(self):
+        with patch('datetime' + '.date') as mock_date:
+            mock_date.now.return_value = datetime.datetime(2017, 6, 5, 4, 3, 2) 
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
 
-    def test_verify_passing_layout_current_date(self):
-        """Test pass verification with current date expiry layout."""
-        freezer = freeze_time("2023-01-14 12:00:01")
-        freezer.start()
-        layout = Metablock.load(self.layout_current_date_expiry_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
-        in_toto_verify(layout, layout_key_dict)
-        freezer.stop()
+            assert datetime.date.now() == datetime.datetime(2017, 6, 5, 4, 3, 2) 
+            assert datetime.date(2009, 6, 8) == date(2009, 6, 8)
+            """Test pass verification with current date expiry layout."""
+            layout = Metablock.load(self.layout_current_datetime_expiry_path)
+            layout_key_dict = import_publickeys_from_file([self.alice_path])
+            with self.assertRaises(LayoutExpiredError):
+                in_toto_verify(layout, layout_key_dict)
     
 
     def test_verify_passing_empty_layout(self):
@@ -1068,11 +1071,8 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
     def test_verify_failing_layout_expired(self):
         """Test fail verification with expired layout."""
-        freezer = freeze_time("2023-01-14 12:00:01")
-        freezer.start()
         layout = Metablock.load(self.layout_expired_path)
         layout_key_dict = import_publickeys_from_file([self.alice_path])
-        freezer.stop()
         with self.assertRaises(LayoutExpiredError):
             in_toto_verify(layout, layout_key_dict)
 
