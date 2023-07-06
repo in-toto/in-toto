@@ -969,6 +969,13 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.sign(alice)
         layout.dump(cls.layout_current_datetime_expiry_path)
+
+        # dump layout with bad signature
+        layout = copy.deepcopy(layout_template)
+        layout.sign(alice)
+        layout.signed.readme = "this breaks the signature"
+        layout.dump(cls.layout_bad_sig)
+
         # dump expired layout
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
@@ -977,11 +984,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.sign(alice)
         layout.dump(cls.layout_expired_path)
        
-        # dump layout with bad signature
-        layout = copy.deepcopy(layout_template)
-        layout.sign(alice)
-        layout.signed.readme = "this breaks the signature"
-        layout.dump(cls.layout_bad_sig)
+
 
 
 
