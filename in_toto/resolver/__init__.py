@@ -17,6 +17,7 @@ Example usage::
 
 from in_toto.resolver._resolver import (
     RESOLVER_FOR_URI_SCHEME,
+    DirectoryResolver,
     FileResolver,
     OSTreeResolver,
     Resolver,

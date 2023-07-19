@@ -55,6 +55,7 @@ from in_toto.models.link import (
 from in_toto.models.metadata import Envelope, Metablock, Metadata
 from in_toto.resolver import (
     RESOLVER_FOR_URI_SCHEME,
+    DirectoryResolver,
     FileResolver,
     OSTreeResolver,
     Resolver,
@@ -172,6 +173,14 @@ def record_artifacts_as_dict(
 
     # Configure resolver for OSTree
     RESOLVER_FOR_URI_SCHEME[OSTreeResolver.SCHEME] = OSTreeResolver(base_path)
+
+    # Configure resolver for hashing directories as a single entry
+    RESOLVER_FOR_URI_SCHEME[DirectoryResolver.SCHEME] = DirectoryResolver(
+        exclude_patterns=exclude_patterns,
+        follow_symlink_dirs=follow_symlink_dirs,
+        normalize_line_endings=normalize_line_endings,
+        lstrip_paths=lstrip_paths,
+    )
 
     # Aggregate artifacts per resolver
     resolver_for_uris = defaultdict(list)
