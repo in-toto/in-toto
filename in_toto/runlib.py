@@ -27,35 +27,6 @@
     - Return Metadata containing a Link object which can be can be signed
       and stored to disk
 """
-from in_toto.resolver import (
-    RESOLVER_FOR_URI_SCHEME,
-    FileResolver,
-    OSTreeResolver,
-    Resolver,
-)
-from in_toto.models.metadata import Envelope, Metablock, Metadata
-from in_toto.models.link import (
-    FILENAME_FORMAT,
-    FILENAME_FORMAT_SHORT,
-    UNFINISHED_FILENAME_FORMAT,
-    UNFINISHED_FILENAME_FORMAT_GLOB,
-)
-from securesystemslib.signer import Signature, SSlibSigner
-import securesystemslib.gpg
-import securesystemslib.exceptions
-import securesystemslib.hash
-import securesystemslib.formats
-import in_toto_attestation.v1.statement_pb2 as statementpb
-import in_toto_attestation.v1.resource_descriptor_pb2 as rdpb
-from in_toto.models.common import Signable
-from in_toto.models.statement import Statement
-from in_toto.models.metadata import (Metadata, Envelope, Metablock)
-from in_toto.models.link import (UNFINISHED_FILENAME_FORMAT, FILENAME_FORMAT,
-                                 FILENAME_FORMAT_SHORT, UNFINISHED_FILENAME_FORMAT_GLOB)
-from in_toto.models._signer import GPGSigner
-import in_toto.exceptions
-import in_toto.settings
-from pathspec import PathSpec
 import glob
 import io
 import logging
@@ -66,9 +37,32 @@ import tempfile
 import time
 from collections import defaultdict
 
+import securesystemslib.exceptions
+import securesystemslib.formats
+import securesystemslib.gpg
+import securesystemslib.hash
+from securesystemslib.signer import Signature, SSlibSigner
+
+import in_toto.exceptions
+import in_toto.settings
+from in_toto.models._signer import GPGSigner
+from in_toto.models.link import (
+    FILENAME_FORMAT,
+    FILENAME_FORMAT_SHORT,
+    UNFINISHED_FILENAME_FORMAT,
+    UNFINISHED_FILENAME_FORMAT_GLOB,
+)
+from in_toto.models.metadata import Envelope, Metablock, Metadata
+from in_toto.resolver import (
+    RESOLVER_FOR_URI_SCHEME,
+    DirectoryResolver,
+    FileResolver,
+    OSTreeResolver,
+    Resolver,
+)
+
 # Inherits from in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger(__name__)
-STATEMENT_TYPE_URI = 'https://in-toto.io/Statement/v1'
 
 
 def record_artifacts_as_dict(
@@ -395,21 +389,6 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     return link_metadata
 
 
-def _create_resource_descriptors(resources={}):
-    rds = []
-
-    for name, item_hash in resources.items():
-        rd = rdpb.ResourceDescriptor()
-        rd.name = name
-
-        for algorithm, hash in item_hash.items():
-            rd.digest[algorithm] = hash
-
-        rds.append(rd)
-
-    return rds
-
-
 def _check_match_signing_key(signing_key):
     """Helper method to check if the signing_key has securesystemslib's
     KEY_SCHEMA and the private part is not empty.
@@ -593,26 +572,24 @@ def in_toto_run(
         lstrip_paths=lstrip_paths,
     )
 
+    LOG.info("Creating link metadata...")
+    environment = {}
+    if record_environment:
+        environment["workdir"] = os.getcwd().replace("\\", "/")
+
+    link = in_toto.models.link.Link(
+        name=name,
+        materials=materials_dict,
+        products=products_dict,
+        command=link_cmd_args,
+        byproducts=byproducts,
+        environment=environment,
+    )
 
     if use_dsse:
-        LOG.info("Creating statement...")
-        signable_statement = Statement(
-            subject=_create_resource_descriptors(products_dict))
         LOG.info("Generating link metadata using DSSE...")
-        link_metadata = Envelope.from_signable(signable_statement)
+        link_metadata = Envelope.from_signable(link)
     else:
-        LOG.info("Creating link metadata...")
-        environment = {}
-        if record_environment:
-            environment["workdir"] = os.getcwd().replace("\\", "/")
-        materials = _create_resource_descriptors(materials_dict)
-        link = in_toto.models.link.Link(
-            name=name,
-            materials=materials,
-            command=link_cmd_args,
-            byproducts=byproducts,
-            environment=environment,
-        )
         LOG.info("Generating link metadata using Metablock...")
         link_metadata = Metablock(signed=link, compact_json=compact_json)
 
