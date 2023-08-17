@@ -62,5 +62,3 @@ target/
 .ipynb_checkpoints
 .travis-solo/
 
-# IDE
-.vscode/
