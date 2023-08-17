@@ -22,14 +22,8 @@
   step of the supply chain is performed.
 """
 
-import json
 import attr
 import securesystemslib.formats
-import in_toto_attestation.predicates.link.v0.link_pb2 as linkpb
-import in_toto_attestation.v1.resource_descriptor_pb2 as rdpb
-
-# from google.protobuf.json_format import MessageToDict
-from google.protobuf.json_format import MessageToJson
 
 from in_toto.models.common import Signable
 
@@ -91,6 +85,7 @@ class Link(Signable):
     _type = attr.ib()
     name = attr.ib()
     materials = attr.ib()
+    products = attr.ib()
     byproducts = attr.ib()
     command = attr.ib()
     environment = attr.ib()
@@ -98,51 +93,14 @@ class Link(Signable):
     def __init__(self, **kwargs):
         super().__init__()
 
-        link = linkpb.Link()
-        link.name = kwargs.get("name", "")
-        link.byproducts.update(kwargs.get("byproducts", {}))
-        link.environment.update(kwargs.get("environment", {}))
-
-        for material in kwargs.get("materials", []):
-            if not isinstance(material, rdpb.ResourceDescriptor):
-                material = rdpb.ResourceDescriptor(**material)
-
-            link.materials.append(material)
-
-        for command in kwargs.get("command", []):
-            link.command.append(command)
-
-        # NOTE: We need to serialize the protobuf into JSON
-        # so that we can sign the contents downstream
-        # serialized_link = MessageToDict(link)
-        serialized_link = MessageToJson(message=link)
-        serialized_link = json.loads(serialized_link)
-
-        # This is to assign attributes onto the class
-        # itself so the properties are directly accessible.
-        for k, v in serialized_link.items():
-            setattr(self, k, v)
-
-        if hasattr(self, 'name') == False:
-            self.name = ""
-
-        if hasattr(self, 'materials') == False:
-            self.materials = []
-
-        if hasattr(self, 'command') == False:
-            self.command = []
-
-        if hasattr(self, 'environment') == False:
-            self.environment = {}
-
-        if hasattr(self, 'byproducts') == True:
-            self.byproducts["return-value"] = int(
-                self.byproducts["return-value"])
-
-        if hasattr(self, 'byproducts') == False:
-            self.byproducts = {}
-
         self._type = "link"
+        self.name = kwargs.get("name")
+        self.materials = kwargs.get("materials", {})
+        self.products = kwargs.get("products", {})
+        self.byproducts = kwargs.get("byproducts", {})
+        self.command = kwargs.get("command", [])
+        self.environment = kwargs.get("environment", {})
+
         self.validate()
 
     @property
@@ -179,53 +137,53 @@ class Link(Signable):
                 )
             )
 
-    # def _validate_materials(self):
-    #     """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
-    #     if not isinstance(self.materials, dict):
-    #         raise securesystemslib.exceptions.FormatError(
-    #             "Invalid Link: field `materials` must be of type dict, got: {}".format(
-    #                 type(self.materials)
-    #             )
-    #         )
+    def _validate_materials(self):
+        """Private method to check that `materials` is a `dict` of `HASHDICTs`."""
+        if not isinstance(self.materials, dict):
+            raise securesystemslib.exceptions.FormatError(
+                "Invalid Link: field `materials` must be of type dict, got: {}".format(
+                    type(self.materials)
+                )
+            )
 
-    #     for material in list(self.materials.values()):
-    #         securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
+        for material in list(self.materials.values()):
+            securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
 
-    # def _validate_products(self):
-    #     """Private method to check that `products` is a `dict` of `HASHDICTs`."""
-    #     if not isinstance(self.products, dict):
-    #         raise securesystemslib.exceptions.FormatError(
-    #             "Invalid Link: field `products` must be of type dict, got: {}".format(
-    #                 type(self.products)
-    #             )
-    #         )
+    def _validate_products(self):
+        """Private method to check that `products` is a `dict` of `HASHDICTs`."""
+        if not isinstance(self.products, dict):
+            raise securesystemslib.exceptions.FormatError(
+                "Invalid Link: field `products` must be of type dict, got: {}".format(
+                    type(self.products)
+                )
+            )
 
-    #     for product in list(self.products.values()):
-    #         securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
+        for product in list(self.products.values()):
+            securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
 
-    # def _validate_byproducts(self):
-    #     """Private method to check that `byproducts` is a `dict`."""
-    #     if not isinstance(self.byproducts, dict):
-    #         raise securesystemslib.exceptions.FormatError(
-    #             "Invalid Link: field `byproducts` must be of type dict, got: {}".format(
-    #                 type(self.byproducts)
-    #             )
-    #         )
+    def _validate_byproducts(self):
+        """Private method to check that `byproducts` is a `dict`."""
+        if not isinstance(self.byproducts, dict):
+            raise securesystemslib.exceptions.FormatError(
+                "Invalid Link: field `byproducts` must be of type dict, got: {}".format(
+                    type(self.byproducts)
+                )
+            )
 
-    # def _validate_command(self):
-    #     """Private method to check that `command` is a `list`."""
-    #     if not isinstance(self.command, list):
-    #         raise securesystemslib.exceptions.FormatError(
-    #             "Invalid Link: field `command` must be of type list, got: {}".format(
-    #                 type(self.command)
-    #             )
-    #         )
+    def _validate_command(self):
+        """Private method to check that `command` is a `list`."""
+        if not isinstance(self.command, list):
+            raise securesystemslib.exceptions.FormatError(
+                "Invalid Link: field `command` must be of type list, got: {}".format(
+                    type(self.command)
+                )
+            )
 
-    # def _validate_environment(self):
-    #     """Private method to check that `environment` is a `dict`."""
-    #     if not isinstance(self.environment, dict):
-    #         raise securesystemslib.exceptions.FormatError(
-    #             "Invalid Link: field `environment` must be of type dict, got: {}".format(
-    #                 type(self.environment)
-    #             )
-    #         )
+    def _validate_environment(self):
+        """Private method to check that `environment` is a `dict`."""
+        if not isinstance(self.environment, dict):
+            raise securesystemslib.exceptions.FormatError(
+                "Invalid Link: field `environment` must be of type dict, got: {}".format(
+                    type(self.environment)
+                )
+            )
