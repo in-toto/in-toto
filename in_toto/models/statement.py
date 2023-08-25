@@ -20,51 +20,50 @@
   Provides a class that represents a Statement, the middle layer of an 
   attestation, binding it to a particular subject and unambiguously 
   identifying the types of the Predicate as defined in the in-toto 
-  attestion spec.
+  attestation spec.
 """
 
 import attr
+
 import in_toto_attestation.v1.statement_pb2 as statementpb
 import in_toto_attestation.v1.resource_descriptor_pb2 as rdpb
-
-
 from google.protobuf.json_format import MessageToDict
 from in_toto.models.common import Signable
 
 STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 
 
+# NOTE: 08/24/23 - This function is an intentional
+# hack to alter JSON after it has been serialized
+# to a JSON from a Protobuf. Every object that is
+# a member of a part of a class that is a child of
+# the Signable class must be able to be represented
+# via canonical JSON. Floats are not allowed in
+# canonical JSON, but there is a function within the
+# Securesystemslib library that is able to protect
+# against this. However, the code to resolve this
+# particular issue is not yet implemented and until
+# it is, this function specifically protects against
+# the case where the return-value of a Link's
+# byproducts changes from 0 to 0.0 and consequently
+# prevents the entire class from resolving to a
+# correct `signable_bytes` property.
+def _enforce_canonical_json(obj):
+    for k in obj:
+        val = obj[k]
+        if isinstance(val, dict):
+            _enforce_canonical_json(val)
+        if isinstance(val, float):
+            nv = int(val)
+            obj[k] = nv
+
+    return obj
+
+
 @attr.s(repr=False, init=False)
 class Statement(Signable):
-    """The Statement is the middle layer of the attestation, binding it to a 
-    particular subject and unambiguously identifying the types of the Predicate.
+    """https://github.com/in-toto/attestation/blob/main/spec/v1.0/statement.md"""
 
-    A Link object is usually contained in a generic Metablock object for signing,
-    serialization and I/O capabilities.
-
-    Attributes:
-      subject: A dictionary of software artifacts that the attestation applies to. 
-          Each element represents a single software artifact.
-
-          IMPORTANT: Subject artifacts are matched purely by digest, regardless of 
-          content type. If this matters to you, please comment on GitHub Issue #28
-          (https://github.com/in-toto/attestation/issues/28)
-
-          i.e.::
-
-          {
-              "name": "<NAME>",
-              "digest": {
-                  "<ALGORITHM>": "<HEX_VALUE>"
-              }
-          }
-
-      predicate_type: URI identifying the type of the Predicate.
-
-      predicate: An opaque dictionary containing additional parameters of 
-      the Predicate. Unset is treated the same as set-but-empty. May be 
-      omitted if predicate_type fully describes the predicate.
-    """
     _type = attr.ib()
     predicateType = attr.ib()
     predicate = attr.ib()
@@ -76,11 +75,12 @@ class Statement(Signable):
 
         statement = statementpb.Statement()
         statement.type = STATEMENT_TYPE
-        statement.predicateType = 'NOT_YET_SUPPORTED'
-        statement.predicate.update(
-            {'NOT_YET_SUPPORTED': "NOT_YET_SUPPORTED"})
+        # camelCase here because of protobuf requirements
+        statement.predicateType = kwargs.get("predicateType")
+        statement.predicate.update(kwargs.get("predicate", {}))
+        subjects = kwargs.get("subject", [])
 
-        for subject in kwargs.get("subject"):
+        for subject in subjects:
             if not isinstance(subject, rdpb.ResourceDescriptor):
                 subject = rdpb.ResourceDescriptor(**subject)
 
@@ -89,18 +89,19 @@ class Statement(Signable):
         # NOTE: We need to serialize the protobuf into JSON
         # so that we can sign the contents downstream
         serialized_statement = MessageToDict(statement)
+        serialized_statement = _enforce_canonical_json(serialized_statement)
 
         # This is to assign attributes onto the class
         # itself so the properties are directly accessible.
         for k, v in serialized_statement.items():
             setattr(self, k, v)
 
-        if hasattr(self, 'subject') == False:
+        if hasattr(self, "subject") == False:
             self.subject = []
 
     @property
     def type_(self):
-        """ The string to indentify the in-toto metadata type."""
+        """The string to indentify the in-toto metadata type."""
         # NOTE: We expose the type_ property in the API documentation instead of
         # _type to protect it against modification.
         # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict

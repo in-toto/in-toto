@@ -196,6 +196,13 @@ DSSE_KWARGS = {
     "help": ("generate metadata using dsse (experimental)."),
 }
 
+STATEMENT_ARGS = ["--use-statement"]
+STATEMENT_KWARGS = {
+    "dest": "use_statement",
+    "default": False,
+    "help": ("generate attestation using a ITE-6 statement (experimental)."),
+}
+
 RUN_TIMEOUT_ARGS = ["--run-timeout"]
 RUN_TIMEOUT_KWARGS = {
     "dest": "run_timeout",

@@ -52,6 +52,7 @@ from in_toto.models.link import (
     UNFINISHED_FILENAME_FORMAT,
     UNFINISHED_FILENAME_FORMAT_GLOB,
 )
+from in_toto.models.statement import Statement
 from in_toto.models.metadata import Envelope, Metablock, Metadata
 from in_toto.resolver import (
     RESOLVER_FOR_URI_SCHEME,
@@ -419,6 +420,7 @@ def in_toto_run(
     lstrip_paths=None,
     metadata_directory=None,
     use_dsse=False,
+    use_statement=False,
     timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
 ):
     """Performs a supply chain step or inspection generating link metadata.
@@ -483,6 +485,9 @@ def in_toto_run(
 
     use_dsse (optional): A boolean indicating if DSSE should be used to
         generate metadata.
+
+    use_statement (optional): A boolean indicating if you intend to generate 
+        an attestation using a ITE-6 statement (experimental).
 
     timeout (optional): An integer indicating the max timeout in seconds 
         for this command. Default is 10 seconds.
@@ -588,7 +593,33 @@ def in_toto_run(
 
     if use_dsse:
         LOG.info("Generating link metadata using DSSE...")
-        link_metadata = Envelope.from_signable(link)
+
+        if use_statement == False:
+
+            link_metadata = Envelope.from_signable(link)
+            LOG.info("Created Envelope from Link...")
+
+        else:
+
+            products = []
+            for product_name in products_dict:
+                product_digest = products_dict[product_name]
+                product_as_subject = {
+                    "name": product_name,
+                    "digest": product_digest,
+                }
+                products.append(product_as_subject)
+
+            statement = Statement(
+                subject=products,
+                predicateType="https://in-toto.io/attestation/link/v0.3",
+                predicate=vars(link),
+            )
+
+            link_metadata = Envelope.from_signable(statement)
+
+            LOG.info("Created Envelope from Statement...")
+
     else:
         LOG.info("Generating link metadata using Metablock...")
         link_metadata = Metablock(signed=link, compact_json=compact_json)
