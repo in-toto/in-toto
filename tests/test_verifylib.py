@@ -29,7 +29,7 @@ import shlex
 import shutil
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import securesystemslib.exceptions
@@ -954,6 +954,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # Store various layout paths to be used in tests
         cls.layout_single_signed_path = "single-signed.layout"
         cls.layout_double_signed_path = "double-signed.layout"
+        cls.layout_fixed_expiry_path = "fixed-datetime-expiry.layout"
         cls.layout_bad_sig = "bad-sig.layout"
         cls.layout_expired_path = "expired.layout"
         cls.layout_failing_step_rule_path = "failing-step-rule.layout"
@@ -981,6 +982,14 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.sign(alice)
         layout.sign(bob)
         layout.dump(cls.layout_double_signed_path)
+
+        # dump layout with fixed (and mocked) date expiry
+        layout = copy.deepcopy(layout_template)
+        layout.signed.expires = (
+            datetime(2025, 1, 2, 3, 4, 6, tzinfo=timezone.utc)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        layout.sign(alice)
+        layout.dump(cls.layout_fixed_expiry_path)
 
         # dump layout with bad signature
         layout = copy.deepcopy(layout_template)
@@ -1052,6 +1061,18 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout_key_dict = import_publickeys_from_file([self.alice_path])
         in_toto_verify(layout, layout_key_dict)
 
+    def test_verify_passing_layout_expiry(self):
+        """Test pass verification at expire < current timestamp."""
+        with patch("""in_toto.verifylib.datetime""") as mock_date:
+            mock_date.datetime.now.return_value = datetime(
+                2025, 1, 2, 3, 4, 5, tzinfo=timezone.utc
+            )
+            layout = Metablock.load(self.layout_fixed_expiry_path)
+            layout_key_dict = import_publickeys_from_file([self.alice_path])
+            # the expiry is a second later than the mocked datetime.datetime.now(), which
+            # should not raise an exception due to <= behaviour of expiration comparison
+            in_toto_verify(layout, layout_key_dict)
+
     def test_verify_failing_wrong_key(self):
         """Test fail verification with wrong layout key."""
         layout = Metablock.load(self.layout_single_signed_path)
@@ -1072,6 +1093,19 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout_key_dict = import_publickeys_from_file([self.alice_path])
         with self.assertRaises(LayoutExpiredError):
             in_toto_verify(layout, layout_key_dict)
+
+    def test_verify_failing_layout_at_expire_timestamp(self):
+        """Test fail expiry verification at current==expire timestamp."""
+        with patch("""in_toto.verifylib.datetime""") as mock_date:
+            mock_date.datetime.now.return_value = datetime(
+                2025, 1, 2, 3, 4, 6, tzinfo=timezone.utc
+            )
+            layout = Metablock.load(self.layout_fixed_expiry_path)
+            layout_key_dict = import_publickeys_from_file([self.alice_path])
+            # the expiry is the same as the mocked datetime.datetime.now(), which
+            # should raise an exception due to <= behaviour of expiration comparison
+            with self.assertRaises(LayoutExpiredError):
+                in_toto_verify(layout, layout_key_dict)
 
     def test_verify_failing_link_metadata_files(self):
         """Test fail verification with link metadata files not found."""
