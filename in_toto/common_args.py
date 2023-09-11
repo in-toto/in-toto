@@ -198,6 +198,7 @@ DSSE_KWARGS = {
 
 RUN_TIMEOUT_ARGS = ["--run-timeout"]
 RUN_TIMEOUT_KWARGS = {
+    "type": int,
     "dest": "run_timeout",
     "default": LINK_CMD_EXEC_TIMEOUT,
     "help": (
