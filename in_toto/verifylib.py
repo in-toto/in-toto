@@ -553,7 +553,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
     return verified_steps_metadata
 
 
-def verify_command_alignment(command, expected_command="", regex=None):
+def verify_command_alignment(command, expected_command="", regex=False):
     """
     <Purpose>
       Checks if a run command aligns with an expected command. The commands align
@@ -569,10 +569,9 @@ def verify_command_alignment(command, expected_command="", regex=None):
       command:
               A command list, e.g. ["vi", "foo.py"]
       expected_command:
-              A command list, e.g. ["make", "install"]
+              A command list, e.g. ["make", "install"], or in the case of a regex, a single regex string
       regex:
-              A regex expression that if passed will be used to compare to the command,
-              e.g. 
+              A boolean stating whether or not the expected_command should be treated as regex
 
     <Exceptions>
       None.
@@ -587,14 +586,14 @@ def verify_command_alignment(command, expected_command="", regex=None):
     # https://github.com/in-toto/in-toto/pull/47
     # We chose the simplest solution for now, i.e. Warn if they do not align.
     if regex:
-        regular_expression_object = re.compile(regex)
+        regular_expression_object = re.compile(expected_command)
         joined_command = ' '.join([str(elem) for elem in command])
         if not regular_expression_object.match(joined_command):
-            print("Run command '%s' differs from expected regex '%s'", command, regex)
+            print("Run command '%s' differs from expected regex '%s'", command, expected_command)
             LOG.warning(
                 "Run command '%s' differs from expected regex '%s'",
                 command,
-                regex,
+                expected_command,
             )
     else:
         if command != expected_command:
