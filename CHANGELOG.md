@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.1
+
+### Changed
+* Default type for CLI arg `--run-timeout` to avoid type mismatch (#626)
+* Dependency update (#627)
+
 ## v2.1.0
 
 ### Added
