@@ -62,3 +62,50 @@ class Signable(ValidationMixin):
         return securesystemslib.formats.encode_canonical(
             attr.asdict(self)
         ).encode("UTF-8")
+
+
+class BeautifyMixin:
+    """The beautify mixin provides a method to represent in-toto's metadata 
+    object into a friendly and readable form as a string."""
+
+    def _beautify(self, data, level=0, width=4):
+        """Helper function for beautify method. This function recursively 
+        unpacks data in given dictionary object into a string.
+
+        Arguments:
+          data: dictionary object containing metadata key-value pairs. Keys 
+              are metadata field names and values are the metadata values.
+          level: integer representing level of nesting that determines 
+              indentation.
+          width: integer representing the size of single indentation.
+
+        Returns:
+          A string that presents in-toto metadata in a readable form.
+        """
+        indent = ' ' * (level * width)
+        s = []
+        for key, val in data.items():
+            if not val:
+                continue
+
+            s.append(f'{indent}{key}: ')
+
+            if isinstance(val, str) or isinstance(val, int):
+                s.append(f'{val}\n')
+
+            elif isinstance(val, list):
+                s.append('\n')
+                next_indent = indent + (' ' * width)
+                for item in val:
+                    s.append(f'{next_indent}{item}\n')
+            
+            elif isinstance(val, dict):
+                s.append(f'\n{self._beautify(val, level=level+1)}')
+            
+        return ''.join(s)
+
+    def beautify(self):
+        """Translates in-toto metadata object into audit-friendly string 
+        representation."""
+        data = self.get_beautify_dict()
+        return self._beautify(data).strip()

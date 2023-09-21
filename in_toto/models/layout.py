@@ -34,6 +34,7 @@
 """
 import json
 import shlex
+from collections import OrderedDict
 from datetime import datetime
 
 import attr
@@ -47,7 +48,11 @@ from dateutil.relativedelta import relativedelta
 
 import in_toto.exceptions
 import in_toto.rulelib
-from in_toto.models.common import Signable, ValidationMixin
+from in_toto.models.common import (
+    Signable, 
+    ValidationMixin,
+    BeautifyMixin
+)
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
 # with the following name, relative to the verification directory
@@ -55,7 +60,7 @@ SUBLAYOUT_LINK_DIR_FORMAT = "{name}.{keyid:.8}"
 
 
 @attr.s(repr=False, init=False)
-class Layout(Signable):
+class Layout(Signable, BeautifyMixin):
     """A definition for a software supply chain.
 
     A layout lists the sequence of steps of the software supply chain in the
@@ -487,9 +492,20 @@ class Layout(Signable):
                 )
             names_seen.add(inspection.name)
 
+    def get_beautify_dict(self):
+        """Organize Layout's metadata attributes in key-value pairs 
+        """
+        return OrderedDict({
+            'Type': self._type,
+            'Expiration': self.expires,
+            'Keys': [keyid for keyid in self.keys],
+            'Steps': {step.name: step.get_beautify_dict() for step in self.steps},
+            'Inspections': {insp.name: insp.get_beautify_dict() for insp in self.inspect},
+        })
+
 
 @attr.s(repr=False, init=False)
-class SupplyChainItem(ValidationMixin):
+class SupplyChainItem(ValidationMixin, BeautifyMixin):
     """Common attributes and methods for supply chain steps and inspections.
 
     Attributes:
@@ -673,6 +689,15 @@ class Step(SupplyChainItem):
                 "The expected command field is malformed!"
             )
 
+    def get_beautify_dict(self):
+        return OrderedDict({
+            'Expected Command': ' '.join(self.expected_command),
+            'Expected Materials': [' '.join(material) for material in self.expected_materials],
+            'Expected Products': [' '.join(product) for product in self.expected_products],
+            'Pubkeys': self.pubkeys,
+            'Threshold': self.threshold,
+        })
+
 
 @attr.s(repr=False, init=False)
 class Inspection(SupplyChainItem):
@@ -740,3 +765,10 @@ class Inspection(SupplyChainItem):
             raise securesystemslib.exceptions.FormatError(
                 "The run field is malformed!"
             )
+
+    def get_beautify_dict(self):
+        return OrderedDict({
+            'Run': ' '.join(self.run),
+            'Expected Materials': [' '.join(material) for material in self.expected_materials],
+            'Expected Products': [' '.join(product) for product in self.expected_products],
+        })
