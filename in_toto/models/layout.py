@@ -51,7 +51,8 @@ import in_toto.rulelib
 from in_toto.models.common import (
     Signable, 
     ValidationMixin,
-    BeautifyMixin
+    BeautifyMixin,
+    MetadataFields
 )
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -492,16 +493,33 @@ class Layout(Signable, BeautifyMixin):
                 )
             names_seen.add(inspection.name)
 
-    def get_beautify_dict(self):
-        """Organize Layout's metadata attributes in key-value pairs 
+    def get_beautify_dict(self, order=[]):
+        """Organize Layout's metadata attributes as key-value pairs
+        
+        Arguments:
+          order: list of string specifying fields to be included and the 
+              order in which they are to be arranged.
+
+        Returns:
+          OrderedDict containing metadata field and value pairs arranged 
+          in the given order. If order is not defined, the full metadata 
+          fields are returned in the dafault order.
         """
-        return OrderedDict({
-            'Type': self._type,
-            'Expiration': self.expires,
-            'Keys': [keyid for keyid in self.keys],
-            'Steps': {step.name: step.get_beautify_dict() for step in self.steps},
-            'Inspections': {insp.name: insp.get_beautify_dict() for insp in self.inspect},
+        metadata = OrderedDict({
+            MetadataFields.TYPE: self._type,
+            MetadataFields.EXPIRATION: self.expires,
+            MetadataFields.KEYS: [keyid for keyid in self.keys],
+            MetadataFields.STEPS: {step.name: step.get_beautify_dict() for step in self.steps},
+            MetadataFields.INSPECTIONS: {insp.name: insp.get_beautify_dict() for insp in self.inspect},
         })
+
+        if not order:
+            return metadata
+        
+        ordered_metadata = OrderedDict()
+        for field in order:
+            ordered_metadata[field] = metadata[field]
+        return ordered_metadata
 
 
 @attr.s(repr=False, init=False)
@@ -689,14 +707,33 @@ class Step(SupplyChainItem):
                 "The expected command field is malformed!"
             )
 
-    def get_beautify_dict(self):
-        return OrderedDict({
-            'Expected Command': ' '.join(self.expected_command),
-            'Expected Materials': [' '.join(material) for material in self.expected_materials],
-            'Expected Products': [' '.join(product) for product in self.expected_products],
-            'Pubkeys': self.pubkeys,
-            'Threshold': self.threshold,
+    def get_beautify_dict(self, order=[]):
+        """Organize Step's metadata attributes as key-value pairs
+        
+        Arguments:
+          order: list of string specifying fields to be included and the 
+              order in which they are to be arranged.
+
+        Returns:
+          OrderedDict containing metadata field and value pairs arranged 
+          in the given order. If order is not defined, the full metadata 
+          fields are returned in the dafault order.
+        """
+        metadata = OrderedDict({
+            MetadataFields.EXPECTED_COMMAND: ' '.join(self.expected_command),
+            MetadataFields.EXPECTED_MATERIALS: [' '.join(material) for material in self.expected_materials],
+            MetadataFields.EXPECTED_PRODUCTS: [' '.join(product) for product in self.expected_products],
+            MetadataFields.PUBKEYS: self.pubkeys,
+            MetadataFields.THRESHOLD: self.threshold,
         })
+
+        if not order:
+            return metadata
+        
+        ordered_metadata = OrderedDict()
+        for field in order:
+            ordered_metadata[field] = metadata[field]
+        return ordered_metadata
 
 
 @attr.s(repr=False, init=False)
@@ -766,9 +803,28 @@ class Inspection(SupplyChainItem):
                 "The run field is malformed!"
             )
 
-    def get_beautify_dict(self):
-        return OrderedDict({
-            'Run': ' '.join(self.run),
-            'Expected Materials': [' '.join(material) for material in self.expected_materials],
-            'Expected Products': [' '.join(product) for product in self.expected_products],
+    def get_beautify_dict(self, order=[]):
+        """Organize Step's metadata attributes as key-value pairs
+        
+        Arguments:
+          order: list of string specifying fields to be included and the 
+              order in which they are to be arranged.
+
+        Returns:
+          OrderedDict containing metadata field and value pairs arranged 
+          in the given order. If order is not defined, the full metadata 
+          fields are returned in the dafault order.
+        """
+        metadata = OrderedDict({
+            MetadataFields.RUN: ' '.join(self.run),
+            MetadataFields.EXPECTED_MATERIALS: [' '.join(material) for material in self.expected_materials],
+            MetadataFields.EXPECTED_PRODUCTS: [' '.join(product) for product in self.expected_products],
         })
+
+        if not order:
+            return metadata
+        
+        ordered_metadata = OrderedDict()
+        for field in order:
+            ordered_metadata[field] = metadata[field]
+        return ordered_metadata

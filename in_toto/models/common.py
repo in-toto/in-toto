@@ -104,8 +104,31 @@ class BeautifyMixin:
             
         return ''.join(s)
 
-    def beautify(self):
+    def beautify(self, order=[]):
         """Translates in-toto metadata object into audit-friendly string 
-        representation."""
-        data = self.get_beautify_dict()
+        representation.
+        
+        Arguments:
+          order: list of string specifying fields to be included and the 
+              order in which they are to be arranged.
+
+        Returns:
+          A string that presents in-toto metadata in a readable form.
+        """
+        data = self.get_beautify_dict(order)
         return self._beautify(data).strip()
+
+
+class MetadataFields:
+    """Common in-toto metadata fields"""
+    TYPE = 'Type'
+    EXPIRATION = 'Expiration'
+    KEYS = 'Keys'
+    STEPS = 'Steps'
+    INSPECTIONS = 'Inspections'
+    EXPECTED_COMMAND = 'Expected Command'
+    EXPECTED_MATERIALS = 'Expected Materials'
+    EXPECTED_PRODUCTS = 'Expected Products'
+    PUBKEYS = 'Pubkeys'
+    THRESHOLD = 'Threshold'
+    RUN = 'Run'
