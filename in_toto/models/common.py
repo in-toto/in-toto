@@ -84,25 +84,25 @@ class BeautifyMixin:
         """
         indent = ' ' * (level * width)
         s = []
-        for key, val in data.items():
-            if not val:
-                continue
 
-            s.append(f'{indent}{key}: ')
+        if isinstance(data, str) or isinstance(data, int):
+            return str(data)
+        
+        elif isinstance(data, list):
+            s.append('\n')
+            for item in data:
+                s.append(f'{indent}{self._beautify(item, level)}\n')
+        
+        elif isinstance(data, dict):    # Includes OrderedDict - dict is superset
+            s.append('\n')
+            for key, val in data.items():
+                if not val:
+                    continue
+                
+                s.append(f'{indent}{key}: ')
+                s.append(f'{self._beautify(val, level=level+1)}\n')
 
-            if isinstance(val, str) or isinstance(val, int):
-                s.append(f'{val}\n')
-
-            elif isinstance(val, list):
-                s.append('\n')
-                next_indent = indent + (' ' * width)
-                for item in val:
-                    s.append(f'{next_indent}{item}\n')
-            
-            elif isinstance(val, dict):
-                s.append(f'\n{self._beautify(val, level=level+1)}')
-            
-        return ''.join(s)
+        return ''.join(s).rstrip()
 
     def beautify(self, order=[]):
         """Translates in-toto metadata object into audit-friendly string 

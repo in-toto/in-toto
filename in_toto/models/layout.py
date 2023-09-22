@@ -509,8 +509,8 @@ class Layout(Signable, BeautifyMixin):
             MetadataFields.TYPE: self._type,
             MetadataFields.EXPIRATION: self.expires,
             MetadataFields.KEYS: [keyid for keyid in self.keys],
-            MetadataFields.STEPS: {step.name: step.get_beautify_dict() for step in self.steps},
-            MetadataFields.INSPECTIONS: {insp.name: insp.get_beautify_dict() for insp in self.inspect},
+            MetadataFields.STEPS: OrderedDict({step.name: step.get_beautify_dict() for step in self.steps}),
+            MetadataFields.INSPECTIONS: OrderedDict({insp.name: insp.get_beautify_dict() for insp in self.inspect}),
         })
 
         if not order:
