@@ -26,10 +26,7 @@ import textwrap
 import unittest
 from collections import OrderedDict
 
-from in_toto.models.common import (
-    Signable,
-    BeautifyMixin,
-)
+from in_toto.models.common import BeautifyMixin, Signable
 
 
 class TestSignable(unittest.TestCase):

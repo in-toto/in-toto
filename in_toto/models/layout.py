@@ -49,10 +49,10 @@ from dateutil.relativedelta import relativedelta
 import in_toto.exceptions
 import in_toto.rulelib
 from in_toto.models.common import (
-    Signable,
-    ValidationMixin,
     BeautifyMixin,
     MetadataFields,
+    Signable,
+    ValidationMixin,
 )
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
