@@ -82,29 +82,29 @@ class BeautifyMixin:
         Returns:
           A string that presents in-toto metadata in a readable form.
         """
-        indent = ' ' * (level * width)
+        indent = " " * (level * width)
         s = []
 
-        if isinstance(data, str) or isinstance(data, int):
+        if isinstance(data, (str, int)):
             return str(data)
         
-        elif isinstance(data, list):
-            s.append('\n')
+        if isinstance(data, list):
+            s.append("\n")
             for item in data:
-                s.append(f'{indent}{self._beautify(item, level)}\n')
+                s.append(f"{indent}{self._beautify(item, level)}\n")
         
         elif isinstance(data, dict):    # Includes OrderedDict - dict is superset
-            s.append('\n')
+            s.append("\n")
             for key, val in data.items():
                 if not val:
                     continue
                 
-                s.append(f'{indent}{key}: ')
-                s.append(f'{self._beautify(val, level=level+1)}\n')
+                s.append(f"{indent}{key}: ")
+                s.append(f"{self._beautify(val, level=level+1)}\n")
 
-        return ''.join(s).rstrip()
+        return "".join(s).rstrip()
 
-    def beautify(self, order=[]):
+    def beautify(self, order=None):
         """Translates in-toto metadata object into audit-friendly string 
         representation.
         
@@ -121,14 +121,14 @@ class BeautifyMixin:
 
 class MetadataFields:
     """Common in-toto metadata fields"""
-    TYPE = 'Type'
-    EXPIRATION = 'Expiration'
-    KEYS = 'Keys'
-    STEPS = 'Steps'
-    INSPECTIONS = 'Inspections'
-    EXPECTED_COMMAND = 'Expected Command'
-    EXPECTED_MATERIALS = 'Expected Materials'
-    EXPECTED_PRODUCTS = 'Expected Products'
-    PUBKEYS = 'Pubkeys'
-    THRESHOLD = 'Threshold'
-    RUN = 'Run'
+    TYPE = "Type"
+    EXPIRATION = "Expiration"
+    KEYS = "Keys"
+    STEPS = "Steps"
+    INSPECTIONS = "Inspections"
+    EXPECTED_COMMAND = "Expected Command"
+    EXPECTED_MATERIALS = "Expected Materials"
+    EXPECTED_PRODUCTS = "Expected Products"
+    PUBKEYS = "Pubkeys"
+    THRESHOLD = "Threshold"
+    RUN = "Run"

@@ -41,22 +41,25 @@ class TestSignable(unittest.TestCase):
 
 
 class TestBeautifyMixin(unittest.TestCase):
+    """Tests BeautifyMixin's beautify method"""
 
     class ExampleMetadata(BeautifyMixin):
-        def get_beautify_dict(self, order=[]):
+        """Metadata class to mock real metadata instances for testing"""
+        def get_beautify_dict(self, order=None):
+            """Organize Layout's metadata attributes as key-value pairs"""
             metadata = OrderedDict({
-                'field_string': 'value',
-                'field_integer': 1,
-                'field_list_string': ['value1', 'value2', 'value3'],
-                'field_list_integer': [1, 2, 3],
-                'field_dict': {
-                    'field_string': 'value',
-                    'field_integer': 1,
-                    'field_list': ['value'],
-                    'field_nested_dict': {
-                        'field_string': 'value',
-                        'field_integer': 1,
-                        'field_list': ['value'],
+                "field_string": "value",
+                "field_integer": 1,
+                "field_list_string": ["value1", "value2", "value3"],
+                "field_list_integer": [1, 2, 3],
+                "field_dict": {
+                    "field_string": "value",
+                    "field_integer": 1,
+                    "field_list": ["value"],
+                    "field_nested_dict": {
+                        "field_string": "value",
+                        "field_integer": 1,
+                        "field_list": ["value"],
                     }
                 }
             })
@@ -100,7 +103,7 @@ class TestBeautifyMixin(unittest.TestCase):
 
     def test_beautify_with_order(self):
         metadata = self.ExampleMetadata()
-        order = ['field_dict', 'field_integer', 'field_string']
+        order = ["field_dict", "field_integer", "field_string"]
         beautified_metadata = metadata.beautify(order)
         expected = textwrap.dedent(
             """

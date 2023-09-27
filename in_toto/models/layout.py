@@ -493,7 +493,7 @@ class Layout(Signable, BeautifyMixin):
                 )
             names_seen.add(inspection.name)
 
-    def get_beautify_dict(self, order=[]):
+    def get_beautify_dict(self, order=None):
         """Organize Layout's metadata attributes as key-value pairs
         
         Arguments:
@@ -508,7 +508,7 @@ class Layout(Signable, BeautifyMixin):
         metadata = OrderedDict({
             MetadataFields.TYPE: self._type,
             MetadataFields.EXPIRATION: self.expires,
-            MetadataFields.KEYS: [keyid for keyid in self.keys],
+            MetadataFields.KEYS: list(self.keys),
             MetadataFields.STEPS: OrderedDict({step.name: step.get_beautify_dict() for step in self.steps}),
             MetadataFields.INSPECTIONS: OrderedDict({insp.name: insp.get_beautify_dict() for insp in self.inspect}),
         })
@@ -707,7 +707,7 @@ class Step(SupplyChainItem):
                 "The expected command field is malformed!"
             )
 
-    def get_beautify_dict(self, order=[]):
+    def get_beautify_dict(self, order=None):
         """Organize Step's metadata attributes as key-value pairs
         
         Arguments:
@@ -720,9 +720,9 @@ class Step(SupplyChainItem):
           fields are returned in the dafault order.
         """
         metadata = OrderedDict({
-            MetadataFields.EXPECTED_COMMAND: ' '.join(self.expected_command),
-            MetadataFields.EXPECTED_MATERIALS: [' '.join(material) for material in self.expected_materials],
-            MetadataFields.EXPECTED_PRODUCTS: [' '.join(product) for product in self.expected_products],
+            MetadataFields.EXPECTED_COMMAND: " ".join(self.expected_command),
+            MetadataFields.EXPECTED_MATERIALS: [" ".join(material) for material in self.expected_materials],
+            MetadataFields.EXPECTED_PRODUCTS: [" ".join(product) for product in self.expected_products],
             MetadataFields.PUBKEYS: self.pubkeys,
             MetadataFields.THRESHOLD: self.threshold,
         })
@@ -803,7 +803,7 @@ class Inspection(SupplyChainItem):
                 "The run field is malformed!"
             )
 
-    def get_beautify_dict(self, order=[]):
+    def get_beautify_dict(self, order=None):
         """Organize Step's metadata attributes as key-value pairs
         
         Arguments:
@@ -816,9 +816,9 @@ class Inspection(SupplyChainItem):
           fields are returned in the dafault order.
         """
         metadata = OrderedDict({
-            MetadataFields.RUN: ' '.join(self.run),
-            MetadataFields.EXPECTED_MATERIALS: [' '.join(material) for material in self.expected_materials],
-            MetadataFields.EXPECTED_PRODUCTS: [' '.join(product) for product in self.expected_products],
+            MetadataFields.RUN: " ".join(self.run),
+            MetadataFields.EXPECTED_MATERIALS: [" ".join(material) for material in self.expected_materials],
+            MetadataFields.EXPECTED_PRODUCTS: [" ".join(product) for product in self.expected_products],
         })
 
         if not order:

@@ -200,46 +200,46 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         layout = Layout(
             steps=[
                 Step(
-                    name='step-1',
-                    expected_command=['echo', 'step-1'],
+                    name="step-1",
+                    expected_command=["echo", "step-1"],
                     threshold=1
                 )
             ],
             inspect=[
                 Inspection(
-                    name='inspection-1',
-                    run=['echo', 'inspection-1']
+                    name="inspection-1",
+                    run=["echo", "inspection-1"]
                 )
             ],
-            expires='2023-09-23T00:00:00Z'
+            expires="2023-09-23T00:00:00Z"
         )
         metadata_dict = layout.get_beautify_dict()
         expected = OrderedDict({
-            'Type': 'layout',
-            'Expiration': '2023-09-23T00:00:00Z',
-            'Keys': [],
-            'Steps': OrderedDict({
-                'step-1': OrderedDict({
-                    'Expected Command': 'echo step-1',
-                    'Expected Materials': [],
-                    'Expected Products': [],
-                    'Pubkeys': [],
-                    'Threshold': 1
+            "Type": "layout",
+            "Expiration": "2023-09-23T00:00:00Z",
+            "Keys": [],
+            "Steps": OrderedDict({
+                "step-1": OrderedDict({
+                    "Expected Command": "echo step-1",
+                    "Expected Materials": [],
+                    "Expected Products": [],
+                    "Pubkeys": [],
+                    "Threshold": 1
                 })
             }),
-            'Inspections': OrderedDict({
-                'inspection-1': OrderedDict({
-                    'Run': 'echo inspection-1',
-                    'Expected Materials': [],
-                    'Expected Products': [],
+            "Inspections": OrderedDict({
+                "inspection-1": OrderedDict({
+                    "Run": "echo inspection-1",
+                    "Expected Materials": [],
+                    "Expected Products": [],
                 })
             })
         })
 
-        for field in ['Type', 'Expiration', 'Keys']:
+        for field in ["Type", "Expiration", "Keys"]:
             self.assertEqual(metadata_dict[field], expected[field])
 
-        for field in ['Steps', 'Inspections']:
+        for field in ["Steps", "Inspections"]:
             for name, link_metadata in metadata_dict[field].items():
                 expected_link_metadata = expected[field][name]
                 self.assertEqual(
