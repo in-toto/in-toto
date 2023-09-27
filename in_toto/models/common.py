@@ -65,17 +65,17 @@ class Signable(ValidationMixin):
 
 
 class BeautifyMixin:
-    """The beautify mixin provides a method to represent in-toto's metadata 
+    """The beautify mixin provides a method to represent in-toto's metadata
     object into a friendly and readable form as a string."""
 
     def _beautify(self, data, level=0, width=4):
-        """Helper function for beautify method. This function recursively 
+        """Helper function for beautify method. This function recursively
         unpacks data in given dictionary object into a string.
 
         Arguments:
-          data: dictionary object containing metadata key-value pairs. Keys 
+          data: dictionary object containing metadata key-value pairs. Keys
               are metadata field names and values are the metadata values.
-          level: integer representing level of nesting that determines 
+          level: integer representing level of nesting that determines
               indentation.
           width: integer representing the size of single indentation.
 
@@ -87,29 +87,29 @@ class BeautifyMixin:
 
         if isinstance(data, (str, int)):
             return str(data)
-        
+
         if isinstance(data, list):
             s.append("\n")
             for item in data:
                 s.append(f"{indent}{self._beautify(item, level)}\n")
-        
-        elif isinstance(data, dict):    # Includes OrderedDict - dict is superset
+
+        elif isinstance(data, dict):  # Includes OrderedDict - dict is superset
             s.append("\n")
             for key, val in data.items():
                 if not val:
                     continue
-                
+
                 s.append(f"{indent}{key}: ")
                 s.append(f"{self._beautify(val, level=level+1)}\n")
 
         return "".join(s).rstrip()
 
     def beautify(self, order=None):
-        """Translates in-toto metadata object into audit-friendly string 
+        """Translates in-toto metadata object into audit-friendly string
         representation.
-        
+
         Arguments:
-          order: list of string specifying fields to be included and the 
+          order: list of string specifying fields to be included and the
               order in which they are to be arranged.
 
         Returns:
@@ -121,6 +121,7 @@ class BeautifyMixin:
 
 class MetadataFields:
     """Common in-toto metadata fields"""
+
     TYPE = "Type"
     EXPIRATION = "Expiration"
     KEYS = "Keys"

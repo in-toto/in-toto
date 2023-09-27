@@ -49,10 +49,10 @@ from dateutil.relativedelta import relativedelta
 import in_toto.exceptions
 import in_toto.rulelib
 from in_toto.models.common import (
-    Signable, 
+    Signable,
     ValidationMixin,
     BeautifyMixin,
-    MetadataFields
+    MetadataFields,
 )
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -495,27 +495,36 @@ class Layout(Signable, BeautifyMixin):
 
     def get_beautify_dict(self, order=None):
         """Organize Layout's metadata attributes as key-value pairs
-        
+
         Arguments:
-          order: list of string specifying fields to be included and the 
+          order: list of string specifying fields to be included and the
               order in which they are to be arranged.
 
         Returns:
-          OrderedDict containing metadata field and value pairs arranged 
-          in the given order. If order is not defined, the full metadata 
+          OrderedDict containing metadata field and value pairs arranged
+          in the given order. If order is not defined, the full metadata
           fields are returned in the dafault order.
         """
-        metadata = OrderedDict({
-            MetadataFields.TYPE: self._type,
-            MetadataFields.EXPIRATION: self.expires,
-            MetadataFields.KEYS: list(self.keys),
-            MetadataFields.STEPS: OrderedDict({step.name: step.get_beautify_dict() for step in self.steps}),
-            MetadataFields.INSPECTIONS: OrderedDict({insp.name: insp.get_beautify_dict() for insp in self.inspect}),
-        })
+        metadata = OrderedDict(
+            {
+                MetadataFields.TYPE: self._type,
+                MetadataFields.EXPIRATION: self.expires,
+                MetadataFields.KEYS: list(self.keys),
+                MetadataFields.STEPS: OrderedDict(
+                    {step.name: step.get_beautify_dict() for step in self.steps}
+                ),
+                MetadataFields.INSPECTIONS: OrderedDict(
+                    {
+                        insp.name: insp.get_beautify_dict()
+                        for insp in self.inspect
+                    }
+                ),
+            }
+        )
 
         if not order:
             return metadata
-        
+
         ordered_metadata = OrderedDict()
         for field in order:
             ordered_metadata[field] = metadata[field]
@@ -709,27 +718,35 @@ class Step(SupplyChainItem):
 
     def get_beautify_dict(self, order=None):
         """Organize Step's metadata attributes as key-value pairs
-        
+
         Arguments:
-          order: list of string specifying fields to be included and the 
+          order: list of string specifying fields to be included and the
               order in which they are to be arranged.
 
         Returns:
-          OrderedDict containing metadata field and value pairs arranged 
-          in the given order. If order is not defined, the full metadata 
+          OrderedDict containing metadata field and value pairs arranged
+          in the given order. If order is not defined, the full metadata
           fields are returned in the dafault order.
         """
-        metadata = OrderedDict({
-            MetadataFields.EXPECTED_COMMAND: " ".join(self.expected_command),
-            MetadataFields.EXPECTED_MATERIALS: [" ".join(material) for material in self.expected_materials],
-            MetadataFields.EXPECTED_PRODUCTS: [" ".join(product) for product in self.expected_products],
-            MetadataFields.PUBKEYS: self.pubkeys,
-            MetadataFields.THRESHOLD: self.threshold,
-        })
+        metadata = OrderedDict(
+            {
+                MetadataFields.EXPECTED_COMMAND: " ".join(
+                    self.expected_command
+                ),
+                MetadataFields.EXPECTED_MATERIALS: [
+                    " ".join(material) for material in self.expected_materials
+                ],
+                MetadataFields.EXPECTED_PRODUCTS: [
+                    " ".join(product) for product in self.expected_products
+                ],
+                MetadataFields.PUBKEYS: self.pubkeys,
+                MetadataFields.THRESHOLD: self.threshold,
+            }
+        )
 
         if not order:
             return metadata
-        
+
         ordered_metadata = OrderedDict()
         for field in order:
             ordered_metadata[field] = metadata[field]
@@ -805,25 +822,31 @@ class Inspection(SupplyChainItem):
 
     def get_beautify_dict(self, order=None):
         """Organize Step's metadata attributes as key-value pairs
-        
+
         Arguments:
-          order: list of string specifying fields to be included and the 
+          order: list of string specifying fields to be included and the
               order in which they are to be arranged.
 
         Returns:
-          OrderedDict containing metadata field and value pairs arranged 
-          in the given order. If order is not defined, the full metadata 
+          OrderedDict containing metadata field and value pairs arranged
+          in the given order. If order is not defined, the full metadata
           fields are returned in the dafault order.
         """
-        metadata = OrderedDict({
-            MetadataFields.RUN: " ".join(self.run),
-            MetadataFields.EXPECTED_MATERIALS: [" ".join(material) for material in self.expected_materials],
-            MetadataFields.EXPECTED_PRODUCTS: [" ".join(product) for product in self.expected_products],
-        })
+        metadata = OrderedDict(
+            {
+                MetadataFields.RUN: " ".join(self.run),
+                MetadataFields.EXPECTED_MATERIALS: [
+                    " ".join(material) for material in self.expected_materials
+                ],
+                MetadataFields.EXPECTED_PRODUCTS: [
+                    " ".join(product) for product in self.expected_products
+                ],
+            }
+        )
 
         if not order:
             return metadata
-        
+
         ordered_metadata = OrderedDict()
         for field in order:
             ordered_metadata[field] = metadata[field]

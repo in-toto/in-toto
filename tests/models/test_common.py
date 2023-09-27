@@ -45,28 +45,31 @@ class TestBeautifyMixin(unittest.TestCase):
 
     class ExampleMetadata(BeautifyMixin):
         """Metadata class to mock real metadata instances for testing"""
+
         def get_beautify_dict(self, order=None):
             """Organize Layout's metadata attributes as key-value pairs"""
-            metadata = OrderedDict({
-                "field_string": "value",
-                "field_integer": 1,
-                "field_list_string": ["value1", "value2", "value3"],
-                "field_list_integer": [1, 2, 3],
-                "field_dict": {
+            metadata = OrderedDict(
+                {
                     "field_string": "value",
                     "field_integer": 1,
-                    "field_list": ["value"],
-                    "field_nested_dict": {
+                    "field_list_string": ["value1", "value2", "value3"],
+                    "field_list_integer": [1, 2, 3],
+                    "field_dict": {
                         "field_string": "value",
                         "field_integer": 1,
                         "field_list": ["value"],
-                    }
+                        "field_nested_dict": {
+                            "field_string": "value",
+                            "field_integer": 1,
+                            "field_list": ["value"],
+                        },
+                    },
                 }
-            })
+            )
 
             if not order:
                 return metadata
-            
+
             ordered_metadata = {}
             for field in order:
                 ordered_metadata[field] = metadata[field]
