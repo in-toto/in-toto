@@ -283,27 +283,38 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
             MetadataFields.EXPIRATION,
             MetadataFields.TYPE,
             MetadataFields.RUN,
+            MetadataFields.INSPECTIONS,
         ]
+        step_order = [
+            MetadataFields.THRESHOLD,
+            MetadataFields.EXPECTED_COMMAND,
+            MetadataFields.RUN,
+        ]
+        inspection_order = [MetadataFields.RUN, MetadataFields.PUBKEYS]
         expected = OrderedDict(
             {
                 "Steps": OrderedDict(
                     {
                         "step-1": OrderedDict(
                             {
-                                "Expected Command": "echo step-1",
-                                "Expected Materials": [],
-                                "Expected Products": [],
-                                "Pubkeys": [],
                                 "Threshold": 1,
+                                "Expected Command": "echo step-1",
                             }
                         )
                     }
                 ),
                 "Expiration": "2023-09-23T00:00:00Z",
                 "Type": "layout",
+                "Inspections": OrderedDict(
+                    {"inspection-1": OrderedDict({"Run": "echo inspection-1"})}
+                ),
             }
         )
-        metadata_dict = layout.get_beautify_dict(order=order)
+        metadata_dict = layout.get_beautify_dict(
+            order=order,
+            step_order=step_order,
+            inspection_order=inspection_order,
+        )
 
         # Verify order of the metadata fields
         self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
@@ -313,7 +324,7 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
             self.assertEqual(metadata_dict[field], expected[field])
 
         # Verify nested metadata objects
-        for field in [MetadataFields.STEPS]:
+        for field in [MetadataFields.STEPS, MetadataFields.INSPECTIONS]:
             for name, link_metadata in metadata_dict[field].items():
                 expected_link_metadata = expected[field][name]
                 self.assertEqual(

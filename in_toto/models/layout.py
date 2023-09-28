@@ -493,29 +493,43 @@ class Layout(Signable, BeautifyMixin):
                 )
             names_seen.add(inspection.name)
 
-    def get_beautify_dict(self, order=None):
+    def get_beautify_dict(self, order=None, **kwargs):
         """Organize Layout's metadata attributes as key-value pairs
 
         Arguments:
           order: list of string specifying fields to be included and the
               order in which they are to be arranged.
 
+        Keyword Arguments:
+          step_order: list of string specifying step metadata fields to be
+              included and the order in which they are to be arranged
+          inspection_order: list of string specifying inspection metadata
+              fields to be included and the order in which they are to be
+              arranged
+
         Returns:
           OrderedDict containing metadata field and value pairs arranged
           in the given order. If order is not defined, the full metadata
           fields are returned in the dafault order.
         """
+        step_order = kwargs.get("step_order")
+        inspection_order = kwargs.get("inspection_order")
         metadata = OrderedDict(
             {
                 MetadataFields.TYPE: self._type,
                 MetadataFields.EXPIRATION: self.expires,
                 MetadataFields.KEYS: list(self.keys),
                 MetadataFields.STEPS: OrderedDict(
-                    {step.name: step.get_beautify_dict() for step in self.steps}
+                    {
+                        step.name: step.get_beautify_dict(order=step_order)
+                        for step in self.steps
+                    }
                 ),
                 MetadataFields.INSPECTIONS: OrderedDict(
                     {
-                        insp.name: insp.get_beautify_dict()
+                        insp.name: insp.get_beautify_dict(
+                            order=inspection_order
+                        )
                         for insp in self.inspect
                     }
                 ),

@@ -107,9 +107,14 @@ class BeautifyMixin:
 
         return "".join(s).rstrip()
 
-    def beautify(self, order=None):
+    def beautify(self, order=None, **kwargs):
         """Translates in-toto metadata object into audit-friendly string
         representation.
+
+        Keyword arguments are passed downstream to metadata's
+        get_beautify_dict() method. To learn more about available keyword
+        arguments, refer to the metdata's get_beautify_dict() method
+        docstring.
 
         Arguments:
           order: list of string specifying fields to be included and the
@@ -118,7 +123,7 @@ class BeautifyMixin:
         Returns:
           A string that presents in-toto metadata in a readable form.
         """
-        data = self.get_beautify_dict(order)
+        data = self.get_beautify_dict(order=order, **kwargs)
         return self._beautify(data).strip()
 
 

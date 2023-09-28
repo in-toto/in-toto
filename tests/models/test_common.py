@@ -78,9 +78,19 @@ class TestBeautifyMixin(unittest.TestCase):
     class UnsupportedMetadata(BeautifyMixin):
         """Metadata class to test unsupported metadata data type"""
 
-        def get_beautify_dict(self):
+        def get_beautify_dict(self, order=None):
             """Organize Layout's metadata attributes as key-value pairs"""
-            return OrderedDict({"field_set": {"item1"}})
+            metadata = OrderedDict({"field_set": {"item1"}})
+
+            if not order:
+                return metadata
+
+            ordered_metadata = {}
+            for field in order:
+                if field not in metadata:
+                    continue
+                ordered_metadata[field] = metadata[field]
+            return ordered_metadata
 
     def test_beautify(self):
         metadata = self.ExampleMetadata()
@@ -114,7 +124,7 @@ class TestBeautifyMixin(unittest.TestCase):
     def test_beautify_with_order(self):
         metadata = self.ExampleMetadata()
         order = ["field_dict", "field_integer", "field_string"]
-        beautified_metadata = metadata.beautify(order)
+        beautified_metadata = metadata.beautify(order=order)
         expected = textwrap.dedent(
             """
             field_dict: 
