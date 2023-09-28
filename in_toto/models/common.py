@@ -86,9 +86,9 @@ class BeautifyMixin:
         s = []
 
         if isinstance(data, (str, int)):
-            return str(data)
+            s.append(str(data))
 
-        if isinstance(data, list):
+        elif isinstance(data, list):
             s.append("\n")
             for item in data:
                 s.append(f"{indent}{self._beautify(item, level)}\n")
@@ -101,6 +101,9 @@ class BeautifyMixin:
 
                 s.append(f"{indent}{key}: ")
                 s.append(f"{self._beautify(val, level=level+1)}\n")
+
+        else:
+            raise ValueError("Unsupported data type to beautify")
 
         return "".join(s).rstrip()
 

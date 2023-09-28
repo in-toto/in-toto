@@ -527,6 +527,8 @@ class Layout(Signable, BeautifyMixin):
 
         ordered_metadata = OrderedDict()
         for field in order:
+            if field not in metadata:
+                continue
             ordered_metadata[field] = metadata[field]
         return ordered_metadata
 
@@ -749,6 +751,8 @@ class Step(SupplyChainItem):
 
         ordered_metadata = OrderedDict()
         for field in order:
+            if field not in metadata:
+                continue
             ordered_metadata[field] = metadata[field]
         return ordered_metadata
 
@@ -849,5 +853,7 @@ class Inspection(SupplyChainItem):
 
         ordered_metadata = OrderedDict()
         for field in order:
+            if field not in metadata:
+                continue
             ordered_metadata[field] = metadata[field]
         return ordered_metadata

@@ -32,6 +32,7 @@ import securesystemslib.exceptions
 import in_toto.exceptions
 import in_toto.models.link
 import in_toto.verifylib
+from in_toto.models.common import MetadataFields
 from in_toto.models.layout import Inspection, Layout, Step
 from in_toto.models.metadata import Metablock
 from tests.common import GPGKeysMixin, TmpDirMixin
@@ -210,7 +211,6 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
             ],
             expires="2023-09-23T00:00:00Z",
         )
-        metadata_dict = layout.get_beautify_dict()
         expected = OrderedDict(
             {
                 "Type": "layout",
@@ -242,17 +242,87 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
                 ),
             }
         )
+        metadata_dict = layout.get_beautify_dict()
 
-        for field in ["Type", "Expiration", "Keys"]:
+        # Verify order of the metadata fields
+        self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
+
+        # Verify integer and string type metadata
+        for field in [
+            MetadataFields.TYPE,
+            MetadataFields.EXPIRATION,
+            MetadataFields.KEYS,
+        ]:
             self.assertEqual(metadata_dict[field], expected[field])
 
-        for field in ["Steps", "Inspections"]:
+        # Verify nested metadata objects
+        for field in [MetadataFields.STEPS, MetadataFields.INSPECTIONS]:
             for name, link_metadata in metadata_dict[field].items():
                 expected_link_metadata = expected[field][name]
                 self.assertEqual(
                     list(link_metadata.items()),
                     list(expected_link_metadata.items()),
                 )
+
+    def test_get_beautify_dict_with_order(self):
+        layout = Layout(
+            steps=[
+                Step(
+                    name="step-1",
+                    expected_command=["echo", "step-1"],
+                    threshold=1,
+                )
+            ],
+            inspect=[
+                Inspection(name="inspection-1", run=["echo", "inspection-1"])
+            ],
+            expires="2023-09-23T00:00:00Z",
+        )
+        order = [
+            MetadataFields.STEPS,
+            MetadataFields.EXPIRATION,
+            MetadataFields.TYPE,
+            MetadataFields.RUN,
+        ]
+        expected = OrderedDict(
+            {
+                "Steps": OrderedDict(
+                    {
+                        "step-1": OrderedDict(
+                            {
+                                "Expected Command": "echo step-1",
+                                "Expected Materials": [],
+                                "Expected Products": [],
+                                "Pubkeys": [],
+                                "Threshold": 1,
+                            }
+                        )
+                    }
+                ),
+                "Expiration": "2023-09-23T00:00:00Z",
+                "Type": "layout",
+            }
+        )
+        metadata_dict = layout.get_beautify_dict(order=order)
+
+        # Verify order of the metadata fields
+        self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
+
+        # Verify integer and string type metadata
+        for field in [MetadataFields.TYPE, MetadataFields.EXPIRATION]:
+            self.assertEqual(metadata_dict[field], expected[field])
+
+        # Verify nested metadata objects
+        for field in [MetadataFields.STEPS]:
+            for name, link_metadata in metadata_dict[field].items():
+                expected_link_metadata = expected[field][name]
+                self.assertEqual(
+                    list(link_metadata.items()),
+                    list(expected_link_metadata.items()),
+                )
+
+        # Verify unsupported fields are excluded
+        self.assertFalse(MetadataFields.RUN in metadata_dict)
 
 
 class TestLayoutValidator(unittest.TestCase):
