@@ -494,7 +494,7 @@ class Layout(Signable, BeautifyMixin):
             names_seen.add(inspection.name)
 
     def get_beautify_dict(self, order=None, **kwargs):
-        """Organize Layout's metadata attributes as key-value pairs
+        """Organize Layout metadata attributes as key-value pairs
 
         Arguments:
           order: list of string specifying fields to be included and the

@@ -22,10 +22,16 @@
   step of the supply chain is performed.
 """
 
+from collections import OrderedDict
+
 import attr
 import securesystemslib.formats
 
-from in_toto.models.common import Signable
+from in_toto.models.common import (
+    Signable,
+    LinkMetadataFields,
+    BeautifyMixin,
+)
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 FILENAME_FORMAT_SHORT = "{step_name}.link"
@@ -34,7 +40,7 @@ UNFINISHED_FILENAME_FORMAT_GLOB = ".{step_name}.{pattern}.link-unfinished"
 
 
 @attr.s(repr=False, init=False)
-class Link(Signable):
+class Link(Signable, BeautifyMixin):
     """Evidence for a performed step or inspection of the supply chain.
 
     A Link object is usually contained in a generic Metablock object for signing,
@@ -187,3 +193,37 @@ class Link(Signable):
                     type(self.environment)
                 )
             )
+
+    def get_beautify_dict(self, order=None):
+        """Organize Link metadata attributes as key-value pairs
+
+        Arguments:
+          order: list of string specifying fields to be included and the
+              order in which they are to be arranged.
+
+        Returns:
+          OrderedDict containing metadata field and value pairs arranged
+          in the given order. If order is not defined, the full metadata
+          fields are returned in the dafault order.
+        """
+        metadata = OrderedDict(
+            {
+                LinkMetadataFields.TYPE: self._type,
+                LinkMetadataFields.NAME: self.name,
+                LinkMetadataFields.COMMAND: " ".join(self.command),
+                LinkMetadataFields.MATERIALS: self.materials,
+                LinkMetadataFields.PRODUCTS: self.products,
+                LinkMetadataFields.BYPRODUCTS: self.byproducts,
+                LinkMetadataFields.ENVIRONMENT: self.environment,
+            }
+        )
+
+        if not order:
+            return metadata
+
+        ordered_metadata = OrderedDict()
+        for field in order:
+            if field not in metadata:
+                continue
+            ordered_metadata[field] = metadata[field]
+        return ordered_metadata

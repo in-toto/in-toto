@@ -22,15 +22,26 @@
 """
 # pylint: disable=protected-access
 
+import json
+import os
 import unittest
+from collections import OrderedDict
 
 from securesystemslib.exceptions import FormatError
 
+from in_toto.models.common import LinkMetadataFields
 from in_toto.models.link import Link
 
 
 class TestLinkValidator(unittest.TestCase):
     """Test link format validators"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.demo_files = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "../demo_files"
+        )
+        cls.package_link_file = "package.2f89b927.link"
 
     def test_validate_type(self):
         """Test `_type` field. Must be "link" """
@@ -120,3 +131,82 @@ class TestLinkValidator(unittest.TestCase):
         test_link.environment = "not a dict"
         with self.assertRaises(FormatError):
             test_link.validate()
+
+    def test_get_beautify_dict(self):
+        with open(
+            os.path.join(self.demo_files, self.package_link_file)
+        ) as fptr:
+            raw_json = json.load(fptr)
+            link = Link().read(raw_json.get("signed"))
+
+        expected = OrderedDict(
+            {
+                "Type": "link",
+                "Name": "package",
+                "Command": "tar zcvf foo.tar.gz foo.py",
+                "Materials": {
+                    "foo.py": {
+                        "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+                    }
+                },
+                "Products": {
+                    "foo.tar.gz": {
+                        "sha256": "52947cb78b91ad01fe81cd6aef42d1f6817e92b9e6936c1e5aabb7c98514f355"
+                    }
+                },
+                "Byproducts": {
+                    "return-value": 0,
+                    "stderr": "a foo.py\n",
+                    "stdout": "",
+                },
+                "Environment": {},
+            }
+        )
+        metadata_dict = link.get_beautify_dict()
+
+        # Verify order of the metadata fields
+        self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
+
+        # Verify equality of all the metadata fields
+        for field in metadata_dict:
+            self.assertEqual(metadata_dict[field], expected[field])
+
+    def test_get_beautify_dict_with_order(self):
+        with open(
+            os.path.join(self.demo_files, self.package_link_file)
+        ) as fptr:
+            raw_json = json.load(fptr)
+            link = Link().read(raw_json.get("signed"))
+
+        order = [
+            LinkMetadataFields.MATERIALS,
+            LinkMetadataFields.TYPE,
+            LinkMetadataFields.BYPRODUCTS,
+            LinkMetadataFields.NAME,
+            LinkMetadataFields.COMMAND,
+        ]
+        expected = OrderedDict(
+            {
+                "Materials": {
+                    "foo.py": {
+                        "sha256": "74dc3727c6e89308b39e4dfedf787e37841198b1fa165a27c013544a60502549"
+                    }
+                },
+                "Type": "link",
+                "Byproducts": {
+                    "return-value": 0,
+                    "stderr": "a foo.py\n",
+                    "stdout": "",
+                },
+                "Name": "package",
+                "Command": "tar zcvf foo.tar.gz foo.py",
+            }
+        )
+        metadata_dict = link.get_beautify_dict(order=order)
+
+        # Verify order of the metadata fields
+        self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
+
+        # Verify equality of all the metadata fields
+        for field in metadata_dict:
+            self.assertEqual(metadata_dict[field], expected[field])

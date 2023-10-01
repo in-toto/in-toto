@@ -96,7 +96,8 @@ class BeautifyMixin:
         elif isinstance(data, dict):  # Includes OrderedDict - dict is superset
             s.append("\n")
             for key, val in data.items():
-                if not val:
+                # 0 can be an intentionally set non-empty value
+                if not val and not isinstance(val, int):
                     continue
 
                 s.append(f"{indent}{key}: ")
@@ -141,3 +142,15 @@ class MetadataFields:
     PUBKEYS = "Pubkeys"
     THRESHOLD = "Threshold"
     RUN = "Run"
+
+
+class LinkMetadataFields:
+    """Link metadata fields"""
+
+    TYPE = "Type"
+    NAME = "Name"
+    MATERIALS = "Materials"
+    PRODUCTS = "Products"
+    BYPRODUCTS = "Byproducts"
+    COMMAND = "Command"
+    ENVIRONMENT = "Environment"
