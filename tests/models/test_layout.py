@@ -32,7 +32,7 @@ import securesystemslib.exceptions
 import in_toto.exceptions
 import in_toto.models.link
 import in_toto.verifylib
-from in_toto.models.common import MetadataFields
+from in_toto.models.common import LayoutMetadataFields
 from in_toto.models.layout import Inspection, Layout, Step
 from in_toto.models.metadata import Metablock
 from tests.common import GPGKeysMixin, TmpDirMixin
@@ -249,14 +249,17 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
 
         # Verify integer and string type metadata
         for field in [
-            MetadataFields.TYPE,
-            MetadataFields.EXPIRATION,
-            MetadataFields.KEYS,
+            LayoutMetadataFields.TYPE,
+            LayoutMetadataFields.EXPIRATION,
+            LayoutMetadataFields.KEYS,
         ]:
             self.assertEqual(metadata_dict[field], expected[field])
 
         # Verify nested metadata objects
-        for field in [MetadataFields.STEPS, MetadataFields.INSPECTIONS]:
+        for field in [
+            LayoutMetadataFields.STEPS,
+            LayoutMetadataFields.INSPECTIONS,
+        ]:
             for name, link_metadata in metadata_dict[field].items():
                 expected_link_metadata = expected[field][name]
                 self.assertEqual(
@@ -279,18 +282,21 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
             expires="2023-09-23T00:00:00Z",
         )
         order = [
-            MetadataFields.STEPS,
-            MetadataFields.EXPIRATION,
-            MetadataFields.TYPE,
-            MetadataFields.RUN,
-            MetadataFields.INSPECTIONS,
+            LayoutMetadataFields.STEPS,
+            LayoutMetadataFields.EXPIRATION,
+            LayoutMetadataFields.TYPE,
+            LayoutMetadataFields.RUN,
+            LayoutMetadataFields.INSPECTIONS,
         ]
         step_order = [
-            MetadataFields.THRESHOLD,
-            MetadataFields.EXPECTED_COMMAND,
-            MetadataFields.RUN,
+            LayoutMetadataFields.THRESHOLD,
+            LayoutMetadataFields.EXPECTED_COMMAND,
+            LayoutMetadataFields.RUN,
         ]
-        inspection_order = [MetadataFields.RUN, MetadataFields.PUBKEYS]
+        inspection_order = [
+            LayoutMetadataFields.RUN,
+            LayoutMetadataFields.PUBKEYS,
+        ]
         expected = OrderedDict(
             {
                 "Steps": OrderedDict(
@@ -320,11 +326,17 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         self.assertEqual(list(metadata_dict.keys()), list(expected.keys()))
 
         # Verify integer and string type metadata
-        for field in [MetadataFields.TYPE, MetadataFields.EXPIRATION]:
+        for field in [
+            LayoutMetadataFields.TYPE,
+            LayoutMetadataFields.EXPIRATION,
+        ]:
             self.assertEqual(metadata_dict[field], expected[field])
 
         # Verify nested metadata objects
-        for field in [MetadataFields.STEPS, MetadataFields.INSPECTIONS]:
+        for field in [
+            LayoutMetadataFields.STEPS,
+            LayoutMetadataFields.INSPECTIONS,
+        ]:
             for name, link_metadata in metadata_dict[field].items():
                 expected_link_metadata = expected[field][name]
                 self.assertEqual(
@@ -333,7 +345,7 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
                 )
 
         # Verify unsupported fields are excluded
-        self.assertFalse(MetadataFields.RUN in metadata_dict)
+        self.assertFalse(LayoutMetadataFields.RUN in metadata_dict)
 
 
 class TestLayoutValidator(unittest.TestCase):

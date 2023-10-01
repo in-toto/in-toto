@@ -128,8 +128,12 @@ class BeautifyMixin:
         return self._beautify(data).strip()
 
 
-class MetadataFields:
-    """Common in-toto metadata fields"""
+class LayoutMetadataFields:
+    """Layout metadata fields
+
+    The defined string constants are used as field headings
+    in the beautified metadata string.
+    """
 
     TYPE = "Type"
     EXPIRATION = "Expiration"
@@ -145,7 +149,11 @@ class MetadataFields:
 
 
 class LinkMetadataFields:
-    """Link metadata fields"""
+    """Link metadata fields
+
+    The defined string constants are used as field headings
+    in the beautified metadata string.
+    """
 
     TYPE = "Type"
     NAME = "Name"

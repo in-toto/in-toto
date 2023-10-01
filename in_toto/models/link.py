@@ -27,11 +27,7 @@ from collections import OrderedDict
 import attr
 import securesystemslib.formats
 
-from in_toto.models.common import (
-    Signable,
-    LinkMetadataFields,
-    BeautifyMixin,
-)
+from in_toto.models.common import BeautifyMixin, LinkMetadataFields, Signable
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
 FILENAME_FORMAT_SHORT = "{step_name}.link"

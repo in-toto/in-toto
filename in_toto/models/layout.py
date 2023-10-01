@@ -50,7 +50,7 @@ import in_toto.exceptions
 import in_toto.rulelib
 from in_toto.models.common import (
     BeautifyMixin,
-    MetadataFields,
+    LayoutMetadataFields,
     Signable,
     ValidationMixin,
 )
@@ -516,16 +516,16 @@ class Layout(Signable, BeautifyMixin):
         inspection_order = kwargs.get("inspection_order")
         metadata = OrderedDict(
             {
-                MetadataFields.TYPE: self._type,
-                MetadataFields.EXPIRATION: self.expires,
-                MetadataFields.KEYS: list(self.keys),
-                MetadataFields.STEPS: OrderedDict(
+                LayoutMetadataFields.TYPE: self._type,
+                LayoutMetadataFields.EXPIRATION: self.expires,
+                LayoutMetadataFields.KEYS: list(self.keys),
+                LayoutMetadataFields.STEPS: OrderedDict(
                     {
                         step.name: step.get_beautify_dict(order=step_order)
                         for step in self.steps
                     }
                 ),
-                MetadataFields.INSPECTIONS: OrderedDict(
+                LayoutMetadataFields.INSPECTIONS: OrderedDict(
                     {
                         insp.name: insp.get_beautify_dict(
                             order=inspection_order
@@ -746,17 +746,17 @@ class Step(SupplyChainItem):
         """
         metadata = OrderedDict(
             {
-                MetadataFields.EXPECTED_COMMAND: " ".join(
+                LayoutMetadataFields.EXPECTED_COMMAND: " ".join(
                     self.expected_command
                 ),
-                MetadataFields.EXPECTED_MATERIALS: [
+                LayoutMetadataFields.EXPECTED_MATERIALS: [
                     " ".join(material) for material in self.expected_materials
                 ],
-                MetadataFields.EXPECTED_PRODUCTS: [
+                LayoutMetadataFields.EXPECTED_PRODUCTS: [
                     " ".join(product) for product in self.expected_products
                 ],
-                MetadataFields.PUBKEYS: self.pubkeys,
-                MetadataFields.THRESHOLD: self.threshold,
+                LayoutMetadataFields.PUBKEYS: self.pubkeys,
+                LayoutMetadataFields.THRESHOLD: self.threshold,
             }
         )
 
@@ -852,11 +852,11 @@ class Inspection(SupplyChainItem):
         """
         metadata = OrderedDict(
             {
-                MetadataFields.RUN: " ".join(self.run),
-                MetadataFields.EXPECTED_MATERIALS: [
+                LayoutMetadataFields.RUN: " ".join(self.run),
+                LayoutMetadataFields.EXPECTED_MATERIALS: [
                     " ".join(material) for material in self.expected_materials
                 ],
-                MetadataFields.EXPECTED_PRODUCTS: [
+                LayoutMetadataFields.EXPECTED_PRODUCTS: [
                     " ".join(product) for product in self.expected_products
                 ],
             }

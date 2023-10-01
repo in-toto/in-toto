@@ -134,7 +134,8 @@ class TestLinkValidator(unittest.TestCase):
 
     def test_get_beautify_dict(self):
         with open(
-            os.path.join(self.demo_files, self.package_link_file)
+            os.path.join(self.demo_files, self.package_link_file),
+            encoding="utf8",
         ) as fptr:
             raw_json = json.load(fptr)
             link = Link().read(raw_json.get("signed"))
@@ -173,7 +174,8 @@ class TestLinkValidator(unittest.TestCase):
 
     def test_get_beautify_dict_with_order(self):
         with open(
-            os.path.join(self.demo_files, self.package_link_file)
+            os.path.join(self.demo_files, self.package_link_file),
+            encoding="utf8",
         ) as fptr:
             raw_json = json.load(fptr)
             link = Link().read(raw_json.get("signed"))
