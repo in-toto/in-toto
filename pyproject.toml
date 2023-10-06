@@ -7,7 +7,7 @@ name = "in-toto"
 description = "A framework to define and secure the integrity of software supply chains"
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = "~=3.7"
+requires-python = "~=3.8"
 authors = [
     { name = "New York University: Secure Systems Lab", email = "in-toto-dev@googlegroups.com" },
 ]
@@ -26,7 +26,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
