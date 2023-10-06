@@ -2,7 +2,9 @@
 # in a test environment, so that we can run the test suite or individual tests
 # directly in the development environment as well.
 tox
--r requirements-tox.txt
+-r requirements-test.txt
+-r requirements-lint.txt
+-r requirements-docs.txt
 
 # Install in-toto in editable mode
 -e .
