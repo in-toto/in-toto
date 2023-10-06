@@ -16,6 +16,9 @@ jobs:
           - python-version: '3.x'
             os: ubuntu-latest
             toxenv: lint
+          - python-version: 3.x
+            os: ubuntu-latest
+            toxenv: with-sslib-main
 
     runs-on: ${{ matrix.os }}
 
