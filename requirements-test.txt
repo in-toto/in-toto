@@ -1,0 +1,5 @@
+# in-toto runtime dependencies
+-r requirements-pinned.txt
+
+# Test tools for coverage measurement
+coverage==7.3.2
