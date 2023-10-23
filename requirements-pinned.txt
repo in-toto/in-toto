@@ -12,7 +12,7 @@ cffi==1.15.1
     #   pynacl
 cryptography==41.0.4
     # via securesystemslib
-iso8601==2.0.0
+iso8601==2.1.0
     # via -r requirements.txt
 pathspec==0.11.2
     # via -r requirements.txt
