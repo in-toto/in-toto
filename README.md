@@ -35,8 +35,7 @@ The in-toto software supply chain layout consists of the following parts:
  - **inspections** define commands to be run during the verification process and can also list material and product rules.
 
 Take a look at the [demo layout creation example](https://in-toto.readthedocs.io/en/latest/layout-creation-example.html)
-for further information on how to create an in-toto layout. Or try our
-experimental [layout creation web tool](https://in-toto.engineering.nyu.edu/).
+for further information on how to create an in-toto layout.
 
 
 
@@ -129,10 +128,8 @@ layout metadata is written to the path of the input file while link metadata
 is written to `<name>.<keyid prefix>.link`)
 - verify signatures
 
-This tool is intended to sign layouts created by the
-[layout web wizard](https://in-toto.engineering.nyu.edu/), but also serves
-well to re-sign test and demo data. For example, it can be used if metadata
-formats or signing routines change.
+This tool serves well to re-sign test and demo data. For example, it can be used
+if metadata formats or signing routines change.
 
 For a detailed list of all command line arguments and their usage, run
 `in-toto-sign --help` or look at the
