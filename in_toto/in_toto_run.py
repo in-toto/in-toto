@@ -29,6 +29,7 @@
 import argparse
 import logging
 import sys
+from getpass import getpass
 
 from securesystemslib import interface
 
@@ -55,6 +56,8 @@ from in_toto.common_args import (
     METADATA_DIRECTORY_ARGS,
     METADATA_DIRECTORY_KWARGS,
     OPTS_TITLE,
+    PKCS8_ARGS,
+    PKCS8_KWARGS,
     QUIET_ARGS,
     QUIET_KWARGS,
     RUN_TIMEOUT_ARGS,
@@ -65,6 +68,7 @@ from in_toto.common_args import (
     sort_action_groups,
     title_case_action_groups,
 )
+from in_toto.models._signer import load_crypto_signer_from_pkcs8_file
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -213,6 +217,8 @@ e.g. 'document.pdf'.
     named_args.add_argument(*GPG_ARGS, **GPG_KWARGS)
     parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
 
+    named_args.add_argument(*PKCS8_ARGS, **PKCS8_KWARGS)
+
     parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
     parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
     parser.add_argument(*LSTRIP_PATHS_ARGS, **LSTRIP_PATHS_KWARGS)
@@ -256,10 +262,13 @@ def main():
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
-    # Regular signing and GPG signing are mutually exclusive
-    if (args.key is None) == (args.gpg is None):
+    # Use exactly one of legacy key, gpg or pkcs8 key
+    if sum([bool(args.key), bool(args.gpg), bool(args.pkcs8)]) != 1:
         parser.print_usage()
-        parser.error("Specify either '--key <key path>' or '--gpg [<keyid>]'")
+        parser.error(
+            "Specify exactly one of '--key <key path>', "
+            "--gpg [<keyid>]' or --pkcs8 <key path>"
+        )
 
     password, prompt = parse_password_and_prompt_args(args)
 
@@ -295,6 +304,16 @@ def main():
                 prompt=prompt,
             )
 
+        signer = None
+        if args.pkcs8:
+            if prompt:
+                password = getpass()
+
+            if password is not None:
+                password = password.encode()
+
+            signer = load_crypto_signer_from_pkcs8_file(args.pkcs8, password)
+
         runlib.in_toto_run(
             args.step_name,
             args.materials,
@@ -311,6 +330,7 @@ def main():
             metadata_directory=args.metadata_directory,
             use_dsse=args.use_dsse,
             timeout=args.run_timeout,
+            signer=signer,
         )
 
     except Exception as e:  # pylint: disable=broad-exception-caught
