@@ -163,6 +163,18 @@ GPG_HOME_KWARGS = {
     ),
 }
 
+PKCS8_ARGS = ["--pkcs8"]
+PKCS8_KWARGS = {
+    "type": str,
+    "metavar": "<path>",
+    "help": (
+        "replacement for '--key' using a standard PKCS8/PEM format. Key type is"
+        " detected automatically and need not be specified with '--key-type'."
+        " Use '--password [<password>]' to pass a decryption password"
+        " or toggle a prompt, if the key es encrypted."
+    ),
+}
+
 VERBOSE_ARGS = ["-v", "--verbose"]
 VERBOSE_KWARGS = {
     "dest": "verbose",
