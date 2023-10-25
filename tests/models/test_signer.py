@@ -21,6 +21,7 @@
 """
 
 import unittest
+from pathlib import Path
 
 from securesystemslib.exceptions import (
     UnverifiedSignatureError,
@@ -29,7 +30,12 @@ from securesystemslib.exceptions import (
 from securesystemslib.gpg.constants import have_gpg
 from securesystemslib.gpg.functions import export_pubkey
 
-from in_toto.models._signer import GPGKey, GPGSignature, GPGSigner
+from in_toto.models._signer import (
+    GPGKey,
+    GPGSignature,
+    GPGSigner,
+    load_crypto_signer_from_pkcs8_file,
+)
 from tests.common import GPGKeysMixin, TmpDirMixin
 
 
@@ -161,3 +167,25 @@ class TestLegacyGPGKeyAndSigner(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         key2.keyval = key1.keyval
 
         self.assertEqual(key2, key1)
+
+
+class TestCryptoSigner(unittest.TestCase):
+    """Test helper to load CryptoSigner"""
+
+    def test_load_keys(self):
+        pems_dir = Path(__file__).parent.parent / "pems"
+
+        for algo in ["rsa", "ecdsa", "ed25519"]:
+            path = pems_dir / f"{algo}_private_unencrypted.pem"
+            signer = load_crypto_signer_from_pkcs8_file(path)
+            self.assertEqual(signer.public_key.keytype, algo)
+
+            path = pems_dir / f"{algo}_private_encrypted.pem"
+            signer2 = load_crypto_signer_from_pkcs8_file(path, b"hunter2")
+            self.assertEqual(
+                signer.public_key.to_dict(), signer2.public_key.to_dict()
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()
