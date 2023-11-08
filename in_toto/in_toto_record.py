@@ -31,6 +31,7 @@ import logging
 import sys
 from getpass import getpass
 
+import argcomplete
 from securesystemslib import interface
 
 import in_toto.runlib
@@ -234,6 +235,7 @@ def main():
     on the specified subcommand."""
 
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

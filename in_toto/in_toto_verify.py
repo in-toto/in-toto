@@ -29,6 +29,7 @@ import argparse
 import logging
 import sys
 
+import argcomplete
 from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
 
@@ -237,6 +238,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
 def main():
     """Parse arguments and call in_toto_verify."""
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

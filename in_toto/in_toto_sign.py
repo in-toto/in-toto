@@ -27,6 +27,8 @@ import logging
 import sys
 from getpass import getpass
 
+import argcomplete
+from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
 
 from in_toto import __version__, exceptions
@@ -366,6 +368,7 @@ def main():
     metadata file or verify its signatures."""
 
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

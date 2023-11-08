@@ -35,6 +35,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
+    "argcomplete",
     "attrs",
     "iso8601",
     "pathspec",
