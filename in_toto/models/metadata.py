@@ -22,6 +22,8 @@
 
 """
 
+from in_toto.models.statement import Statement, STATEMENT_TYPE
+from in_toto.models.link import Link
 import json
 from typing import Union
 
@@ -38,7 +40,6 @@ from in_toto.exceptions import InvalidMetadata, SignatureVerificationError
 from in_toto.models._signer import GPGSigner
 from in_toto.models.common import Signable, ValidationMixin
 from in_toto.models.layout import Layout
-from in_toto.models.link import Link
 
 ENVELOPE_PAYLOAD_TYPE = "application/vnd.in-toto+json"
 
@@ -186,6 +187,8 @@ class Envelope(SSlibEnvelope, Metadata):
             return Link.read(data)
         if _type == "layout":
             return Layout.read(data)
+        if _type == STATEMENT_TYPE:
+            return Statement.read(data)
 
         raise InvalidMetadata
 
@@ -223,7 +226,8 @@ class Metablock(Metadata, ValidationMixin):
         separators = (",", ":") if self.compact_json else (",", ": ")
 
         return json.dumps(
-            {"signatures": self.signatures, "signed": attr.asdict(self.signed)},
+            {"signatures": self.signatures,
+                "signed": attr.asdict(self.signed)},
             indent=indent,
             separators=separators,
             sort_keys=True,
@@ -438,7 +442,8 @@ class Metablock(Metadata, ValidationMixin):
             )
 
         for signature in self.signatures:
-            securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(signature)
+            securesystemslib.formats.ANY_SIGNATURE_SCHEMA.check_match(
+                signature)
 
     def get_payload(self):
         """Returns signed of the Metablock."""

@@ -11,3 +11,5 @@ attrs
 python-dateutil
 iso8601
 pathspec
+in_toto_attestation==0.9.1
+protobuf==3.20.3
