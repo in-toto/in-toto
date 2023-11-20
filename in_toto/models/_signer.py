@@ -20,30 +20,18 @@
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import securesystemslib.gpg.exceptions as gpg_exceptions
 import securesystemslib.gpg.functions as gpg
-from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from securesystemslib import (
-    KEY_TYPE_ECDSA,
-    KEY_TYPE_ED25519,
-    KEY_TYPE_RSA,
-    exceptions,
-)
+from securesystemslib import exceptions
 from securesystemslib.signer import (
     CryptoSigner,
     Key,
     SecretsHandler,
     Signature,
     Signer,
-    SSlibKey,
-)
-from securesystemslib.signer._crypto_signer import (
-    _ECDSASigner,
-    _Ed25519Signer,
-    _RSASigner,
 )
 
 
@@ -51,31 +39,11 @@ def load_crypto_signer_from_pkcs8_file(
     path: str, password: Optional[bytes] = None
 ) -> CryptoSigner:
     """Internal helper to load CryptoSigner from PKCS8/PEM file."""
-    # TODO: coordinate with sslib to not require protected access
-    # pylint: disable=protected-access
     with open(path, "rb") as f:
         data = f.read()
 
     private_key = load_pem_private_key(data, password)
-
-    # TODO: Fix upstream, we don't want to use protected methods
-    public_key = SSlibKey._from_crypto_public_key(
-        private_key.public_key(), None, None
-    )
-
-    # TODO: Fix upstream, we don't want to use protected classes
-    if public_key.keytype == KEY_TYPE_RSA:
-        signer = _RSASigner(public_key, cast(rsa.RSAPrivateKey, private_key))
-    elif public_key.keytype == KEY_TYPE_ECDSA:
-        signer = _ECDSASigner(
-            public_key, cast(ec.EllipticCurvePrivateKey, private_key)
-        )
-    elif public_key.keytype == KEY_TYPE_ED25519:
-        signer = _Ed25519Signer(
-            public_key, cast(ed25519.Ed25519PrivateKey, private_key)
-        )
-    else:  # can't be reached
-        raise ValueError(f"unsupported keytype: {public_key.keytype}")
+    signer = CryptoSigner(private_key)
 
     return signer
 
