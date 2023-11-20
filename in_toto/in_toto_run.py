@@ -297,6 +297,8 @@ def main():
         # case the key is encrypted. Something that should not happen in the lib.
         key = None
         if args.key:
+            LOG.warning("'-k', '--key' is deprecated, use '--pkcs8' instead.")
+
             key = interface.import_privatekey_from_file(
                 args.key,
                 key_type=args.key_type,
