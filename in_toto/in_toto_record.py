@@ -29,6 +29,7 @@
 import argparse
 import logging
 import sys
+from getpass import getpass
 
 from securesystemslib import interface
 
@@ -56,6 +57,8 @@ from in_toto.common_args import (
     METADATA_DIRECTORY_ARGS,
     METADATA_DIRECTORY_KWARGS,
     OPTS_TITLE,
+    PKCS8_ARGS,
+    PKCS8_KWARGS,
     QUIET_ARGS,
     QUIET_KWARGS,
     VERBOSE_ARGS,
@@ -64,6 +67,7 @@ from in_toto.common_args import (
     sort_action_groups,
     title_case_action_groups,
 )
+from in_toto.models._signer import load_crypto_signer_from_pkcs8_file
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -140,6 +144,8 @@ file to the target directory (on stop).
 
     parent_named_args.add_argument(*GPG_ARGS, **GPG_KWARGS)
     parent_parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
+
+    parent_named_args.add_argument(*PKCS8_ARGS, **PKCS8_KWARGS)
 
     parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
     parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
@@ -232,10 +238,13 @@ def main():
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
-    # Regular signing and GPG signing are mutually exclusive
-    if (args.key is None) == (args.gpg is None):
+    # Use exactly one of legacy key, gpg or pkcs8 key
+    if sum([bool(args.key), bool(args.gpg), bool(args.pkcs8)]) != 1:
         parser.print_usage()
-        parser.error("Specify either '--key <key path>' or '--gpg [<keyid>]'")
+        parser.error(
+            "Specify exactly one of '--key <key path>', "
+            "--gpg [<keyid>]' or --pkcs8 <key path>"
+        )
 
     password, prompt = parse_password_and_prompt_args(args)
 
@@ -253,12 +262,23 @@ def main():
         # case the key is encrypted. Something that should not happen in the lib.
         key = None
         if args.key:
+            LOG.warning("'-k', '--key' is deprecated, use '--pkcs8' instead.")
             key = interface.import_privatekey_from_file(
                 args.key,
                 key_type=args.key_type,
                 password=password,
                 prompt=prompt,
             )
+
+        signer = None
+        if args.pkcs8:
+            if prompt:
+                password = getpass()
+
+            if password is not None:
+                password = password.encode()
+
+            signer = load_crypto_signer_from_pkcs8_file(args.pkcs8, password)
 
         if args.command == "start":
             in_toto.runlib.in_toto_record_start(
@@ -272,6 +292,7 @@ def main():
                 base_path=args.base_path,
                 lstrip_paths=args.lstrip_paths,
                 use_dsse=args.use_dsse,
+                signer=signer,
             )
 
         # Mutually exclusiveness is guaranteed by argparser
@@ -287,6 +308,7 @@ def main():
                 base_path=args.base_path,
                 lstrip_paths=args.lstrip_paths,
                 metadata_directory=args.metadata_directory,
+                signer=signer,
             )
 
     except Exception as e:  # pylint: disable=broad-exception-caught
