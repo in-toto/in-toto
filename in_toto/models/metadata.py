@@ -23,6 +23,7 @@
 """
 
 import json
+from copy import deepcopy
 from typing import Union
 
 import attr
@@ -31,8 +32,11 @@ import securesystemslib.formats
 import securesystemslib.gpg.functions
 import securesystemslib.keys
 from securesystemslib.dsse import Envelope as SSlibEnvelope
-from securesystemslib.exceptions import VerificationError
-from securesystemslib.signer import Signature, Signer, SSlibKey
+from securesystemslib.exceptions import (
+    UnverifiedSignatureError,
+    VerificationError,
+)
+from securesystemslib.signer import Key, Signature, Signer, SSlibKey
 
 from in_toto.exceptions import InvalidMetadata, SignatureVerificationError
 from in_toto.models._signer import GPGSigner
@@ -395,18 +399,28 @@ class Metablock(Metadata, ValidationMixin):
                 "No signature found for key '{}'".format(verification_keyid)
             )
 
+        valid = False
         if securesystemslib.formats.GPG_SIGNATURE_SCHEMA.matches(signature):
             valid = securesystemslib.gpg.functions.verify_signature(
                 signature, verification_key, self.signed.signable_bytes
             )
 
-        elif securesystemslib.formats.SIGNATURE_SCHEMA.matches(signature):
-            valid = securesystemslib.keys.verify_signature(
-                verification_key, signature, self.signed.signable_bytes
-            )
-
         else:
-            valid = False
+            # Parse key and (below) signature dicts as `Key` and `Signature`
+            # instances to use modern securesystemslib verification code.
+            # Deepcopy to preserve original dicts, which are otherwise destroyed
+            # in `from_dict` methods.
+            # NOTE: It would be nice to support `Key` and `Signature` natively
+            # in in-toto model classes.
+            key = Key.from_dict(verification_keyid, deepcopy(verification_key))
+
+            try:
+                sig = Signature.from_dict(deepcopy(signature))
+                key.verify_signature(sig, self.signed.signable_bytes)
+                valid = True
+
+            except (KeyError, UnverifiedSignatureError):
+                pass
 
         if not valid:
             raise SignatureVerificationError(
