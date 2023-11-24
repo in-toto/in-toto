@@ -36,7 +36,7 @@ from securesystemslib.exceptions import (
     UnverifiedSignatureError,
     VerificationError,
 )
-from securesystemslib.signer import Key, Signature, Signer, SSlibKey
+from securesystemslib.signer import Key, Signature, Signer
 
 from in_toto.exceptions import InvalidMetadata, SignatureVerificationError
 from in_toto.models._signer import GPGSigner
@@ -168,7 +168,13 @@ class Envelope(SSlibEnvelope, Metadata):
         return super().sign(signer)
 
     def verify_signature(self, verification_key):
-        key = SSlibKey.from_securesystemslib_key(verification_key)
+        # Deepcopy to preserve `verification_key`, which might still be needed
+        # in calling context and would otherwise be destroyed in `from_dict`.
+        # NOTE: It would be nice to support `Key` natively in in-toto model.
+        key = Key.from_dict(
+            verification_key["keyid"], deepcopy(verification_key)
+        )
+
         try:
             super().verify(keys=[key], threshold=1)
         except VerificationError as exc:
