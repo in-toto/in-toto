@@ -26,7 +26,6 @@
 import unittest
 
 import securesystemslib.exceptions
-import securesystemslib.keys
 
 from in_toto.models.layout import Step
 
@@ -67,12 +66,6 @@ class TestStepValidator(unittest.TestCase):
         self.step.validate()
 
     def test_wrong_pubkeys(self):
-        # FIXME: generating keys for each test are expensive processes, maybe we
-        # should have an asset/fixture folder/loader?
-
-        rsa_key_one = securesystemslib.keys.generate_rsa_key()
-        rsa_key_two = securesystemslib.keys.generate_rsa_key()
-
         self.step.pubkeys = ["bad-keyid"]
 
         with self.assertRaises(securesystemslib.exceptions.FormatError):
@@ -81,7 +74,7 @@ class TestStepValidator(unittest.TestCase):
         with self.assertRaises(securesystemslib.exceptions.FormatError):
             self.step.validate()
 
-        self.step.pubkeys = [rsa_key_one["keyid"], rsa_key_two["keyid"]]
+        self.step.pubkeys = ["abc", "def"]
         self.step._validate_pubkeys()
         self.step.validate()
 
