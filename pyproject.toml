@@ -55,7 +55,6 @@ pynacl = [
 ]
 
 [project.scripts]
-in-toto-keygen = "in_toto.in_toto_keygen:main"
 in-toto-mock = "in_toto.in_toto_mock:main"
 in-toto-record = "in_toto.in_toto_record:main"
 in-toto-run = "in_toto.in_toto_run:main"
