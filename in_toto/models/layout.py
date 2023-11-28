@@ -38,7 +38,6 @@ from datetime import datetime
 
 import attr
 import securesystemslib.exceptions
-import securesystemslib.formats
 import securesystemslib.gpg.functions
 import securesystemslib.interface
 from dateutil.parser import parse
@@ -56,6 +55,7 @@ from in_toto.formats import (
     _check_str,
     _check_str_list,
 )
+from in_toto.models._signer import load_public_key_from_file
 from in_toto.models.common import Signable, ValidationMixin
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -317,21 +317,18 @@ class Layout(Signable):
         """Loads key from disk and adds as functionary key to layout.
 
         Arguments:
-          key_path: A path to a PEM-formatted RSA public key.
+            key_path: A path to a public key in PEM/subjectPublicKeyInfo format.
+                Supported key types are rsa, ecdsa (nistp256) and ed25519.
 
         Raises:
-          securesystemslib.exceptions.FormatError: Argument is malformed.
-          securesystemslib.exceptions.Error: Key cannot be imported.
+            securesystemslib.exceptions.FormatError: Argument is malformed.
 
         Returns:
-          The added functionary public key.
+            The added functionary public key.
 
         """
         _check_str(key_path)
-        key = securesystemslib.interface.import_rsa_publickey_from_file(
-            key_path
-        )
-
+        key = load_public_key_from_file(key_path)
         return self.add_functionary_key(key)
 
     def add_functionary_key_from_gpg_keyid(self, gpg_keyid, gpg_home=None):
@@ -366,15 +363,14 @@ class Layout(Signable):
         """Loads keys from disk and adds as functionary keys to layout.
 
         Arguments:
-          key_path_list: A list of paths to PEM-formatted RSA public keys.
+            key_path_list: A list of paths public keys in PEM/subjectPublicKeyInfo
+                format. Supported key types are rsa, ecdsa (nistp256), ed25519.
 
         Raises:
-          securesystemslib.exceptions.FormatError: Argument is malformed.
-          securesystemslib.exceptions.Error: A key cannot be imported.
+            securesystemslib.exceptions.FormatError: Argument is malformed.
 
         Returns:
-          A dictionary of the added functionary keys, with keyids as dictionary
-          keys and keys as values.
+            The added functionary public key.
 
         """
         _check_str_list(key_path_list)
