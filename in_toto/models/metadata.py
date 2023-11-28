@@ -107,19 +107,18 @@ class Metadata:
             fp.write(json_bytes)
 
     def create_signature(self, signer: Signer) -> Signature:
-        """Creates signature over signable with Signer and adds it to signatures.
+        """Creates and adds signature over signable representation of self.
 
-    Arguments:
-      signer: A "Signer" class instance to create signature.
+        The passed signer is used for signing. Applications can implement their
+        own signer or use one from ``securesystemslib``.
 
-    Raises:
-      securesystemslib.exceptions.CryptoError, \
-              securesystemslib.exceptions.UnsupportedAlgorithmError:
-          Signing errors.
+        Arguments:
+            signer: A ``Signer`` implementation.
 
-    Returns:
-      The signature. A securesystemslib.signer.Signature type.
-    """
+        Returns:
+            The ``Signature`` object returned from ``Signer``.
+
+        """
         raise NotImplementedError  # pragma: no cover
 
     def verify_signature(self, verification_key):
@@ -306,6 +305,9 @@ class Metablock(Metadata, ValidationMixin):
 
     Returns:
       The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
+
+    .. deprecated:: 2.2.0
+        Please use ``Metablock.create_signature()`` instead.
 
     """
         securesystemslib.formats.KEY_SCHEMA.check_match(key)
