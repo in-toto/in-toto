@@ -12,19 +12,18 @@ for more details about the supply chain represented by this layout.
 
 
 ```python
-from securesystemslib.interface import (generate_and_write_rsa_keypair,
-    import_rsa_privatekey_from_file)
+from securesystemslib.signer import CryptoSigner
+
 from in_toto.models.layout import Layout, Step, Inspection
 from in_toto.models.metadata import Metablock
 
-
-# in-toto provides functions to create RSA key pairs if you don't have them yet
+# In this example we use in-memory signers (key pairs) for project owner and
+# functionaries. More signer implementations are available in securesystemslib.
 
 # In this example Alice is the project owner, whose private key is used to sign
 # the layout. The corresponding public key will be used during final product
 # verification.
-alice_path = generate_and_write_rsa_keypair(password="123", filepath="alice")
-alice_key = import_rsa_privatekey_from_file(alice_path, password="123")
+alice = CryptoSigner.generate_ed25519()
 
 # Bob and Carl are both functionaries, i.e. they are authorized to carry out
 # different steps of the supply chain. Their public keys will be added to the
@@ -32,8 +31,8 @@ alice_key = import_rsa_privatekey_from_file(alice_path, password="123")
 # Carl will generate when carrying out their respective tasks.
 # Bob and Carl will each require their private key when creating link metadata
 # for a step.
-bob_path = generate_and_write_rsa_keypair(password="123", filepath="bob")
-carl_path = generate_and_write_rsa_keypair(password="123", filepath="carl")
+bob = CryptoSigner.generate_ed25519()
+carl = CryptoSigner.generate_ed25519()
 
 
 # Create an empty layout
@@ -43,8 +42,10 @@ layout = Layout()
 # Since the functionaries public keys are embedded in the layout, they don't
 # need to be added separately for final product verification, as a consequence
 # the layout serves as functionary PKI.
-bob_pubkey = layout.add_functionary_key_from_path(bob_path + ".pub")
-carl_pubkey = layout.add_functionary_key_from_path(carl_path + ".pub")
+for key in [bob, carl]:
+    key_dict = key.public_key.to_dict()
+    key_dict["keyid"] = key.public_key.keyid
+    layout.add_functionary_key(key_dict)
 
 # Set expiration date so that the layout will expire in 4 months from now.
 layout.set_relative_expiration(months=4)
@@ -76,7 +77,7 @@ layout.set_relative_expiration(months=4)
 # The link metadata file must have the name "clone.<bob's keyid prefix>.link"
 
 step_clone = Step(name="clone")
-step_clone.pubkeys = [bob_pubkey["keyid"]]
+step_clone.pubkeys = [bob.public_key.keyid]
 
 # Note: In general final product verification will not fail but only warn if
 # the expected command diverges from the command that was actually used.
@@ -96,7 +97,7 @@ step_clone.add_product_rule_from_string("DISALLOW *")
 # single command (see 'in-toto-record').
 
 step_update = Step(name="update-version")
-step_update.pubkeys = [bob_pubkey["keyid"]]
+step_update.pubkeys = [bob.public_key.keyid]
 
 # Below rules specify that the materials of this step must match the
 # products of the 'clone' step and that the product of this step can be a
@@ -113,7 +114,7 @@ step_update.add_product_rule_from_string("DISALLOW *")
 # "package.<carl's keyid prefix>.link"
 
 step_package = Step(name="package")
-step_package.pubkeys = [carl_pubkey["keyid"]]
+step_package.pubkeys = [carl.public_key.keyid]
 
 step_package.set_expected_command_from_string(
     "tar --exclude '.git' -zcvf demo-project.tar.gz demo-project")
@@ -161,7 +162,7 @@ layout.inspect = [inspection]
 # link metadata files for final product verification.
 
 metablock = Metablock(signed=layout)
-metablock.sign(alice_key)
+metablock.create_signature(alice)
 metablock.dump("root.layout")
 
 ```
