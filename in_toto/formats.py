@@ -22,16 +22,10 @@
 from copy import deepcopy
 from re import fullmatch
 
-import securesystemslib.schema as ssl_schema
 from securesystemslib.exceptions import FormatError
 from securesystemslib.signer import Key, Signature
 
 from in_toto.models._signer import GPGKey, GPGSignature
-
-PARAMETER_DICTIONARY_KEY = ssl_schema.RegularExpression(r"[a-zA-Z0-9_-]+")
-PARAMETER_DICTIONARY_SCHEMA = ssl_schema.DictOf(
-    key_schema=PARAMETER_DICTIONARY_KEY, value_schema=ssl_schema.AnyString()
-)
 
 
 def _err(arg, expected):
