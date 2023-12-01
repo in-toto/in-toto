@@ -133,3 +133,13 @@ def _check_public_keys(arg):
     for k, v in arg.items():
         _check_hex(k)
         _check_public_key(v)
+
+
+def _check_signing_key(arg):
+    """Check legacy signing key dict format.
+
+    NOTE: signing key dict is deprecated, this check will be removed with it
+    """
+    _check_public_key(arg)
+    if not arg["keyval"].get("private"):
+        raise _err(arg, "private key data")

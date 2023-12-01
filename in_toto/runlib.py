@@ -45,6 +45,7 @@ from securesystemslib.signer import Key, Signature, Signer, SSlibSigner
 
 import in_toto.exceptions
 import in_toto.settings
+from in_toto.formats import _check_signing_key
 from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (
     FILENAME_FORMAT,
@@ -389,18 +390,6 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     return link_metadata
 
 
-def _check_match_signing_key(signing_key):
-    """Helper method to check if the signing_key has securesystemslib's
-    KEY_SCHEMA and the private part is not empty.
-    # FIXME: Add private key format check to formats
-    """
-    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
-    if not signing_key["keyval"].get("private"):
-        raise securesystemslib.exceptions.FormatError(
-            "Signing key needs to be a private key."
-        )
-
-
 def _check_signer(signer):
     if not isinstance(signer, Signer):
         raise ValueError("signer must be a Signer instance")
@@ -555,7 +544,7 @@ def in_toto_run(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
         securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
@@ -767,7 +756,7 @@ def in_toto_record_start(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
         securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
@@ -969,7 +958,7 @@ def in_toto_record_stop(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
         securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
