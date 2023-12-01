@@ -299,7 +299,7 @@ class Layout(Signable):
         """Adds key as functionary key to layout.
 
         Arguments:
-          key: A public key. Format is securesystemslib.formats.ANY_PUBKEY_SCHEMA.
+          key: A public key.
 
         Raises:
           securesystemslib.exceptions.FormatError: Argument is malformed.
@@ -317,8 +317,7 @@ class Layout(Signable):
         """Loads key from disk and adds as functionary key to layout.
 
         Arguments:
-          key_path: A path to a PEM-formatted RSA public key. Format is
-              securesystemslib.formats.PATH_SCHEMA.
+          key_path: A path to a PEM-formatted RSA public key.
 
         Raises:
           securesystemslib.exceptions.FormatError: Argument is malformed.
@@ -367,8 +366,7 @@ class Layout(Signable):
         """Loads keys from disk and adds as functionary keys to layout.
 
         Arguments:
-          key_path_list: A list of paths to PEM-formatted RSA public keys. Format
-              of each path is securesystemslib.formats.PATH_SCHEMA.
+          key_path_list: A list of paths to PEM-formatted RSA public keys.
 
         Raises:
           securesystemslib.exceptions.FormatError: Argument is malformed.
@@ -428,7 +426,7 @@ class Layout(Signable):
         """Private method to verify if the expiration field has the right format
         and can be parsed."""
         try:
-            # We do both 'parse' and 'check_match' because the format check does not
+            # We do both 'parse' and '_check_iso8601' because the format check does not
             # detect bogus dates (e.g. Jan 35th) and parse can do more formats.
             parse(self.expires)
             _check_iso8601(self.expires)

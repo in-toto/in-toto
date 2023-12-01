@@ -129,8 +129,7 @@ class Metadata:
         """Verifies a signature over signable in signatures with verification_key.
 
         Arguments:
-          verification_key: A verification key. The format is
-              securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.
+          verification_key: A verification key.
 
         Raises:
           securesystemslib.exceptions.FormatError: The passed key is malformed.
@@ -305,7 +304,7 @@ class Metablock(Metadata, ValidationMixin):
     attribute to create signatures deterministically.
 
     Attributes:
-      key: A signing key. The format is securesystemslib.formats.KEY_SCHEMA.
+      key: A signing key.
 
     Raises:
       securesystemslib.exceptions.FormatError: Key argument is malformed.
@@ -314,7 +313,7 @@ class Metablock(Metadata, ValidationMixin):
           Signing errors.
 
     Returns:
-      The signature. Format is securesystemslib.formats.SIGNATURE_SCHEMA.
+      The signature.
 
     .. deprecated:: 2.2.0
         Please use ``Metablock.create_signature()`` instead.
@@ -352,7 +351,7 @@ class Metablock(Metadata, ValidationMixin):
       Calls system gpg command in a subprocess.
 
     Returns:
-      The signature. Format is securesystemslib.formats.GPG_SIGNATURE_SCHEMA.
+      The signature.
 
     """
         signature = securesystemslib.gpg.functions.create_signature(
@@ -371,12 +370,10 @@ class Metablock(Metadata, ValidationMixin):
 
         NOTE: Only the first signature in the signatures attribute, whose keyid
         matches the verification_key keyid, is verified. If the verification_key
-        format is securesystemslib.formats.GPG_PUBKEY_SCHEMA, subkey keyids are
-        considered too.
+        is a gpg key, subkey keyids are considered too.
 
         Arguments:
-          verification_key: A verification key. The format is
-              securesystemslib.formats.ANY_VERIFICATION_KEY_SCHEMA.
+          verification_key: A verification key.
 
         Raises:
           securesystemslib.exceptions.FormatError: The passed key is malformed.
@@ -451,9 +448,7 @@ class Metablock(Metadata, ValidationMixin):
         self.signed.validate()
 
     def _validate_signatures(self):
-        """Private method to check that the 'signatures' attribute is a list of
-        signatures in the format 'securesystemslib.formats.ANY_SIGNATURE_SCHEMA'.
-        """
+        """Private method to check that the 'signatures' attribute is valid."""
 
         if not isinstance(self.signatures, list):
             raise securesystemslib.exceptions.FormatError(

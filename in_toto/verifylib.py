@@ -361,12 +361,11 @@ def verify_metadata_signatures(metadata, keys_dict):
               verified.
 
       keys_dict:
-              A dictionary of keys to verify the signatures conformant with
-              securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
+              A dictionary of keys to verify the signatures.
 
     <Exceptions>
       securesystemslib.exceptions.FormatError
-        if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
+        if the passed key dict is invalid.
 
       SignatureVerificationError
         if an empty verification key dictionary was passed, or

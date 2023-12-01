@@ -462,8 +462,7 @@ def in_toto_run(
         standard error of the link command should be recorded in the link
         metadata in addition to being displayed while the command is executed.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
@@ -681,8 +680,7 @@ def in_toto_record_start(
     material_list: A list of artifact paths to be recorded as materials.
         Directories are traversed recursively.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
@@ -867,8 +865,7 @@ def in_toto_record_stop(
     product_list: A list of artifact paths to be recorded as products.
         Directories are traversed recursively.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
