@@ -46,6 +46,7 @@ from securesystemslib.signer import CryptoSigner, Signer
 import in_toto.exceptions
 import in_toto.settings
 from in_toto.exceptions import SignatureVerificationError
+from in_toto.formats import _check_hash_dict
 from in_toto.models.link import (
     FILENAME_FORMAT,
     UNFINISHED_FILENAME_FORMAT,
@@ -343,7 +344,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(["."])
 
         for val in list(artifacts_dict.values()):
-            securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
+            _check_hash_dict(val)
 
         self.assertListEqual(
             sorted(list(artifacts_dict.keys())),
@@ -495,7 +496,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(["foo", "subdir"])
 
         for val in list(artifacts_dict.values()):
-            securesystemslib.formats.HASHDICT_SCHEMA.check_match(val)
+            _check_hash_dict(val)
 
         self.assertListEqual(
             sorted(list(artifacts_dict.keys())),

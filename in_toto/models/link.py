@@ -25,6 +25,7 @@
 import attr
 import securesystemslib.formats
 
+from in_toto.formats import _check_hash_dict
 from in_toto.models.common import Signable
 
 FILENAME_FORMAT = "{step_name}.{keyid:.8}.link"
@@ -147,7 +148,7 @@ class Link(Signable):
             )
 
         for material in list(self.materials.values()):
-            securesystemslib.formats.HASHDICT_SCHEMA.check_match(material)
+            _check_hash_dict(material)
 
     def _validate_products(self):
         """Private method to check that `products` is a `dict` of `HASHDICTs`."""
@@ -159,7 +160,7 @@ class Link(Signable):
             )
 
         for product in list(self.products.values()):
-            securesystemslib.formats.HASHDICT_SCHEMA.check_match(product)
+            _check_hash_dict(product)
 
     def _validate_byproducts(self):
         """Private method to check that `byproducts` is a `dict`."""

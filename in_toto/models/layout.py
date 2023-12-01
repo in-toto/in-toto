@@ -41,12 +41,21 @@ import securesystemslib.exceptions
 import securesystemslib.formats
 import securesystemslib.gpg.functions
 import securesystemslib.interface
-import securesystemslib.schema
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 import in_toto.exceptions
 import in_toto.rulelib
+from in_toto.formats import (
+    _check_hex,
+    _check_hex_list,
+    _check_int,
+    _check_iso8601,
+    _check_public_key,
+    _check_public_keys,
+    _check_str,
+    _check_str_list,
+)
 from in_toto.models.common import Signable, ValidationMixin
 
 # Link metadata for sublayouts are expected to be found in a subdirectory
@@ -158,9 +167,9 @@ class Layout(Signable):
           securesystemslib.exceptions.FormatError: Arguments are not ints.
 
         """
-        securesystemslib.schema.Integer().check_match(days)
-        securesystemslib.schema.Integer().check_match(months)
-        securesystemslib.schema.Integer().check_match(years)
+        _check_int(days)
+        _check_int(months)
+        _check_int(years)
 
         self.expires = (
             datetime.today()
@@ -196,7 +205,7 @@ class Layout(Signable):
           A Step object.
 
         """
-        securesystemslib.schema.AnyString().check_match(step_name)
+        _check_str(step_name)
 
         for step in self.steps:  # pragma: no branch
             if step.name == step_name:
@@ -216,7 +225,7 @@ class Layout(Signable):
           securesystemslib.exceptions.FormatError: Argument is not a string.
 
         """
-        securesystemslib.schema.AnyString().check_match(step_name)
+        _check_str(step_name)
 
         for step in self.steps:
             if step.name == step_name:
@@ -251,7 +260,7 @@ class Layout(Signable):
           An Inspection object.
 
         """
-        securesystemslib.schema.AnyString().check_match(inspection_name)
+        _check_str(inspection_name)
 
         for inspection in self.inspect:  # pragma: no branch
             if inspection.name == inspection_name:
@@ -271,7 +280,7 @@ class Layout(Signable):
           securesystemslib.exceptions.FormatError: Argument is not a string.
 
         """
-        securesystemslib.schema.AnyString().check_match(inspection_name)
+        _check_str(inspection_name)
 
         for inspection in self.inspect:
             if inspection.name == inspection_name:
@@ -299,7 +308,7 @@ class Layout(Signable):
           The added key.
 
         """
-        securesystemslib.formats.ANY_PUBKEY_SCHEMA.check_match(key)
+        _check_public_key(key)
         keyid = key["keyid"]
         self.keys[keyid] = key
         return key
@@ -319,7 +328,7 @@ class Layout(Signable):
           The added functionary public key.
 
         """
-        securesystemslib.formats.PATH_SCHEMA.check_match(key_path)
+        _check_str(key_path)
         key = securesystemslib.interface.import_rsa_publickey_from_file(
             key_path
         )
@@ -345,9 +354,9 @@ class Layout(Signable):
           The added key.
 
         """
-        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+        _check_hex(gpg_keyid)
         if gpg_home:  # pragma: no branch
-            securesystemslib.formats.PATH_SCHEMA.check_match(gpg_home)
+            _check_str(gpg_home)
 
         key = securesystemslib.gpg.functions.export_pubkey(
             gpg_keyid, homedir=gpg_home
@@ -370,7 +379,7 @@ class Layout(Signable):
           keys and keys as values.
 
         """
-        securesystemslib.formats.PATHS_SCHEMA.check_match(key_path_list)
+        _check_str_list(key_path_list)
         key_dict = {}
         for key_path in key_path_list:
             key = self.add_functionary_key_from_path(key_path)
@@ -400,7 +409,7 @@ class Layout(Signable):
           keys and keys as values.
 
         """
-        securesystemslib.formats.KEYIDS_SCHEMA.check_match(gpg_keyid_list)
+        _check_hex_list(gpg_keyid_list)
         key_dict = {}
         for gpg_keyid in gpg_keyid_list:
             key = self.add_functionary_key_from_gpg_keyid(gpg_keyid, gpg_home)
@@ -422,9 +431,8 @@ class Layout(Signable):
             # We do both 'parse' and 'check_match' because the format check does not
             # detect bogus dates (e.g. Jan 35th) and parse can do more formats.
             parse(self.expires)
-            securesystemslib.formats.ISO8601_DATETIME_SCHEMA.check_match(
-                self.expires
-            )
+            _check_iso8601(self.expires)
+
         except Exception as e:
             raise securesystemslib.exceptions.FormatError(
                 "Malformed date string in layout. Exception: {}".format(e)
@@ -441,7 +449,7 @@ class Layout(Signable):
 
     def _validate_keys(self):
         """Private method to ensure that the keys contained are right."""
-        securesystemslib.formats.ANY_PUBKEY_DICT_SCHEMA.check_match(self.keys)
+        _check_public_keys(self.keys)
 
     def _validate_steps_and_inspections(self):
         """Private method to verify that the list of steps and inspections are
@@ -529,7 +537,7 @@ class SupplyChainItem(ValidationMixin):
           securesystemslib.exceptions.FormatError: Argument is malformed.
 
         """
-        securesystemslib.schema.AnyString().check_match(rule_string)
+        _check_str(rule_string)
         rule_list = shlex.split(rule_string)
 
         # Raises format error if the parsed rule_string is not a valid rule
@@ -547,7 +555,7 @@ class SupplyChainItem(ValidationMixin):
           securesystemslib.exceptions.FormatError: Argument is malformed.
 
         """
-        securesystemslib.schema.AnyString().check_match(rule_string)
+        _check_str(rule_string)
         rule_list = shlex.split(rule_string)
 
         # Raises format error if the parsed rule_string is not a valid rule
@@ -637,7 +645,7 @@ class Step(SupplyChainItem):
           securesystemslib.exceptions.FormatError: Argument is malformed.
 
         """
-        securesystemslib.schema.AnyString().check_match(command_string)
+        _check_str(command_string)
         self.expected_command = shlex.split(command_string)
 
     def _validate_type(self):
@@ -664,7 +672,7 @@ class Step(SupplyChainItem):
             )
 
         for keyid in self.pubkeys:
-            securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
+            _check_hex(keyid)
 
     def _validate_expected_command(self):
         """Private method to check that the expected_command is proper."""
@@ -724,7 +732,7 @@ class Inspection(SupplyChainItem):
           securesystemslib.exceptions.FormatError: Argument is malformed.
 
         """
-        securesystemslib.schema.AnyString().check_match(command_string)
+        _check_str(command_string)
         self.run = shlex.split(command_string)
 
     def _validate_type(self):

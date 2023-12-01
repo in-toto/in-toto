@@ -50,6 +50,7 @@ from in_toto.common_args import (
     sort_action_groups,
     title_case_action_groups,
 )
+from in_toto.formats import _check_hex
 from in_toto.models._signer import GPGSigner
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metadata
@@ -94,7 +95,7 @@ def _sign_and_dump_metadata(metadata, args):
 
             # Otherwise we sign with each passed keyid
             for keyid in args.gpg:
-                securesystemslib.formats.KEYID_SCHEMA.check_match(keyid)
+                _check_hex(keyid)
                 signature = metadata.create_signature(
                     GPGSigner(keyid, homedir=args.gpg_home)
                 )
