@@ -27,6 +27,7 @@ import os
 import shutil
 import unittest
 
+from securesystemslib.exceptions import FormatError
 from securesystemslib.interface import (
     import_publickeys_from_file,
     import_rsa_privatekey_from_file,
@@ -113,6 +114,16 @@ class TestSubstituteArtifacts(unittest.TestCase):
         """Raise an error if the parameter is not filled-in"""
         with self.assertRaises(KeyError):
             substitute_parameters(self.layout, {})
+
+    def test_invalid_format(self):
+        for bad_param_dict in [
+            False,  # must be dict
+            {False: "foo"},  # name must be string
+            {"~!#@": "foo"},  # name must not have disallowed characters
+            {"GOOD_NAME": False},  # value must be string
+        ]:
+            with self.assertRaises(FormatError):
+                substitute_parameters(self.layout, bad_param_dict)
 
 
 class TestSubstituteRunField(unittest.TestCase):
