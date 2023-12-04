@@ -45,6 +45,12 @@ from securesystemslib.signer import Key, Signature, Signer, SSlibSigner
 
 import in_toto.exceptions
 import in_toto.settings
+from in_toto.formats import (
+    _check_hex,
+    _check_signing_key,
+    _check_str,
+    _check_str_list,
+)
 from in_toto.models._signer import GPGSigner
 from in_toto.models.link import (
     FILENAME_FORMAT,
@@ -389,18 +395,6 @@ def in_toto_mock(name, link_cmd_args, use_dsse=False):
     return link_metadata
 
 
-def _check_match_signing_key(signing_key):
-    """Helper method to check if the signing_key has securesystemslib's
-    KEY_SCHEMA and the private part is not empty.
-    # FIXME: Add private key format check to formats
-    """
-    securesystemslib.formats.KEY_SCHEMA.check_match(signing_key)
-    if not signing_key["keyval"].get("private"):
-        raise securesystemslib.exceptions.FormatError(
-            "Signing key needs to be a private key."
-        )
-
-
 def _check_signer(signer):
     if not isinstance(signer, Signer):
         raise ValueError("signer must be a Signer instance")
@@ -468,8 +462,7 @@ def in_toto_run(
         standard error of the link command should be recorded in the link
         metadata in addition to being displayed while the command is executed.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
@@ -555,19 +548,19 @@ def in_toto_run(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
-        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+        _check_hex(gpg_keyid)
 
     if exclude_patterns:
-        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+        _check_str_list(exclude_patterns)
 
     if base_path:
-        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+        _check_str(base_path)
 
     if metadata_directory:
-        securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+        _check_str(metadata_directory)
 
     if material_list:
         LOG.info("Recording materials '%s'...", ", ".join(material_list))
@@ -582,16 +575,14 @@ def in_toto_run(
     )
 
     if link_cmd_args:
-        securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(
-            link_cmd_args
-        )
+        _check_str_list(link_cmd_args)
         LOG.info("Running command '%s'...", " ".join(link_cmd_args))
         byproducts = execute_link(link_cmd_args, record_streams, timeout)
     else:
         byproducts = {}
 
     if product_list:
-        securesystemslib.formats.PATHS_SCHEMA.check_match(product_list)
+        _check_str_list(product_list)
         LOG.info("Recording products '%s'...", ", ".join(product_list))
 
     products_dict = record_artifacts_as_dict(
@@ -689,8 +680,7 @@ def in_toto_record_start(
     material_list: A list of artifact paths to be recorded as materials.
         Directories are traversed recursively.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
@@ -767,16 +757,16 @@ def in_toto_record_start(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
-        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+        _check_str(gpg_keyid)
 
     if exclude_patterns:
-        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+        _check_str_list(exclude_patterns)
 
     if base_path:
-        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+        _check_str(base_path)
 
     if material_list:
         LOG.info("Recording materials '%s'...", ", ".join(material_list))
@@ -875,8 +865,7 @@ def in_toto_record_stop(
     product_list: A list of artifact paths to be recorded as products.
         Directories are traversed recursively.
 
-    signing_key (optional): A key used to sign the resulting link metadata. The
-        format is securesystemslib.formats.KEY_SCHEMA.
+    signing_key (optional): A key used to sign the resulting link metadata.
 
         .. deprecated:: 2.2.0
            Please pass a ``signer`` instead.
@@ -969,19 +958,19 @@ def in_toto_record_stop(
         _check_signer(signer)
 
     if signing_key:
-        _check_match_signing_key(signing_key)
+        _check_signing_key(signing_key)
 
     if gpg_keyid:
-        securesystemslib.formats.KEYID_SCHEMA.check_match(gpg_keyid)
+        _check_hex(gpg_keyid)
 
     if exclude_patterns:
-        securesystemslib.formats.NAMES_SCHEMA.check_match(exclude_patterns)
+        _check_str_list(exclude_patterns)
 
     if base_path:
-        securesystemslib.formats.PATH_SCHEMA.check_match(base_path)
+        _check_str(base_path)
 
     if metadata_directory:
-        securesystemslib.formats.PATH_SCHEMA.check_match(metadata_directory)
+        _check_str(metadata_directory)
 
     # Load preliminary link file
     # If we have a signing key we can use the keyid to construct the name

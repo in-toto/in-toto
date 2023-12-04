@@ -76,6 +76,10 @@ class TestMetablockValidator(unittest.TestCase):
         with self.assertRaises(FormatError):
             metablock._validate_signatures()
 
+        metablock.signatures = [{"missing": "'keyid' and 'sig'"}]
+        with self.assertRaises(FormatError):
+            metablock._validate_signatures()
+
         # Load signed demo link
         demo_link_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),

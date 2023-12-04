@@ -23,6 +23,8 @@
 import securesystemslib.exceptions
 import securesystemslib.formats
 
+from in_toto.formats import _check_str, _check_str_list
+
 GENERIC_RULES = {
     "create",
     "modify",
@@ -82,7 +84,7 @@ def unpack_rule(rule):
       }
 
     """
-    securesystemslib.formats.LIST_OF_ANY_STRING_SCHEMA.check_match(rule)
+    _check_str_list(rule)
 
     # Create all lower rule copy to case insensitively parse out tokens whose
     # position we don't know yet
@@ -261,8 +263,8 @@ def pack_rule(
       Note that REQUIRE is somewhat of a weird animal that does not use patterns
       but rather single filenames (for now).
     """
-    securesystemslib.formats.ANY_STRING_SCHEMA.check_match(rule_type)
-    securesystemslib.formats.ANY_STRING_SCHEMA.check_match(pattern)
+    _check_str(rule_type)
+    _check_str(pattern)
 
     if rule_type.lower() not in ALL_RULES:
         raise securesystemslib.exceptions.FormatError(
@@ -273,9 +275,7 @@ def pack_rule(
         )
 
     if rule_type.upper() == "MATCH":
-        if not securesystemslib.formats.ANY_STRING_SCHEMA.matches(
-            dest_type
-        ) or not (
+        if not isinstance(dest_type, str) or not (
             dest_type.lower() == "materials" or dest_type.lower() == "products"
         ):
             raise securesystemslib.exceptions.FormatError(
@@ -286,10 +286,7 @@ def pack_rule(
                 )
             )
 
-        if not (
-            securesystemslib.formats.ANY_STRING_SCHEMA.matches(dest_name)
-            and dest_name
-        ):
+        if not (isinstance(dest_name, str) and dest_name):
             raise securesystemslib.exceptions.FormatError(
                 "'{}' is not a valid"
                 " 'dest_name'. Rules of type 'MATCH' require a step name as a"
@@ -300,15 +297,14 @@ def pack_rule(
         rule = ["MATCH", pattern]
 
         if source_prefix:
-            securesystemslib.formats.ANY_STRING_SCHEMA.check_match(
-                source_prefix
-            )
+            _check_str(source_prefix)
+
             rule += ["IN", source_prefix]
 
         rule += ["WITH", dest_type.upper()]
 
         if dest_prefix:
-            securesystemslib.formats.ANY_STRING_SCHEMA.check_match(dest_prefix)
+            _check_str(dest_prefix)
             rule += ["IN", dest_prefix]
 
         rule += ["FROM", dest_name]

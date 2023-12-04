@@ -49,6 +49,7 @@ from in_toto.exceptions import (
     SignatureVerificationError,
     ThresholdVerificationError,
 )
+from in_toto.formats import _check_parameter_dict, _check_public_keys
 from in_toto.models.metadata import Metadata
 
 # Inherits from in_toto base logger (c.f. in_toto.log)
@@ -296,9 +297,7 @@ def substitute_parameters(layout, parameter_dictionary):
       The layout object will have any tags replaced with the corresponding
       values defined in the parameter dictionary.
     """
-    in_toto.formats.PARAMETER_DICTIONARY_SCHEMA.check_match(
-        parameter_dictionary
-    )
+    _check_parameter_dict(parameter_dictionary)
 
     for step in layout.steps:
         new_material_rules = []
@@ -362,12 +361,11 @@ def verify_metadata_signatures(metadata, keys_dict):
               verified.
 
       keys_dict:
-              A dictionary of keys to verify the signatures conformant with
-              securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.
+              A dictionary of keys to verify the signatures.
 
     <Exceptions>
       securesystemslib.exceptions.FormatError
-        if the passed key dict does not match VERIFICATION_KEY_DICT_SCHEMA.
+        if the passed key dict is invalid.
 
       SignatureVerificationError
         if an empty verification key dictionary was passed, or
@@ -377,7 +375,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         if any of the passed verification keys is an expired gpg key
 
     """
-    securesystemslib.formats.VERIFICATION_KEY_DICT_SCHEMA.check_match(keys_dict)
+    _check_public_keys(keys_dict)
 
     # Fail if an empty verification key dictionary was passed
     if len(keys_dict) < 1:

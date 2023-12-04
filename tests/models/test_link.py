@@ -64,6 +64,16 @@ class TestLinkValidator(unittest.TestCase):
         with self.assertRaises(FormatError):
             test_link.validate()
 
+        # Bad hash dicts
+        for bad_hash_dict in [
+            {False: "deadbeef"},  # name must be string
+            {"sha256": False},  # digest must be string
+            {"sha256": "ghijk"},  # digest must be hex
+        ]:
+            test_link.materials = {"foo": bad_hash_dict}
+            with self.assertRaises(FormatError):
+                test_link.validate()
+
     def test_validate_products(self):
         """Test `products` field. Must be a `dict` of HASH_DICTs"""
         test_link = Link()

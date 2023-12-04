@@ -117,8 +117,7 @@ class GPGSigner(Signer):
           payload: The bytes to be signed.
         Raises:
           securesystemslib.exceptions.FormatError:
-            If the keyid was passed and does not match
-            securesystemslib.formats.KEYID_SCHEMA.
+            If the keyid is invalid.
           ValueError: the gpg command failed to create a valid signature.
           OSError: the gpg command is not present or non-executable.
           securesystemslib.exceptions.UnsupportedLibraryError: the gpg command is

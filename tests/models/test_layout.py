@@ -274,6 +274,21 @@ class TestLayoutValidator(unittest.TestCase):
         with self.assertRaises(securesystemslib.exceptions.FormatError):
             self.layout.validate()
 
+        # ... more invalid keys
+        for invalid_keys in [
+            False,  # must be a dict
+            {1234: {}},  # keyid must be string
+            {"xyz": {}},  # keyid must be hex
+            {"deadbeef": {"missing": "'keyval' field"}},
+        ]:
+            self.layout.keys = invalid_keys
+            with self.assertRaises(securesystemslib.exceptions.FormatError):
+                self.layout._validate_keys()
+
+        self.layout.keys[rsa_key_two["keyid"]] = "kek"
+        with self.assertRaises(securesystemslib.exceptions.FormatError):
+            self.layout.validate()
+
         self.layout.keys = {}
         del rsa_key_one["keyval"]["private"]
         del rsa_key_two["keyval"]["private"]
