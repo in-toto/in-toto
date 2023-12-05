@@ -549,6 +549,41 @@ class TestInTotoRunToolWithDSSE(
 
         self.assertTrue(os.path.exists(self.test_link_rsa))
 
+    def test_pkcs8_signing_key(self):
+        """Test in-toto-run, sign link with pkcs8 key file for each algo."""
+        pems_dir = Path(__file__).parent / "pems"
+        args = ["-n", "foo", "-x", "--use-dsse", "--signing-key"]
+        for algo, short_keyid in [
+            ("rsa", "2f685fa7"),
+            ("ecdsa", "50d7e110"),
+            ("ed25519", "c6d8bf2e"),
+        ]:
+            link_path = Path(f"foo.{short_keyid}.link")
+
+            # Use unencrypted key
+            pem_path = pems_dir / f"{algo}_private_unencrypted.pem"
+            self.assert_cli_sys_exit(args + [str(pem_path)], 0)
+            self.assertTrue(link_path.exists())
+            link_path.unlink()
+
+            # Fail with encrypted key, but no pw
+            pem_path = pems_dir / f"{algo}_private_encrypted.pem"
+            self.assert_cli_sys_exit(args + [str(pem_path)], 1)
+            self.assertFalse(link_path.exists())
+
+            # Use encrypted key, passing pw
+            self.assert_cli_sys_exit(args + [str(pem_path), "-P", "hunter2"], 0)
+            self.assertTrue(link_path.exists())
+            link_path.unlink()
+
+            # Use encrypted key, mocking pw enter on prompt
+            with mock.patch(
+                "in_toto.in_toto_run.getpass", return_value="hunter2"
+            ):
+                self.assert_cli_sys_exit(args + [str(pem_path), "-P"], 0)
+            self.assertTrue(link_path.exists())
+            link_path.unlink()
+
 
 if __name__ == "__main__":
     unittest.main()
