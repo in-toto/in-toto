@@ -163,10 +163,11 @@ GPG_HOME_KWARGS = {
     ),
 }
 
-PKCS8_ARGS = ["--pkcs8"]
-PKCS8_KWARGS = {
+SIGNING_KEY_ARGS = ["--signing-key"]
+SIGNING_KEY_KWARGS = {
     "type": str,
     "metavar": "<path>",
+    "dest": "signing_key",
     "help": (
         "replacement for '--key' using a standard PKCS8/PEM format. Key type is"
         " detected automatically and need not be specified with '--key-type'."

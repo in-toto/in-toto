@@ -364,10 +364,10 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         self.assert_cli_sys_exit(args, 1)
         self.assertFalse(os.path.exists(self.test_link_ed25519_enc))
 
-    def test_pkcs8(self):
+    def test_pkcs8_signing_key(self):
         """Test in-toto-run, sign link with pkcs8 key file for each algo."""
         pems_dir = Path(__file__).parent / "pems"
-        args = ["-n", "foo", "-x", "--pkcs8"]
+        args = ["-n", "foo", "-x", "--signing-key"]
         for algo, short_keyid in [
             ("rsa", "2f685fa7"),
             ("ecdsa", "50d7e110"),
