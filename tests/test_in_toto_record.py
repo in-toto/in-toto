@@ -360,10 +360,10 @@ class TestInTotoRecordTool(
         ]
         self.assert_cli_sys_exit(["stop"] + args, 1)
 
-    def test_pkcs8(self):
+    def test_pkcs8_signing_key(self):
         """Test in-toto-record, sign link with pkcs8 key file for each algo."""
         pems_dir = Path(__file__).parent / "pems"
-        args = ["-n", "foo", "--pkcs8"]
+        args = ["-n", "foo", "--signing-key"]
         for algo, short_keyid in [
             ("rsa", "2f685fa7"),
             ("ecdsa", "50d7e110"),

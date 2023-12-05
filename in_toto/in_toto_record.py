@@ -57,10 +57,10 @@ from in_toto.common_args import (
     METADATA_DIRECTORY_ARGS,
     METADATA_DIRECTORY_KWARGS,
     OPTS_TITLE,
-    PKCS8_ARGS,
-    PKCS8_KWARGS,
     QUIET_ARGS,
     QUIET_KWARGS,
+    SIGNING_KEY_ARGS,
+    SIGNING_KEY_KWARGS,
     VERBOSE_ARGS,
     VERBOSE_KWARGS,
     parse_password_and_prompt_args,
@@ -145,7 +145,7 @@ file to the target directory (on stop).
     parent_named_args.add_argument(*GPG_ARGS, **GPG_KWARGS)
     parent_parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
 
-    parent_named_args.add_argument(*PKCS8_ARGS, **PKCS8_KWARGS)
+    parent_named_args.add_argument(*SIGNING_KEY_ARGS, **SIGNING_KEY_KWARGS)
 
     parent_parser.add_argument(*EXCLUDE_ARGS, **EXCLUDE_KWARGS)
     parent_parser.add_argument(*BASE_PATH_ARGS, **BASE_PATH_KWARGS)
@@ -238,12 +238,12 @@ def main():
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
-    # Use exactly one of legacy key, gpg or pkcs8 key
-    if sum([bool(args.key), bool(args.gpg), bool(args.pkcs8)]) != 1:
+    # Use exactly one of legacy key, gpg or pkcs8 signing key
+    if sum([bool(args.key), bool(args.gpg), bool(args.signing_key)]) != 1:
         parser.print_usage()
         parser.error(
             "Specify exactly one of '--key <key path>', "
-            "--gpg [<keyid>]' or --pkcs8 <key path>"
+            "--gpg [<keyid>]' or --signing-key <key path>"
         )
 
     password, prompt = parse_password_and_prompt_args(args)
@@ -262,7 +262,9 @@ def main():
         # case the key is encrypted. Something that should not happen in the lib.
         key = None
         if args.key:
-            LOG.warning("'-k', '--key' is deprecated, use '--pkcs8' instead.")
+            LOG.warning(
+                "'-k', '--key' is deprecated, use '--signing-key' instead."
+            )
             key = interface.import_privatekey_from_file(
                 args.key,
                 key_type=args.key_type,
@@ -271,14 +273,16 @@ def main():
             )
 
         signer = None
-        if args.pkcs8:
+        if args.signing_key:
             if prompt:
                 password = getpass()
 
             if password is not None:
                 password = password.encode()
 
-            signer = load_crypto_signer_from_pkcs8_file(args.pkcs8, password)
+            signer = load_crypto_signer_from_pkcs8_file(
+                args.signing_key, password
+            )
 
         if args.command == "start":
             in_toto.runlib.in_toto_record_start(
