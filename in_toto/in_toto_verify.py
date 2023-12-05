@@ -177,9 +177,9 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
     )
 
     named_args.add_argument(
-        "--subjectPublicKeyInfo",
+        "--verification-keys",
         type=str,
-        dest="subject_public_key_info",
+        dest="verification_keys",
         metavar="<path>",
         nargs="+",
         help=(
@@ -242,12 +242,12 @@ def main():
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
     # For verifying at least one public key must be specified
-    if not (args.layout_keys or args.gpg or args.subject_public_key_info):
+    if not (args.layout_keys or args.gpg or args.verification_keys):
         parser.print_help()
         parser.error(
             "wrong arguments: specify at least one layout verification key:"
             " '--layout-keys path [path ...]' or  '--gpg id [id ...]' or "
-            " '--subjectPublicKeyInfo path [path ...]'."
+            " '--verification-keys path [path ...]'."
         )
 
     try:
@@ -259,7 +259,7 @@ def main():
             LOG.info("Loading layout key(s)...")
             LOG.warning(
                 "'-k', '--layout-keys' is deprecated, use "
-                "'--subjectPublicKeyInfo' instead."
+                "'--verification-keys' instead."
             )
 
             layout_key_dict.update(
@@ -274,8 +274,8 @@ def main():
                 gpg_interface.export_pubkeys(args.gpg, homedir=args.gpg_home)
             )
 
-        if args.subject_public_key_info:
-            for path in args.subject_public_key_info:
+        if args.verification_keys:
+            for path in args.verification_keys:
                 key = load_public_key_from_file(path)
                 layout_key_dict[key["keyid"]] = key
 

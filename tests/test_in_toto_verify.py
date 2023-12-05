@@ -567,7 +567,7 @@ class TestInTotoVerifySubjectPublicKeyInfoKeys(CliTestCase, TmpDirMixin):
         args = [
             "--layout",
             "demo.layout",
-            "--subjectPublicKeyInfo",
+            "--verification-keys",
         ] + self.public_key_paths
         self.assert_cli_sys_exit(args, 0)
 
