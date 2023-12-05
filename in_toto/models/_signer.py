@@ -15,7 +15,7 @@
   See LICENSE for licensing information.
 
 <Purpose>
-  Provides in-toto flavored GPGSigner, GPGSignature and GPGKey.
+  Provides in-toto flavored Signer implementations
 
 """
 
@@ -24,8 +24,28 @@ from typing import Any, Dict, List, Optional
 
 import securesystemslib.gpg.exceptions as gpg_exceptions
 import securesystemslib.gpg.functions as gpg
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from securesystemslib import exceptions
-from securesystemslib.signer import Key, SecretsHandler, Signature, Signer
+from securesystemslib.signer import (
+    CryptoSigner,
+    Key,
+    SecretsHandler,
+    Signature,
+    Signer,
+)
+
+
+def load_crypto_signer_from_pkcs8_file(
+    path: str, password: Optional[bytes] = None
+) -> CryptoSigner:
+    """Internal helper to load CryptoSigner from PKCS8/PEM file."""
+    with open(path, "rb") as f:
+        data = f.read()
+
+    private_key = load_pem_private_key(data, password)
+    signer = CryptoSigner(private_key)
+
+    return signer
 
 
 class GPGSignature(Signature):
