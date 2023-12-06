@@ -24,6 +24,7 @@
 import os
 import shutil
 import unittest
+from pathlib import Path
 
 from securesystemslib.gpg.constants import have_gpg
 from securesystemslib.interface import (
@@ -33,8 +34,14 @@ from securesystemslib.interface import (
 from securesystemslib.signer import SSlibSigner
 
 from in_toto.in_toto_verify import main as in_toto_verify_main
+from in_toto.models._signer import load_crypto_signer_from_pkcs8_file
 from in_toto.models.metadata import Metadata
 from tests.common import CliTestCase, GPGKeysMixin, TmpDirMixin
+
+DEMO_FILES = Path(__file__).parent / "demo_files"
+DEMO_FILES_DSSE = Path(__file__).parent / "demo_dsse_files"
+PEMS = Path(__file__).parent / "pems"
+SCRIPTS = Path(__file__).parent / "scripts"
 
 
 class TestInTotoVerifyTool(CliTestCase, TmpDirMixin):
@@ -500,6 +507,133 @@ class TestInTotoVerifyToolGPG(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.gnupg_home,
         ]
 
+        self.assert_cli_sys_exit(args, 0)
+
+
+class TestInTotoVerifySubjectPublicKeyInfoKeys(CliTestCase, TmpDirMixin):
+    """Tests in-toto-verify like TestInTotoVerifyTool but with
+    standard PEM/SubjectPublicKeyInfo keys."""
+
+    cli_main_func = staticmethod(in_toto_verify_main)
+
+    @classmethod
+    def setUpClass(cls):
+        """Creates and changes into temporary directory.
+
+        * Copy files needed for verification:
+            - demo *.link files
+            - final product
+            - inspection scripts
+
+        * Sign layout with keys in "pems" dir
+        * Dump layout
+
+        """
+        cls.set_up_test_dir()
+
+        # Copy demo files and inspection scripts
+        for demo_file in [
+            "foo.tar.gz",
+            "package.2f89b927.link",
+            "write-code.776a00e2.link",
+        ]:
+            shutil.copy(DEMO_FILES / demo_file, demo_file)
+
+        shutil.copytree(SCRIPTS, "scripts")
+
+        # Load layout template
+        layout_template = Metadata.load(
+            str(DEMO_FILES / "demo.layout.template")
+        )
+
+        # Load keys and sign
+        cls.public_key_paths = []
+        for keytype in ["rsa", "ed25519", "ecdsa"]:
+            cls.public_key_paths.append(str(PEMS / f"{keytype}_public.pem"))
+            signer = load_crypto_signer_from_pkcs8_file(
+                PEMS / f"{keytype}_private_unencrypted.pem"
+            )
+
+            layout_template.create_signature(signer)
+
+        layout_template.dump("demo.layout")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
+
+    def test_main_multiple_keys(self):
+        """Test in-toto-verify CLI tool with multiple keys."""
+
+        args = [
+            "--layout",
+            "demo.layout",
+            "--verification-keys",
+        ] + self.public_key_paths
+        self.assert_cli_sys_exit(args, 0)
+
+
+class TestInTotoVerifySubjectPublicKeyInfoKeysAndUseDSSE(
+    CliTestCase, TmpDirMixin
+):
+    """Tests in-toto-verify like TestInTotoVerifyTool but with
+    standard PEM/SubjectPublicKeyInfo keys."""
+
+    cli_main_func = staticmethod(in_toto_verify_main)
+
+    @classmethod
+    def setUpClass(cls):
+        """Creates and changes into temporary directory.
+
+        * Copy files needed for verification:
+            - demo *.link files (dsse)
+            - final product
+            - inspection scripts
+
+        * Sign layout with keys in "pems" dir
+        * Dump layout
+
+        """
+        cls.set_up_test_dir()
+
+        # Copy demo files and inspection scripts
+        for dsse_link in [
+            "package.2f89b927.link",
+            "write-code.776a00e2.link",
+        ]:
+            shutil.copy(DEMO_FILES_DSSE / dsse_link, dsse_link)
+        shutil.copy(DEMO_FILES / "foo.tar.gz", "foo.tar.gz")
+        shutil.copytree(SCRIPTS, "scripts")
+
+        # Load layout template
+        layout_template = Metadata.load(
+            str(DEMO_FILES_DSSE / "demo.layout.template")
+        )
+
+        # Load keys and sign
+        cls.public_key_paths = []
+        for keytype in ["rsa", "ed25519", "ecdsa"]:
+            cls.public_key_paths.append(str(PEMS / f"{keytype}_public.pem"))
+            signer = load_crypto_signer_from_pkcs8_file(
+                PEMS / f"{keytype}_private_unencrypted.pem"
+            )
+
+            layout_template.create_signature(signer)
+
+        layout_template.dump("demo.layout")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tear_down_test_dir()
+
+    def test_main_multiple_keys(self):
+        """Test in-toto-verify CLI tool with multiple keys."""
+
+        args = [
+            "--layout",
+            "demo.layout",
+            "--verification-keys",
+        ] + self.public_key_paths
         self.assert_cli_sys_exit(args, 0)
 
 

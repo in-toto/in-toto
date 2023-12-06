@@ -51,6 +51,7 @@ from in_toto.common_args import (
     sort_action_groups,
     title_case_action_groups,
 )
+from in_toto.models._signer import load_public_key_from_file
 from in_toto.models.metadata import Metadata
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
@@ -176,6 +177,19 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
     )
 
     named_args.add_argument(
+        "--verification-keys",
+        type=str,
+        dest="verification_keys",
+        metavar="<path>",
+        nargs="+",
+        help=(
+            "replacement for '--layout-keys' using a standard "
+            "subjectPublicKeyInfo/PEM format. Key type is detected "
+            "automatically and need not be specified with '--key-type'."
+        ),
+    )
+
+    named_args.add_argument(
         "-g",
         "--gpg",
         nargs="+",
@@ -227,13 +241,13 @@ def main():
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
-    # For verifying at least one of --layout-keys or --gpg must be specified
-    # Note: Passing both at the same time is possible.
-    if (args.layout_keys is None) and (args.gpg is None):
+    # For verifying at least one public key must be specified
+    if not (args.layout_keys or args.gpg or args.verification_keys):
         parser.print_help()
         parser.error(
-            "wrong arguments: specify at least one of"
-            " '--layout-keys path [path ...]' or '--gpg id [id ...]'"
+            "wrong arguments: specify at least one layout verification key:"
+            " '--layout-keys path [path ...]' or  '--gpg id [id ...]' or "
+            " '--verification-keys path [path ...]'."
         )
 
     try:
@@ -243,6 +257,11 @@ def main():
         layout_key_dict = {}
         if args.layout_keys is not None:
             LOG.info("Loading layout key(s)...")
+            LOG.warning(
+                "'-k', '--layout-keys' is deprecated, use "
+                "'--verification-keys' instead."
+            )
+
             layout_key_dict.update(
                 interface.import_publickeys_from_file(
                     args.layout_keys, args.key_types
@@ -254,6 +273,11 @@ def main():
             layout_key_dict.update(
                 gpg_interface.export_pubkeys(args.gpg, homedir=args.gpg_home)
             )
+
+        if args.verification_keys:
+            for path in args.verification_keys:
+                key = load_public_key_from_file(path)
+                layout_key_dict[key["keyid"]] = key
 
         verifylib.in_toto_verify(layout, layout_key_dict, args.link_dir)
 
