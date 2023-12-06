@@ -25,21 +25,11 @@
 import argparse
 import logging
 import sys
+from getpass import getpass
 
-import securesystemslib.exceptions
-import securesystemslib.formats
-from securesystemslib import interface
 from securesystemslib.gpg import functions as gpg_interface
-from securesystemslib.signer import SSlibSigner
 
-from in_toto import (
-    KEY_TYPE_ECDSA,
-    KEY_TYPE_ED25519,
-    KEY_TYPE_RSA,
-    SUPPORTED_KEY_TYPES,
-    __version__,
-    exceptions,
-)
+from in_toto import __version__, exceptions
 from in_toto.common_args import (
     GPG_HOME_ARGS,
     GPG_HOME_KWARGS,
@@ -51,7 +41,11 @@ from in_toto.common_args import (
     title_case_action_groups,
 )
 from in_toto.formats import _check_hex
-from in_toto.models._signer import GPGSigner
+from in_toto.models._signer import (
+    GPGSigner,
+    load_crypto_signer_from_pkcs8_file,
+    load_public_key_from_file,
+)
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metadata
 
@@ -103,20 +97,14 @@ def _sign_and_dump_metadata(metadata, args):
         # Alternatively we iterate over passed private key paths `--key KEYPATH
         # ...` load the corresponding key from disk and sign with it
         elif args.key is not None:  # pragma: no branch
-            if args.key_type is None:
-                args.key_type = [KEY_TYPE_RSA] * len(args.key)
+            password = None
+            if args.prompt:
+                password = getpass()
+                password = password.encode()
 
-            if len(args.key_type) != len(args.key):
-                raise securesystemslib.exceptions.FormatError(
-                    "number of key_types should match with the number"
-                    " of keys specified"
-                )
-
-            for idx, key_path in enumerate(args.key):
-                key = interface.import_privatekey_from_file(
-                    key_path, key_type=args.key_type[idx], prompt=args.prompt
-                )
-                signature = metadata.create_signature(SSlibSigner(key))
+            for path in args.key:
+                signer = load_crypto_signer_from_pkcs8_file(path, password)
+                signature = metadata.create_signature(signer)
 
         payload = metadata.get_payload()
         _type = payload.type_
@@ -168,9 +156,10 @@ def _verify_metadata(metadata, args):
     try:
         # Load pubkeys from disk ....
         if args.key is not None:
-            pub_key_dict = interface.import_publickeys_from_file(
-                args.key, args.key_type
-            )
+            pub_key_dict = {}
+            for path in args.key:
+                key = load_public_key_from_file(path)
+                pub_key_dict[key["keyid"]] = key
 
         # ... or from gpg keyring
         elif args.gpg is not None:  # pragma: no branch
@@ -298,26 +287,9 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
         metavar="<path>",
         help=(
             "paths to key files, used to sign the passed link or layout metadata"
-            " or to verify its signatures. See '--key-type' for available formats."
-        ),
-    )
-
-    parser.add_argument(
-        "-t",
-        "--key-type",
-        dest="key_type",
-        type=str,
-        choices=SUPPORTED_KEY_TYPES,
-        nargs="+",
-        help=(
-            "types of keys specified by the '--key' option. '{rsa}' keys are"
-            " expected in a 'PEM' format. '{ed25519}' and '{ecdsa} are expected in a"
-            " custom 'securesystemslib/json' format. If multiple keys are passed via"
-            " '--key' the same amount of key types must be passed. Key"
-            " types are then associated with keys by index. If '--key-type' is"
-            " omitted, the default of '{rsa}' is used for all keys.".format(
-                rsa=KEY_TYPE_RSA, ed25519=KEY_TYPE_ED25519, ecdsa=KEY_TYPE_ECDSA
-            )
+            " or to verify its signatures. Verification keys are expected in"
+            " PEM/subjectPublicKeyInfo and signing keys in PEM/PKCS8 format."
+            " Pass '--prompt' to enter a signing key decryption password."
         ),
     )
 

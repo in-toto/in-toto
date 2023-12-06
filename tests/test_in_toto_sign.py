@@ -16,16 +16,16 @@
 """
 
 import json
-import os
 import shutil
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from in_toto.in_toto_sign import main as in_toto_sign_main
-from tests.common import CliTestCase, GenKeysMixin, GPGKeysMixin, TmpDirMixin
+from tests.common import CliTestCase, GPGKeysMixin, TmpDirMixin
 
 
-class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
+class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
     """Test in_toto_sign's main() - requires sys.argv patching; error logs/exits
     on Exception."""
 
@@ -33,30 +33,33 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
 
     @classmethod
     def setUpClass(cls):
-        # Find demo files
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_files"
-        )
-
-        # Create and change into temporary directory
         cls.set_up_test_dir()
         cls.set_up_gpg_keys()
-        cls.set_up_keys()
 
-        # Copy demo files to temp dir
-        for file_path in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, file_path), cls.test_dir)
+        demo_files = Path(__file__).parent / "demo_files"
+        pems = Path(__file__).parent / "pems"
 
-        cls.layout_path = "demo.layout.template"
-        cls.link_path = "package.2f89b927.link"
-        cls.alice_path = "alice"
-        cls.alice_pub_path = "alice.pub"
-        cls.bob_path = "bob"
-        cls.bob_pub_path = "bob.pub"
-        cls.carl_path = "carl"
-        cls.carl_pub_path = "carl.pub"
-        cls.danny_path = "danny"
-        cls.danny_pub_path = "danny.pub"
+        layout_name = "demo.layout.template"
+        link_name = "package.2f89b927.link"
+        for name in [layout_name, link_name]:
+            shutil.copy(demo_files / name, name)
+
+        cls.layout_path = layout_name
+        cls.link_path = link_name
+
+        cls.key_pw = "hunter2"
+
+        cls.alice_path = str(pems / "rsa_private_unencrypted.pem")
+        cls.alice_enc_path = str(pems / "rsa_private_encrypted.pem")
+        cls.alice_pub_path = str(pems / "rsa_public.pem")
+
+        cls.bob_path = str(pems / "ecdsa_private_unencrypted.pem")
+        cls.bob_enc_path = str(pems / "ecdsa_private_encrypted.pem")
+        cls.bob_pub_path = str(pems / "ecdsa_public.pem")
+
+        cls.carl_path = str(pems / "ed25519_private_unencrypted.pem")
+        cls.carl_enc_path = str(pems / "ed25519_private_encrypted.pem")
+        cls.carl_pub_path = str(pems / "ed25519_public.pem")
 
     @classmethod
     def tearDownClass(cls):
@@ -112,33 +115,6 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
             0,
         )
 
-        # Sign Layout "tmp.layout" with ed25519 key, appending new signature,
-        # write to "tmp.layout"
-        self.assert_cli_sys_exit(
-            ["-f", "tmp.layout", "-k", self.danny_path, "-t", "ed25519", "-a"],
-            0,
-        )
-
-        # Verify "tmp.layout" (has four signatures now)
-        self.assert_cli_sys_exit(
-            [
-                "-f",
-                "tmp.layout",
-                "-k",
-                self.alice_pub_path,
-                self.bob_pub_path,
-                self.carl_pub_path,
-                self.danny_pub_path,
-                "-t",
-                "rsa",
-                "rsa",
-                "rsa",
-                "ed25519",
-                "--verify",
-            ],
-            0,
-        )
-
         # Sign Link, replacing old signature
         # and write to same file as input
         self.assert_cli_sys_exit(
@@ -167,7 +143,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         self.assert_cli_sys_exit(
             [
                 "-f",
-                "package.556caebd.link",
+                "package.2f685fa7.link",
                 "-k",
                 self.alice_pub_path,
                 "--verify",
@@ -231,20 +207,18 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
             0,
         )
 
-        # Sign Layout with encrypted rsa/ed25519 keys, prompting for pw, and verify
+        # Sign Layout with encrypted rsa/ed25519/ecdsa keys, prompting for pw, and verify
         with mock.patch(
-            "securesystemslib.interface.get_password", return_value=self.key_pw
+            "in_toto.in_toto_sign.getpass", return_value=self.key_pw
         ):
             self.assert_cli_sys_exit(
                 [
                     "-f",
                     self.layout_path,
                     "-k",
-                    self.rsa_key_enc_path,
-                    self.ed25519_key_enc_path,
-                    "-t",
-                    "rsa",
-                    "ed25519",
+                    self.alice_enc_path,
+                    self.bob_enc_path,
+                    self.carl_enc_path,
                     "--prompt",
                     "-o",
                     "signed_with_encrypted_keys.layout",
@@ -256,11 +230,9 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
                 "-f",
                 "signed_with_encrypted_keys.layout",
                 "-k",
-                self.rsa_key_enc_path + ".pub",
-                self.ed25519_key_enc_path + ".pub",
-                "-t",
-                "rsa",
-                "ed25519",
+                self.alice_pub_path,
+                self.bob_pub_path,
+                self.alice_pub_path,
                 "--verify",
             ],
             0,
@@ -281,7 +253,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
 
         # Fail with encrypted rsa key but no password
         self.assert_cli_sys_exit(
-            ["-f", self.layout_path, "-k", self.rsa_key_enc_path], 2
+            ["-f", self.layout_path, "-k", self.alice_enc_path], 2
         )
 
         # Fail with encrypted ed25519 key but no password
@@ -290,9 +262,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
                 "-f",
                 self.layout_path,
                 "-k",
-                self.ed25519_key_enc_path,
-                "-t",
-                "ed25519",
+                self.bob_enc_path,
             ],
             2,
         )
@@ -384,22 +354,6 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
             2,
         )
 
-        # Wrong number of multiple key types
-        self.assert_cli_sys_exit(
-            [
-                "-f",
-                self.layout_path,
-                "-k",
-                self.alice_path,
-                self.bob_path,
-                "-t",
-                "rsa",
-                "-o",
-                "tmp.layout",
-            ],
-            2,
-        )
-
         # Wrong multiple gpg keys for Link metadata
         self.assert_cli_sys_exit(
             [
@@ -458,9 +412,7 @@ class TestInTotoSignTool(CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin):
         )
 
 
-class TestInTotoSignToolWithDSSE(
-    CliTestCase, TmpDirMixin, GPGKeysMixin, GenKeysMixin
-):
+class TestInTotoSignToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
     """Test in_toto_sign's main() for dsse metadata files - requires sys.argv
     patching; error logs/exits on Exception."""
 
@@ -468,39 +420,32 @@ class TestInTotoSignToolWithDSSE(
 
     @classmethod
     def setUpClass(cls):
-        # Find demo files
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_files"
-        )
-
-        # Demo DSSE Metadata Files
-        demo_dsse_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_dsse_files"
-        )
-
-        # Create and change into temporary directory
         cls.set_up_test_dir()
         cls.set_up_gpg_keys()
-        cls.set_up_keys()
 
-        # Copy demo files to temp dir
-        for file_path in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, file_path), cls.test_dir)
+        pems = Path(__file__).parent / "pems"
+        demo_dsse_files = Path(__file__).parent / "demo_dsse_files"
+        layout_name = "demo.layout.template"
+        link_name = "package.2f89b927.link"
+        for name in [layout_name, link_name]:
+            shutil.copy(demo_dsse_files / name, name)
 
-        # Copy demo DSSE files to temp dir
-        for file_path in os.listdir(demo_dsse_files):
-            shutil.copy(os.path.join(demo_dsse_files, file_path), cls.test_dir)
+        cls.layout_path = layout_name
+        cls.link_path = link_name
 
-        cls.layout_path = "demo.layout.template"
-        cls.link_path = "package.2f89b927.link"
-        cls.alice_path = "alice"
-        cls.alice_pub_path = "alice.pub"
-        cls.bob_path = "bob"
-        cls.bob_pub_path = "bob.pub"
-        cls.carl_path = "carl"
-        cls.carl_pub_path = "carl.pub"
-        cls.danny_path = "danny"
-        cls.danny_pub_path = "danny.pub"
+        cls.key_pw = "hunter2"
+
+        cls.alice_path = str(pems / "rsa_private_unencrypted.pem")
+        cls.alice_enc_path = str(pems / "rsa_private_encrypted.pem")
+        cls.alice_pub_path = str(pems / "rsa_public.pem")
+
+        cls.bob_path = str(pems / "ecdsa_private_unencrypted.pem")
+        cls.bob_enc_path = str(pems / "ecdsa_private_encrypted.pem")
+        cls.bob_pub_path = str(pems / "ecdsa_public.pem")
+
+        cls.carl_path = str(pems / "ed25519_private_unencrypted.pem")
+        cls.carl_enc_path = str(pems / "ed25519_private_encrypted.pem")
+        cls.carl_pub_path = str(pems / "ed25519_public.pem")
 
     @classmethod
     def tearDownClass(cls):
@@ -556,33 +501,6 @@ class TestInTotoSignToolWithDSSE(
             0,
         )
 
-        # Sign Layout "tmp.layout" with ed25519 key, appending new signature,
-        # write to "tmp.layout"
-        self.assert_cli_sys_exit(
-            ["-f", "tmp.layout", "-k", self.danny_path, "-t", "ed25519", "-a"],
-            0,
-        )
-
-        # Verify "tmp.layout" (has four signatures now)
-        self.assert_cli_sys_exit(
-            [
-                "-f",
-                "tmp.layout",
-                "-k",
-                self.alice_pub_path,
-                self.bob_pub_path,
-                self.carl_pub_path,
-                self.danny_pub_path,
-                "-t",
-                "rsa",
-                "rsa",
-                "rsa",
-                "ed25519",
-                "--verify",
-            ],
-            0,
-        )
-
         # Sign Link, replacing old signature
         # and write to same file as input
         self.assert_cli_sys_exit(
@@ -611,7 +529,7 @@ class TestInTotoSignToolWithDSSE(
         self.assert_cli_sys_exit(
             [
                 "-f",
-                "package.556caebd.link",
+                "package.2f685fa7.link",
                 "-k",
                 self.alice_pub_path,
                 "--verify",
