@@ -5,4 +5,4 @@
 pylint==3.0.2
 bandit==1.7.6
 black==23.11.0
-isort==5.12.0
+isort==5.13.1
