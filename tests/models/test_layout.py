@@ -23,8 +23,8 @@
 # pylint: disable=protected-access
 
 import os
-import shutil
 import unittest
+from pathlib import Path
 
 import securesystemslib.exceptions
 
@@ -41,23 +41,18 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
 
     @classmethod
     def setUpClass(cls):
-        """Create temporary test directory and copy gpg keychain, and rsa keys from
-        demo files."""
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "..", "demo_files"
-        )
+        """Create temporary test directory to copy gpg keychain, and setup
+        key file paths."""
 
         cls.set_up_test_dir()
         cls.set_up_gpg_keys()
 
-        # Copy keys to temp test dir
-        key_names = ["bob", "bob.pub", "carl.pub"]
-        for name in key_names:
-            shutil.copy(os.path.join(demo_files, name), name)
+        pems = Path(__file__).parent.parent / "pems"
 
-        cls.key_path = os.path.join(cls.test_dir, "bob")
-        cls.pubkey_path1 = os.path.join(cls.test_dir, "bob.pub")
-        cls.pubkey_path2 = os.path.join(cls.test_dir, "carl.pub")
+        cls.key_path = str(pems / "rsa_private_unencrypted.pem")
+        cls.pubkey_path1 = str(pems / "rsa_public.pem")
+        cls.pubkey_path2 = str(pems / "ecdsa_public.pem")
+        cls.pubkey_path3 = str(pems / "ed25519_public.pem")
 
     @classmethod
     def tearDownClass(cls):
@@ -156,7 +151,7 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
         self.assertEqual(len(layout.get_functionary_key_id_list()), 0)
 
         layout.add_functionary_keys_from_paths(
-            [self.pubkey_path1, self.pubkey_path2]
+            [self.pubkey_path1, self.pubkey_path2, self.pubkey_path3]
         )
 
         layout.add_functionary_keys_from_gpg_keyids(
@@ -165,14 +160,14 @@ class TestLayoutMethods(unittest.TestCase, TmpDirMixin, GPGKeysMixin):
 
         layout._validate_keys()
 
-        self.assertEqual(len(layout.get_functionary_key_id_list()), 4)
+        self.assertEqual(len(layout.get_functionary_key_id_list()), 5)
 
         # Must be a valid key object
         with self.assertRaises(securesystemslib.exceptions.FormatError):
             layout.add_functionary_key("abcd")
 
         # Must be pubkey and not private key
-        with self.assertRaises(securesystemslib.exceptions.Error):
+        with self.assertRaises(ValueError):
             layout.add_functionary_key_from_path(self.key_path)
 
         # Must be a valid path
