@@ -2,7 +2,7 @@
 -r requirements-pinned.txt
 
 # Test tools for linting and test coverage measurement
-pylint==3.0.2
+pylint==3.0.3
 bandit==1.7.6
 black==23.11.0
 isort==5.12.0
