@@ -37,11 +37,6 @@ import securesystemslib.gpg.functions
 from dateutil.relativedelta import relativedelta
 from securesystemslib.gpg.constants import have_gpg
 from securesystemslib.gpg.exceptions import KeyExpirationError
-from securesystemslib.interface import (
-    import_publickeys_from_file,
-    import_rsa_privatekey_from_file,
-    import_rsa_publickey_from_file,
-)
 
 import in_toto.exceptions
 import in_toto.settings
@@ -81,7 +76,7 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
-from tests.common import GPGKeysMixin, TmpDirMixin
+from tests.common import GPGKeysMixin, SignerStore, TmpDirMixin
 
 
 class TestRaiseOnBadRetval(unittest.TestCase):
@@ -945,20 +940,21 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         cls.layout_no_steps_no_inspections = "no_steps_no_inspections.layout"
 
         # Import layout signing keys
-        alice = import_rsa_privatekey_from_file("alice")
-        bob = import_rsa_privatekey_from_file("bob")
-        cls.alice_path = "alice.pub"
-        cls.bob_path = "bob.pub"
+        alice = SignerStore.rsa
+        bob = SignerStore.ecdsa
+
+        cls.alice_pub = SignerStore.rsa_pub
+        cls.bob_pub = SignerStore.ecdsa_pub
 
         # dump single signed layout
         layout = copy.deepcopy(layout_template)
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_single_signed_path)
 
         # dump double signed layout
         layout = copy.deepcopy(layout_template)
-        layout.sign(alice)
-        layout.sign(bob)
+        layout.create_signature(alice)
+        layout.create_signature(bob)
         layout.dump(cls.layout_double_signed_path)
 
         # dump layout with fixed (and mocked) date expiry
@@ -966,12 +962,12 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.signed.expires = (
             datetime(2025, 1, 2, 3, 4, 6, tzinfo=timezone.utc)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_fixed_expiry_path)
 
         # dump layout with bad signature
         layout = copy.deepcopy(layout_template)
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.signed.readme = "this breaks the signature"
         layout.dump(cls.layout_bad_sig)
 
@@ -980,21 +976,21 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         layout.signed.expires = (
             datetime.today() + relativedelta(months=-1)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_expired_path)
 
         # dump layout with failing step rule
         layout = copy.deepcopy(layout_template)
         layout.signed.steps[0].expected_products.insert(0, ["DISALLOW", "*"])
         layout.signed.steps[0].expected_products.insert(0, ["MODIFY", "*"])
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_failing_step_rule_path)
 
         # dump layout with failing inspection rule
         layout = copy.deepcopy(layout_template)
         layout.signed.inspect[0].expected_materials.insert(0, ["MODIFY", "*"])
         layout.signed.inspect[0].expected_materials.append(["DISALLOW", "*"])
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_failing_inspection_rule_path)
 
         # dump layout with failing inspection retval
@@ -1006,14 +1002,13 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
             "/",
             "0",
         ]
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_failing_inspection_retval)
 
         # dump empty layout
         layout = Metablock(signed=Layout())
-        layout.sign(alice)
+        layout.create_signature(alice)
         layout.dump(cls.layout_no_steps_no_inspections)
-        cls.alice = alice
 
     @classmethod
     def tearDownClass(cls):
@@ -1022,21 +1017,22 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     def test_verify_passing(self):
         """Test pass verification of single-signed layout."""
         layout = Metablock.load(self.layout_single_signed_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         in_toto_verify(layout, layout_key_dict)
 
     def test_verify_passing_double_signed_layout(self):
         """Test pass verification of double-signed layout."""
         layout = Metablock.load(self.layout_double_signed_path)
-        layout_key_dict = import_publickeys_from_file(
-            [self.alice_path, self.bob_path]
-        )
+        layout_key_dict = {
+            self.alice_pub["keyid"]: self.alice_pub,
+            self.bob_pub["keyid"]: self.bob_pub,
+        }
         in_toto_verify(layout, layout_key_dict)
 
     def test_verify_passing_empty_layout(self):
         """Test pass verification of layout without steps or inspections."""
         layout = Metablock.load(self.layout_no_steps_no_inspections)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         in_toto_verify(layout, layout_key_dict)
 
     def test_verify_passing_layout_expiry(self):
@@ -1046,7 +1042,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
                 2025, 1, 2, 3, 4, 5, tzinfo=timezone.utc
             )
             layout = Metablock.load(self.layout_fixed_expiry_path)
-            layout_key_dict = import_publickeys_from_file([self.alice_path])
+            layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
             # the expiry is a second later than the mocked datetime.datetime.now(), which
             # should not raise an exception due to <= behaviour of expiration comparison
             in_toto_verify(layout, layout_key_dict)
@@ -1054,21 +1050,21 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     def test_verify_failing_wrong_key(self):
         """Test fail verification with wrong layout key."""
         layout = Metablock.load(self.layout_single_signed_path)
-        layout_key_dict = import_publickeys_from_file([self.bob_path])
+        layout_key_dict = {self.bob_pub["keyid"]: self.bob_pub}
         with self.assertRaises(SignatureVerificationError):
             in_toto_verify(layout, layout_key_dict)
 
     def test_verify_failing_bad_signature(self):
         """Test fail verification with bad layout signature."""
         layout = Metablock.load(self.layout_bad_sig)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(SignatureVerificationError):
             in_toto_verify(layout, layout_key_dict)
 
     def test_verify_failing_layout_expired(self):
         """Test fail verification with expired layout."""
         layout = Metablock.load(self.layout_expired_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(LayoutExpiredError):
             in_toto_verify(layout, layout_key_dict)
 
@@ -1079,7 +1075,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
                 2025, 1, 2, 3, 4, 6, tzinfo=timezone.utc
             )
             layout = Metablock.load(self.layout_fixed_expiry_path)
-            layout_key_dict = import_publickeys_from_file([self.alice_path])
+            layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
             # the expiry is the same as the mocked datetime.datetime.now(), which
             # should raise an exception due to <= behaviour of expiration comparison
             with self.assertRaises(LayoutExpiredError):
@@ -1089,7 +1085,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         """Test fail verification with link metadata files not found."""
         os.rename("package.2f89b927.link", "package.link.bak")
         layout = Metablock.load(self.layout_single_signed_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(in_toto.exceptions.LinkNotFoundError):
             in_toto_verify(layout, layout_key_dict)
         os.rename("package.link.bak", "package.2f89b927.link")
@@ -1097,21 +1093,21 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     def test_verify_failing_inspection_exits_non_zero(self):
         """Test fail verification with inspection returning non-zero."""
         layout = Metablock.load(self.layout_failing_inspection_retval)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(BadReturnValueError):
             in_toto_verify(layout, layout_key_dict)
 
     def test_verify_failing_step_rules(self):
         """Test fail verification with failing step artifact rule."""
         layout = Metablock.load(self.layout_failing_step_rule_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(RuleVerificationError):
             in_toto_verify(layout, layout_key_dict)
 
     def test_verify_failing_inspection_rules(self):
         """Test fail verification with failing inspection artifact rule."""
         layout = Metablock.load(self.layout_failing_inspection_rule_path)
-        layout_key_dict = import_publickeys_from_file([self.alice_path])
+        layout_key_dict = {self.alice_pub["keyid"]: self.alice_pub}
         with self.assertRaises(RuleVerificationError):
             in_toto_verify(layout, layout_key_dict)
 
@@ -1124,14 +1120,12 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     def test_verify_layout_signatures_fail_with_malformed_signature(self):
         """Layout signature verification fails with malformed signatures."""
         layout_metablock = Metablock(signed=Layout())
-        signature = layout_metablock.sign(self.alice)
-        pubkey = copy.deepcopy(self.alice)
-        pubkey["keyval"]["private"] = ""
+        layout_metablock.create_signature(SignerStore.rsa)
 
-        del signature["sig"]
-        layout_metablock.signed.signatures = [signature]
+        del layout_metablock.signatures[0]["sig"]
+        layout_key_dict = {SignerStore.rsa_pub["keyid"]: SignerStore.rsa_pub}
         with self.assertRaises(SignatureVerificationError):
-            in_toto_verify(layout_metablock, {self.alice["keyid"]: pubkey})
+            in_toto_verify(layout_metablock, layout_key_dict)
 
 
 class TestInTotoVerifyThresholds(unittest.TestCase):
@@ -1143,25 +1137,14 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Load test keys from demo files."""
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_files"
-        )
 
-        cls.alice = import_rsa_privatekey_from_file(
-            os.path.join(demo_files, "alice")
-        )
-        cls.alice_pubkey = import_rsa_publickey_from_file(
-            os.path.join(demo_files, "alice.pub")
-        )
-        cls.alice_keyid = cls.alice["keyid"]
+        cls.alice = SignerStore.rsa
+        cls.alice_pubkey = SignerStore.rsa_pub
+        cls.alice_keyid = cls.alice_pubkey["keyid"]
 
-        cls.bob = import_rsa_privatekey_from_file(
-            os.path.join(demo_files, "bob")
-        )
-        cls.bob_pubkey = import_rsa_publickey_from_file(
-            os.path.join(demo_files, "bob.pub")
-        )
-        cls.bob_keyid = cls.bob["keyid"]
+        cls.bob = SignerStore.ecdsa
+        cls.bob_pubkey = SignerStore.ecdsa_pub
+        cls.bob_keyid = cls.bob_pubkey["keyid"]
 
         cls.name = "test"
         cls.foo_hash = (
@@ -1178,9 +1161,9 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
         # Signed links (one authorized the other one not)
         link_bob = Metablock(signed=Link(name=self.name))
-        link_bob.sign(self.bob)
+        link_bob.create_signature(self.bob)
         link_alice = Metablock(signed=Link(name=self.name))
-        link_alice.sign(self.alice)
+        link_alice.create_signature(self.alice)
 
         # The dictionary of links per step passed to the verify function
         chain_link_dict = {
@@ -1217,7 +1200,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
         # Authorized links (one signed one not)
         link_bob = Metablock(signed=Link(name=self.name))
-        link_bob.sign(self.bob)
+        link_bob.create_signature(self.bob)
         link_alice = Metablock(signed=Link(name=self.name))
 
         # The dictionary of links per step passed to the verify function
@@ -1256,7 +1239,7 @@ class TestInTotoVerifyThresholds(unittest.TestCase):
 
         # Only one authorized and validly signed link
         link_bob = Metablock(signed=Link(name=self.name))
-        link_bob.sign(self.bob)
+        link_bob.create_signature(self.bob)
 
         # The dictionary of links per step passed to the verify function
         chain_link_dict = {self.name: {self.bob_keyid: link_bob}}
@@ -1552,8 +1535,8 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
         shutil.copytree(scripts_directory, "scripts")
 
         # Import sub layout signing (private) and verifying (public) keys
-        alice = import_rsa_privatekey_from_file("alice")
-        alice_pub = import_rsa_publickey_from_file("alice.pub")
+        alice = SignerStore.rsa
+        alice_pub = SignerStore.rsa_pub
 
         # From the perspective of the superlayout, the sublayout is treated as
         # a link corresponding to a step, hence needs a name.
@@ -1562,7 +1545,7 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
         # Sublayout links are expected in a directory relative to the superlayout's
         # link directory
         sub_layout_link_dir = SUBLAYOUT_LINK_DIR_FORMAT.format(
-            name=sub_layout_name, keyid=alice["keyid"]
+            name=sub_layout_name, keyid=alice_pub["keyid"]
         )
 
         for sublayout_link_name in glob.glob("*.link"):
@@ -1575,7 +1558,7 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
         sub_layout_path = FILENAME_FORMAT.format(
             step_name=sub_layout_name, keyid=alice_pub["keyid"]
         )
-        sub_layout.sign(alice)
+        sub_layout.create_signature(alice)
         sub_layout.dump(sub_layout_path)
 
         # Create super layout that has only one step, the sublayout
@@ -1602,23 +1585,17 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
     """Test verifylib.in_toto_verify with multiple levels of sublayouts."""
 
     def test_verify_multi_level_sublayout(self):
-        # Find demo files
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_files"
-        )
-
         # Create and change into temporary directory
         self.set_up_test_dir()
 
-        # We don't need to copy the demo files, we just load the keys
-        keys = {}
-        for key_name in ["alice", "bob", "carl"]:
-            keys[key_name + "_priv"] = import_rsa_privatekey_from_file(
-                os.path.join(demo_files, key_name)
-            )
-            keys[key_name + "_pub"] = import_rsa_publickey_from_file(
-                os.path.join(demo_files, key_name + ".pub")
-            )
+        keys = {
+            "alice_priv": SignerStore.rsa,
+            "alice_pub": SignerStore.rsa_pub,
+            "bob_priv": SignerStore.ecdsa,
+            "bob_pub": SignerStore.ecdsa_pub,
+            "carl_priv": SignerStore.ed25519,
+            "carl_pub": SignerStore.ed25519_pub,
+        }
 
         # Create layout hierarchy
 
@@ -1644,7 +1621,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
                 ],
             )
         )
-        root_layout.sign(keys["alice_priv"])
+        root_layout.create_signature(keys["alice_priv"])
 
         # Sublayout (first level)
         # The first level sublayout wil be treated as a link from the
@@ -1673,7 +1650,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
                 ],
             )
         )
-        bobs_layout.sign(keys["bob_priv"])
+        bobs_layout.create_signature(keys["bob_priv"])
         bobs_layout.dump(bobs_layout_name)
 
         # Subsublayout (second level)
@@ -1688,7 +1665,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
             bobs_layout_link_dir, carls_layout_name
         )
         carls_layout = Metablock(signed=Layout())
-        carls_layout.sign(keys["carl_priv"])
+        carls_layout.create_signature(keys["carl_priv"])
         carls_layout.dump(carls_layout_path)
 
         in_toto_verify(root_layout, root_layout_pub_key_dict)
@@ -1713,15 +1690,14 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
         # Create and change into temporary directory
         self.set_up_test_dir()
 
-        # We don't need to copy the demo files, we just load the keys
-        keys = {}
-        for key_name in ["alice", "bob"]:
-            keys[key_name + "_priv"] = import_rsa_privatekey_from_file(
-                os.path.join(demo_files, key_name)
-            )
-            keys[key_name + "_pub"] = import_rsa_publickey_from_file(
-                os.path.join(demo_files, key_name + ".pub")
-            )
+        keys = {
+            "alice_priv": SignerStore.rsa,
+            "alice_pub": SignerStore.rsa_pub,
+            "bob_priv": SignerStore.ecdsa,
+            "bob_pub": SignerStore.ecdsa_pub,
+            "carl_priv": SignerStore.ed25519,
+            "carl_pub": SignerStore.ed25519_pub,
+        }
 
         # Create layout hierarchy
 
@@ -1758,7 +1734,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
                 ],
             )
         )
-        root_layout.sign(keys["alice_priv"])
+        root_layout.create_signature(keys["alice_priv"])
 
         # Sublayout (first level)
         # The sublayout will be treated as a link from the superlayout's
@@ -1776,7 +1752,7 @@ class TestSublayoutVerificationMatchRule(unittest.TestCase, TmpDirMixin):
         bobs_layout = Metablock.load(
             os.path.join(demo_files, "demo.layout.template")
         )
-        bobs_layout.sign(keys["bob_priv"])
+        bobs_layout.create_signature(keys["bob_priv"])
         bobs_layout.dump(bobs_layout_name)
         shutil.copy2(
             os.path.join(demo_files, "write-code.776a00e2.link"),

@@ -22,24 +22,16 @@
   layer is to be removed.
 
 """
-
-import os
-import shutil
 import unittest
 
 from securesystemslib.exceptions import FormatError
-from securesystemslib.interface import (
-    import_publickeys_from_file,
-    import_rsa_privatekey_from_file,
-)
-from securesystemslib.signer import SSlibSigner
 
 import in_toto.exceptions
 import in_toto.settings
 from in_toto.models.layout import Layout
 from in_toto.models.metadata import Envelope, Metablock
 from in_toto.verifylib import in_toto_verify, substitute_parameters
-from tests.common import TmpDirMixin
+from tests.common import SignerStore
 
 
 class TestSubstituteArtifacts(unittest.TestCase):
@@ -190,7 +182,7 @@ class TestSubstituteExpectedCommand(unittest.TestCase):
             substitute_parameters(self.layout, {"NOEDITOR": "vim"})
 
 
-class TestSubstituteOnVerify(unittest.TestCase, TmpDirMixin):
+class TestSubstituteOnVerify(unittest.TestCase):
     """Test verifylib.verify_command_alignment(command, expected_command)"""
 
     @classmethod
@@ -209,29 +201,14 @@ class TestSubstituteOnVerify(unittest.TestCase, TmpDirMixin):
             }
         )
 
-        # Find demo files
-        demo_files = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "demo_files"
-        )
-
-        cls.set_up_test_dir()
-
-        # Copy demo files to temp dir
-        for fn in os.listdir(demo_files):
-            shutil.copy(os.path.join(demo_files, fn), cls.test_dir)
-
         # load alice's key
-        cls.alice = import_rsa_privatekey_from_file("alice")
-        cls.alice_pub_dict = import_publickeys_from_file(["alice.pub"])
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tear_down_test_dir()
+        cls.alice = SignerStore.rsa
+        cls.alice_pub_dict = {SignerStore.rsa_pub["keyid"]: SignerStore.rsa_pub}
 
     def test_substitute(self):
         """Do a simple substitution on the expected_command field"""
         signed_layout = Metablock(signed=self.layout)
-        signed_layout.sign(self.alice)
+        signed_layout.create_signature(self.alice)
 
         # we will catch a LinkNotFound error because we don't have (and don't need)
         # the metadata.
@@ -248,7 +225,7 @@ class TestSubstituteOnVerify(unittest.TestCase, TmpDirMixin):
         """Do a simple substitution on the expected_command field for DSSE
         envelope."""
         signed_layout = Envelope.from_signable(self.layout)
-        signed_layout.create_signature(SSlibSigner(self.alice))
+        signed_layout.create_signature(self.alice)
 
         # we will catch a LinkNotFound error because we don't have (and don't need)
         # the metadata.

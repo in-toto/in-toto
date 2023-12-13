@@ -32,6 +32,8 @@ import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
+from typing import Any, Dict
 from unittest.mock import patch
 
 from securesystemslib.interface import (
@@ -42,6 +44,27 @@ from securesystemslib.interface import (
     generate_and_write_unencrypted_ed25519_keypair,
     generate_and_write_unencrypted_rsa_keypair,
 )
+from securesystemslib.signer import CryptoSigner
+
+from in_toto.models._signer import (
+    load_crypto_signer_from_pkcs8_file as load_signer,
+)
+from in_toto.models._signer import load_public_key_from_file as load_pubkey
+
+PEMS = Path(__file__).parent / "pems"
+
+
+class SignerStore:
+    """CryptoSigner and public key (dict) store for sign/verify tests."""
+
+    rsa: CryptoSigner = load_signer(PEMS / "rsa_private_unencrypted.pem")
+    rsa_pub: Dict[str, Any] = load_pubkey(PEMS / "rsa_public.pem")
+    ecdsa: CryptoSigner = load_signer(PEMS / "ecdsa_private_unencrypted.pem")
+    ecdsa_pub: Dict[str, Any] = load_pubkey(PEMS / "ecdsa_public.pem")
+    ed25519: CryptoSigner = load_signer(
+        PEMS / "ed25519_private_unencrypted.pem"
+    )
+    ed25519_pub: Dict[str, Any] = load_pubkey(PEMS / "ed25519_public.pem")
 
 
 class TmpDirMixin:
