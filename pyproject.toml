@@ -1,6 +1,8 @@
 [build-system]
-# Version needs manual updates (dependabot/dependabot-core#8465)
-requires = ["hatchling==1.20.0"]
+# Dependabot cannot do `build-system.requires` (dependabot/dependabot-core#8465)
+# workaround to get reproducibility and auto-updates:
+#   PIP_CONSTRAINT=requirements/build.txt python3 -m build ...
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
