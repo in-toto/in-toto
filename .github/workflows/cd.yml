@@ -1,0 +1,118 @@
+name: CD
+concurrency: cd
+
+on:
+  push:
+    tags:
+      - v*
+
+permissions: {}
+
+jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/_test.yml
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: '3.x'
+
+      - name: Install build dependency
+        run: python3 -m pip install --constraint requirements-build.txt build
+
+      - name: Build binary wheel and source tarball
+        run: PIP_CONSTRAINT=requirements-build.txt python3 -m build --sdist --wheel --outdir dist/ .
+
+      - name: Store build artifacts
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        # NOTE: The GitHub release page contains the release artifacts too, but using
+        # GitHub upload/download actions seems robuster: there is no need to compute
+        # download URLs and tampering with artifacts between jobs is more limited.
+        with:
+          name: build-artifacts
+          path: dist
+
+  candidate_release:
+    name: Release candidate on Github for review
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write # to modify GitHub releases
+    outputs:
+      release_id: ${{ steps.gh-release.outputs.result }}
+    steps:
+      - name: Fetch build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: dist
+
+      - id: gh-release
+        name: Publish GitHub release draft
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            fs = require('fs')
+            res = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: '${{ github.ref_name }}-rc',
+              tag_name: '${{ github.ref }}',
+              body: 'Release waiting for review...',
+            });
+
+            fs.readdirSync('dist/').forEach(file => {
+              github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: res.data.id,
+                name: file,
+                data: fs.readFileSync('dist/' + file),
+              });
+            });
+            return res.data.id
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: candidate_release
+    environment: release
+    permissions:
+      contents: write # to modify GitHub releases
+      id-token: write # to authenticate as Trusted Publisher to pypi.org
+    steps:
+      - name: Fetch build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: dist
+
+      - name: Publish binary wheel and source tarball on PyPI
+        # Only attempt pypi upload in upstream repository
+        if: github.repository == 'in-toto/in-toto'
+        uses: pypa/gh-action-pypi-publish@2f6f737ca5f74c637829c0f5c3acd0e29ea5e8bf # v1.8.11
+
+      - name: Finalize GitHub release
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: '${{ needs.candidate_release.outputs.release_id }}',
+              name: '${{ github.ref_name }}',
+              body: 'See [CHANGELOG.md](https://github.com/' +
+                     context.repo.owner + '/' + context.repo.repo +
+                    '/blob/${{ github.ref_name }}/CHANGELOG.md) for details.'
+            })
