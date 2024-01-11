@@ -13,4 +13,4 @@ SUPPORTED_KEY_TYPES = [KEY_TYPE_RSA, KEY_TYPE_ED25519, KEY_TYPE_ECDSA]
 
 
 # in-toto version
-__version__ = "2.1.1"
+__version__ = "2.2.0"
