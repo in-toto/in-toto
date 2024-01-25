@@ -15,7 +15,6 @@ Build-Depends:
  python3-hatchling,
  python3-attr,
  python3-dateutil,
- python3-six,
  python3-iso8601,
  python3-pathspec,
  python3-cryptography,
