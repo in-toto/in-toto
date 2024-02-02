@@ -1578,7 +1578,7 @@ class TestVerifySublayouts(unittest.TestCase, TmpDirMixin):
 
     def test_verify_demo_as_sublayout(self):
         """Test super layout's passing sublayout verification."""
-        verify_sublayouts(self.super_layout, self.super_layout_links, ".")
+        verify_sublayouts(self.super_layout, self.super_layout_links, ".", 10)
 
 
 class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
