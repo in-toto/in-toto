@@ -43,11 +43,11 @@ from in_toto import (
 from in_toto.common_args import (
     GPG_HOME_ARGS,
     GPG_HOME_KWARGS,
+    INSPECT_TIMEOUT_ARGS,
+    INSPECT_TIMEOUT_KWARGS,
     OPTS_TITLE,
     QUIET_ARGS,
     QUIET_KWARGS,
-    RUN_TIMEOUT_ARGS,
-    RUN_TIMEOUT_KWARGS,
     VERBOSE_ARGS,
     VERBOSE_KWARGS,
     sort_action_groups,
@@ -219,7 +219,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
     )
 
     parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
-    parser.add_argument(*RUN_TIMEOUT_ARGS, **RUN_TIMEOUT_KWARGS)
+    parser.add_argument(*INSPECT_TIMEOUT_ARGS, **INSPECT_TIMEOUT_KWARGS)
 
     verbosity_args = parser.add_mutually_exclusive_group(required=False)
     verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -286,7 +286,7 @@ def main():
             layout,
             layout_key_dict,
             args.link_dir,
-            run_timeout=args.run_timeout,
+            run_timeout=args.inspect_timeout,
         )
 
     except Exception as e:  # pylint: disable=broad-exception-caught

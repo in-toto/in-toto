@@ -1372,6 +1372,10 @@ def verify_sublayouts(
               relative to this path, with a name in the format
               in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
 
+      run_timeout:
+              Integer value that is the number of seconds to pass to the run
+              command to timeout the subprocess within.
+
     <Exceptions>
       raises an Exception if verification of the delegated step fails.
 
@@ -1556,6 +1560,10 @@ def in_toto_verify(
 
       persist_inspection_links (optional): A boolean that determines whether or
           not link metadata files for inspection are written to cwd.
+
+      run_timeout (optional): An integer value that defaults to
+          in_toto.settings.LINK_CMD_EXEC_TIMEOUT in seconds which ends up timing
+          out the run command subprocess if it runs over.
 
     Raises:
       securesystemslib.exceptions.FormatError: Passed parameters are malformed.

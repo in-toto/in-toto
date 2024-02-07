@@ -223,6 +223,20 @@ RUN_TIMEOUT_KWARGS = {
     ),
 }
 
+INSPECT_TIMEOUT_ARGS = ["--inspection-timeout"]
+INSPECT_TIMEOUT_KWARGS = {
+    "type": int,
+    "dest": "inspect_timeout",
+    "default": LINK_CMD_EXEC_TIMEOUT,
+    "help": (
+        "integer that represents the max timeout in seconds for the "
+        "   in-toto-verify command for inspect subprocess."
+        "   Default is '{timeout}' seconds.".format(
+            timeout=LINK_CMD_EXEC_TIMEOUT
+        )
+    ),
+}
+
 
 def title_case_action_groups(parser):
     """Capitalize the first character of all words in the title of each action
