@@ -43,8 +43,6 @@ from in_toto import (
 from in_toto.common_args import (
     GPG_HOME_ARGS,
     GPG_HOME_KWARGS,
-    INSPECT_TIMEOUT_ARGS,
-    INSPECT_TIMEOUT_KWARGS,
     OPTS_TITLE,
     QUIET_ARGS,
     QUIET_KWARGS,
@@ -55,6 +53,7 @@ from in_toto.common_args import (
 )
 from in_toto.models._signer import load_public_key_from_file
 from in_toto.models.metadata import Metadata
+from in_toto.settings import LINK_CMD_EXEC_TIMEOUT
 
 # Command line interfaces should use in_toto base logger (c.f. in_toto.log)
 LOG = logging.getLogger("in_toto")
@@ -219,7 +218,19 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
     )
 
     parser.add_argument(*GPG_HOME_ARGS, **GPG_HOME_KWARGS)
-    parser.add_argument(*INSPECT_TIMEOUT_ARGS, **INSPECT_TIMEOUT_KWARGS)
+    parser.add_argument(
+        "--inspection-timeout",
+        dest="inspect_timeout",
+        type=int,
+        default=LINK_CMD_EXEC_TIMEOUT,
+        help=(
+            "integer that represents the max timeout in seconds for the "
+            "   in-toto-verify command for inspect subprocess."
+            "   Default is '{timeout}' seconds.".format(
+                timeout=LINK_CMD_EXEC_TIMEOUT
+            )
+        ),
+    )
 
     verbosity_args = parser.add_mutually_exclusive_group(required=False)
     verbosity_args.add_argument(*VERBOSE_ARGS, **VERBOSE_KWARGS)
@@ -286,7 +297,7 @@ def main():
             layout,
             layout_key_dict,
             args.link_dir,
-            run_timeout=args.inspect_timeout,
+            inspect_timeout=args.inspect_timeout,
         )
 
     except Exception as e:  # pylint: disable=broad-exception-caught

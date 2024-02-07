@@ -1342,7 +1342,7 @@ def reduce_chain_links(chain_link_dict):
 
 
 def verify_sublayouts(
-    layout, steps_metadata, superlayout_link_dir_path, run_timeout
+    layout, steps_metadata, superlayout_link_dir_path, inspect_timeout
 ):
     """
     <Purpose>
@@ -1372,7 +1372,7 @@ def verify_sublayouts(
               relative to this path, with a name in the format
               in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
 
-      run_timeout:
+      inspect_timeout:
               Integer value that is the number of seconds to pass to the run
               command to timeout the subprocess within.
 
@@ -1430,7 +1430,7 @@ def verify_sublayouts(
                     layout_key_dict,
                     link_dir_path=sublayout_link_dir_path,
                     step_name=step_name,
-                    run_timeout=run_timeout,
+                    inspect_timeout=inspect_timeout,
                 )
 
                 # Replace the layout object with the link object returned
@@ -1506,7 +1506,7 @@ def in_toto_verify(
     substitution_parameters=None,
     step_name="",
     persist_inspection_links=True,
-    run_timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
+    inspect_timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
 ):
     """Performs complete in-toto supply chain verification for a final product.
 
@@ -1561,7 +1561,7 @@ def in_toto_verify(
       persist_inspection_links (optional): A boolean that determines whether or
           not link metadata files for inspection are written to cwd.
 
-      run_timeout (optional): An integer value that defaults to
+      inspect_timeout (optional): An integer value that defaults to
           in_toto.settings.LINK_CMD_EXEC_TIMEOUT in seconds which ends up timing
           out the run command subprocess if it runs over.
 
@@ -1623,7 +1623,7 @@ def in_toto_verify(
 
     LOG.info("Verifying sublayouts...")
     chain_link_dict = verify_sublayouts(
-        layout, steps_metadata, link_dir_path, run_timeout
+        layout, steps_metadata, link_dir_path, inspect_timeout
     )
 
     LOG.info("Verifying alignment of reported commands...")
@@ -1641,7 +1641,7 @@ def in_toto_verify(
 
     LOG.info("Executing Inspection commands...")
     inspection_link_dict = run_all_inspections(
-        layout, persist_inspection_links, run_timeout
+        layout, persist_inspection_links, inspect_timeout
     )
 
     LOG.info("Verifying Inspection rules...")
