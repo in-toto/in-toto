@@ -31,6 +31,7 @@ import logging
 import sys
 from getpass import getpass
 
+import argcomplete
 from securesystemslib import interface
 
 from in_toto import __version__, runlib
@@ -258,6 +259,7 @@ def main():
     """Parse arguments, load key from disk (prompts for password if key is
     encrypted) and call in_toto_run."""
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)

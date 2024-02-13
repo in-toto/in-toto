@@ -29,6 +29,8 @@ import argparse
 import logging
 import sys
 
+import argcomplete
+
 import in_toto.runlib
 from in_toto import __version__
 from in_toto.common_args import (
@@ -124,6 +126,7 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
 def main():
     """Parse arguments and call in_toto_mock."""
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     # in-toto-mock should not be used to secure the supply chain but only to try

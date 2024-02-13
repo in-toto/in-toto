@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=requirements-pinned.txt requirements.txt
 #
+argcomplete==3.1.4
+    # via -r requirements.txt
 attrs==23.1.0
     # via -r requirements.txt
 cffi==1.16.0

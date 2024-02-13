@@ -9,6 +9,8 @@ import argparse
 import logging
 import sys
 
+import argcomplete
+
 from in_toto.common_args import (
     LSTRIP_PATHS_ARGS,
     LSTRIP_PATHS_KWARGS,
@@ -69,6 +71,7 @@ def create_parser():
 def main():
     """CLI."""
     parser = create_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     metadata = Metadata.load(args.link)
