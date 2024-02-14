@@ -177,7 +177,11 @@ def load_links_for_layout(layout, link_dir_path):
     return steps_metadata
 
 
-def run_all_inspections(layout, persist_inspection_links):
+def run_all_inspections(
+    layout,
+    persist_inspection_links,
+    timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
+):
     """
     <Purpose>
       Extracts all inspections from a passed Layout's inspect field and
@@ -193,6 +197,10 @@ def run_all_inspections(layout, persist_inspection_links):
       persist_inspection_links:
               A boolean indicating whether link metadata files for inspection
               are written to cwd.
+
+      timeout:
+              Integer that is the amount of seconds that the inspection run will
+              fail after.
 
     <Exceptions>
       Calls function that raises BadReturnValueError if an inspection returned
@@ -224,7 +232,11 @@ def run_all_inspections(layout, persist_inspection_links):
         # We could use artifact rule paths.
         material_list = product_list = ["."]
         link = in_toto.runlib.in_toto_run(
-            inspection.name, material_list, product_list, inspection.run
+            inspection.name,
+            material_list,
+            product_list,
+            inspection.run,
+            timeout=timeout,
         )
 
         _raise_on_bad_retval(
@@ -1329,7 +1341,9 @@ def reduce_chain_links(chain_link_dict):
     return reduced_chain_link_dict
 
 
-def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
+def verify_sublayouts(
+    layout, steps_metadata, superlayout_link_dir_path, inspect_timeout
+):
     """
     <Purpose>
       Extracts link or layout object for each step in steps_metadata. Checks if
@@ -1357,6 +1371,10 @@ def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
               from. Links of the sublayout are expected to be in a subdirectory
               relative to this path, with a name in the format
               in_toto.models.layout.SUBLAYOUT_LINK_DIR_FORMAT.
+
+      inspect_timeout:
+              Integer value that is the number of seconds to pass to the run
+              command to timeout the subprocess within.
 
     <Exceptions>
       raises an Exception if verification of the delegated step fails.
@@ -1412,6 +1430,7 @@ def verify_sublayouts(layout, steps_metadata, superlayout_link_dir_path):
                     layout_key_dict,
                     link_dir_path=sublayout_link_dir_path,
                     step_name=step_name,
+                    inspect_timeout=inspect_timeout,
                 )
 
                 # Replace the layout object with the link object returned
@@ -1487,6 +1506,7 @@ def in_toto_verify(
     substitution_parameters=None,
     step_name="",
     persist_inspection_links=True,
+    inspect_timeout=in_toto.settings.LINK_CMD_EXEC_TIMEOUT,
 ):
     """Performs complete in-toto supply chain verification for a final product.
 
@@ -1540,6 +1560,10 @@ def in_toto_verify(
 
       persist_inspection_links (optional): A boolean that determines whether or
           not link metadata files for inspection are written to cwd.
+
+      inspect_timeout (optional): An integer value that defaults to
+          in_toto.settings.LINK_CMD_EXEC_TIMEOUT in seconds which ends up timing
+          out the run command subprocess if it runs over.
 
     Raises:
       securesystemslib.exceptions.FormatError: Passed parameters are malformed.
@@ -1598,7 +1622,9 @@ def in_toto_verify(
     steps_metadata = verify_link_signature_thresholds(layout, steps_metadata)
 
     LOG.info("Verifying sublayouts...")
-    chain_link_dict = verify_sublayouts(layout, steps_metadata, link_dir_path)
+    chain_link_dict = verify_sublayouts(
+        layout, steps_metadata, link_dir_path, inspect_timeout
+    )
 
     LOG.info("Verifying alignment of reported commands...")
     verify_all_steps_command_alignment(layout, chain_link_dict)
@@ -1614,7 +1640,9 @@ def in_toto_verify(
     verify_all_item_rules(layout.steps, reduced_chain_link_dict)
 
     LOG.info("Executing Inspection commands...")
-    inspection_link_dict = run_all_inspections(layout, persist_inspection_links)
+    inspection_link_dict = run_all_inspections(
+        layout, persist_inspection_links, inspect_timeout
+    )
 
     LOG.info("Verifying Inspection rules...")
     # Artifact rules for inspections can reference links that correspond to
