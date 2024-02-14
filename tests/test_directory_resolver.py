@@ -1,4 +1,5 @@
 """Test cases for DirectoryResolver."""
+
 #!/usr/bin/env python
 # coding=utf-8
 

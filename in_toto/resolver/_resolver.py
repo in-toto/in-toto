@@ -1,5 +1,6 @@
 """Resolver interface and implementations for files, OSTree, and directory
 artifacts."""
+
 import locale
 import logging
 import os

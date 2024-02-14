@@ -1,4 +1,5 @@
 """Test cases for resolver.py."""
+
 from pathlib import Path
 from unittest import TestCase, main
 

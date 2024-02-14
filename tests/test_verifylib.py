@@ -434,7 +434,7 @@ class TestVerifyRule(unittest.TestCase):
             ["foo", {"bar"}, True],
             # A pattern is passed, which should be interpreted *literally*
             ["*", {"*"}, False],
-            ["*", {"foo"}, True]
+            ["*", {"foo"}, True],
             #
         ]
 
