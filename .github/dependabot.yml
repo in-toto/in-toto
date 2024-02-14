@@ -5,9 +5,7 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
-  allow:
-  - dependency-type: direct
-  - dependency-type: indirect
+
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
