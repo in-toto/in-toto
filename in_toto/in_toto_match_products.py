@@ -3,8 +3,7 @@
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
-"""CLI to check local artifacts.
-"""
+"""CLI to check local artifacts."""
 import argparse
 import logging
 import sys
