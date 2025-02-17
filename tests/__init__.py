@@ -1,6 +1,6 @@
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Test in-toto. """
+"""Test in-toto."""
 
 import logging
 import sys
