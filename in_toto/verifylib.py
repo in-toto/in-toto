@@ -396,7 +396,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout
-    for _, verify_key in keys_dict.items():
+    for verify_key in keys_dict.values():
         metadata.verify_signature(verify_key)
 
 
