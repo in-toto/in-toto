@@ -221,13 +221,13 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
     stderr_fd, stderr_name = tempfile.mkstemp()
     try:
         with (
-            io.open(  # pylint: disable=unspecified-encoding
+            open(  # pylint: disable=unspecified-encoding
                 stdout_name, "r"
             ) as stdout_reader,
             os.fdopen(  # pylint: disable=unspecified-encoding
                 stdout_fd, "w"
             ) as stdout_writer,
-            io.open(  # pylint: disable=unspecified-encoding
+            open(  # pylint: disable=unspecified-encoding
                 stderr_name, "r"
             ) as stderr_reader,
             os.fdopen(stderr_fd, "w") as stderr_writer,
