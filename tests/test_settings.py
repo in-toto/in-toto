@@ -25,7 +25,7 @@ import in_toto.settings
 
 class TestSettings(unittest.TestCase):
     def test_debug_not_true(self):
-        """in_toto.settings.DEBUG should not be commited with True."""
+        """in_toto.settings.DEBUG should not be committed with True."""
         self.assertFalse(in_toto.settings.DEBUG)
 
 

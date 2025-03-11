@@ -109,7 +109,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     @classmethod
     def setUpClass(cls):
         """
-        Create layout with dummy inpsection.
+        Create layout with dummy inspection.
         Create and change into temp test directory with dummy artifact."""
 
         # find where the scripts directory is located.
@@ -1625,7 +1625,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
         root_layout.create_signature(keys["alice_priv"])
 
         # Sublayout (first level)
-        # The first level sublayout wil be treated as a link from the
+        # The first level sublayout will be treated as a link from the
         # superlayout's perspective and loaded from the current working directory.
         # The link for the only step of this sublayout will be placed in a
         # namespaced subdir, that link itself is a sublayout (subsublayout).

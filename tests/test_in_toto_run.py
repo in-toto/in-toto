@@ -107,7 +107,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.test_artifact in list(link_metadata.signed.products.keys())
         )
 
-        # Test and assert exlcuded artifacts
+        # Test and assert excluded artifacts
         args2 = named_args + ["--exclude", "*test*"] + positional_args
         self.assert_cli_sys_exit(args2, 0)
         link_metadata = Metablock.load(self.test_link_rsa)
@@ -379,7 +379,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
         self.assertTrue(self.test_artifact in list(link.materials.keys()))
         self.assertTrue(self.test_artifact in list(link.products.keys()))
 
-        # Test and assert exlcuded artifacts
+        # Test and assert excluded artifacts
         args2 = named_args + ["--exclude", "*test*"] + positional_args
         self.assert_cli_sys_exit(args2, 0)
         link = Metadata.load(self.test_link_rsa).get_payload()

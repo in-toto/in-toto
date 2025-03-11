@@ -337,7 +337,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
         action="store_true",
         help=(
             "add signatures rather than replacing existing signatures. This option"
-            " is only availabe for layout metdata."
+            " is only available for layout metadata."
         ),
     )
 
