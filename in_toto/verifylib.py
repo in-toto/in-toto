@@ -489,9 +489,8 @@ def verify_link_signature_thresholds(layout, steps_metadata):
                     break
 
                 # ... or the signing key is a subkey of an authorized key
-                if (
-                    authorized_key
-                    and link_keyid in authorized_key.get("subkeys", {}).keys()
+                if authorized_key and link_keyid in authorized_key.get(
+                    "subkeys", {}
                 ):
                     verification_key = authorized_key
                     break
