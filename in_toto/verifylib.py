@@ -158,7 +158,7 @@ def load_links_for_layout(layout, link_dir_path):
                     metadata = Metadata.load(filepath)
                     links_per_step[keyid] = metadata
 
-                except IOError:
+                except OSError:
                     pass
 
         # This is only a preliminary threshold check, based on (authorized)

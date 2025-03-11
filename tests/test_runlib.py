@@ -333,7 +333,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         """If the platform is Windows, raises an error that asks the user if
         developer mode is activated."""
         if os.name == "nt":
-            raise IOError(
+            raise OSError(
                 "Developer mode is required to work with symlinks on "
                 "Windows. Is it enabled?"
             )
@@ -357,7 +357,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             # level as the link (target)
             try:
                 os.symlink(os.path.basename(pair[0]), pair[1])
-            except IOError:
+            except OSError:
                 TestRecordArtifactsAsDict._raise_win_dev_mode_error()
                 raise
 
@@ -403,7 +403,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         for link in links:
             try:
                 os.symlink("does/not/exist", link)
-            except IOError:
+            except OSError:
                 TestRecordArtifactsAsDict._raise_win_dev_mode_error()
                 raise
 
@@ -433,7 +433,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         try:
             # Link to subdir
             os.symlink("subdir", "subdir_link")
-        except IOError:
+        except OSError:
             TestRecordArtifactsAsDict._raise_win_dev_mode_error()
             raise
 
