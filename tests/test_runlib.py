@@ -547,7 +547,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
             ),
             (
-                ["\#esc*"],  # pylint: disable=W1401
+                ["\\#esc*"],
                 [
                     "foo",
                     "bar",
@@ -557,7 +557,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ],
             ),
             (
-                ["*esc\!"],  # pylint: disable=W1401
+                ["*esc\\!"],
                 [
                     "foo",
                     "bar",
