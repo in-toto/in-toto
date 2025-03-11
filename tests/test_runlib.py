@@ -190,15 +190,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
         in_toto.settings.ARTIFACT_BASE_PATH = base_path
         artifacts_dict = record_artifacts_as_dict(["."])
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
         artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_base_path_is_parent_dir(self):
         """Test path of recorded artifacts and cd back with parent as base."""
@@ -210,15 +206,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
         in_toto.settings.ARTIFACT_BASE_PATH = base_path
         artifacts_dict = record_artifacts_as_dict(["."])
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
         artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
         os.chdir(self.test_dir)
 
@@ -237,9 +229,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["."], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_substring_prefix_directory(self):
         lstrip_paths = ["subdir/subsubdir/", "subdir/"]
@@ -271,9 +261,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["."], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_valid_prefix_file(self):
         lstrip_paths = ["subdir/subsubdir/"]
@@ -281,9 +269,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["./subdir/subsubdir/foosubsub"], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_non_unique_key_file(self):
         os.mkdir("subdir/subsubdir_new")
@@ -315,7 +301,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ["./ಠ/"], lstrip_paths=lstrip_paths
             )
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())), expected_artifacts
+                sorted(artifacts_dict.keys()), expected_artifacts
             )
             os.remove(path)
             os.rmdir("ಠ")
@@ -339,7 +325,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             _check_hash_dict(val)
 
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list),
         )
 
@@ -385,7 +371,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
             # Test that everything was recorded ...
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())),
+                sorted(artifacts_dict.keys()),
                 sorted(
                     self.full_file_path_list + [pair[1] for pair in link_pairs]
                 ),
@@ -431,7 +417,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
             # Test only the files were recorded ...
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())),
+                sorted(artifacts_dict.keys()),
                 sorted(self.full_file_path_list),
             )
 
@@ -464,7 +450,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         )
         # Test that all files were recorded including files in linked subdir ...
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list + [pair[1] for pair in link_pairs]),
         )
 
@@ -477,7 +463,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         # Record with follow_symlink_dirs FALSE (default)
         artifacts_dict = record_artifacts_as_dict(["."])
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list),
         )
 
@@ -491,7 +477,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             _check_hash_dict(val)
 
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(
                 [
                     "foo",
@@ -605,8 +591,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             )
 
             self.assertTrue(
-                sorted(list(artifacts1))
-                == sorted(list(artifacts2))
+                sorted(artifacts1)
+                == sorted(artifacts2)
                 == sorted(expected_results)
             )
 
