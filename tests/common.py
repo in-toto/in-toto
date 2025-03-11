@@ -33,7 +33,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 from securesystemslib.signer import CryptoSigner

@@ -20,7 +20,7 @@
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import securesystemslib._gpg.exceptions as gpg_exceptions
 import securesystemslib._gpg.functions as gpg
