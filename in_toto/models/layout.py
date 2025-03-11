@@ -226,9 +226,7 @@ class Layout(Signable):
         """
         _check_str(step_name)
 
-        for step in self.steps:
-            if step.name == step_name:
-                self.steps.remove(step)
+        self.steps[:] = [x for x in self.steps if x.name != step_name]
 
     def get_inspection_name_list(self):
         """Returns ordered list of inspection names as they appear in the layout.
@@ -281,9 +279,7 @@ class Layout(Signable):
         """
         _check_str(inspection_name)
 
-        for inspection in self.inspect:
-            if inspection.name == inspection_name:
-                self.inspect.remove(inspection)
+        self.inspect[:] = [x for x in self.inspect if x.name != inspection_name]
 
     def get_functionary_key_id_list(self):
         """Returns list of functionary keyids from the layout.
