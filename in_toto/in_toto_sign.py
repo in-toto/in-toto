@@ -127,7 +127,7 @@ def _sign_and_dump_metadata(metadata, args):
             out_path = args.file
 
         else:  # pragma: no cover
-            raise ValueError("invalid type {_type}")  # unreachable
+            raise ValueError(f"invalid type {_type}")  # unreachable
 
         LOG.info("Dumping %s to '%s'...", _type, out_path)
 
