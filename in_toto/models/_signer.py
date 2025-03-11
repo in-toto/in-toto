@@ -52,7 +52,7 @@ def load_crypto_signer_from_pkcs8_file(
     return signer
 
 
-def load_public_key_from_file(path: str) -> Dict[str, Any]:
+def load_public_key_from_file(path: str) -> dict[str, Any]:
     """Internal helper to load key from SubjectPublicKeyInfo/PEM file."""
     with open(path, "rb") as f:
         data = f.read()
@@ -90,7 +90,7 @@ class GPGSignature(Signature):
         self.other_headers = other_headers
 
     @classmethod
-    def from_dict(cls, signature_dict: Dict) -> "GPGSignature":
+    def from_dict(cls, signature_dict: dict) -> "GPGSignature":
         """Creates a ``GPGSignature`` object from its JSON/dict
         representation.
 
@@ -110,7 +110,7 @@ class GPGSignature(Signature):
             signature_dict["other_headers"],
         )
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Returns the JSON-serializable dictionary representation of self."""
         return {
             "keyid": self.keyid,
@@ -203,15 +203,15 @@ class GPGKey(Key):
 
     type: str
     method: str
-    hashes: List[str]
-    keyval: Dict[str, str]
+    hashes: list[str]
+    keyval: dict[str, str]
     keyid: str
     creation_time: Optional[int] = None
     validity_period: Optional[int] = None
-    subkeys: Optional[Dict[str, "GPGKey"]] = None
+    subkeys: Optional[dict[str, "GPGKey"]] = None
 
     @classmethod
-    def from_dict(cls, keyid: str, key_dict: Dict[str, Any]):
+    def from_dict(cls, keyid: str, key_dict: dict[str, Any]):
         """Creates ``GPGKey`` object from its json/dict representation.
         Raises:
           KeyError, TypeError: Invalid arguments.
@@ -237,7 +237,7 @@ class GPGKey(Key):
         )
 
     @classmethod
-    def from_legacy_dict(cls, key_dict: Dict[str, Any]):
+    def from_legacy_dict(cls, key_dict: dict[str, Any]):
         """Create GPGKey from legacy dictionary representation."""
 
         keyid = key_dict["keyid"]
