@@ -83,9 +83,9 @@ def _raise_on_bad_retval(return_value, command=None):
 
     msg = "Got non-{what} " + "return value '{}'".format(return_value)
     if command:
-        msg = "{0} from command '{1}'.".format(msg, command)
+        msg = "{} from command '{}'.".format(msg, command)
     else:
-        msg = "{0}.".format(msg)
+        msg = "{}.".format(msg)
 
     if not isinstance(return_value, int):
         raise BadReturnValueError(msg.format(what="int"))
@@ -166,8 +166,8 @@ def load_links_for_layout(layout, link_dir_path):
         # check is indispensable.
         if len(links_per_step) < step.threshold:
             raise in_toto.exceptions.LinkNotFoundError(
-                "Step '{0}' requires '{1}'"
-                " link metadata file(s), found '{2}'.".format(
+                "Step '{}' requires '{}'"
+                " link metadata file(s), found '{}'.".format(
                     step.name, step.threshold, len(links_per_step)
                 )
             )
@@ -1004,7 +1004,7 @@ def _get_artifact_rule_traceback():
     error message for RuleVerificationError.
 
     """
-    traceback_str = "Full trace for 'expected_{0}' of item '{1}':\n".format(
+    traceback_str = "Full trace for 'expected_{}' of item '{}':\n".format(
         RULE_TRACE["source_type"], RULE_TRACE["source_name"]
     )
 
@@ -1018,7 +1018,7 @@ def _get_artifact_rule_traceback():
         )
 
     for trace_entry in RULE_TRACE["trace"]:
-        traceback_str += "Queue after '{0}':\n".format(
+        traceback_str += "Queue after '{}':\n".format(
             " ".join(trace_entry["rule"])
         )
         traceback_str += "{}\n".format(trace_entry["queue"])
@@ -1265,7 +1265,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Should we remove the check?
         if len(key_link_dict) < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{0}' not performed"
+                "Step '{}' not performed"
                 " by enough functionaries!".format(step.name)
             )
 
@@ -1282,7 +1282,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
                 or reference_link.products != link.products
             ):
                 raise ThresholdVerificationError(
-                    "Links '{0}' and '{1}' have different"
+                    "Links '{}' and '{}' have different"
                     " artifacts!".format(
                         in_toto.models.link.FILENAME_FORMAT.format(
                             step_name=step.name, keyid=reference_keyid

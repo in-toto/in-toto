@@ -96,9 +96,9 @@ def unpack_rule(rule):
     if rule_len < 2 or rule_lower[0] not in ALL_RULES:
         raise securesystemslib.exceptions.FormatError(
             "Wrong rule format,"
-            " rules must start with one of '{0}' and specify a 'pattern' as"
+            " rules must start with one of '{}' and specify a 'pattern' as"
             " second element.\n"
-            "Got: \n\t'{1}'".format(", ".join(ALL_RULES), rule)
+            "Got: \n\t'{}'".format(", ".join(ALL_RULES), rule)
         )
 
     rule_type = rule_lower[0]
@@ -266,8 +266,8 @@ def pack_rule(
 
     if rule_type.lower() not in ALL_RULES:
         raise securesystemslib.exceptions.FormatError(
-            "'{0}' is not a valid "
-            "'type'.  Rule type must be one of:  {1} (case insensitive).".format(
+            "'{}' is not a valid "
+            "'type'.  Rule type must be one of:  {} (case insensitive).".format(
                 rule_type, ", ".join(ALL_RULES)
             )
         )
