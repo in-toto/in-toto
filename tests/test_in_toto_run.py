@@ -445,7 +445,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
         self.assertTrue(os.path.exists(self.test_link_rsa))
 
     def test_pkcs8_signing_key(self):
-        """Test in-totqo-run, sign link with pkcs8 key file for each algo."""
+        """Test in-toto-run, sign link with pkcs8 key file for each algo."""
         args = ["-n", "foo", "-x", "--use-dsse", "--signing-key"]
         for algo, short_keyid in [
             ("rsa", "2f685fa7"),

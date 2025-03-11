@@ -1,4 +1,4 @@
-# Ignore inital black and isort commits
+# Ignore initial black and isort commits
 #
 # configure globally, e.g. with:
 #    git config blame.ignoreRevsFile .git-blame-ignore-revs

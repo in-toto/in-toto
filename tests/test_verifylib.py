@@ -186,7 +186,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         run_all_inspections(self.layout, False)
         self.assertFalse(os.path.exists("touch-bar.link"))
 
-    def test_inspeciton_persistence_true(self):
+    def test_inspection_persistence_true(self):
         run_all_inspections(self.layout, True)
         self.assertTrue(os.path.exists("touch-bar.link"))
 

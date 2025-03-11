@@ -166,7 +166,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         in_toto.settings.ARTIFACT_BASE_PATH = cls.artifact_base_path_orig
 
     def tearDown(self):
-        """Clear the ARTIFACT_EXLCUDES after every test."""
+        """Clear the ARTIFACT_EXCLUDES after every test."""
         in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
