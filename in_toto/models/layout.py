@@ -139,15 +139,14 @@ class Layout(Signable):
           The created Layout object.
 
         """
-        steps = []
 
-        for step_data in data.get("steps"):
-            steps.append(Step.read(step_data))
+        steps = [Step.read(step_data) for step_data in data.get("steps")]
         data["steps"] = steps
 
-        inspections = []
-        for inspect_data in data.get("inspect"):
-            inspections.append(Inspection.read(inspect_data))
+        inspections = [
+            Inspection.read(inspect_data)
+            for inspect_data in data.get("inspect")
+        ]
         data["inspect"] = inspections
 
         return Layout(**data)
@@ -182,9 +181,7 @@ class Layout(Signable):
           A list of step names.
 
         """
-        step_names = []
-        for step in self.steps:
-            step_names.append(step.name)
+        step_names = [step.name for step in self.steps]
 
         return step_names
 
@@ -235,9 +232,7 @@ class Layout(Signable):
           A list of inspection names.
 
         """
-        inspection_names = []
-        for inspection in self.inspect:
-            inspection_names.append(inspection.name)
+        inspection_names = [inspection.name for inspection in self.inspect]
 
         return inspection_names
 

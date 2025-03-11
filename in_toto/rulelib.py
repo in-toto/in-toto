@@ -89,9 +89,7 @@ def unpack_rule(rule):
     # Create all lower rule copy to case insensitively parse out tokens whose
     # position we don't know yet
     # We keep the original rule to retain the non-token elements' case
-    rule_lower = []
-    for rule_elem in rule:
-        rule_lower.append(rule_elem.lower())
+    rule_lower = [rule_elem.lower() for rule_elem in rule]
 
     rule_len = len(rule)
 

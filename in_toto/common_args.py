@@ -221,9 +221,7 @@ def sort_action_groups(parser, title_order=None):
     ) in parser._action_groups:  # pylint: disable=protected-access
         action_group_dict[action_group.title] = action_group
 
-    ordered_action_groups = []
-    for title in title_order:
-        ordered_action_groups.append(action_group_dict[title])
+    ordered_action_groups = [action_group_dict[title] for title in title_order]
 
     parser._action_groups = (  # pylint: disable=protected-access
         ordered_action_groups

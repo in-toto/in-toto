@@ -314,9 +314,9 @@ def substitute_parameters(layout, parameter_dictionary):
     for step in layout.steps:
         new_material_rules = []
         for rule in step.expected_materials:
-            new_rule = []
-            for stanza in rule:
-                new_rule.append(stanza.format(**parameter_dictionary))
+            new_rule = [
+                stanza.format(**parameter_dictionary) for stanza in rule
+            ]
             new_material_rules.append(new_rule)
 
         new_product_rules = []
@@ -326,9 +326,10 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_expected_command = []
-        for argv in step.expected_command:
-            new_expected_command.append(argv.format(**parameter_dictionary))
+        new_expected_command = [
+            argv.format(**parameter_dictionary)
+            for argv in step.expected_command
+        ]
 
         step.expected_command = new_expected_command
         step.expected_materials = new_material_rules
@@ -349,9 +350,9 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_run = []
-        for argv in inspection.run:
-            new_run.append(argv.format(**parameter_dictionary))
+        new_run = [
+            argv.format(**parameter_dictionary) for argv in inspection.run
+        ]
 
         inspection.run = new_run
         inspection.expected_materials = new_material_rules
@@ -704,17 +705,16 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     # prefix before filtering with rule pattern (see filter part 2) to prevent
     # globbing in the prefix.
     if rule_data["source_prefix"]:
-        filtered_source_paths = []
         # Add trailing slash to source prefix if it does not exist
         normalized_source_prefix = os.path.join(
             rule_data["source_prefix"], ""
         ).replace("\\", "/")
 
-        for artifact_path in artifacts_queue:
-            if artifact_path.startswith(normalized_source_prefix):
-                filtered_source_paths.append(
-                    artifact_path[len(normalized_source_prefix) :]
-                )
+        filtered_source_paths = [
+            artifact_path[len(normalized_source_prefix) :]
+            for artifact_path in artifacts_queue
+            if artifact_path.startswith(normalized_source_prefix)
+        ]
 
     else:
         filtered_source_paths = artifacts_queue
