@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
