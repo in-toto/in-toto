@@ -106,7 +106,7 @@ class Link(Signable):
 
     @property
     def type_(self):
-        """The string "link" to indentify the in-toto metadata type."""
+        """The string "link" to identify the in-toto metadata type."""
         # NOTE: We expose the type_ property in the API documentation instead of
         # _type to protect it against modification.
         # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict

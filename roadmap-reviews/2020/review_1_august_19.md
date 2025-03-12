@@ -23,7 +23,7 @@ and usefulness. Thanks to everybody in the community for the feedback on this!
 
 ### Relevant documents:
 * [sphinx boilerplate](https://github.com/in-toto/in-toto/pull/298)
-* [in-toto metdata compiler and examples](https://github.com/in-toto/docs/pull/5)
+* [in-toto metadata compiler and examples](https://github.com/in-toto/docs/pull/5)
 * [better documentation overview](https://github.com/in-toto/docs/blob/master/README.md)
 
 

@@ -1100,7 +1100,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     # Depending on the source type we create the artifact queue from the item's
     # materials or products and use it to keep track of (not) consumed artifacts.
-    # The queue also only contains aritfact keys (without hashes)
+    # The queue also only contains artifact keys (without hashes)
     artifacts = getattr(links[source_name], source_type)
     artifacts_queue = set(artifacts.keys())
 

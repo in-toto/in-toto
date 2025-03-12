@@ -118,7 +118,7 @@ class Layout(Signable):
 
     @property
     def type_(self):
-        """The string "layout" to indentify the in-toto metadata type."""
+        """The string "layout" to identify the in-toto metadata type."""
         # NOTE: We expose the type_ property in the API documentation instead of
         # _type to protect it against modification.
         # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict
@@ -155,7 +155,7 @@ class Layout(Signable):
     def set_relative_expiration(self, days=0, months=0, years=0):
         """Sets layout expiration relative to today.
 
-        If not argument is passed the set exipration date is now.
+        If not argument is passed the set expiration date is now.
 
         Arguments:
           days (optional): Days from today.
@@ -340,7 +340,7 @@ class Layout(Signable):
 
         Raises:
           securesystemslib.exceptions.FormatError: Arguments are malformed.
-          securesystemslib._gpg.execeptions.KeyNotFoundError: Key cannot be found.
+          securesystemslib._gpg.exceptions.KeyNotFoundError: Key cannot be found.
 
         Side Effects:
           Calls system gpg command in a subprocess.
@@ -392,7 +392,7 @@ class Layout(Signable):
 
         Raises:
           securesystemslib.exceptions.FormatError: Arguments are malformed.
-          securesystemslib._gpg.execeptions.KeyNotFoundError: A key cannot be found.
+          securesystemslib._gpg.exceptions.KeyNotFoundError: A key cannot be found.
 
         Side Effects:
           Calls system gpg command in a subprocess.

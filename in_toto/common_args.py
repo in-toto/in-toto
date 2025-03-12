@@ -162,7 +162,7 @@ METADATA_DIRECTORY_KWARGS = {
     "metavar": "<directory>",
     "help": (
         "path to a directory to dump metadata. If '--metadata-directory'"
-        " is not passed, the current working direcotry is used."
+        " is not passed, the current working directory is used."
     ),
 }
 

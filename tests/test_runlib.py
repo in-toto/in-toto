@@ -166,7 +166,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         in_toto.settings.ARTIFACT_BASE_PATH = cls.artifact_base_path_orig
 
     def tearDown(self):
-        """Clear the ARTIFACT_EXLCUDES after every test."""
+        """Clear the ARTIFACT_EXCLUDES after every test."""
         in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
@@ -710,7 +710,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     """ "
     Tests runlib.in_toto_run() with different arguments
 
-    Calls in_toto_run library funtion inside of a temporary directory that
+    Calls in_toto_run library function inside of a temporary directory that
     contains a test artifact and a test keypair
 
     If the function does not fail it will dump a test step link metadata file
@@ -1033,7 +1033,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
         cls.tear_down_test_dir()
 
     def test_UNFINISHED_FILENAME_FORMAT(self):
-        """Test if the unfinished filname format."""
+        """Test if the unfinished filename format."""
         self.assertTrue(
             self.link_name_unfinished
             == ".{}.{:.8}.link-unfinished".format(
