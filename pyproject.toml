@@ -126,7 +126,7 @@ ignore = [
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "N"]
 "doc/**" = ["A"]
 
 [tool.ruff.lint.flake8-comprehensions]
