@@ -31,7 +31,7 @@ import glob
 import io
 import logging
 import os
-import subprocess  # nosec
+import subprocess
 import sys
 import tempfile
 import time
@@ -253,7 +253,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 streams["err"] += stderr_part
 
             # Start child process, writing its standard streams to temporary files
-            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
+            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # noqa: S603
                 cmd,
                 stdout=stdout_writer,
                 stderr=stderr_writer,
@@ -332,9 +332,9 @@ def execute_link(link_cmd_args, record_streams, timeout):
         )
 
     else:
-        process = subprocess.run(
+        process = subprocess.run(  # noqa: S603
             link_cmd_args,
-            check=False,  # nosec
+            check=False,
             timeout=timeout,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

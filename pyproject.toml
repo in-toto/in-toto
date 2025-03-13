@@ -75,11 +75,6 @@ include = [
 [tool.black]
 line-length=80
 
-[tool.isort]
-profile="black"
-line_length=80
-known_first_party = ["in_toto"]
-
 # Minimal pylint configuration file for Secure Systems Lab Python Style Guide:
 #     https://github.com/secure-systems-lab/code-style-guidelines
 #
@@ -132,8 +127,10 @@ check-quote-consistency="yes"
 
 [tool.ruff.lint]
 extend-select = [
+    "S",
     "I",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/**" = ["S101"]

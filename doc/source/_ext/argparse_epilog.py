@@ -59,11 +59,13 @@ class ArgparseUsageEpilog(Directive):
 
         # Parse and mark-up epilog
         epilog_lines = parser.epilog.split("\n")
-        assert epilog_lines, "moot '.. argparse-epilog::' with empty 'epilog'"
+        assert (  # noqa: S101
+            epilog_lines
+        ), "moot '.. argparse-epilog::' with empty 'epilog'"
 
         # The first line is expected to be the title
         title = epilog_lines.pop(0)
-        assert title == "EXAMPLE USAGE", "missing 'epilog' title"
+        assert title == "EXAMPLE USAGE", "missing 'epilog' title"  # noqa: S101
         title_node = nodes.title(text=title.title())
 
         # Copy remaining lines (body) as they are and ...
