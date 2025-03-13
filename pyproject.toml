@@ -129,3 +129,8 @@ notes="TODO"
 
 [tool.pylint.STRING]
 check-quote-consistency="yes"
+
+[tool.ruff.lint]
+extend-select = [
+    "I",
+]

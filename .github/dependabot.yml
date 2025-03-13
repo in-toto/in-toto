@@ -17,8 +17,8 @@ updates:
         - "bandit"
         - "black"
         - "coverage"
-        - "isort"
         - "pylint"
+        - "ruff"
     dependencies:
       # Python (developer) runtime dependencies. Also any new dependencies not
       # caught by earlier groups
