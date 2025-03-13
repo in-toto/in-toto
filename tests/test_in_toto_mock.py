@@ -20,6 +20,7 @@
   Test in_toto_mock command line tool.
 
 """
+
 import logging
 import os
 import unittest

@@ -69,6 +69,7 @@
   ```
 
 """
+
 import logging
 import sys
 
@@ -100,9 +101,7 @@ class InTotoLogger(_LOGGER_CLASS):
         return super().error(msg, *args, exc_info=show_stacktrace)
 
     # Allow non snake_case function name for consistency with logging library
-    def setLevelVerboseOrQuiet(
-        self, verbose, quiet
-    ):  # pylint: disable=invalid-name
+    def setLevelVerboseOrQuiet(self, verbose, quiet):  # pylint: disable=invalid-name
         """Convenience method to set the logger's verbosity level based on the
         passed booleans verbose and quiet (useful for cli tools)."""
         if verbose:

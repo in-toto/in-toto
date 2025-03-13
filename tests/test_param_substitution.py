@@ -22,6 +22,7 @@
   layer is to be removed.
 
 """
+
 import unittest
 
 from securesystemslib.exceptions import FormatError

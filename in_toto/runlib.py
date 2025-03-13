@@ -27,6 +27,7 @@
     - Return Metadata containing a Link object which can be can be signed
       and stored to disk
 """
+
 import glob
 import io
 import logging

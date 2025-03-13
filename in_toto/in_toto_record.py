@@ -26,6 +26,7 @@
   0 if no exception occurred
 
 """
+
 import argparse
 import logging
 import sys
@@ -103,9 +104,7 @@ file to the target directory (on stop).
   {prog} start -n edit-files --signing-key path/to/key_file -m .
   {prog} stop -d path/to/target/dir -n edit-files --signing-key path/to/key_file -p .
 
-""".format(
-        prog=parser.prog
-    )
+""".format(prog=parser.prog)
 
     # The subparsers inherit the arguments from the parent parser
     parent_parser = argparse.ArgumentParser(add_help=False)

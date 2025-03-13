@@ -131,9 +131,7 @@ e.g. 'document.pdf'.
          --lstrip-paths /tmp/my/review/docs/ -x
 
 
-""".format(
-        prog=parser.prog
-    )
+""".format(prog=parser.prog)
 
     named_args = parser.add_argument_group("required named arguments")
 

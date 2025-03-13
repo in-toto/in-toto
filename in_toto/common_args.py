@@ -28,6 +28,7 @@
   ```
 
 """
+
 import sys
 
 from in_toto.settings import LINK_CMD_EXEC_TIMEOUT
@@ -197,9 +198,7 @@ def title_case_action_groups(parser):
     which title-cases default action groups only.
 
     """
-    for (
-        action_group
-    ) in parser._action_groups:  # pylint: disable=protected-access
+    for action_group in parser._action_groups:  # pylint: disable=protected-access
         action_group.title = action_group.title.title()
 
 
@@ -216,9 +215,7 @@ def sort_action_groups(parser, title_order=None):
         ]
 
     action_group_dict = {}
-    for (
-        action_group
-    ) in parser._action_groups:  # pylint: disable=protected-access
+    for action_group in parser._action_groups:  # pylint: disable=protected-access
         action_group_dict[action_group.title] = action_group
 
     ordered_action_groups = [action_group_dict[title] for title in title_order]
