@@ -435,7 +435,6 @@ class TestVerifyRule(unittest.TestCase):
             # A pattern is passed, which should be interpreted *literally*
             ["*", {"*"}, False],
             ["*", {"foo"}, True],
-            #
         ]
 
         for i, test_data in enumerate(test_cases):
