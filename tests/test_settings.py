@@ -18,6 +18,7 @@
   Test in_toto/settings.py
 
 """
+
 import unittest
 
 import in_toto.settings

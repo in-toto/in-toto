@@ -20,6 +20,7 @@
   syntax.
 
 """
+
 import securesystemslib.exceptions
 import securesystemslib.formats
 

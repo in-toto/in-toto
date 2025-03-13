@@ -25,6 +25,7 @@
   0 if no exception occurred
 
 """
+
 import argparse
 import logging
 import sys
@@ -75,9 +76,7 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
   # 'foo.<mykey keyid prefix>.link'.
   in-toto-sign -k mykey -f foo.link
 
-""".format(
-        prog=parser.prog
-    )
+""".format(prog=parser.prog)
 
     named_args = parser.add_argument_group("required named arguments")
 

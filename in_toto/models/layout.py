@@ -32,6 +32,7 @@
   Inspection:
       represents a hook that is run at verification
 """
+
 import json
 import shlex
 from datetime import datetime

@@ -26,6 +26,7 @@
      in_toto.settings.ARTIFACT_BASE_PATH = "/home/user/project"
      ```
 """
+
 # The debug setting is used to set to the in-toto base logger to logging.DEBUG
 DEBUG = False
 

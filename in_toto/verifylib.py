@@ -955,8 +955,7 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
 
     if filtered_artifacts:
         raise RuleVerificationError(
-            "'DISALLOW {}' matched the following "
-            "artifacts: {}\n{}".format(
+            "'DISALLOW {}' matched the following artifacts: {}\n{}".format(
                 rule_pattern, filtered_artifacts, _get_artifact_rule_traceback()
             )
         )
@@ -1265,8 +1264,9 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Should we remove the check?
         if len(key_link_dict) < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{}' not performed"
-                " by enough functionaries!".format(step.name)
+                "Step '{}' not performed by enough functionaries!".format(
+                    step.name
+                )
             )
 
         # Take a reference link (e.g. the first in the step_link_dict)
@@ -1282,8 +1282,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
                 or reference_link.products != link.products
             ):
                 raise ThresholdVerificationError(
-                    "Links '{}' and '{}' have different"
-                    " artifacts!".format(
+                    "Links '{}' and '{}' have different artifacts!".format(
                         in_toto.models.link.FILENAME_FORMAT.format(
                             step_name=step.name, keyid=reference_keyid
                         ),

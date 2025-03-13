@@ -18,6 +18,7 @@
   Test in_toto/log.py
 
 """
+
 import logging
 import unittest
 

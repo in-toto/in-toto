@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """CLI to check local artifacts."""
+
 import argparse
 import logging
 import sys

@@ -22,6 +22,7 @@
   or to verify its signatures.
 
 """
+
 import argparse
 import logging
 import sys
@@ -268,9 +269,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
   {prog} -f root.layout --verify \\
       --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
 
-""".format(
-        prog=parser.prog
-    )
+""".format(prog=parser.prog)
 
     named_args = parser.add_argument_group("required named arguments")
 

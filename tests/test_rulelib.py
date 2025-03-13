@@ -21,6 +21,7 @@
   Test artifact rule packing and unpacking.
 
 """
+
 import unittest
 
 import securesystemslib.exceptions

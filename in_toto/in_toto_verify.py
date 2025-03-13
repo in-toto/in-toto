@@ -25,6 +25,7 @@
   0 if no exception occurred (verification passed)
 
 """
+
 import argparse
 import logging
 import sys
@@ -117,9 +118,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
       --gpg-home ~/.gnupg
 
 
-""".format(
-        prog=parser.prog
-    )
+""".format(prog=parser.prog)
 
     named_args = parser.add_argument_group("required named arguments")
 

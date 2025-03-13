@@ -22,7 +22,6 @@
 """
 # pylint: disable=protected-access
 
-
 import unittest
 
 import securesystemslib.exceptions
