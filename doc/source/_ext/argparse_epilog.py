@@ -5,8 +5,6 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
 from docutils.statemachine import StringList
 
-from in_toto import in_toto_run
-
 
 class ArgparseUsageEpilog(Directive):
     """Sphinx directive to modify argparse epilog to render nicely.
