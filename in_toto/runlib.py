@@ -1042,15 +1042,14 @@ def in_toto_record_stop(
 
     if signer:
         LOG.info(
-            "Updating signature with signer '{:.8}...'...".format(
-                signer.public_key.keyid
-            )
+            "Updating signature with signer '%.8s...'...",
+            signer.public_key.keyid,
         )
 
     else:  # gpg_keyid or gpg_use_default
         # In both cases we use the keyid we got from verifying the preliminary
         # link signature above.
-        LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
+        LOG.info("Updating signature with gpg key '%.8s...'...", keyid)
         signer = GPGSigner(keyid=keyid, homedir=gpg_home)
 
     link_metadata.create_signature(signer)
