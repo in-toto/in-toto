@@ -135,9 +135,6 @@ extend-select = [
     "S",
     "I",
 ]
-ignore = [
-    "S101",
-]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
