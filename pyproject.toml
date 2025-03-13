@@ -102,6 +102,7 @@ extend-select = [
 ]
 ignore = [
     "B904",     # raise-without-from-inside-except
+    "PERF203",  # try-except-in-loop
     "PLR0912",  # too-many-branches
     "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
