@@ -132,7 +132,11 @@ check-quote-consistency="yes"
 
 [tool.ruff.lint]
 extend-select = [
+    "S",
     "I",
+]
+ignore = [
+    "S101",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
