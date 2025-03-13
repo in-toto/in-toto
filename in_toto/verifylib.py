@@ -83,9 +83,9 @@ def _raise_on_bad_retval(return_value, command=None):
 
     msg = "Got non-{what} " + "return value '{}'".format(return_value)
     if command:
-        msg = "{0} from command '{1}'.".format(msg, command)
+        msg = "{} from command '{}'.".format(msg, command)
     else:
-        msg = "{0}.".format(msg)
+        msg = "{}.".format(msg)
 
     if not isinstance(return_value, int):
         raise BadReturnValueError(msg.format(what="int"))
@@ -158,7 +158,7 @@ def load_links_for_layout(layout, link_dir_path):
                     metadata = Metadata.load(filepath)
                     links_per_step[keyid] = metadata
 
-                except IOError:
+                except OSError:
                     pass
 
         # This is only a preliminary threshold check, based on (authorized)
@@ -166,8 +166,8 @@ def load_links_for_layout(layout, link_dir_path):
         # check is indispensable.
         if len(links_per_step) < step.threshold:
             raise in_toto.exceptions.LinkNotFoundError(
-                "Step '{0}' requires '{1}'"
-                " link metadata file(s), found '{2}'.".format(
+                "Step '{}' requires '{}'"
+                " link metadata file(s), found '{}'.".format(
                     step.name, step.threshold, len(links_per_step)
                 )
             )
@@ -314,9 +314,9 @@ def substitute_parameters(layout, parameter_dictionary):
     for step in layout.steps:
         new_material_rules = []
         for rule in step.expected_materials:
-            new_rule = []
-            for stanza in rule:
-                new_rule.append(stanza.format(**parameter_dictionary))
+            new_rule = [
+                stanza.format(**parameter_dictionary) for stanza in rule
+            ]
             new_material_rules.append(new_rule)
 
         new_product_rules = []
@@ -326,9 +326,10 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_expected_command = []
-        for argv in step.expected_command:
-            new_expected_command.append(argv.format(**parameter_dictionary))
+        new_expected_command = [
+            argv.format(**parameter_dictionary)
+            for argv in step.expected_command
+        ]
 
         step.expected_command = new_expected_command
         step.expected_materials = new_material_rules
@@ -349,9 +350,9 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_run = []
-        for argv in inspection.run:
-            new_run.append(argv.format(**parameter_dictionary))
+        new_run = [
+            argv.format(**parameter_dictionary) for argv in inspection.run
+        ]
 
         inspection.run = new_run
         inspection.expected_materials = new_material_rules
@@ -396,7 +397,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout
-    for _, verify_key in keys_dict.items():
+    for verify_key in keys_dict.values():
         metadata.verify_signature(verify_key)
 
 
@@ -489,9 +490,8 @@ def verify_link_signature_thresholds(layout, steps_metadata):
                     break
 
                 # ... or the signing key is a subkey of an authorized key
-                if (
-                    authorized_key
-                    and link_keyid in authorized_key.get("subkeys", {}).keys()
+                if authorized_key and link_keyid in authorized_key.get(
+                    "subkeys", {}
                 ):
                     verification_key = authorized_key
                     break
@@ -705,17 +705,16 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     # prefix before filtering with rule pattern (see filter part 2) to prevent
     # globbing in the prefix.
     if rule_data["source_prefix"]:
-        filtered_source_paths = []
         # Add trailing slash to source prefix if it does not exist
         normalized_source_prefix = os.path.join(
             rule_data["source_prefix"], ""
         ).replace("\\", "/")
 
-        for artifact_path in artifacts_queue:
-            if artifact_path.startswith(normalized_source_prefix):
-                filtered_source_paths.append(
-                    artifact_path[len(normalized_source_prefix) :]
-                )
+        filtered_source_paths = [
+            artifact_path[len(normalized_source_prefix) :]
+            for artifact_path in artifacts_queue
+            if artifact_path.startswith(normalized_source_prefix)
+        ]
 
     else:
         filtered_source_paths = artifacts_queue
@@ -1005,7 +1004,7 @@ def _get_artifact_rule_traceback():
     error message for RuleVerificationError.
 
     """
-    traceback_str = "Full trace for 'expected_{0}' of item '{1}':\n".format(
+    traceback_str = "Full trace for 'expected_{}' of item '{}':\n".format(
         RULE_TRACE["source_type"], RULE_TRACE["source_name"]
     )
 
@@ -1019,7 +1018,7 @@ def _get_artifact_rule_traceback():
         )
 
     for trace_entry in RULE_TRACE["trace"]:
-        traceback_str += "Queue after '{0}':\n".format(
+        traceback_str += "Queue after '{}':\n".format(
             " ".join(trace_entry["rule"])
         )
         traceback_str += "{}\n".format(trace_entry["queue"])
@@ -1266,7 +1265,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Should we remove the check?
         if len(key_link_dict) < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{0}' not performed"
+                "Step '{}' not performed"
                 " by enough functionaries!".format(step.name)
             )
 
@@ -1283,7 +1282,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
                 or reference_link.products != link.products
             ):
                 raise ThresholdVerificationError(
-                    "Links '{0}' and '{1}' have different"
+                    "Links '{}' and '{}' have different"
                     " artifacts!".format(
                         in_toto.models.link.FILENAME_FORMAT.format(
                             step_name=step.name, keyid=reference_keyid

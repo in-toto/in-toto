@@ -156,7 +156,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         link = Metablock.load("touch-bar.link")
         self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
         self.assertListEqual(
-            sorted(list(link.signed.products.keys())), sorted(["foo", "bar"])
+            sorted(link.signed.products.keys()), sorted(["foo", "bar"])
         )
 
         in_toto.settings.ARTIFACT_BASE_PATH = None

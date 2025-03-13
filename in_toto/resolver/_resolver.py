@@ -4,7 +4,7 @@ artifacts."""
 import locale
 import logging
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from functools import cmp_to_key
 from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
@@ -21,7 +21,7 @@ _HASH_ALGORITHM = "sha256"
 RESOLVER_FOR_URI_SCHEME = {}
 
 
-class Resolver(metaclass=ABCMeta):
+class Resolver(ABC):
     """Resolver interface and factory."""
 
     @classmethod

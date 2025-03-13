@@ -89,18 +89,16 @@ def unpack_rule(rule):
     # Create all lower rule copy to case insensitively parse out tokens whose
     # position we don't know yet
     # We keep the original rule to retain the non-token elements' case
-    rule_lower = []
-    for rule_elem in rule:
-        rule_lower.append(rule_elem.lower())
+    rule_lower = [rule_elem.lower() for rule_elem in rule]
 
     rule_len = len(rule)
 
     if rule_len < 2 or rule_lower[0] not in ALL_RULES:
         raise securesystemslib.exceptions.FormatError(
             "Wrong rule format,"
-            " rules must start with one of '{0}' and specify a 'pattern' as"
+            " rules must start with one of '{}' and specify a 'pattern' as"
             " second element.\n"
-            "Got: \n\t'{1}'".format(", ".join(ALL_RULES), rule)
+            "Got: \n\t'{}'".format(", ".join(ALL_RULES), rule)
         )
 
     rule_type = rule_lower[0]
@@ -268,8 +266,8 @@ def pack_rule(
 
     if rule_type.lower() not in ALL_RULES:
         raise securesystemslib.exceptions.FormatError(
-            "'{0}' is not a valid "
-            "'type'.  Rule type must be one of:  {1} (case insensitive).".format(
+            "'{}' is not a valid "
+            "'type'.  Rule type must be one of:  {} (case insensitive).".format(
                 rule_type, ", ".join(ALL_RULES)
             )
         )
