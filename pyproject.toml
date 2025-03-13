@@ -134,3 +134,6 @@ check-quote-consistency="yes"
 extend-select = [
     "I",
 ]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
