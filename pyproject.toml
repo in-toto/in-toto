@@ -72,9 +72,6 @@ include = [
     "/requirements*.txt",
 ]
 
-[tool.black]
-line-length=80
-
 # Minimal pylint configuration file for Secure Systems Lab Python Style Guide:
 #     https://github.com/secure-systems-lab/code-style-guidelines
 #
@@ -124,6 +121,9 @@ notes="TODO"
 
 [tool.pylint.STRING]
 check-quote-consistency="yes"
+
+[tool.ruff]
+line-length = 80
 
 [tool.ruff.lint]
 extend-select = [
