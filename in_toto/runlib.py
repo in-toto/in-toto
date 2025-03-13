@@ -223,13 +223,13 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
     try:
         with (
             open(  # pylint: disable=unspecified-encoding
-                stdout_name, "r"
+                stdout_name
             ) as stdout_reader,
             os.fdopen(  # pylint: disable=unspecified-encoding
                 stdout_fd, "w"
             ) as stdout_writer,
             open(  # pylint: disable=unspecified-encoding
-                stderr_name, "r"
+                stderr_name
             ) as stderr_reader,
             os.fdopen(stderr_fd, "w") as stderr_writer,
         ):

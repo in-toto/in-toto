@@ -83,7 +83,7 @@ class Metadata:
           A Metadata containing a Link or Layout object.
 
         """
-        with open(path, "r", encoding="utf8") as fp:
+        with open(path, encoding="utf8") as fp:
             data = json.load(fp)
 
         return cls.from_dict(data)
