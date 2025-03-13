@@ -101,6 +101,7 @@ extend-select = [
     "RUF",
 ]
 ignore = [
+    "B904",     # raise-without-from-inside-except
     "PLR0912",  # too-many-branches
     "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
