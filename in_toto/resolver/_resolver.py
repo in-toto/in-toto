@@ -149,13 +149,13 @@ class FileResolver(Resolver):
 
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later (see _mangle)
-            path, prefix = self._strip_scheme_prefix(path)
+            path, prefix = self._strip_scheme_prefix(path)  # noqa: PLW2901
 
             # Normalize URI before filtering and returning them
             # FIXME: Is this expected behavior? Does this make exclude patterns
             # with slashes platform-dependent? Check how 'gitwildmatch' treats
             # dots and slashes!
-            path = normpath(path)
+            path = normpath(path)  # noqa: PLW2901
 
             if self._exclude(path):
                 continue
@@ -258,7 +258,7 @@ class OSTreeResolver(Resolver):
 
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later
-            path = self._strip_scheme_prefix(path)
+            path = self._strip_scheme_prefix(path)  # noqa: PLW2901
             hashes[self._add_scheme_prefix(path)] = self._hash(path)
 
         # Change back to original current working dir
@@ -357,7 +357,7 @@ class DirectoryResolver(Resolver):
         hashes = {}
 
         for path in uris:
-            path = self._strip_scheme_prefix(path)
+            path = self._strip_scheme_prefix(path)  # noqa: PLW2901
 
             if not os.path.isdir(path):
                 raise ValueError(f"path '{path}' is not a directory")
