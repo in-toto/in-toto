@@ -1497,7 +1497,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
     return summary_link
 
 
-def in_toto_verify(
+def in_toto_verify(  # noqa: PLR0913
     metadata,
     layout_key_dict,
     link_dir_path=".",
