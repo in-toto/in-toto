@@ -404,7 +404,7 @@ def _require_signing_arg(signer, gpg_keyid, gpg_use_default):
         )
 
 
-def in_toto_run(  # noqa: PLR0912, PLR0913
+def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0915
     name,
     material_list,
     product_list,
@@ -522,7 +522,7 @@ def in_toto_run(  # noqa: PLR0912, PLR0913
     A Metadata object that contains the resulting link object.
 
   """
-    # pylint: disable=too-many-locals, too-many-statements
+    # pylint: disable=too-many-locals
 
     LOG.info("Running '%s'...", name)
 
@@ -791,7 +791,7 @@ def in_toto_record_start(  # noqa: PLR0913
     link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(  # noqa: PLR0912, PLR0913
+def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0915
     step_name,
     product_list,
     gpg_keyid=None,
@@ -905,7 +905,7 @@ def in_toto_record_stop(  # noqa: PLR0912, PLR0913
     Removes preliminary link metadata file from disk.
 
   """
-    # pylint: disable=too-many-locals, too-many-statements
+    # pylint: disable=too-many-locals
     LOG.info("Stop recording '%s'...", step_name)
 
     # Check that we have something to sign and if the formats are right
