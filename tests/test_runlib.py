@@ -114,10 +114,8 @@ class TestApplyExcludePatterns(unittest.TestCase):
         self.assertListEqual(result, expected)
 
 
-class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
+class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):  # noqa: PLR0904, RUF100
     """Test record_artifacts_as_dict(artifacts)."""
-
-    # pylint: disable=too-many-public-methods
 
     @classmethod
     def setUpClass(cls):
