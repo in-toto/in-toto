@@ -1270,7 +1270,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
             )
 
         # Take a reference link (e.g. the first in the step_link_dict)
-        reference_keyid = list(key_link_dict.keys())[0]
+        reference_keyid = next(iter(key_link_dict.keys()))
         reference_link = key_link_dict[reference_keyid]
 
         # Iterate over all links to compare their properties with a reference_link
@@ -1334,7 +1334,7 @@ def reduce_chain_links(chain_link_dict):
         # Extract the key_link_dict for this step from the passed chain_link_dict
         # take one exemplary link (e.g. the first in the step_link_dict)
         # form the reduced_chain_link_dict to return
-        reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
+        reduced_chain_link_dict[step_name] = next(iter(key_link_dict.values()))
 
     return reduced_chain_link_dict
 

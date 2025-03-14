@@ -15,7 +15,6 @@ updates:
       # Python dependencies that are only pinned to ensure test reproducibility
       patterns:
         - "coverage"
-        - "pylint"
         - "ruff"
     dependencies:
       # Python (developer) runtime dependencies. Also any new dependencies not

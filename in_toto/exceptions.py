@@ -39,5 +39,5 @@ class PrefixError(Error):
     """Indicates that there is an error because of the prefixes passed."""
 
 
-class InvalidMetadata(Error):
+class InvalidMetadata(Error):  # noqa: N818
     """Indicates that the metadata is not valid."""

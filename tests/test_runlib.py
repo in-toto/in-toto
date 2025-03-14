@@ -641,11 +641,11 @@ class TestSubprocess(unittest.TestCase):
         stderr_fd, stderr_fn = tempfile.mkstemp()
         with (
             open(  # pylint: disable=unspecified-encoding
-                stdout_fn, "r"
+                stdout_fn
             ) as fake_stdout_reader,
             os.fdopen(stdout_fd, "w") as fake_stdout_writer,
             open(  # pylint: disable=unspecified-encoding
-                stderr_fn, "r"
+                stderr_fn
             ) as fake_stderr_reader,
             os.fdopen(stderr_fd, "w") as fake_stderr_writer,
         ):
@@ -1157,7 +1157,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
             # pylint: disable-next=consider-using-with
-            open(self.link_name_unfinished, "r", encoding="utf8")
+            open(self.link_name_unfinished, encoding="utf8")
         self.assertTrue(os.path.isfile(self.link_name))
         os.remove(self.link_name)
 
@@ -1167,7 +1167,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
             in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
             # pylint: disable-next=consider-using-with
-            open(self.link_name, "r", encoding="utf8")
+            open(self.link_name, encoding="utf8")
 
     def test_wrong_signature_in_unfinished_metadata(self):
         """Test record stop exits on wrong signature, no link recorded."""
@@ -1183,7 +1183,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
             in_toto_record_stop(self.step_name, [], signer=self.signer2)
         with self.assertRaises(IOError):
             # pylint: disable-next=consider-using-with
-            open(self.link_name, "r", encoding="utf8")
+            open(self.link_name, encoding="utf8")
         os.rename(changed_link_name, link_name)
         os.remove(self.link_name_unfinished)
 
