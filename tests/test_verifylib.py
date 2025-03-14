@@ -972,7 +972,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump expired layout
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.today() + relativedelta(months=-1)
+            datetime.today() + relativedelta(months=-1)  # noqa: DTZ002
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.create_signature(alice)
         layout.dump(cls.layout_expired_path)
