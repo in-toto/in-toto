@@ -1155,8 +1155,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         in_toto_record_start(self.step_name, [], signer=self.signer)
         in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name_unfinished, encoding="utf8")
+            open(self.link_name_unfinished, encoding="utf8")  # noqa: SIM115
         self.assertTrue(os.path.isfile(self.link_name))
         os.remove(self.link_name)
 
@@ -1165,8 +1164,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         with self.assertRaises(IOError):
             in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name, encoding="utf8")
+            open(self.link_name, encoding="utf8")  # noqa: SIM115
 
     def test_wrong_signature_in_unfinished_metadata(self):
         """Test record stop exits on wrong signature, no link recorded."""
@@ -1181,8 +1179,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         with self.assertRaises(SignatureVerificationError):
             in_toto_record_stop(self.step_name, [], signer=self.signer2)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name, encoding="utf8")
+            open(self.link_name, encoding="utf8")  # noqa: SIM115
         os.rename(changed_link_name, link_name)
         os.remove(self.link_name_unfinished)
 

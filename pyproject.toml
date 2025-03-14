@@ -89,6 +89,7 @@ extend-select = [
     "PYI",
     "Q",
     "SLF",
+    "SIM",
     "SLOT",
     "FLY",
     "I",
