@@ -67,7 +67,7 @@ from in_toto.resolver import (
 LOG = logging.getLogger(__name__)
 
 
-def record_artifacts_as_dict(  # noqa: PLR0913
+def record_artifacts_as_dict(  # noqa: PLR0913, PLR0917, RUF100
     artifacts,
     exclude_patterns=None,
     base_path=None,
@@ -404,7 +404,7 @@ def _require_signing_arg(signer, gpg_keyid, gpg_use_default):
         )
 
 
-def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0915
+def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917, RUF100
     name,
     material_list,
     product_list,
@@ -622,7 +622,7 @@ def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0915
     return link_metadata
 
 
-def in_toto_record_start(  # noqa: PLR0913
+def in_toto_record_start(  # noqa: PLR0913, PLR0917, RUF100
     step_name,
     material_list,
     gpg_keyid=None,
@@ -791,7 +791,7 @@ def in_toto_record_start(  # noqa: PLR0913
     link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0915
+def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917, RUF100
     step_name,
     product_list,
     gpg_keyid=None,
