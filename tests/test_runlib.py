@@ -21,6 +21,7 @@
 
 """
 
+import contextlib
 import os
 import shutil
 import stat
@@ -721,14 +722,12 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     def tearDown(self):
         """Remove link file if it was created."""
-        try:
+        with contextlib.suppress(OSError):
             os.remove(
                 FILENAME_FORMAT.format(
                     step_name=self.step_name, keyid=self.key["keyid"]
                 )
             )
-        except OSError:
-            pass
 
     def test_in_toto_run_verify_signature(self):
         """Successfully run, verify signed metadata."""

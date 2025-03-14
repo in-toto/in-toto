@@ -21,6 +21,7 @@
 
 """
 
+import contextlib
 import logging
 import os
 import unittest
@@ -63,10 +64,8 @@ class TestInTotoMockTool(CliTestCase, TmpDirMixin):
         logger.setLevel(cls._base_log_level)
 
     def tearDown(self):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(self.test_link)
-        except OSError:
-            pass
 
     def test_main_required_args(self):
         """Test CLI command with required arguments."""
