@@ -105,7 +105,6 @@ extend-select = [
 ignore = [
     "B904",     # raise-without-from-inside-except
     "PERF203",  # try-except-in-loop
-    "PLR0917",  # too-many-positional-arguments
     "PLR2004",  # magic-value-comparison
     "UP032",    # f-string
     "UP038",    # https://github.com/astral-sh/ruff/issues/7871
