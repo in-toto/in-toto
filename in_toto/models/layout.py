@@ -418,7 +418,7 @@ class Layout(Signable):
             parse(self.expires)
             _check_iso8601(self.expires)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise securesystemslib.exceptions.FormatError(
                 "Malformed date string in layout. Exception: {}".format(e)
             )
