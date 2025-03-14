@@ -336,7 +336,7 @@ class Metablock(Metadata, ValidationMixin):
       The signature.
 
     """
-        signature = securesystemslib._gpg.functions.create_signature(  # pylint: disable=protected-access
+        signature = securesystemslib._gpg.functions.create_signature(  # noqa: SLF001
             self.signed.signable_bytes, gpg_keyid, gpg_home
         )
 
@@ -390,7 +390,7 @@ class Metablock(Metadata, ValidationMixin):
 
         valid = False
         if "signature" in signature and "other_headers" in signature:
-            valid = securesystemslib._gpg.functions.verify_signature(  # pylint: disable=protected-access
+            valid = securesystemslib._gpg.functions.verify_signature(  # noqa: SLF001
                 signature, verification_key, self.signed.signable_bytes
             )
 

@@ -18,7 +18,6 @@
   Test in_toto/common_args.py
 
 """
-# pylint: disable=protected-access
 
 import argparse
 import unittest
@@ -57,8 +56,6 @@ class TestCommonArgs(unittest.TestCase):
 
 class TestArgparseActionGroupHelpers(unittest.TestCase):
     """Test functions to hack cli output."""
-
-    # pylint: disable=protected-access
 
     def setUp(self):
         """Create an empty parser and perform some basic assertions prior to

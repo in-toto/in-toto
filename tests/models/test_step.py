@@ -20,7 +20,6 @@
   Test step class functions.
 
 """
-# pylint: disable=protected-access
 
 import unittest
 

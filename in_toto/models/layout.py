@@ -345,7 +345,7 @@ class Layout(Signable):
         if gpg_home:  # pragma: no branch
             _check_str(gpg_home)
 
-        key = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        key = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             gpg_keyid, homedir=gpg_home
         )
         return self.add_functionary_key(key)

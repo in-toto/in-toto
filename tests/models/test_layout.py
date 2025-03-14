@@ -20,7 +20,6 @@
   Test layout class functions.
 
 """
-# pylint: disable=protected-access
 
 import os
 import unittest
