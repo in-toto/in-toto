@@ -244,7 +244,7 @@ def main():
             inspect_timeout=args.inspect_timeout,
         )
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # noqa: BLE001
         LOG.error("(in-toto-verify) %s: %s", type(e).__name__, e)
         sys.exit(1)
 

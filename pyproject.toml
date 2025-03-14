@@ -78,6 +78,7 @@ line-length = 80
 [tool.ruff.lint]
 extend-select = [
     "S",
+    "BLE",
     "B",
     "A",
     "C4",
