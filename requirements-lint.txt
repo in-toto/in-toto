@@ -2,4 +2,4 @@
 -r requirements-pinned.txt
 
 # Test tools for linting and test coverage measurement
-ruff==0.9.10
+ruff==0.10.0
