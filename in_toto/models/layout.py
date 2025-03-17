@@ -171,7 +171,7 @@ class Layout(Signable):
         _check_int(years)
 
         self.expires = (
-            datetime.today()
+            datetime.today()  # noqa: DTZ002
             + relativedelta(days=days, months=months, years=years)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
 
