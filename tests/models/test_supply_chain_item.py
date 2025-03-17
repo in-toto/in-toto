@@ -21,7 +21,6 @@
   SupplyChainItem is a super class for Steps and Inspections.
 
 """
-# pylint: disable=protected-access
 
 import json
 import unittest

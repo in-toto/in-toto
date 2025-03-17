@@ -88,6 +88,7 @@ extend-select = [
     "PIE",
     "PYI",
     "Q",
+    "SLF",
     "SLOT",
     "FLY",
     "I",
@@ -129,7 +130,7 @@ ignore = [
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**" = ["S101", "N"]
+"tests/**" = ["S101", "N", "SLF001"]
 "doc/**" = ["A", "RUF012"]
 
 [tool.ruff.lint.flake8-comprehensions]

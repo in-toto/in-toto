@@ -975,7 +975,7 @@ def in_toto_record_stop(
 
     elif gpg_keyid:
         LOG.info("Verifying preliminary link signature using passed gpg key...")
-        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             gpg_keyid, gpg_home
         )
         keyid = gpg_pubkey["keyid"]
@@ -1001,7 +1001,7 @@ def in_toto_record_stop(
         else:
             keyid = link_metadata.signatures[0]["keyid"]
 
-        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             keyid, gpg_home
         )
         verification_key = gpg_pubkey

@@ -20,7 +20,6 @@
   Test link class functions.
 
 """
-# pylint: disable=protected-access
 
 import unittest
 
