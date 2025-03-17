@@ -64,9 +64,8 @@ class FileResolver(Resolver):
         if not lstrip_paths:
             lstrip_paths = []
 
-        if base_path is not None:
-            if not isinstance(base_path, str):
-                raise ValueError("'base_path' must be string")
+        if base_path is not None and not isinstance(base_path, str):
+            raise ValueError("'base_path' must be string")
 
         for name, val in [
             ("exclude_patterns", exclude_patterns),

@@ -76,12 +76,11 @@ class ArgparseUsageEpilog(Directive):
 
             # ... inject ReST markup for code snippets, if the current line is empty
             # and there is a next line, which starts with two spaces.
-            if line.strip() == "":
-                if epilog_lines_len > idx + 1:
-                    next_line = epilog_lines[idx + 1]
-                    if next_line.startswith("  "):
-                        epilog_lines_dest.append(".. code-block:: sh")
-                        epilog_lines_dest.append("")
+            if line.strip() == "" and epilog_lines_len > idx + 1:
+                next_line = epilog_lines[idx + 1]
+                if next_line.startswith("  "):
+                    epilog_lines_dest.append(".. code-block:: sh")
+                    epilog_lines_dest.append("")
 
         # Parse epilog body as ReST
         text_node = nodes.paragraph()
