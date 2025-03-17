@@ -51,7 +51,7 @@ class TestCommonArgs(unittest.TestCase):
 
         for idx, (params, expected) in enumerate(tests):
             result = parse_password_and_prompt_args(parser.parse_args(params))
-            self.assertTupleEqual(result, expected, "(row {})".format(idx))
+            self.assertTupleEqual(result, expected, f"(row {idx})")
 
 
 class TestArgparseActionGroupHelpers(unittest.TestCase):

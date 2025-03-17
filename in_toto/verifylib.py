@@ -81,11 +81,11 @@ def _raise_on_bad_retval(return_value, command=None):
       None.
     """
 
-    msg = "Got non-{what} " + "return value '{}'".format(return_value)
-    if command:
-        msg = "{} from command '{}'.".format(msg, command)
+    msg = "Got non-{what} " + f"return value '{return_value}'"
+    if command:  # noqa: SIM108
+        msg = f"{msg} from command '{command}'."
     else:
-        msg = "{}.".format(msg)
+        msg = f"{msg}."
 
     if not isinstance(return_value, int):
         raise BadReturnValueError(msg.format(what="int"))
@@ -166,10 +166,8 @@ def load_links_for_layout(layout, link_dir_path):
         # check is indispensable.
         if len(links_per_step) < step.threshold:
             raise in_toto.exceptions.LinkNotFoundError(
-                "Step '{}' requires '{}'"
-                " link metadata file(s), found '{}'.".format(
-                    step.name, step.threshold, len(links_per_step)
-                )
+                f"Step '{step.name}' requires '{step.threshold}'"
+                f" link metadata file(s), found '{len(links_per_step)}'."
             )
 
         steps_metadata[step.name] = links_per_step
@@ -547,11 +545,9 @@ def verify_link_signature_thresholds(layout, steps_metadata):  # noqa: PLR0912
         # Maybe we should add such a check to the layout validation? Or here?
         if valid_authorized_links_cnt < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{}' requires at least '{}' links"
+                f"Step '{step.name}' requires at least '{step.threshold}' links"
                 " validly signed by different authorized functionaries. Only"
-                " found '{}'".format(
-                    step.name, step.threshold, valid_authorized_links_cnt
-                )
+                f" found '{valid_authorized_links_cnt}'"
             )
 
         # Add all good links of this step to the dictionary of links of all steps
@@ -955,9 +951,7 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
 
     if filtered_artifacts:
         raise RuleVerificationError(
-            "'DISALLOW {}' matched the following artifacts: {}\n{}".format(
-                rule_pattern, filtered_artifacts, _get_artifact_rule_traceback()
-            )
+            f"'DISALLOW {rule_pattern}' matched the following artifacts: {filtered_artifacts}\n{_get_artifact_rule_traceback()}"
         )
 
 
@@ -989,12 +983,8 @@ def verify_require_rule(filename, artifacts_queue):
     """
     if filename not in artifacts_queue:
         raise RuleVerificationError(
-            "'REQUIRE {filename}' did not find {filename} "
-            "in: {queue}\n{traceback}".format(
-                filename=filename,
-                queue=artifacts_queue,
-                traceback=_get_artifact_rule_traceback(),
-            )
+            f"'REQUIRE {filename}' did not find {filename} "
+            f"in: {artifacts_queue}\n{_get_artifact_rule_traceback()}"
         )
 
 
@@ -1084,7 +1074,7 @@ def verify_item_rules(source_name, source_type, rules, links):
     if source_type not in {"materials", "products"}:
         raise securesystemslib.exceptions.FormatError(
             "Argument 'source_type' of function 'verify_item_rules' has to be "
-            "one of 'materials' or 'products'. Got: '{}'".format(source_type)
+            f"one of 'materials' or 'products'. Got: '{source_type}'"
         )
 
     # Create shortcuts to item's materials and products (including hashes),
@@ -1156,7 +1146,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
         else:  # pragma: no cover (unreachable)
             raise securesystemslib.exceptions.FormatError(
-                "Invaldid rule type '{}'.".format(_type)
+                f"Invaldid rule type '{_type}'."
             )
 
         artifacts_queue -= consumed
@@ -1264,9 +1254,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Should we remove the check?
         if len(key_link_dict) < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{}' not performed by enough functionaries!".format(
-                    step.name
-                )
+                f"Step '{step.name}' not performed by enough functionaries!"
             )
 
         # Take a reference link (e.g. the first in the step_link_dict)

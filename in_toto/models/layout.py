@@ -420,16 +420,14 @@ class Layout(Signable):
 
         except Exception as e:  # noqa: BLE001
             raise securesystemslib.exceptions.FormatError(
-                "Malformed date string in layout. Exception: {}".format(e)
+                f"Malformed date string in layout. Exception: {e}"
             )
 
     def _validate_readme(self):
         """Private method to check that the readme field is a string."""
         if not isinstance(self.readme, str):
             raise securesystemslib.exceptions.FormatError(
-                "Invalid readme '{}', value must be a string.".format(
-                    self.readme
-                )
+                f"Invalid readme '{self.readme}', value must be a string."
             )
 
     def _validate_keys(self):
@@ -455,8 +453,8 @@ class Layout(Signable):
 
             if step.name in names_seen:
                 raise securesystemslib.exceptions.FormatError(
-                    "There is already a step with name '{}'. Step names must be"
-                    " unique within a layout.".format(step.name)
+                    f"There is already a step with name '{step.name}'. Step names must be"
+                    " unique within a layout."
                 )
             names_seen.add(step.name)
 
@@ -475,8 +473,8 @@ class Layout(Signable):
 
             if inspection.name in names_seen:
                 raise securesystemslib.exceptions.FormatError(
-                    "There is already an inspection with name '{}'. Inspection names"
-                    " must be unique within a layout.".format(inspection.name)
+                    f"There is already an inspection with name '{inspection.name}'. Inspection names"
+                    " must be unique within a layout."
                 )
             names_seen.add(inspection.name)
 
@@ -644,9 +642,7 @@ class Step(SupplyChainItem):
         """Private method to check that the threshold field is set to an int."""
         if not isinstance(self.threshold, int):
             raise securesystemslib.exceptions.FormatError(
-                "Invalid threshold '{}', value must be an int.".format(
-                    self.threshold
-                )
+                f"Invalid threshold '{self.threshold}', value must be an int."
             )
 
     def _validate_pubkeys(self):

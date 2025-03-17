@@ -83,24 +83,20 @@ stdout and stderr) to a link metadata file, which is signed with the passed
 key. It returns a non-zero value on failure and zero otherwise.""",
     )
 
-    parser.usage = (
-        "%(prog)s <named arguments> [{}] \\\n\t -- <command> [args]".format(
-            OPTS_TITLE.lower()
-        )
-    )
+    parser.usage = f"%(prog)s <named arguments> [{OPTS_TITLE.lower()}] \\\n\t -- <command> [args]"
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Tag a git repo, storing files in CWD as products, signing the resulting link
 file with the private key loaded from 'key_file'.
 
-  {prog} -n tag -p . --signing-key key_file -- git tag v1.0
+  {parser.prog} -n tag -p . --signing-key key_file -- git tag v1.0
 
 
 Create a tarball, storing files in 'project' directory as materials and the
 tarball as product, signing the link file with a GPG key '...7E0C8A17'.
 
-  {prog} -n package -m project -p project.tar.gz \\
+  {parser.prog} -n package -m project -p project.tar.gz \\
          -g 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
          -- tar czf project.tar.gz project
 
@@ -110,7 +106,7 @@ still generate signed attestations, e.g. for review work. In that case, files
 may be marked as materials for the manual review process and the command be
 omitted.
 
-  {prog} -n review --signing-key key_file -m document.pdf -x
+  {parser.prog} -n review --signing-key key_file -m document.pdf -x
 
 
 If an artifact that should be recorded is not in the current working directory
@@ -118,7 +114,7 @@ If an artifact that should be recorded is not in the current working directory
 Note that in this example only the relative path, 'document.pdf' is stored
 along with its hash in the resulting link metadata file.
 
-  {prog} -n review --signing-key key_file -m document.pdf \\
+  {parser.prog} -n review --signing-key key_file -m document.pdf \\
          --base-path /my/review/docs/ -x
 
 
@@ -126,12 +122,12 @@ Similarly, it is possible to pass the full path to the artifact that should
 be recorded together with a left-strip path, to only store a relative path,
 e.g. 'document.pdf'.
 
-  {prog} -n review --signing-key key_file \\
+  {parser.prog} -n review --signing-key key_file \\
          -m /tmp/my/review/docs/document.pdf \\
          --lstrip-paths /tmp/my/review/docs/ -x
 
 
-""".format(prog=parser.prog)
+"""
 
     named_args = parser.add_argument_group("required named arguments")
 
@@ -235,7 +231,7 @@ e.g. 'document.pdf'.
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     title_case_action_groups(parser)

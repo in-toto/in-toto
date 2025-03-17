@@ -266,7 +266,7 @@ class Metablock(Metadata, ValidationMixin):
 
         """
         with open(path, "wb") as fp:
-            fp.write("{}".format(self).encode("utf-8"))
+            fp.write(f"{self}".encode())
 
     @classmethod
     def from_dict(cls, data):
@@ -385,7 +385,7 @@ class Metablock(Metadata, ValidationMixin):
 
         else:
             raise SignatureVerificationError(
-                "No signature found for key '{}'".format(verification_keyid)
+                f"No signature found for key '{verification_keyid}'"
             )
 
         valid = False
@@ -413,7 +413,7 @@ class Metablock(Metadata, ValidationMixin):
 
         if not valid:
             raise SignatureVerificationError(
-                "Invalid signature for keyid '{}'".format(verification_keyid)
+                f"Invalid signature for keyid '{verification_keyid}'"
             )
 
     def _validate_signed(self):

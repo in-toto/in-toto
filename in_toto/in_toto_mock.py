@@ -63,20 +63,20 @@ quickly generate link metadata, inspect it and sign it retroactively.
 
     parser.usage = "%(prog)s [-h] --name <name> -- <command> [args]"
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Generate unsigned link metadata 'foo.link' for the activity of creating file
 'bar', inspect it, and sign it with 'mykey'
 
   # Generate unsigned link
-  {prog} --name foo -- touch bar
+  {parser.prog} --name foo -- touch bar
   # Inspect and/or update unsigned link metadata
   vi foo.link
   # Sign the link, attesting to its validity, and write it to
   # 'foo.<mykey keyid prefix>.link'.
   in-toto-sign -k mykey -f foo.link
 
-""".format(prog=parser.prog)
+"""
 
     named_args = parser.add_argument_group("required named arguments")
 
@@ -111,7 +111,7 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     title_case_action_groups(parser)
