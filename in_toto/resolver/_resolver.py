@@ -234,7 +234,7 @@ class OSTreeResolver(Resolver):
 
         ref_path = os.path.join("refs", "heads", path)
 
-        with open(ref_path) as ref:  # pylint: disable=unspecified-encoding
+        with open(ref_path) as ref:  # noqa: PLW1514, RUF100
             ref_contents = ref.read()
         ref_contents = ref_contents.strip("\n")
 

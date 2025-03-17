@@ -639,11 +639,11 @@ class TestSubprocess(unittest.TestCase):
         stdout_fd, stdout_fn = tempfile.mkstemp()
         stderr_fd, stderr_fn = tempfile.mkstemp()
         with (
-            open(  # pylint: disable=unspecified-encoding
+            open(  # noqa: PLW1514, RUF100
                 stdout_fn
             ) as fake_stdout_reader,
             os.fdopen(stdout_fd, "w") as fake_stdout_writer,
-            open(  # pylint: disable=unspecified-encoding
+            open(  # noqa: PLW1514, RUF100
                 stderr_fn
             ) as fake_stderr_reader,
             os.fdopen(stderr_fd, "w") as fake_stderr_writer,
