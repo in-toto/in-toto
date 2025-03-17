@@ -1,5 +1,8 @@
 # Changelog
 
+### Changed
+* Code style to use ruff, includes update to codebase to conform (#837, #840)
+
 ## v3.0.0
 
 This release, most notably, marks stable securesystemslib v1.0.0 as minimum
