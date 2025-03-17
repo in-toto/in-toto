@@ -108,7 +108,6 @@ ignore = [
     "B904",     # raise-without-from-inside-except
     "PERF203",  # try-except-in-loop
     "PLR2004",  # magic-value-comparison
-    "UP038",    # https://github.com/astral-sh/ruff/issues/7871
     "RUF005",   # collection-literal-concatenation
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
     "W191",
