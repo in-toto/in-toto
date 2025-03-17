@@ -1081,7 +1081,7 @@ def verify_item_rules(source_name, source_type, rules, links):
       Clears and populates the global RULE_TRACE data structure.
 
     """
-    if source_type not in ["materials", "products"]:
+    if source_type not in {"materials", "products"}:
         raise securesystemslib.exceptions.FormatError(
             "Argument 'source_type' of function 'verify_item_rules' has to be "
             "one of 'materials' or 'products'. Got: '{}'".format(source_type)
