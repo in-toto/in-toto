@@ -117,7 +117,7 @@ def unpack_rule(rule):
                 "ALLOW <pattern>\n\t"
                 "DISALLOW <pattern>\n"
                 "REQUIRE <file>\n"
-                "Got:\n\t{}".format(rule)
+                f"Got:\n\t{rule}"
             )
         return {
             "rule_type": rule_type,
@@ -181,7 +181,7 @@ def unpack_rule(rule):
                 " match rules must have the format:\n\t"
                 " MATCH <pattern> [IN <source-path-prefix>] WITH"
                 " (MATERIALS|PRODUCTS) [IN <destination-path-prefix>] FROM <step>.\n"
-                "Got: \n\t{}".format(rule)
+                f"Got: \n\t{rule}"
             )
 
         if dest_type not in {"materials", "products"}:
@@ -189,7 +189,7 @@ def unpack_rule(rule):
                 "Wrong rule format,"
                 " match rules must have either MATERIALS or PRODUCTS (case"
                 " insensitive) as destination.\n"
-                "Got: \n\t{}".format(rule)
+                f"Got: \n\t{rule}"
             )
 
         return {
@@ -278,18 +278,16 @@ def pack_rule(  # noqa: PLR0913, PLR0917, RUF100
             dest_type.lower() == "materials" or dest_type.lower() == "products"
         ):
             raise securesystemslib.exceptions.FormatError(
-                "'{}' is not a valid"
+                f"'{dest_type}' is not a valid"
                 " 'dest_type'. Rules of type 'MATCH' require a destination type of"
-                " either 'MATERIALS' or 'PRODUCTS' (case insensitive).".format(
-                    dest_type
-                )
+                " either 'MATERIALS' or 'PRODUCTS' (case insensitive)."
             )
 
         if not (isinstance(dest_name, str) and dest_name):
             raise securesystemslib.exceptions.FormatError(
-                "'{}' is not a valid"
+                f"'{dest_name}' is not a valid"
                 " 'dest_name'. Rules of type 'MATCH' require a step name as a"
-                " destination name.".format(dest_name)
+                " destination name."
             )
 
         # Construct rule

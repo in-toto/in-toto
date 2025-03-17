@@ -761,9 +761,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
         stdout_contents = link.signed.byproducts.get("stdout")
         self.assertTrue(
             "Python" in stderr_contents or "Python" in stdout_contents,
-            msg="\nSTDERR:\n{}\nSTDOUT:\n{}".format(
-                stderr_contents, stdout_contents
-            ),
+            msg=f"\nSTDERR:\n{stderr_contents}\nSTDOUT:\n{stdout_contents}",
         )
 
     def test_in_toto_run_without_byproduct(self):

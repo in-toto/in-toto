@@ -941,9 +941,7 @@ def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, R
         if not unfinished_fn_list:
             raise in_toto.exceptions.LinkNotFoundError(
                 "Could not find a preliminary"
-                " link for step '{}' in the current working directory.".format(
-                    step_name
-                )
+                f" link for step '{step_name}' in the current working directory."
             )
 
         if len(unfinished_fn_list) > 1:

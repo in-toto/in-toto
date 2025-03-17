@@ -241,35 +241,35 @@ useful to append signatures in case threshold signing of layouts is necessary.
 It returns a non-zero value on failure and zero otherwise.""",
     )
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Sign 'unsigned.layout' with two keys and write it to 'root.layout'.
 
-  {prog} -f unsigned.layout -k priv_key1 priv_key2 -o root.layout
+  {parser.prog} -f unsigned.layout -k priv_key1 priv_key2 -o root.layout
 
 
 Replace signature in link file and write to default filename, i.e.
 'package.<priv_key keyid prefix>.link'.
 
-  {prog} -f package.2f89b927.link -k priv_key
+  {parser.prog} -f package.2f89b927.link -k priv_key
 
 
 Verify layout signed with 3 keys.
 
-  {prog} -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
+  {parser.prog} -f root.layout -k pub_key0 pub_key1 pub_key2 --verify
 
 
 Sign layout with default gpg key in default gpg keyring.
 
-  {prog} -f root.layout --gpg
+  {parser.prog} -f root.layout --gpg
 
 
 Verify layout with a gpg key identified by keyid '...439F3C2'.
 
-  {prog} -f root.layout --verify \\
+  {parser.prog} -f root.layout --verify \\
       --gpg 3BF8135765A07E21BD12BF89A5627F6BF439F3C2
 
-""".format(prog=parser.prog)
+"""
 
     named_args = parser.add_argument_group("required named arguments")
 
@@ -354,7 +354,7 @@ Verify layout with a gpg key identified by keyid '...439F3C2'.
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     title_case_action_groups(parser)
@@ -417,17 +417,15 @@ def main():
         ):
             parser.print_help()
             parser.error(
-                "too many arguments: {} Hence signing Link metadata"
-                " with multiple keys is not allowed.".format(link_error_message)
+                f"too many arguments: {link_error_message} Hence signing Link metadata"
+                " with multiple keys is not allowed."
             )
 
         if args.append:
             parser.print_help()
             parser.error(
-                "wrong arguments: {}. Hence adding signatures to"
-                " existing signatures on link metadata is not allowed.".format(
-                    link_error_message
-                )
+                f"wrong arguments: {link_error_message}. Hence adding signatures to"
+                " existing signatures on link metadata is not allowed."
             )
 
     if args.verify:

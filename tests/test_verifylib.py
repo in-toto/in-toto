@@ -260,7 +260,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_create_rule(self):
@@ -294,7 +294,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_modify_rule(self):
@@ -365,7 +365,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_allow_rule(self):
@@ -389,7 +389,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_disallow_rule(self):
@@ -409,7 +409,7 @@ class TestVerifyRule(unittest.TestCase):
         for i, test_data in enumerate(test_cases):
             pattern, queue, should_raise = test_data
 
-            msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+            msg = f"test {i}: {dict(zip(test_data_keys, test_data))}"
             exception = None
 
             try:
@@ -418,10 +418,10 @@ class TestVerifyRule(unittest.TestCase):
                 exception = e
 
             if should_raise and not exception:
-                self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+                self.fail(f"Expected 'RuleVerificationError'\n{msg}")
 
             if exception and not should_raise:
-                self.fail("Unexpected {}\n{}".format(exception, msg))
+                self.fail(f"Unexpected {exception}\n{msg}")
 
     def test_verify_require_rule(self):
         """Test verifylib.verify_require_rule."""
@@ -439,7 +439,7 @@ class TestVerifyRule(unittest.TestCase):
         for i, test_data in enumerate(test_cases):
             pattern, queue, should_raise = test_data
 
-            msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+            msg = f"test {i}: {dict(zip(test_data_keys, test_data))}"
             exception = None
 
             try:
@@ -448,10 +448,10 @@ class TestVerifyRule(unittest.TestCase):
                 exception = e
 
             if should_raise and not exception:
-                self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+                self.fail(f"Expected 'RuleVerificationError'\n{msg}")
 
             if exception and not should_raise:
-                self.fail("Unexpected {}\n{}".format(exception, msg))
+                self.fail(f"Unexpected {exception}\n{msg}")
 
 
 class TestVerifyMatchRule(unittest.TestCase):
@@ -703,9 +703,7 @@ class TestVerifyMatchRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "'result': {}\n test {}: {}, 'links':{}".format(
-                    result, i, dict(zip(test_data_keys, test_data)), self.links
-                ),
+                f"'result': {result}\n test {i}: {dict(zip(test_data_keys, test_data))}, 'links':{self.links}",
             )
 
 

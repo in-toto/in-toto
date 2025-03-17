@@ -183,9 +183,7 @@ RUN_TIMEOUT_KWARGS = {
     "help": (
         "integer that represents the max timeout in seconds for the "
         "   in-toto-run command."
-        "   Default is '{timeout}' seconds.".format(
-            timeout=LINK_CMD_EXEC_TIMEOUT
-        )
+        f"   Default is '{LINK_CMD_EXEC_TIMEOUT}' seconds."
     ),
 }
 
