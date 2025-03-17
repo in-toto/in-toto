@@ -67,7 +67,7 @@ from in_toto.resolver import (
 LOG = logging.getLogger(__name__)
 
 
-def record_artifacts_as_dict(
+def record_artifacts_as_dict(  # noqa: PLR0913, PLR0917, RUF100
     artifacts,
     exclude_patterns=None,
     base_path=None,
@@ -404,7 +404,7 @@ def _require_signing_arg(signer, gpg_keyid, gpg_use_default):
         )
 
 
-def in_toto_run(
+def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     name,
     material_list,
     product_list,
@@ -522,8 +522,6 @@ def in_toto_run(
     A Metadata object that contains the resulting link object.
 
   """
-    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-
     LOG.info("Running '%s'...", name)
 
     # Check key formats to fail early
@@ -622,7 +620,7 @@ def in_toto_run(
     return link_metadata
 
 
-def in_toto_record_start(
+def in_toto_record_start(  # noqa: PLR0913, PLR0917, RUF100
     step_name,
     material_list,
     gpg_keyid=None,
@@ -715,7 +713,7 @@ def in_toto_record_start(
     Writes preliminary link metadata file to disk.
 
   """
-    # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-locals
 
     LOG.info("Start recording '%s'...", step_name)
 
@@ -791,7 +789,7 @@ def in_toto_record_start(
     link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(
+def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     step_name,
     product_list,
     gpg_keyid=None,
@@ -905,7 +903,6 @@ def in_toto_record_stop(
     Removes preliminary link metadata file from disk.
 
   """
-    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     LOG.info("Stop recording '%s'...", step_name)
 
     # Check that we have something to sign and if the formats are right

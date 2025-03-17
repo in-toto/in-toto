@@ -887,7 +887,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # noqa: PLR0915
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -897,7 +897,6 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
         ...and dumps various layouts for different test scenarios
         """
-        # pylint: disable=too-many-statements
 
         # Find demo files
         demo_files = os.path.join(

@@ -203,7 +203,7 @@ def unpack_rule(rule):
     return None
 
 
-def pack_rule(
+def pack_rule(  # noqa: PLR0913, PLR0917, RUF100
     rule_type,
     pattern,
     source_prefix=None,

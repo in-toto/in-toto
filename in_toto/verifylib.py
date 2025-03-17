@@ -401,7 +401,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         metadata.verify_signature(verify_key)
 
 
-def verify_link_signature_thresholds(layout, steps_metadata):
+def verify_link_signature_thresholds(layout, steps_metadata):  # noqa: PLR0912
     """
     <Purpose>
       Verify that for each step of the layout there are at least `threshold`
@@ -440,7 +440,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       authorized functionaries.
 
     """
-    # pylint: disable=too-many-branches, too-many-locals
+    # pylint: disable=too-many-locals
 
     # Create an inverse keys-subkeys dictionary, with subkey keyids as
     # dictionary keys and main keys as dictionary values. This will be
@@ -1497,7 +1497,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
     return summary_link
 
 
-def in_toto_verify(
+def in_toto_verify(  # noqa: PLR0913, PLR0917, RUF100
     metadata,
     layout_key_dict,
     link_dir_path=".",
