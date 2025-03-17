@@ -79,8 +79,7 @@ class ArgparseUsageEpilog(Directive):
             if line.strip() == "" and epilog_lines_len > idx + 1:
                 next_line = epilog_lines[idx + 1]
                 if next_line.startswith("  "):
-                    epilog_lines_dest.append(".. code-block:: sh")
-                    epilog_lines_dest.append("")
+                    epilog_lines_dest.extend((".. code-block:: sh", ""))
 
         # Parse epilog body as ReST
         text_node = nodes.paragraph()
