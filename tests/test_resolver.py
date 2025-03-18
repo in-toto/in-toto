@@ -1,13 +1,13 @@
 """Test cases for resolver.py."""
 
+import unittest
 from pathlib import Path
-from unittest import TestCase, main
 
 from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
 from tests.common import TmpDirMixin
 
 
-class TestResolver(TestCase):
+class TestResolver(unittest.TestCase):
     """Test default and custom resolver registration and dispatch."""
 
     def test_register(self):
@@ -42,7 +42,7 @@ class TestResolver(TestCase):
         RESOLVER_FOR_URI_SCHEME.clear()
 
 
-class TestFileResolver(TmpDirMixin, TestCase):
+class TestFileResolver(TmpDirMixin, unittest.TestCase):
     """Test hash_artifacts with and without scheme.
 
     See 'test_runlib' for comprehensive tests of file hash recording.
@@ -85,4 +85,4 @@ class TestFileResolver(TmpDirMixin, TestCase):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

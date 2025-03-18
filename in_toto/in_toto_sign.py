@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -433,7 +431,3 @@ def main():
 
     else:
         _sign_and_dump_metadata(metadata, args)
-
-
-if __name__ == "__main__":
-    main()

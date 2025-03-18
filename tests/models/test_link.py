@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -129,3 +127,7 @@ class TestLinkValidator(unittest.TestCase):
         test_link.environment = "not a dict"
         with self.assertRaises(FormatError):
             test_link.validate()
+
+
+if __name__ == "__main__":
+    unittest.main()
