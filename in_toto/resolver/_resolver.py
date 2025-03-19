@@ -1,6 +1,7 @@
 """Resolver interface and implementations for files, OSTree, and directory
 artifacts."""
 
+import hashlib
 import locale
 import logging
 import os
@@ -10,7 +11,6 @@ from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
 
 from pathspec import GitIgnoreSpec
-from securesystemslib.hash import digest, digest_filename
 
 from in_toto.exceptions import PrefixError
 
@@ -97,12 +97,12 @@ class FileResolver(Resolver):
 
     def _hash(self, path):
         """Helper to generate hash dictionary for path."""
-        digest_obj = digest_filename(
+        hexdigest = _hash_file(
             path,
-            algorithm=_HASH_ALGORITHM,
-            normalize_line_endings=self._normalize_line_endings,
+            _HASH_ALGORITHM,
+            self._normalize_line_endings,
         )
-        return {_HASH_ALGORITHM: digest_obj.hexdigest()}
+        return {_HASH_ALGORITHM: hexdigest}
 
     def _mangle(self, path, existing_paths, scheme_prefix):
         """Helper for path mangling."""
@@ -241,12 +241,9 @@ class OSTreeResolver(Resolver):
             "objects", ref_contents[:2], f"{ref_contents[2:]}.commit"
         )
 
-        digest_obj = digest_filename(
-            object_path,
-            algorithm=self._HASH_ALGORITHM,
-        )
+        hexdigest = _hash_file(object_path, self._HASH_ALGORITHM, False)
 
-        return {self._HASH_ALGORITHM: digest_obj.hexdigest()}
+        return {self._HASH_ALGORITHM: hexdigest}
 
     def hash_artifacts(self, uris):
         hashes = {}
@@ -347,7 +344,7 @@ class DirectoryResolver(Resolver):
             )
             text_repr += "\n"  # trailing new line
 
-        digest_obj = digest(_HASH_ALGORITHM)
+        digest_obj = hashlib.new(_HASH_ALGORITHM)
         digest_obj.update(text_repr.encode("utf-8"))
 
         return {_HASH_ALGORITHM: digest_obj.hexdigest()}
@@ -378,3 +375,36 @@ class DirectoryResolver(Resolver):
             hashes[name] = self._hash(file_hashes)
 
         return hashes
+
+
+def _hash_file(path, algo, normalize_line_endings):
+    """Returns hashed file."""
+
+    digest = hashlib.new(algo)
+    with open(path, "rb") as f:
+        while True:
+            # Chunk size is taken from the previously used and now deprecated
+            # `securesystemslib.hash.digest_fileobject`.
+            data = f.read(4096)
+            if not data:
+                break
+
+            if normalize_line_endings:
+                while data[-1:] == b"\r":
+                    c = f.read(1)
+                    if not c:
+                        break
+
+                    data += c
+
+                data = (
+                    data
+                    # First Windows
+                    .replace(b"\r\n", b"\n")
+                    # Then Mac
+                    .replace(b"\r", b"\n")
+                )
+
+            digest.update(data)
+
+    return digest.hexdigest()
