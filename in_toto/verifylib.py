@@ -799,9 +799,7 @@ def verify_create_rule(rule_pattern, artifacts_queue, materials, products):
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
     # Consume filtered artifacts that are products but not materials
-    consumed = set(filtered_artifacts) & (products - materials)
-
-    return consumed
+    return set(filtered_artifacts) & (products - materials)
 
 
 def verify_delete_rule(rule_pattern, artifacts_queue, materials, products):
@@ -838,9 +836,7 @@ def verify_delete_rule(rule_pattern, artifacts_queue, materials, products):
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
     # Consume filtered artifacts that are materials but not products
-    consumed = set(filtered_artifacts) & (materials - products)
-
-    return consumed
+    return set(filtered_artifacts) & (materials - products)
 
 
 def verify_modify_rule(rule_pattern, artifacts_queue, materials, products):
