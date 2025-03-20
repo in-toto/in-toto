@@ -94,6 +94,7 @@ extend-select = [
     "SLOT",
     "FLY",
     "I",
+    "C90",
     "N",
     "PERF",
     "PGH",
