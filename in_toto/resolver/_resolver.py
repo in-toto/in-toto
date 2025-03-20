@@ -139,7 +139,7 @@ class FileResolver(Resolver):
 
         return path, prefix
 
-    def hash_artifacts(self, uris):
+    def hash_artifacts(self, uris):  # noqa: C901
         hashes = {}
 
         if self._base_path:
