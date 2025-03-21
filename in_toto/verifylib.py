@@ -399,7 +399,7 @@ def verify_metadata_signatures(metadata, keys_dict):
         metadata.verify_signature(verify_key)
 
 
-def verify_link_signature_thresholds(layout, steps_metadata):  # noqa: PLR0912
+def verify_link_signature_thresholds(layout, steps_metadata):  # noqa: C901, PLR0912
     """
     <Purpose>
       Verify that for each step of the layout there are at least `threshold`

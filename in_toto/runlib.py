@@ -404,7 +404,7 @@ def _require_signing_arg(signer, gpg_keyid, gpg_use_default):
         )
 
 
-def in_toto_run(  # noqa: PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
+def in_toto_run(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     name,
     material_list,
     product_list,
@@ -789,7 +789,7 @@ def in_toto_record_start(  # noqa: PLR0913, PLR0917, RUF100
     link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(  # noqa: PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
+def in_toto_record_stop(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     step_name,
     product_list,
     gpg_keyid=None,

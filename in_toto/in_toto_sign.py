@@ -52,7 +52,7 @@ from in_toto.models.metadata import Metadata
 LOG = logging.getLogger("in_toto")
 
 
-def _sign_and_dump_metadata(metadata, args):
+def _sign_and_dump_metadata(metadata, args):  # noqa: C901
     """
     <Purpose>
       Internal method to sign link or layout metadata and dump it to disk.

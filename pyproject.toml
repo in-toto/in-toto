@@ -101,6 +101,7 @@ extend-select = [
     "ARG",
     "FLY",
     "I",
+    "C90",
     "N",
     "PERF",
     "W",
