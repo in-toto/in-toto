@@ -47,9 +47,7 @@ def load_crypto_signer_from_pkcs8_file(
         data = f.read()
 
     private_key = load_pem_private_key(data, password)
-    signer = CryptoSigner(private_key)
-
-    return signer
+    return CryptoSigner(private_key)
 
 
 def load_public_key_from_file(path: str) -> dict[str, Any]:

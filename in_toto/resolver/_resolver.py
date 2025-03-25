@@ -124,9 +124,7 @@ class FileResolver(Resolver):
             )
 
         # Prepend passed scheme prefix
-        path = scheme_prefix + path
-
-        return path
+        return scheme_prefix + path
 
     def _strip_scheme_prefix(self, path):
         """Helper to strip file resolver scheme prefix from path."""

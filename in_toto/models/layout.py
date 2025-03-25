@@ -180,9 +180,7 @@ class Layout(Signable):
           A list of step names.
 
         """
-        step_names = [step.name for step in self.steps]
-
-        return step_names
+        return [step.name for step in self.steps]
 
     def get_step_by_name(self, step_name):
         """Returns step identified by step_name from the layout.
@@ -231,9 +229,7 @@ class Layout(Signable):
           A list of inspection names.
 
         """
-        inspection_names = [inspection.name for inspection in self.inspect]
-
-        return inspection_names
+        return [inspection.name for inspection in self.inspect]
 
     def get_inspection_by_name(self, inspection_name):
         """Returns inspection identified by inspection_names from the layout.
