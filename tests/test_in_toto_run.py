@@ -442,6 +442,22 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
 
         self.assertTrue(os.path.exists(self.test_link_rsa))
 
+    def test_main_failed_command(self):
+        """Test CLI command with required arguments."""
+
+        args = [
+            "--step-name",
+            self.test_step,
+            "--signing-key",
+            self.rsa_key_path,
+            "--",
+            "python",
+            "--badParameter",
+        ]
+
+        self.assert_cli_sys_exit(args, 2)
+        self.assertTrue(os.path.exists(self.test_link_rsa))
+
     def test_pkcs8_signing_key(self):
         """Test in-toto-run, sign link with pkcs8 key file for each algo."""
         args = ["-n", "foo", "-x", "--use-dsse", "--signing-key"]

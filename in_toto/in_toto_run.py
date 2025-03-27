@@ -275,6 +275,7 @@ def main():
             " Please specify (or use the --no-command option)"
         )
 
+    link = None
     try:
         # We load the key here because it might prompt the user for a password in
         # case the key is encrypted. Something that should not happen in the lib.
@@ -290,7 +291,7 @@ def main():
                 args.signing_key, password
             )
 
-        runlib.in_toto_run(
+        link = runlib.in_toto_run(
             args.step_name,
             args.materials,
             args.products,
@@ -312,4 +313,11 @@ def main():
         LOG.error("(in-toto-run) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
+    if (
+        link
+        and getattr(link, "signed", None)
+        and link.signed.byproducts.get("return-value")
+        and link.signed.byproducts.get("return-value") != 0
+    ):
+        sys.exit(link.signed.byproducts.get("return-value"))
     sys.exit(0)
