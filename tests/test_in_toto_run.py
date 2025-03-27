@@ -443,7 +443,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
         self.assertTrue(os.path.exists(self.test_link_rsa))
 
     def test_main_failed_command(self):
-        """Test CLI command with required arguments."""
+        """Test CLI command that returns a failure passes the code back."""
 
         args = [
             "--step-name",
