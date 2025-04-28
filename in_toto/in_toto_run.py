@@ -317,7 +317,7 @@ def main():
         link
         and getattr(link, "signed", None)
         and link.signed.byproducts.get("return-value")
-        and link.signed.byproducts.get("return-value") != 0
     ):
         sys.exit(link.signed.byproducts.get("return-value"))
+
     sys.exit(0)
