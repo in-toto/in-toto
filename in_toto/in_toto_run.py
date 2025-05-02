@@ -275,6 +275,7 @@ def main():
             " Please specify (or use the --no-command option)"
         )
 
+    payload = None
     try:
         # We load the key here because it might prompt the user for a password in
         # case the key is encrypted. Something that should not happen in the lib.
@@ -290,7 +291,7 @@ def main():
                 args.signing_key, password
             )
 
-        runlib.in_toto_run(
+        link = runlib.in_toto_run(
             args.step_name,
             args.materials,
             args.products,
@@ -307,9 +308,18 @@ def main():
             timeout=args.run_timeout,
             signer=signer,
         )
-
+        # FIXME the link has just been serialized and the payload
+        # is being deserialized in order to get the 'return-value'.
+        payload = link.get_payload()
     except Exception as e:  # noqa: BLE001
         LOG.error("(in-toto-run) %s: %s", type(e).__name__, e)
         sys.exit(1)
+
+    if (
+        payload
+        and payload.type_ == "link"
+        and payload.byproducts.get("return-value")
+    ):
+        sys.exit(payload.byproducts.get("return-value"))
 
     sys.exit(0)

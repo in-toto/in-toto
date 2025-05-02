@@ -2,4 +2,5 @@
 -r requirements-pinned.txt
 
 # Test tools for linting and test coverage measurement
+
 ruff==0.11.6
