@@ -41,7 +41,6 @@ from collections import defaultdict
 import securesystemslib._gpg
 import securesystemslib.exceptions
 import securesystemslib.formats
-import securesystemslib.hash
 from securesystemslib.signer import Signer
 
 import in_toto.exceptions
