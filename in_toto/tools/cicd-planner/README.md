@@ -1,214 +1,187 @@
 # in-toto CI/CD Integration Planner
 
-A comprehensive web-based tool to help organizations plan, visualize, and implement in-toto integration into their CI/CD pipelines.
+A comprehensive web-based tool for planning and implementing in-toto supply chain security integration into CI/CD pipelines.
 
-## Overview
+## 🚀 Overview
 
-The in-toto CI/CD Integration Planner provides three main capabilities:
+The in-toto CI/CD Integration Planner is an interactive tool designed to help development teams securely integrate [in-toto](https://in-toto.io/) attestation and verification into their existing CI/CD workflows. This planner provides a structured approach to supply chain security implementation with visual pipeline modeling, goal architecture, and step-by-step action plans.
 
-1. **Digital Twin**: Interactive visualization of your CI/CD pipeline with in-toto integration points
-2. **Goal Architect**: Structured goal setting and compliance framework mapping
-3. **Action Planner**: Step-by-step implementation roadmap with timelines and prerequisites
+## ✨ Features
 
-## Features
-
-### 🔬 Digital Twin Pipeline Visualization
-- **Interactive Diagrams**: Mermaid.js-powered pipeline visualization
-- **Multi-Platform Support**: GitHub Actions, Jenkins, GitLab CI, Azure DevOps, CircleCI
-- **Integration Points**: Clear visualization of where in-toto components integrate
-- **Step Details**: Click on any step to see detailed integration information
+### 📊 Digital Twin Pipeline Visualization
+- **Interactive Pipeline Modeling**: Create visual representations of your CI/CD pipeline with in-toto integration points
+- **Multi-Platform Support**: Compatible with GitHub Actions, Jenkins, GitLab CI, Azure DevOps, and CircleCI
+- **Real-time Updates**: Dynamic pipeline visualization based on your specific workflow steps
+- **Clickable Step Details**: Interactive elements showing in-toto integration requirements for each pipeline stage
 
 ### 🎯 Goal Architect
-- **Security Objectives**: Pre-defined security goals including cryptographic signing, build verification, and supply chain attestation
-- **Compliance Frameworks**: Support for SLSA, SOC2, ISO 27001, CMMC 1.0, and CMMC 2.0
-- **Success Metrics**: Quantifiable metrics for each security objective
-- **Timeline Planning**: Realistic implementation timelines for each goal
+- **Security Objective Definition**: Define clear, measurable security goals for your integration
+- **Compliance Framework Integration**: Support for SLSA, SOC2, ISO 27001, and CMMC compliance requirements
+- **Success Metrics**: Quantifiable metrics for tracking implementation progress
+- **Timeline Estimation**: Realistic implementation timelines for each security objective
 
 ### 📋 Action Planner
-- **Environment Configuration**: Tailored plans for development, staging, and production
-- **Key Management**: Support for multiple key management strategies
-- **Detailed Steps**: Comprehensive task breakdowns with duration estimates
-- **Prerequisites**: Clear dependency mapping between implementation steps
+- **Step-by-Step Implementation**: Detailed action plans tailored to your environment and requirements
+- **Key Management Strategies**: Support for file-based keys, HSM, cloud KMS, and HashiCorp Vault
+- **Environment-Specific Plans**: Customized plans for development, staging, production, or all environments
+- **Risk Mitigation**: Built-in error handling and contingency planning
 
-## Getting Started
+## 🛠️ Supported Integrations
+
+### CI/CD Platforms
+- **GitHub Actions** - Native workflow integration with custom actions
+- **Jenkins** - Plugin-based integration with pipeline scripts
+- **GitLab CI** - YAML configuration with custom stages
+- **Azure DevOps** - Extension-based integration with build pipelines
+- **CircleCI** - Orb-based integration with workflow jobs
+
+### Key Management Systems
+- **File-based Keys** - Traditional key file management
+- **Hardware Security Modules (HSM)** - Enterprise-grade key protection
+- **Cloud Key Management Service** - AWS KMS, Azure Key Vault, Google Cloud KMS
+- **HashiCorp Vault** - Dynamic secret management
+
+### Compliance Frameworks
+- **SLSA (Supply-chain Levels for Software Artifacts)** - Levels 1-4 compliance
+- **SOC 2** - Security and availability controls
+- **ISO 27001** - Information security management
+- **CMMC 1.0/2.0** - Cybersecurity Maturity Model Certification
+
+## 🚀 Getting Started
 
 ### Prerequisites
 - Modern web browser with JavaScript enabled
-- No server setup required - runs entirely in the browser
+- Basic understanding of CI/CD concepts
+- Administrative access to your CI/CD environment
+- Security team coordination for key management
 
-### Installation
-1. Clone the in-toto repository
-2. Navigate to `tools/cicd-planner/`
-3. Open `index.html` in your web browser
+### Quick Start
+1. Open the `index.html` file in your web browser
+2. Navigate to the **Digital Twin** tab to model your current pipeline
+3. Use the **Goal Architect** to define your security objectives
+4. Generate your implementation plan in the **Action Planner**
 
-### Usage
+### Pipeline Configuration
+1. **Select your CI/CD tool** from the dropdown menu
+2. **Define pipeline steps** - Enter each step of your current pipeline (one per line)
+3. **Generate Digital Twin** - Create an interactive visualization of your pipeline
+4. **Click on pipeline steps** to view detailed in-toto integration requirements
 
-#### 1. Digital Twin Creation
-1. Select your CI/CD tool from the dropdown
-2. Enter your pipeline steps (one per line)
-3. Click "Generate Digital Twin" to create the visualization
-4. Click on any pipeline step to see detailed integration information
+## 📋 Implementation Workflow
 
-#### 2. Goal Architecture
-1. Select your security goals from the available options
-2. Choose applicable compliance frameworks
-3. Click "Generate Goal Architecture" to create your objectives
-4. Review success metrics and timelines for each goal
+### Phase 1: Planning (1-2 weeks)
+- [ ] Pipeline analysis and digital twin creation
+- [ ] Security goal definition and compliance mapping
+- [ ] Key management strategy selection
+- [ ] Resource allocation and team coordination
 
-#### 3. Action Planning
-1. Select your target environment
-2. Choose your key management strategy
-3. Click "Generate Action Plan" to create your implementation roadmap
-4. Follow the numbered steps with their associated timelines and prerequisites
+### Phase 2: Environment Setup (1-2 weeks)
+- [ ] in-toto CLI installation and configuration
+- [ ] Key management system setup
+- [ ] Secure storage configuration for attestations
+- [ ] CI/CD environment preparation
 
-## Supported CI/CD Tools
+### Phase 3: Integration (2-4 weeks)
+- [ ] Layout definition and policy creation
+- [ ] CI/CD platform-specific integration
+- [ ] Attestation generation implementation
+- [ ] Verification workflow setup
 
-- **GitHub Actions**: Complete workflow integration with GitHub-specific actions
-- **Jenkins**: Plugin-based integration with Jenkins pipelines
-- **GitLab CI**: Native GitLab CI/CD integration patterns
-- **Azure DevOps**: Azure Pipelines integration with Microsoft tooling
-- **CircleCI**: Orb-based integration for CircleCI workflows
+### Phase 4: Validation (1-2 weeks)
+- [ ] End-to-end testing and validation
+- [ ] Security policy enforcement testing
+- [ ] Performance impact assessment
+- [ ] Documentation and team training
 
-## Key Management Options
+## 🔧 Technical Architecture
 
-- **File-based Keys**: Traditional file-based key storage with secure practices
-- **Hardware Security Module (HSM)**: Enterprise-grade hardware security
-- **Cloud Key Management Service**: AWS KMS, Azure Key Vault, Google Cloud KMS
-- **HashiCorp Vault**: Open-source secrets management
+### Core Components
+- **Mermaid.js** - Pipeline visualization and diagramming
+- **Vanilla JavaScript** - Interactive functionality and state management
+- **CSS3 Animations** - Modern UI/UX with glassmorphism design
+- **Responsive Design** - Mobile-friendly interface
 
-## Compliance Frameworks
+### Security Features
+- **Client-side Processing** - No data transmitted to external servers
+- **Configurable Key Management** - Multiple key storage strategies
+- **Policy-driven Enforcement** - Customizable security policies
+- **Audit Trail Generation** - Comprehensive logging and attestation
 
-### SLSA (Supply-chain Levels for Software Artifacts)
-- Level 3 compliance mapping
-- Build integrity requirements
-- Provenance generation standards
+## 📊 Security Goals Supported
 
-### SOC2 (System and Organization Controls 2)
-- Security principle alignment
-- Availability and confidentiality controls
-- Processing integrity requirements
+| Goal | Description | Implementation Timeline |
+|------|-------------|------------------------|
+| **Cryptographic Signing** | All artifacts cryptographically signed | 2-3 weeks |
+| **Build Verification** | Build process integrity verification | 3-4 weeks |
+| **Supply Chain Attestation** | End-to-end attestation generation | 4-6 weeks |
+| **Dependency Tracking** | Complete dependency visibility | 2-3 weeks |
+| **Provenance Generation** | SLSA-compliant provenance | 3-4 weeks |
+| **Policy Enforcement** | Automated security policy checks | 4-5 weeks |
 
-### ISO 27001 (Enhanced Support)
-- **Information Security Management System (ISMS) Integration**
-- **Comprehensive Control Mapping**: 12 specific ISO 27001 controls mapped to in-toto implementation
-- **Risk Assessment Framework**: Supply chain integrity risk assessment guidance
-- **Documentation Templates**: Ready-to-use procedures and policies
-- **Audit Readiness**: Evidence collection guidance for certification audits
-- **Key Control Areas Covered**:
-  - A.5.1.1 - Information Security Policies
-  - A.8.2.3 - Asset Management for Software Artifacts
-  - A.10.1.1 - Cryptographic Controls
-  - A.12.1.1 - Documented Operating Procedures
-  - A.12.1.2 - Change Management
-  - A.12.2.1 - Controls Against Malicious Code
-  - A.12.6.1 - Technical Vulnerability Management
-  - A.14.2.1 - Secure Development Policy
-  - A.15.1.1 - Supplier Relationship Security
-  - A.15.2.1 - Supplier Service Monitoring
-  - A.16.1.1 - Incident Management
-  - A.18.1.1 - Regulatory Compliance
-- **Performance Indicators**: KPIs for monitoring supply chain security effectiveness
-- **Continuous Improvement**: Framework for ongoing enhancement of controls
+## 🔒 Security Considerations
 
-### CMMC (Cybersecurity Maturity Model Certification)
-- **CMMC 1.0**: Original framework for defense contractors
-- **CMMC 2.0**: Updated framework with streamlined requirements
-- DoD compliance requirements mapping
+### Key Management Best Practices
+- **Principle of Least Privilege** - Minimal access rights for signing keys
+- **Key Rotation** - Regular key rotation schedules (recommended: 90 days)
+- **Multi-signature Requirements** - Multiple signatures for critical releases
+- **Secure Key Storage** - Hardware-backed or cloud-managed key storage
 
-## 🔒 ISO 27001 Deep Integration
+### Attestation Security
+- **Cryptographic Integrity** - All attestations cryptographically signed
+- **Tamper Detection** - Verification of attestation chain integrity
+- **Policy Enforcement** - Automated blocking of non-compliant artifacts
+- **Audit Logging** - Comprehensive audit trails for all operations
 
-### Enhanced Compliance Support
-The tool provides comprehensive ISO 27001 implementation guidance specifically tailored for supply chain security:
+## 🤝 Contributing
 
-#### Control Mapping Matrix
-- **12 Critical Controls**: Detailed mapping of ISO 27001 controls to in-toto implementation
-- **Implementation Guidance**: Step-by-step instructions for each control
-- **Evidence Collection**: Audit-ready documentation requirements
-- **Risk Assessment**: Supply chain-specific risk evaluation framework
+We welcome contributions to improve the in-toto CI/CD Integration Planner! Here's how you can help:
 
-#### ISMS Integration Checklist
-- Risk Assessment with supply chain integrity considerations
-- Risk Treatment plans using in-toto as mitigation control
-- Statement of Applicability documentation
-- Management review integration
-- Internal audit procedures
-- Continuous improvement processes
-
-#### Certification Readiness
-- Documentation templates for policies and procedures
-- Key management audit trails
-- Attestation records and verification reports
-- Training and competency records
-- Incident response documentation
-- Monitoring and measurement evidence
-
-#### Key Performance Indicators (KPIs)
-- Percentage of builds with complete attestation chains
-- Time to detect supply chain anomalies
-- Compliance rate with cryptographic policies
-- Mean time to respond to verification failures
-- Supplier attestation compliance rate
-
-This enhanced support ensures organizations can seamlessly integrate in-toto implementation into their existing ISO 27001 ISMS framework while maintaining certification compliance.
-
-Tested and supported on:
-- DuckDuckGo  0.116.5
-- Edge Version 137.0.3296.68 (Official build) (64-bit)
-
-## Contributing
-
-We welcome contributions to improve the CI/CD Integration Planner:
-
+### Development Setup
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Test across supported browsers
-5. Submit a pull request
+4. Test thoroughly across different browsers
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-### Development Guidelines
-- Maintain pure HTML/CSS/JavaScript approach
-- Ensure responsive design compatibility
+### Contribution Guidelines
 - Follow existing code style and patterns
-- Include appropriate error handling
-- Test interactive features thoroughly
+- Add comments for complex functionality
+- Test across multiple CI/CD platforms
+- Update documentation for new features
+- Ensure responsive design compatibility
 
-## Troubleshooting
+## 📚 Resources
 
-### Common Issues
+### in-toto Documentation
+- [in-toto Official Documentation](https://in-toto.readthedocs.io/)
+- [in-toto Specification](https://github.com/in-toto/docs/blob/master/in-toto-spec.md)
+- [SLSA Framework](https://slsa.dev/)
 
-**Mermaid diagrams not rendering**
-- Ensure JavaScript is enabled
-- Check browser console for errors
-- Try refreshing the page
+### CI/CD Platform Integration Guides
+- [GitHub Actions Integration](https://docs.github.com/en/actions)
+- [Jenkins Plugin Development](https://www.jenkins.io/doc/developer/)
+- [GitLab CI Configuration](https://docs.gitlab.com/ee/ci/)
+- [Azure DevOps Extensions](https://docs.microsoft.com/en-us/azure/devops/extend/)
 
-**Interactive features not working**
-- Verify browser compatibility
-- Disable browser extensions that might interfere
-- Check for JavaScript errors in console
+## 📄 License
 
-**Layout issues on mobile**
-- The tool is responsive but optimized for desktop use
-- Use landscape orientation on mobile devices for best experience
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Security Considerations
+## 🙏 Acknowledgments
 
-This tool runs entirely in the browser and does not:
-- Store any data persistently
-- Send data to external servers
-- Require network access beyond loading the page
-- Handle sensitive information like actual keys or credentials
+- [in-toto](https://in-toto.io/) project for supply chain security framework
+- [Mermaid.js](https://mermaid-js.github.io/) for pipeline visualization
+- The open-source security community for best practices and guidance
 
-## License
+## 📞 Support
 
-This tool is part of the in-toto project and follows the same Apache 2.0 license.
-
-## Support
-
-For issues, questions, or contributions:
-- File issues on the in-toto GitHub repository
+For questions, issues, or feature requests:
+- Open an issue in the GitHub repository
+- Contact the security team for implementation guidance
 - Join the in-toto community discussions
-- Refer to the main in-toto documentation for integration details
 
 ---
 
-**Note**: This tool provides planning and visualization capabilities. Actual in-toto implementation requires following the specific integration guides for your chosen CI/CD platform and installing the necessary in-toto components.
+**🔒 Secure your software supply chain with confidence using the in-toto CI/CD Integration Planner**
