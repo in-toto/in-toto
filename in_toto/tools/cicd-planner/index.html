@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0071)file:///C:/Users/danie/OneDrive/stunspotPrompt/intoto_cicd_planner.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>in-toto CI/CD Integration Planner</title>
-    <script src="./in-toto CI_CD Integration Planner_files/mermaid.min.js.download"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -71,9 +71,7 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;Great. Let go dddper. Kindly Flesh out ISO 27001 Compliance framework support
-
-
+            transition: left 0.5s;
         }
         
         .tab:hover::before {
@@ -292,6 +290,60 @@
             border-radius: 5px;
             margin-top: 10px;
         }
+        
+        .domain-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .domain-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin: 5px;
+        }
+        
+        .key-management-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .key-type {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .key-type input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        .legacy-systems-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .legacy-system {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .legacy-system input[type="checkbox"] {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -302,18 +354,22 @@
         </div>
         
         <div class="tabs">
-            <div class="tab" onclick="switchTab(&#39;digital-twin&#39;)">
+            <div class="tab active" onclick="switchTab('digital-twin')">
                 📊 Digital Twin
             </div>
-            <div class="tab" onclick="switchTab(&#39;goal-architect&#39;)">
+            <div class="tab" onclick="switchTab('goal-architect')">
                 🎯 Goal Architect
             </div>
-            <div class="tab active" onclick="switchTab(&#39;action-planner&#39;)">
+            <div class="tab" onclick="switchTab('action-planner')">
                 📋 Action Planner
+            </div>
+            <div class="tab" onclick="switchTab('domain-config')">
+                🌐 Domain Configuration
             </div>
         </div>
         
-        <div id="digital-twin" class="tab-content">
+        <!-- Digital Twin Tab -->
+        <div id="digital-twin" class="tab-content active">
             <h2>🔬 Digital Twin Pipeline Visualization</h2>
             <p>Create an interactive representation of your CI/CD pipeline with in-toto integration points.</p>
             
@@ -349,7 +405,7 @@ deploy</textarea>
             </div>
             
             <div class="visualization-container">
-                <div id="pipeline-diagram"><div class="mermaid" data-processed="true"><svg aria-roledescription="flowchart-v2" role="graphics-document document" viewBox="-8 -8 357.75 1074" style="max-width: 357.75px;" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="mermaid-1750880744103"><style>#mermaid-1750880744103{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}#mermaid-1750880744103 .error-icon{fill:#552222;}#mermaid-1750880744103 .error-text{fill:#552222;stroke:#552222;}#mermaid-1750880744103 .edge-thickness-normal{stroke-width:2px;}#mermaid-1750880744103 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-1750880744103 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1750880744103 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1750880744103 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-1750880744103 .marker{fill:#333333;stroke:#333333;}#mermaid-1750880744103 .marker.cross{stroke:#333333;}#mermaid-1750880744103 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-1750880744103 .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#mermaid-1750880744103 .cluster-label text{fill:#333;}#mermaid-1750880744103 .cluster-label span,#mermaid-1750880744103 p{color:#333;}#mermaid-1750880744103 .label text,#mermaid-1750880744103 span,#mermaid-1750880744103 p{fill:#333;color:#333;}#mermaid-1750880744103 .node rect,#mermaid-1750880744103 .node circle,#mermaid-1750880744103 .node ellipse,#mermaid-1750880744103 .node polygon,#mermaid-1750880744103 .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#mermaid-1750880744103 .flowchart-label text{text-anchor:middle;}#mermaid-1750880744103 .node .label{text-align:center;}#mermaid-1750880744103 .node.clickable{cursor:pointer;}#mermaid-1750880744103 .arrowheadPath{fill:#333333;}#mermaid-1750880744103 .edgePath .path{stroke:#333333;stroke-width:2.0px;}#mermaid-1750880744103 .flowchart-link{stroke:#333333;fill:none;}#mermaid-1750880744103 .edgeLabel{background-color:#e8e8e8;text-align:center;}#mermaid-1750880744103 .edgeLabel rect{opacity:0.5;background-color:#e8e8e8;fill:#e8e8e8;}#mermaid-1750880744103 .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#mermaid-1750880744103 .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#mermaid-1750880744103 .cluster text{fill:#333;}#mermaid-1750880744103 .cluster span,#mermaid-1750880744103 p{color:#333;}#mermaid-1750880744103 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-1750880744103 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#mermaid-1750880744103 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-1750880744103 .intotoStep&gt;*{fill:#e1f5fe!important;stroke:#01579b!important;stroke-width:2px!important;}#mermaid-1750880744103 .intotoStep span{fill:#e1f5fe!important;stroke:#01579b!important;stroke-width:2px!important;}#mermaid-1750880744103 .pipelineStep&gt;*{fill:#f3e5f5!important;stroke:#4a148c!important;stroke-width:2px!important;}#mermaid-1750880744103 .pipelineStep span{fill:#f3e5f5!important;stroke:#4a148c!important;stroke-width:2px!important;}</style><g><marker orient="auto" markerHeight="12" markerWidth="12" markerUnits="userSpaceOnUse" refY="5" refX="6" viewBox="0 0 10 10" class="marker flowchart" id="mermaid-1750880744103_flowchart-pointEnd"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z"></path></marker><marker orient="auto" markerHeight="12" markerWidth="12" markerUnits="userSpaceOnUse" refY="5" refX="4.5" viewBox="0 0 10 10" class="marker flowchart" id="mermaid-1750880744103_flowchart-pointStart"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z"></path></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="11" viewBox="0 0 10 10" class="marker flowchart" id="mermaid-1750880744103_flowchart-circleEnd"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"></circle></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="-1" viewBox="0 0 10 10" class="marker flowchart" id="mermaid-1750880744103_flowchart-circleStart"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"></circle></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="12" viewBox="0 0 11 11" class="marker cross flowchart" id="mermaid-1750880744103_flowchart-crossEnd"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"></path></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="-1" viewBox="0 0 11 11" class="marker cross flowchart" id="mermaid-1750880744103_flowchart-crossStart"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-Start LE-A" id="L-Start-A-0" d="M73.875,36L73.875,40.167C73.875,44.333,73.875,52.667,73.875,60.283C73.875,67.9,73.875,74.8,73.875,78.25L73.875,81.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A0 LE-B0" id="L-A0-B0-0" d="M245.516,35L245.516,39.333C245.516,43.667,245.516,52.333,245.516,59.95C245.516,67.567,245.516,74.133,245.516,77.417L245.516,80.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B0 LE-A1" id="L-B0-A1-0" d="M245.516,122L245.516,126.167C245.516,130.333,245.516,138.667,245.516,146.117C245.516,153.567,245.516,160.133,245.516,163.417L245.516,166.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A1 LE-B1" id="L-A1-B1-0" d="M245.516,206L245.516,210.167C245.516,214.333,245.516,222.667,245.516,230.117C245.516,237.567,245.516,244.133,245.516,247.417L245.516,250.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B1 LE-A2" id="L-B1-A2-0" d="M245.516,292L245.516,296.167C245.516,300.333,245.516,308.667,245.516,316.117C245.516,323.567,245.516,330.133,245.516,333.417L245.516,336.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A2 LE-B2" id="L-A2-B2-0" d="M245.516,376L245.516,380.167C245.516,384.333,245.516,392.667,245.516,400.117C245.516,407.567,245.516,414.133,245.516,417.417L245.516,420.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B2 LE-A3" id="L-B2-A3-0" d="M245.516,462L245.516,466.167C245.516,470.333,245.516,478.667,245.516,486.117C245.516,493.567,245.516,500.133,245.516,503.417L245.516,506.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A3 LE-B3" id="L-A3-B3-0" d="M245.516,546L245.516,550.167C245.516,554.333,245.516,562.667,245.516,570.117C245.516,577.567,245.516,584.133,245.516,587.417L245.516,590.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B3 LE-A4" id="L-B3-A4-0" d="M245.516,632L245.516,636.167C245.516,640.333,245.516,648.667,245.516,656.117C245.516,663.567,245.516,670.133,245.516,673.417L245.516,676.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A4 LE-B4" id="L-A4-B4-0" d="M245.516,716L245.516,720.167C245.516,724.333,245.516,732.667,245.516,740.117C245.516,747.567,245.516,754.133,245.516,757.417L245.516,760.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B4 LE-A5" id="L-B4-A5-0" d="M245.516,802L245.516,806.167C245.516,810.333,245.516,818.667,245.516,826.117C245.516,833.567,245.516,840.133,245.516,843.417L245.516,846.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-A5 LE-B5" id="L-A5-B5-0" d="M245.516,886L245.516,890.167C245.516,894.333,245.516,902.667,245.516,910.117C245.516,917.567,245.516,924.133,245.516,927.417L245.516,930.7"></path><path marker-end="url(#mermaid-1750880744103_flowchart-pointEnd)" style="fill:none;" class="edge-thickness-normal edge-pattern-solid flowchart-link LS-B5 LE-End" id="L-B5-End-0" d="M245.516,972L245.516,976.167C245.516,980.333,245.516,988.667,245.516,996.117C245.516,1003.567,245.516,1010.133,245.516,1013.417L245.516,1016.7"></path></g><g class="edgeLabels"><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignobject height="0" width="0"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g></g><g class="nodes"><g transform="translate(73.875, 18)" id="flowchart-Start-78" class="node default default flowchart-label" style="cursor: pointer;"><rect height="36" width="147.75" y="-18" x="-73.875" ry="18" rx="18" style=""></rect><g transform="translate(-61.875, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="123.75"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🚀 Pipeline Start</span></div></foreignobject></g></g><g transform="translate(73.875, 104)" id="flowchart-A-79" class="node default default flowchart-label" style="cursor: pointer;"><rect height="34" width="80.0625" y="-17" x="-40.03125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-32.53125, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="65.0625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">checkout</span></div></foreignobject></g></g><g transform="translate(245.515625, 18)" id="flowchart-A0-80" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="80.0625" y="-17" x="-40.03125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-32.53125, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="65.0625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">checkout</span></div></foreignobject></g></g><g transform="translate(245.515625, 104)" id="flowchart-B0-81" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="163.21875" y="-18" x="-81.609375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-74.109375, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="148.21875"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: checkout</span></div></foreignobject></g></g><g transform="translate(245.515625, 189)" id="flowchart-A1-83" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="50.859375" y="-17" x="-25.4296875" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-17.9296875, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="35.859375"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">build</span></div></foreignobject></g></g><g transform="translate(245.515625, 274)" id="flowchart-B1-85" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="134.015625" y="-18" x="-67.0078125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-59.5078125, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="119.015625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: build</span></div></foreignobject></g></g><g transform="translate(245.515625, 359)" id="flowchart-A2-87" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="42.890625" y="-17" x="-21.4453125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-13.9453125, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="27.890625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">test</span></div></foreignobject></g></g><g transform="translate(245.515625, 444)" id="flowchart-B2-89" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="126.046875" y="-18" x="-63.0234375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-55.5234375, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="111.046875"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: test</span></div></foreignobject></g></g><g transform="translate(245.515625, 529)" id="flowchart-A3-91" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="109.3125" y="-17" x="-54.65625" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-47.15625, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="94.3125"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">security-scan</span></div></foreignobject></g></g><g transform="translate(245.515625, 614)" id="flowchart-B3-93" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="192.46875" y="-18" x="-96.234375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-88.734375, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="177.46875"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: security-scan</span></div></foreignobject></g></g><g transform="translate(245.515625, 699)" id="flowchart-A4-95" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="39.765625" y="-17" x="-19.8828125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-12.3828125, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="24.765625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">dcc</span></div></foreignobject></g></g><g transform="translate(245.515625, 784)" id="flowchart-B4-97" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="122.921875" y="-18" x="-61.4609375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-53.9609375, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="107.921875"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: dcc</span></div></foreignobject></g></g><g transform="translate(245.515625, 869)" id="flowchart-A5-99" class="node default pipelineStep flowchart-label" style="cursor: pointer;"><rect height="34" width="62.75" y="-17" x="-31.375" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-23.875, -9.5)" style="" class="label"><rect></rect><foreignobject height="19" width="47.75"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">deploy</span></div></foreignobject></g></g><g transform="translate(245.515625, 954)" id="flowchart-B5-101" class="node default intotoStep flowchart-label" style="cursor: pointer;"><rect height="36" width="145.90625" y="-18" x="-72.953125" ry="0" rx="0" style="" class="basic label-container"></rect><g transform="translate(-65.453125, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="130.90625"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">🔒 in-toto: deploy</span></div></foreignobject></g></g><g transform="translate(245.515625, 1040)" id="flowchart-End-103" class="node default default flowchart-label" style="cursor: pointer;"><rect height="36" width="181.609375" y="-18" x="-90.8046875" ry="18" rx="18" style=""></rect><g transform="translate(-78.8046875, -10.5)" style="" class="label"><rect></rect><foreignobject height="21" width="157.609375"><div style="display: inline-block; white-space: nowrap;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">✅ Pipeline Complete</span></div></foreignobject></g></g></g></g></g></svg></div></div>
+                <div id="pipeline-diagram"></div>
             </div>
             
             <div class="step-details" id="step-details" style="display: none;">
@@ -358,6 +414,7 @@ deploy</textarea>
             </div>
         </div>
         
+        <!-- Goal Architect Tab -->
         <div id="goal-architect" class="tab-content">
             <h2>🎯 Goal Architect</h2>
             <p>Define clear, measurable objectives for your in-toto integration.</p>
@@ -366,9 +423,9 @@ deploy</textarea>
                 <h3>Integration Objectives</h3>
                 <div class="form-group">
                     <label for="security-goals">Security Goals:</label>
-                    <select id="security-goals" multiple="" size="6">
-                        <option value="cryptographic-signing" selected="">Cryptographic signing of all artifacts</option>
-                        <option value="build-verification" selected="">Build step verification</option>
+                    <select id="security-goals" multiple size="6">
+                        <option value="cryptographic-signing" selected>Cryptographic signing of all artifacts</option>
+                        <option value="build-verification" selected>Build step verification</option>
                         <option value="supply-chain-attestation">Supply chain attestation</option>
                         <option value="dependency-tracking">Dependency tracking</option>
                         <option value="provenance-generation">Provenance generation</option>
@@ -378,57 +435,28 @@ deploy</textarea>
                 
                 <div class="form-group">
                     <label for="compliance-requirements">Compliance Requirements:</label>
-                    <select id="compliance-requirements" multiple="" size="4">
+                    <select id="compliance-requirements" multiple size="8">
                         <option value="slsa-level-3">SLSA Level 3</option>
                         <option value="soc2">SOC2</option>
                         <option value="iso-27001">ISO 27001</option>
                         <option value="cmmc-1.0">CMMC 1.0</option>
                         <option value="cmmc-2.0">CMMC 2.0</option>
-                    </select>                </div>
+                        <option value="pci-dss">PCI-DSS</option>
+                        <option value="sox">SOX</option>
+                        <option value="disa-stig">DISA STIG</option>
+                    </select>
+                </div>
                 
                 <button onclick="generateGoals()">🎯 Generate Goal Architecture</button>
             </div>
             
-            <div id="goals-output"><h3>🎯 Defined Goals</h3>
-                    <div class="goal-card">
-                        <h4>🔐 Cryptographic Signing</h4>
-                        <p>Ensure all artifacts are cryptographically signed</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Success Metrics:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>100% of artifacts signed</li><li>Key rotation every 90 days</li><li>Multi-signature for critical releases</li>
-                            </ul>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <strong>⏱️ Timeline:</strong> 2-3 weeks
-                        </div>
-                    </div>
-                
-                    <div class="goal-card">
-                        <h4>🏗️ Build Verification</h4>
-                        <p>Verify the integrity of build processes</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Success Metrics:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Build reproducibility &gt;95%</li><li>Environment consistency checks</li><li>Build attestation coverage</li>
-                            </ul>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <strong>⏱️ Timeline:</strong> 3-4 weeks
-                        </div>
-                    </div>
-                
-                    <div class="goal-card">
-                        <h4>📊 Compliance Requirements</h4>
-                        <p>slsa-level-3</p>
-                        <div class="success-indicator">
-                            Compliance framework integration planned
-                        </div>
-                    </div>
-                </div>
+            <div id="goals-output">
+                <!-- Goals will be generated here -->
+            </div>
         </div>
         
-        <div id="action-planner" class="tab-content active">
+        <!-- Action Planner Tab -->
+        <div id="action-planner" class="tab-content">
             <h2>📋 Action Planner</h2>
             <p>Step-by-step implementation plan for integrating in-toto into your CI/CD pipeline.</p>
             
@@ -446,7 +474,7 @@ deploy</textarea>
                 
                 <div class="form-group">
                     <label for="key-management">Key Management Strategy:</label>
-                    <select id="key-management">
+                    <select id="key-management" onchange="showKeyManagementContent()">
                         <option value="file-based">File-based keys</option>
                         <option value="hsm">Hardware Security Module (HSM)</option>
                         <option value="cloud-kms">Cloud Key Management Service</option>
@@ -454,158 +482,157 @@ deploy</textarea>
                     </select>
                 </div>
                 
+                <div class="key-management-content" id="key-management-content" style="display: none;">
+                    <p>Configure your key management system:</p>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-rotation">
+                        <label for="key-rotation">Enable automatic key rotation</label>
+                    </div>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-access-control">
+                        <label for="key-access-control">Implement strict access control</label>
+                    </div>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-audit">
+                        <label for="key-audit">Enable key usage auditing</label>
+                    </div>
+                </div>
+                
                 <button onclick="generateActionPlan()">📋 Generate Action Plan</button>
             </div>
             
-            <div class="action-container" id="action-plan-output"><h3>📋 Implementation Action Plan</h3>
-                    <div class="action-step">
-                        <h4>Environment Preparation</h4>
-                        <p>Set up development environment for in-toto integration</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Install in-toto CLI tools</li><li>Configure key management system</li><li>Set up secure storage for attestations</li><li>Install required dependencies</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 1-2 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Administrative access to CI/CD environment</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Key Management Setup</h4>
-                        <p>Configure file-based for cryptographic operations</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Generate RSA/ECDSA key pairs</li><li>Secure key storage configuration</li><li>Key backup and recovery procedures</li><li>Access control implementation</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 2-3 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Security team coordination</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Layout Definition</h4>
-                        <p>Create in-toto layout defining the supply chain</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Define functionary roles and responsibilities</li><li>Specify inspection points</li><li>Configure artifact rules</li><li>Set up verification policies</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 3-5 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Complete pipeline analysis</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>github-actions Integration</h4>
-                        <p>Integrate in-toto with github-actions pipeline</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Create in-toto GitHub Actions</li><li>Configure workflow files</li><li>Set up secret management</li><li>Test integration points</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 5-7 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Layout definition complete</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Attestation Implementation</h4>
-                        <p>Implement attestation generation and verification</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Configure link generation</li><li>Set up attestation storage</li><li>Implement verification checks</li><li>Test attestation chain</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 3-4 days</div>
-                            <div><strong>📋 Prerequisites:</strong> CI/CD integration complete</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Policy Enforcement</h4>
-                        <p>Implement security policies and enforcement</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Define security policies</li><li>Configure automated checks</li><li>Set up violation handling</li><li>Test policy enforcement</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 2-3 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Attestation system operational</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Monitoring and Alerting</h4>
-                        <p>Set up monitoring for the in-toto system</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>Configure attestation monitoring</li><li>Set up verification alerts</li><li>Implement dashboard views</li><li>Test alerting mechanisms</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 2-3 days</div>
-                            <div><strong>📋 Prerequisites:</strong> Policy enforcement active</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                    <div class="action-step">
-                        <h4>Testing and Validation</h4>
-                        <p>Comprehensive testing of the integrated system</p>
-                        <div style="margin-top: 15px;">
-                            <strong>Tasks:</strong>
-                            <ul style="margin-top: 5px;">
-                                <li>End-to-end pipeline testing</li><li>Security penetration testing</li><li>Performance impact assessment</li><li>Documentation and training</li>
-                            </ul>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
-                            <div><strong>⏱️ Duration:</strong> 5-7 days</div>
-                            <div><strong>📋 Prerequisites:</strong> All components implemented</div>
-                        </div>
-                        <div class="error-handling">
-                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
-                        </div>
-                    </div>
-                
-                <div class="success-indicator">
-                    <strong>🎉 Success Criteria:</strong> All pipeline steps generate valid attestations, 
-                    verification passes consistently, and security policies are enforced automatically.
+            <div class="action-container" id="action-plan-output">
+                <!-- Action plan will be generated here -->
+            </div>
+        </div>
+        
+        <!-- Domain Configuration Tab -->
+        <div id="domain-config" class="tab-content">
+            <h2>🌐 Domain Configuration</h2>
+            <p>Configure domain-specific settings for your in-toto implementation.</p>
+            
+            <div class="config-section">
+                <h3>Domain Selection</h3>
+                <div class="form-group">
+                    <label for="domain-type">Domain Type:</label>
+                    <select id="domain-type" onchange="showDomainContent()">
+                        <option value="general">General</option>
+                        <option value="financial">Financial</option>
+                        <option value="military">Military</option>
+                        <option value="legacy">Legacy Systems</option>
+                    </select>
                 </div>
+            </div>
+            
+            <!-- General Domain Content -->
+            <div class="domain-content" id="general-content" style="display: block;">
+                <h3>General Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="general-compliance">Compliance Frameworks:</label>
+                    <select id="general-compliance" multiple size="5">
+                        <option value="soc2">SOC2</option>
+                        <option value="gdpr">GDPR</option>
+                        <option value="hipaa">HIPAA</option>
+                        <option value="iso-27001">ISO 27001</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="general-tools">CI/CD Tools:</label>
+                    <select id="general-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="github-actions">GitHub Actions</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Financial Domain Content -->
+            <div class="domain-content" id="financial-content" style="display: none;">
+                <h3>Financial Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="financial-compliance">Compliance Frameworks:</label>
+                    <select id="financial-compliance" multiple size="5">
+                        <option value="pci-dss">PCI-DSS</option>
+                        <option value="sox">SOX</option>
+                        <option value="glba">GLBA</option>
+                        <option value="ffiec">FFIEC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="financial-tools">CI/CD Tools:</label>
+                    <select id="financial-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="travis">Travis CI</option>
+                        <option value="bitbucket">Bitbucket Pipelines</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Military Domain Content -->
+            <div class="domain-content" id="military-content" style="display: none;">
+                <h3>Military Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="military-compliance">Compliance Frameworks:</label>
+                    <select id="military-compliance" multiple size="5">
+                        <option value="nist-800-53">NIST 800-53</option>
+                        <option value="disa-stig">DISA STIG</option>
+                        <option value="dfars">DFARS</option>
+                        <option value="cmmc-1.0">CMMC 1.0</option>
+                        <option value="cmmc-2.0">CMMC 2.0</option>
+                        <option value="itar">ITAR</option>
+                        <option value="ear">EAR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="military-tools">CI/CD Tools:</label>
+                    <select id="military-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="azure-devops">Azure DevOps</option>
+                        <option value="aws-codepipeline">AWS CodePipeline</option>
+                        <option value="teamcity">TeamCity</option>
+                        <option value="bamboo">Bamboo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Legacy Systems Content -->
+            <div class="domain-content" id="legacy-content" style="display: none;">
+                <h3>Legacy Systems Configuration</h3>
+                <div class="form-group">
+                    <label for="legacy-systems">Legacy Systems:</label>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="mainframe">
+                        <label for="mainframe">Mainframe Systems</label>
+                    </div>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="cobol">
+                        <label for="cobol">COBOL Applications</label>
+                    </div>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="hp-nonstop">
+                        <label for="hp-nonstop">HP NonStop</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="legacy-tools">CI/CD Tools:</label>
+                    <select id="legacy-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="github-actions">GitHub Actions</option>
+                        <option value="azure-devops">Azure DevOps</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="generateDomainPlan()">🚀 Generate Domain Plan</button>
+            
+            <div id="domain-plan-output">
+                <!-- Domain plan will be generated here -->
             </div>
         </div>
     </div>
@@ -623,6 +650,7 @@ deploy</textarea>
 
         let currentPipeline = [];
         let intotoSteps = {};
+        let domainConfig = {};
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -744,7 +772,7 @@ deploy</textarea>
 
         function generateGoals() {
             const selectedGoals = Array.from(document.getElementById('security-goals').selectedOptions).map(option => option.value);
-            const compliance = document.getElementById('compliance-requirements').value;
+            const compliance = Array.from(document.getElementById('compliance-requirements').selectedOptions).map(option => option.value);
             
             const goalDefinitions = {
                 'cryptographic-signing': {
@@ -807,11 +835,13 @@ deploy</textarea>
                 `;
             });
             
-            if (compliance) {
+            if (compliance.length > 0) {
                 html += `
                     <div class="goal-card">
                         <h4>📊 Compliance Requirements</h4>
-                        <p>${compliance}</p>
+                        <ul>
+                            ${compliance.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
                         <div class="success-indicator">
                             Compliance framework integration planned
                         </div>
@@ -820,6 +850,17 @@ deploy</textarea>
             }
             
             goalsOutput.innerHTML = html;
+        }
+
+        function showKeyManagementContent() {
+            const keyManagement = document.getElementById('key-management').value;
+            const keyManagementContent = document.getElementById('key-management-content');
+            
+            if (keyManagement === 'file-based' || keyManagement === 'hsm' || keyManagement === 'cloud-kms' || keyManagement === 'hashicorp-vault') {
+                keyManagementContent.style.display = 'block';
+            } else {
+                keyManagementContent.style.display = 'none';
+            }
         }
 
         function generateActionPlan() {
@@ -971,11 +1012,78 @@ deploy</textarea>
             outputDiv.innerHTML = html;
         }
 
+        function showDomainContent() {
+            const domainType = document.getElementById('domain-type').value;
+            
+            document.getElementById('general-content').style.display = domainType === 'general' ? 'block' : 'none';
+            document.getElementById('financial-content').style.display = domainType === 'financial' ? 'block' : 'none';
+            document.getElementById('military-content').style.display = domainType === 'military' ? 'block' : 'none';
+            document.getElementById('legacy-content').style.display = domainType === 'legacy' ? 'block' : 'none';
+        }
+
+        function generateDomainPlan() {
+            const domainType = document.getElementById('domain-type').value;
+            let html = '';
+            
+            if (domainType === 'general') {
+                const compliance = Array.from(document.getElementById('general-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('general-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>General Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with selected frameworks.
+                    </div>
+                `;
+            } else if (domainType === 'financial') {
+                const compliance = Array.from(document.getElementById('financial-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('financial-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Financial Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with financial regulations.
+                    </div>
+                `;
+            } else if (domainType === 'military') {
+                const compliance = Array.from(document.getElementById('military-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('military-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Military Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with military security standards.
+                    </div>
+                `;
+            } else if (domainType === 'legacy') {
+                const systems = Array.from(document.querySelectorAll('#legacy-content input[type="checkbox"]:checked')).map(checkbox => checkbox.nextElementSibling.textContent);
+                const tools = Array.from(document.getElementById('legacy-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Legacy Systems Plan</h3>
+                    <p><strong>Legacy Systems:</strong> ${systems.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> Legacy systems are integrated into modern CI/CD pipeline without compromising security.
+                    </div>
+                `;
+            }
+            
+            document.getElementById('domain-plan-output').innerHTML = html;
+        }
+
         // Initialize with default values
         document.addEventListener('DOMContentLoaded', function() {
             updatePipelineVisualization();
             generateDigitalTwin();
+            showKeyManagementContent();
         });
     </script>
-
-<div class="mermaidTooltip" style="opacity: 0;"></div></body></html>
+</body>
+</html>
