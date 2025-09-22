@@ -6,15 +6,15 @@
 #
 attrs==25.3.0
     # via -r requirements.txt
-cffi==1.17.1
+cffi==2.0.0
     # via cryptography
-cryptography==45.0.5
+cryptography==46.0.1
     # via securesystemslib
 iso8601==2.1.0
     # via -r requirements.txt
 pathspec==0.12.1
     # via -r requirements.txt
-pycparser==2.22
+pycparser==2.23
     # via cffi
 python-dateutil==2.9.0.post0
     # via -r requirements.txt
