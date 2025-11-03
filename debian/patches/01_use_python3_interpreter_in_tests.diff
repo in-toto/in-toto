@@ -73,15 +73,15 @@ Index: in-toto-1.2.0/tests/test_in_toto_run.py
  
        # Make sure the link file to be generated doesn't already exist
        self.assertFalse(os.path.exists(link_path))
-@@ -189,7 +189,7 @@ class TestInTotoRunTool(CliTestCase, Tmp
-     """Test CLI command with specified gpg key. """
-     args = ["-n", self.test_step,
-             "--gpg", self.gpg_key_85da58,
--            "--gpg-home", self.gnupg_home, "--", "python", "--version"]
-+            "--gpg-home", self.gnupg_home, "--", "python3", "--version"]
- 
-     self.assert_cli_sys_exit(args, 0)
-     link_filename = FILENAME_FORMAT.format(step_name=self.test_step,
+@@ -172,7 +172,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
+             "--gpg-home",
+             self.gnupg_home,
+             "--",
+-            "python",
++            "python3",
+             "--version",
+         ]
+
 @@ -201,7 +201,7 @@ class TestInTotoRunTool(CliTestCase, Tmp
    def test_main_with_default_gpg_key(self):
      """Test CLI command with default gpg key. """
