@@ -51,7 +51,7 @@ from in_toto.runlib import (
     in_toto_run,
     record_artifacts_as_dict,
 )
-from tests.common import SignerStore, TmpDirMixin
+from tests.common import SignerStore, TmpDirMixin, VersionedPython
 
 
 def _apply_exclude_patterns(names, patterns):
@@ -731,7 +731,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -739,7 +739,9 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     def test_in_toto_run_no_signature(self):
         """Successfully run, verify empty signature field."""
-        link = in_toto_run(self.step_name, None, None, ["python", "--version"])
+        link = in_toto_run(
+            self.step_name, None, None, [VersionedPython, "--version"]
+        )
         self.assertFalse(len(link.signatures))
 
     def test_in_toto_run_with_byproduct(self):
@@ -748,7 +750,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_streams=True,
         )
 
@@ -768,7 +770,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_streams=False,
         )
         self.assertFalse(len(link.signed.byproducts.get("stdout")))
@@ -779,7 +781,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -798,7 +800,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             metadata_directory=tmp_dir,
@@ -820,7 +822,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             metadata_directory=tmp_dir,
@@ -837,7 +839,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -856,7 +858,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
         )
         self.assertEqual(
             list(link.signed.materials.keys()),
@@ -870,7 +872,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [],
             [],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_environment=True,
         )
         self.assertEqual(
@@ -894,7 +896,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 paths,
                 paths,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 normalize_line_endings=True,
             ).signed
 
@@ -915,7 +917,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 "this-is-not-a-key",
             )
@@ -927,7 +929,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory="nonexistentDir",
@@ -944,7 +946,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory=path,
@@ -962,7 +964,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory=tmp_dir,
@@ -976,7 +978,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             use_dsse=True,
