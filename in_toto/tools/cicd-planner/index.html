@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>in-toto CI/CD Integration Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .tab:hover::before {
+            left: 100%;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .visualization-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .goal-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transform: translateX(-10px);
+            opacity: 0;
+            animation: slideInRight 0.5s ease forwards;
+        }
+        
+        .goal-card:nth-child(even) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            animation-delay: 0.1s;
+        }
+        
+        .goal-card:nth-child(3n) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            animation-delay: 0.2s;
+        }
+        
+        @keyframes slideInRight {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .action-step {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .action-step:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .action-step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .action-container {
+            counter-reset: step-counter;
+            margin-left: 20px;
+        }
+        
+        .pipeline-step {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pipeline-step:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        
+        .step-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .error-handling {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .success-indicator {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .domain-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .domain-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin: 5px;
+        }
+        
+        .key-management-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .key-type {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .key-type input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        .legacy-systems-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .legacy-system {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .legacy-system input[type="checkbox"] {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 in-toto CI/CD Integration Planner</h1>
+            <p>Secure your software supply chain with comprehensive pipeline integration</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('digital-twin')">
+                📊 Digital Twin
+            </div>
+            <div class="tab" onclick="switchTab('goal-architect')">
+                🎯 Goal Architect
+            </div>
+            <div class="tab" onclick="switchTab('action-planner')">
+                📋 Action Planner
+            </div>
+            <div class="tab" onclick="switchTab('domain-config')">
+                🌐 Domain Configuration
+            </div>
+        </div>
+        
+        <!-- Digital Twin Tab -->
+        <div id="digital-twin" class="tab-content active">
+            <h2>🔬 Digital Twin Pipeline Visualization</h2>
+            <p>Create an interactive representation of your CI/CD pipeline with in-toto integration points.</p>
+            
+            <div class="config-section">
+                <h3>Pipeline Configuration</h3>
+                <div class="form-group">
+                    <label for="cicd-tool">CI/CD Tool:</label>
+                    <select id="cicd-tool" onchange="updatePipelineVisualization()">
+                        <option value="github-actions">GitHub Actions</option>
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab-ci">GitLab CI</option>
+                        <option value="azure-devops">Azure DevOps</option>
+                        <option value="circleci">CircleCI</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pipeline-steps">Pipeline Steps (one per line):</label>
+                    <textarea id="pipeline-steps" rows="6" placeholder="checkout
+build
+test
+security-scan
+package
+deploy" onchange="updatePipelineVisualization()">checkout
+build
+test
+security-scan
+package
+deploy</textarea>
+                </div>
+                
+                <button onclick="generateDigitalTwin()">🔄 Generate Digital Twin</button>
+            </div>
+            
+            <div class="visualization-container">
+                <div id="pipeline-diagram"></div>
+            </div>
+            
+            <div class="step-details" id="step-details" style="display: none;">
+                <h4>Step Details</h4>
+                <div id="step-info"></div>
+            </div>
+        </div>
+        
+        <!-- Goal Architect Tab -->
+        <div id="goal-architect" class="tab-content">
+            <h2>🎯 Goal Architect</h2>
+            <p>Define clear, measurable objectives for your in-toto integration.</p>
+            
+            <div class="config-section">
+                <h3>Integration Objectives</h3>
+                <div class="form-group">
+                    <label for="security-goals">Security Goals:</label>
+                    <select id="security-goals" multiple size="6">
+                        <option value="cryptographic-signing" selected>Cryptographic signing of all artifacts</option>
+                        <option value="build-verification" selected>Build step verification</option>
+                        <option value="supply-chain-attestation">Supply chain attestation</option>
+                        <option value="dependency-tracking">Dependency tracking</option>
+                        <option value="provenance-generation">Provenance generation</option>
+                        <option value="policy-enforcement">Policy enforcement</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="compliance-requirements">Compliance Requirements:</label>
+                    <select id="compliance-requirements" multiple size="8">
+                        <option value="slsa-level-3">SLSA Level 3</option>
+                        <option value="soc2">SOC2</option>
+                        <option value="iso-27001">ISO 27001</option>
+                        <option value="cmmc-1.0">CMMC 1.0</option>
+                        <option value="cmmc-2.0">CMMC 2.0</option>
+                        <option value="pci-dss">PCI-DSS</option>
+                        <option value="sox">SOX</option>
+                        <option value="disa-stig">DISA STIG</option>
+                    </select>
+                </div>
+                
+                <button onclick="generateGoals()">🎯 Generate Goal Architecture</button>
+            </div>
+            
+            <div id="goals-output">
+                <!-- Goals will be generated here -->
+            </div>
+        </div>
+        
+        <!-- Action Planner Tab -->
+        <div id="action-planner" class="tab-content">
+            <h2>📋 Action Planner</h2>
+            <p>Step-by-step implementation plan for integrating in-toto into your CI/CD pipeline.</p>
+            
+            <div class="config-section">
+                <h3>Implementation Configuration</h3>
+                <div class="form-group">
+                    <label for="environment">Target Environment:</label>
+                    <select id="environment">
+                        <option value="development">Development</option>
+                        <option value="staging">Staging</option>
+                        <option value="production">Production</option>
+                        <option value="all">All Environments</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="key-management">Key Management Strategy:</label>
+                    <select id="key-management" onchange="showKeyManagementContent()">
+                        <option value="file-based">File-based keys</option>
+                        <option value="hsm">Hardware Security Module (HSM)</option>
+                        <option value="cloud-kms">Cloud Key Management Service</option>
+                        <option value="hashicorp-vault">HashiCorp Vault</option>
+                    </select>
+                </div>
+                
+                <div class="key-management-content" id="key-management-content" style="display: none;">
+                    <p>Configure your key management system:</p>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-rotation">
+                        <label for="key-rotation">Enable automatic key rotation</label>
+                    </div>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-access-control">
+                        <label for="key-access-control">Implement strict access control</label>
+                    </div>
+                    <div class="key-type">
+                        <input type="checkbox" id="key-audit">
+                        <label for="key-audit">Enable key usage auditing</label>
+                    </div>
+                </div>
+                
+                <button onclick="generateActionPlan()">📋 Generate Action Plan</button>
+            </div>
+            
+            <div class="action-container" id="action-plan-output">
+                <!-- Action plan will be generated here -->
+            </div>
+        </div>
+        
+        <!-- Domain Configuration Tab -->
+        <div id="domain-config" class="tab-content">
+            <h2>🌐 Domain Configuration</h2>
+            <p>Configure domain-specific settings for your in-toto implementation.</p>
+            
+            <div class="config-section">
+                <h3>Domain Selection</h3>
+                <div class="form-group">
+                    <label for="domain-type">Domain Type:</label>
+                    <select id="domain-type" onchange="showDomainContent()">
+                        <option value="general">General</option>
+                        <option value="financial">Financial</option>
+                        <option value="military">Military</option>
+                        <option value="legacy">Legacy Systems</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- General Domain Content -->
+            <div class="domain-content" id="general-content" style="display: block;">
+                <h3>General Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="general-compliance">Compliance Frameworks:</label>
+                    <select id="general-compliance" multiple size="5">
+                        <option value="soc2">SOC2</option>
+                        <option value="gdpr">GDPR</option>
+                        <option value="hipaa">HIPAA</option>
+                        <option value="iso-27001">ISO 27001</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="general-tools">CI/CD Tools:</label>
+                    <select id="general-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="github-actions">GitHub Actions</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Financial Domain Content -->
+            <div class="domain-content" id="financial-content" style="display: none;">
+                <h3>Financial Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="financial-compliance">Compliance Frameworks:</label>
+                    <select id="financial-compliance" multiple size="5">
+                        <option value="pci-dss">PCI-DSS</option>
+                        <option value="sox">SOX</option>
+                        <option value="glba">GLBA</option>
+                        <option value="ffiec">FFIEC</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="financial-tools">CI/CD Tools:</label>
+                    <select id="financial-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="travis">Travis CI</option>
+                        <option value="bitbucket">Bitbucket Pipelines</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Military Domain Content -->
+            <div class="domain-content" id="military-content" style="display: none;">
+                <h3>Military Domain Configuration</h3>
+                <div class="form-group">
+                    <label for="military-compliance">Compliance Frameworks:</label>
+                    <select id="military-compliance" multiple size="5">
+                        <option value="nist-800-53">NIST 800-53</option>
+                        <option value="disa-stig">DISA STIG</option>
+                        <option value="dfars">DFARS</option>
+                        <option value="cmmc-1.0">CMMC 1.0</option>
+                        <option value="cmmc-2.0">CMMC 2.0</option>
+                        <option value="itar">ITAR</option>
+                        <option value="ear">EAR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="military-tools">CI/CD Tools:</label>
+                    <select id="military-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="azure-devops">Azure DevOps</option>
+                        <option value="aws-codepipeline">AWS CodePipeline</option>
+                        <option value="teamcity">TeamCity</option>
+                        <option value="bamboo">Bamboo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Legacy Systems Content -->
+            <div class="domain-content" id="legacy-content" style="display: none;">
+                <h3>Legacy Systems Configuration</h3>
+                <div class="form-group">
+                    <label for="legacy-systems">Legacy Systems:</label>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="mainframe">
+                        <label for="mainframe">Mainframe Systems</label>
+                    </div>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="cobol">
+                        <label for="cobol">COBOL Applications</label>
+                    </div>
+                    <div class="legacy-system">
+                        <input type="checkbox" id="hp-nonstop">
+                        <label for="hp-nonstop">HP NonStop</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="legacy-tools">CI/CD Tools:</label>
+                    <select id="legacy-tools" multiple size="5">
+                        <option value="jenkins">Jenkins</option>
+                        <option value="gitlab">GitLab CI/CD</option>
+                        <option value="circleci">CircleCI</option>
+                        <option value="github-actions">GitHub Actions</option>
+                        <option value="azure-devops">Azure DevOps</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="generateDomainPlan()">🚀 Generate Domain Plan</button>
+            
+            <div id="domain-plan-output">
+                <!-- Domain plan will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        let currentPipeline = [];
+        let intotoSteps = {};
+        let domainConfig = {};
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function updatePipelineVisualization() {
+            const steps = document.getElementById('pipeline-steps').value.split('\n').filter(s => s.trim());
+            currentPipeline = steps;
+            
+            // Define in-toto integration points for each step
+            intotoSteps = {
+                'checkout': {
+                    description: 'Source code retrieval with provenance tracking',
+                    intotoActions: ['Record source metadata', 'Verify repository integrity', 'Generate checkout attestation'],
+                    errorHandling: 'Fallback to secure checkout verification'
+                },
+                'build': {
+                    description: 'Compilation with cryptographic signing',
+                    intotoActions: ['Sign build inputs', 'Record build environment', 'Sign build outputs'],
+                    errorHandling: 'Retry build with clean environment'
+                },
+                'test': {
+                    description: 'Testing with result attestation',
+                    intotoActions: ['Sign test inputs', 'Record test results', 'Generate test attestation'],
+                    errorHandling: 'Mark build as failed if tests cannot be verified'
+                },
+                'security-scan': {
+                    description: 'Security scanning with vulnerability tracking',
+                    intotoActions: ['Sign scan inputs', 'Record scan results', 'Generate security attestation'],
+                    errorHandling: 'Block deployment if scan verification fails'
+                },
+                'package': {
+                    description: 'Artifact packaging with signing',
+                    intotoActions: ['Sign package inputs', 'Generate package attestation', 'Sign final artifacts'],
+                    errorHandling: 'Regenerate package if signing fails'
+                },
+                'deploy': {
+                    description: 'Deployment with final verification',
+                    intotoActions: ['Verify all previous attestations', 'Generate deployment record', 'Final policy check'],
+                    errorHandling: 'Rollback deployment if verification fails'
+                }
+            };
+        }
+
+        function generateDigitalTwin() {
+            const tool = document.getElementById('cicd-tool').value;
+            const steps = currentPipeline;
+            
+            let mermaidCode = `graph TD\n`;
+            mermaidCode += `    Start([🚀 Pipeline Start]) --> A[${steps[0]}]\n`;
+            
+            for (let i = 0; i < steps.length - 1; i++) {
+                const current = steps[i];
+                const next = steps[i + 1];
+                mermaidCode += `    A${i}[${current}] --> B${i}[🔒 in-toto: ${current}]\n`;
+                mermaidCode += `    B${i} --> A${i + 1}[${next}]\n`;
+            }
+            
+            const lastIndex = steps.length - 1;
+            mermaidCode += `    A${lastIndex}[${steps[lastIndex]}] --> B${lastIndex}[🔒 in-toto: ${steps[lastIndex]}]\n`;
+            mermaidCode += `    B${lastIndex} --> End([✅ Pipeline Complete])\n`;
+            
+            // Add styling
+            mermaidCode += `    classDef intotoStep fill:#e1f5fe,stroke:#01579b,stroke-width:2px\n`;
+            mermaidCode += `    classDef pipelineStep fill:#f3e5f5,stroke:#4a148c,stroke-width:2px\n`;
+            
+            for (let i = 0; i < steps.length; i++) {
+                mermaidCode += `    class B${i} intotoStep\n`;
+                mermaidCode += `    class A${i} pipelineStep\n`;
+            }
+
+            document.getElementById('pipeline-diagram').innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
+            mermaid.init(undefined, document.querySelector('#pipeline-diagram .mermaid'));
+            
+            // Add click handlers for interactive elements
+            setTimeout(() => {
+                addClickHandlers();
+            }, 1000);
+        }
+
+        function addClickHandlers() {
+            const stepElements = document.querySelectorAll('#pipeline-diagram .node');
+            stepElements.forEach(element => {
+                element.style.cursor = 'pointer';
+                element.addEventListener('click', function() {
+                    const stepText = this.textContent;
+                    showStepDetails(stepText);
+                });
+            });
+        }
+
+        function showStepDetails(stepText) {
+            const stepName = stepText.replace('🔒 in-toto: ', '').toLowerCase().replace(/[^a-z-]/g, '');
+            const stepInfo = intotoSteps[stepName];
+            
+            if (stepInfo) {
+                const detailsDiv = document.getElementById('step-details');
+                const infoDiv = document.getElementById('step-info');
+                
+                infoDiv.innerHTML = `
+                    <h5>📋 ${stepText}</h5>
+                    <p><strong>Description:</strong> ${stepInfo.description}</p>
+                    <p><strong>in-toto Actions:</strong></p>
+                    <ul>
+                        ${stepInfo.intotoActions.map(action => `<li>${action}</li>`).join('')}
+                    </ul>
+                    <div class="error-handling">
+                        <strong>⚠️ Error Handling:</strong> ${stepInfo.errorHandling}
+                    </div>
+                `;
+                
+                detailsDiv.style.display = 'block';
+            }
+        }
+
+        function generateGoals() {
+            const selectedGoals = Array.from(document.getElementById('security-goals').selectedOptions).map(option => option.value);
+            const compliance = Array.from(document.getElementById('compliance-requirements').selectedOptions).map(option => option.value);
+            
+            const goalDefinitions = {
+                'cryptographic-signing': {
+                    title: '🔐 Cryptographic Signing',
+                    description: 'Ensure all artifacts are cryptographically signed',
+                    metrics: ['100% of artifacts signed', 'Key rotation every 90 days', 'Multi-signature for critical releases'],
+                    timeline: '2-3 weeks'
+                },
+                'build-verification': {
+                    title: '🏗️ Build Verification',
+                    description: 'Verify the integrity of build processes',
+                    metrics: ['Build reproducibility >95%', 'Environment consistency checks', 'Build attestation coverage'],
+                    timeline: '3-4 weeks'
+                },
+                'supply-chain-attestation': {
+                    title: '🔗 Supply Chain Attestation',
+                    description: 'Generate and verify supply chain attestations',
+                    metrics: ['End-to-end attestation chain', 'Dependency provenance tracking', 'Third-party verification'],
+                    timeline: '4-6 weeks'
+                },
+                'dependency-tracking': {
+                    title: '📦 Dependency Tracking',
+                    description: 'Track and verify all dependencies',
+                    metrics: ['100% dependency visibility', 'Vulnerability scanning integration', 'License compliance'],
+                    timeline: '2-3 weeks'
+                },
+                'provenance-generation': {
+                    title: '📜 Provenance Generation',
+                    description: 'Generate comprehensive provenance information',
+                    metrics: ['SLSA provenance compliance', 'Build environment recording', 'Artifact lineage tracking'],
+                    timeline: '3-4 weeks'
+                },
+                'policy-enforcement': {
+                    title: '📋 Policy Enforcement',
+                    description: 'Enforce security policies throughout the pipeline',
+                    metrics: ['Policy compliance rate >99%', 'Automated policy checks', 'Exception handling process'],
+                    timeline: '4-5 weeks'
+                }
+            };
+            
+            const goalsOutput = document.getElementById('goals-output');
+            let html = '<h3>🎯 Defined Goals</h3>';
+            
+            selectedGoals.forEach(goal => {
+                const goalDef = goalDefinitions[goal];
+                html += `
+                    <div class="goal-card">
+                        <h4>${goalDef.title}</h4>
+                        <p>${goalDef.description}</p>
+                        <div style="margin-top: 15px;">
+                            <strong>Success Metrics:</strong>
+                            <ul style="margin-top: 5px;">
+                                ${goalDef.metrics.map(metric => `<li>${metric}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <strong>⏱️ Timeline:</strong> ${goalDef.timeline}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (compliance.length > 0) {
+                html += `
+                    <div class="goal-card">
+                        <h4>📊 Compliance Requirements</h4>
+                        <ul>
+                            ${compliance.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                        <div class="success-indicator">
+                            Compliance framework integration planned
+                        </div>
+                    </div>
+                `;
+            }
+            
+            goalsOutput.innerHTML = html;
+        }
+
+        function showKeyManagementContent() {
+            const keyManagement = document.getElementById('key-management').value;
+            const keyManagementContent = document.getElementById('key-management-content');
+            
+            if (keyManagement === 'file-based' || keyManagement === 'hsm' || keyManagement === 'cloud-kms' || keyManagement === 'hashicorp-vault') {
+                keyManagementContent.style.display = 'block';
+            } else {
+                keyManagementContent.style.display = 'none';
+            }
+        }
+
+        function generateActionPlan() {
+            const environment = document.getElementById('environment').value;
+            const keyManagement = document.getElementById('key-management').value;
+            const tool = document.getElementById('cicd-tool').value;
+            
+            const actionSteps = [
+                {
+                    title: 'Environment Preparation',
+                    description: `Set up ${environment} environment for in-toto integration`,
+                    tasks: [
+                        'Install in-toto CLI tools',
+                        'Configure key management system',
+                        'Set up secure storage for attestations',
+                        'Install required dependencies'
+                    ],
+                    duration: '1-2 days',
+                    prerequisites: 'Administrative access to CI/CD environment'
+                },
+                {
+                    title: 'Key Management Setup',
+                    description: `Configure ${keyManagement} for cryptographic operations`,
+                    tasks: keyManagement === 'file-based' ? [
+                        'Generate RSA/ECDSA key pairs',
+                        'Secure key storage configuration',
+                        'Key backup and recovery procedures',
+                        'Access control implementation'
+                    ] : [
+                        'Configure cloud/HSM key management',
+                        'Set up key rotation policies',
+                        'Implement access controls',
+                        'Test key operations'
+                    ],
+                    duration: '2-3 days',
+                    prerequisites: 'Security team coordination'
+                },
+                {
+                    title: 'Layout Definition',
+                    description: 'Create in-toto layout defining the supply chain',
+                    tasks: [
+                        'Define functionary roles and responsibilities',
+                        'Specify inspection points',
+                        'Configure artifact rules',
+                        'Set up verification policies'
+                    ],
+                    duration: '3-5 days',
+                    prerequisites: 'Complete pipeline analysis'
+                },
+                {
+                    title: `${tool} Integration`,
+                    description: `Integrate in-toto with ${tool} pipeline`,
+                    tasks: tool === 'github-actions' ? [
+                        'Create in-toto GitHub Actions',
+                        'Configure workflow files',
+                        'Set up secret management',
+                        'Test integration points'
+                    ] : [
+                        'Install in-toto plugins',
+                        'Configure pipeline scripts',
+                        'Set up credential management',
+                        'Test integration points'
+                    ],
+                    duration: '5-7 days',
+                    prerequisites: 'Layout definition complete'
+                },
+                {
+                    title: 'Attestation Implementation',
+                    description: 'Implement attestation generation and verification',
+                    tasks: [
+                        'Configure link generation',
+                        'Set up attestation storage',
+                        'Implement verification checks',
+                        'Test attestation chain'
+                    ],
+                    duration: '3-4 days',
+                    prerequisites: 'CI/CD integration complete'
+                },
+                {
+                    title: 'Policy Enforcement',
+                    description: 'Implement security policies and enforcement',
+                    tasks: [
+                        'Define security policies',
+                        'Configure automated checks',
+                        'Set up violation handling',
+                        'Test policy enforcement'
+                    ],
+                    duration: '2-3 days',
+                    prerequisites: 'Attestation system operational'
+                },
+                {
+                    title: 'Monitoring and Alerting',
+                    description: 'Set up monitoring for the in-toto system',
+                    tasks: [
+                        'Configure attestation monitoring',
+                        'Set up verification alerts',
+                        'Implement dashboard views',
+                        'Test alerting mechanisms'
+                    ],
+                    duration: '2-3 days',
+                    prerequisites: 'Policy enforcement active'
+                },
+                {
+                    title: 'Testing and Validation',
+                    description: 'Comprehensive testing of the integrated system',
+                    tasks: [
+                        'End-to-end pipeline testing',
+                        'Security penetration testing',
+                        'Performance impact assessment',
+                        'Documentation and training'
+                    ],
+                    duration: '5-7 days',
+                    prerequisites: 'All components implemented'
+                }
+            ];
+            
+            const outputDiv = document.getElementById('action-plan-output');
+            let html = '<h3>📋 Implementation Action Plan</h3>';
+            
+            actionSteps.forEach(step => {
+                html += `
+                    <div class="action-step">
+                        <h4>${step.title}</h4>
+                        <p>${step.description}</p>
+                        <div style="margin-top: 15px;">
+                            <strong>Tasks:</strong>
+                            <ul style="margin-top: 5px;">
+                                ${step.tasks.map(task => `<li>${task}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center;">
+                            <div><strong>⏱️ Duration:</strong> ${step.duration}</div>
+                            <div><strong>📋 Prerequisites:</strong> ${step.prerequisites}</div>
+                        </div>
+                        <div class="error-handling">
+                            <strong>⚠️ Contingency:</strong> If issues arise, pause implementation and review configuration with security team.
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="success-indicator">
+                    <strong>🎉 Success Criteria:</strong> All pipeline steps generate valid attestations, 
+                    verification passes consistently, and security policies are enforced automatically.
+                </div>
+            `;
+            
+            outputDiv.innerHTML = html;
+        }
+
+        function showDomainContent() {
+            const domainType = document.getElementById('domain-type').value;
+            
+            document.getElementById('general-content').style.display = domainType === 'general' ? 'block' : 'none';
+            document.getElementById('financial-content').style.display = domainType === 'financial' ? 'block' : 'none';
+            document.getElementById('military-content').style.display = domainType === 'military' ? 'block' : 'none';
+            document.getElementById('legacy-content').style.display = domainType === 'legacy' ? 'block' : 'none';
+        }
+
+        function generateDomainPlan() {
+            const domainType = document.getElementById('domain-type').value;
+            let html = '';
+            
+            if (domainType === 'general') {
+                const compliance = Array.from(document.getElementById('general-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('general-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>General Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with selected frameworks.
+                    </div>
+                `;
+            } else if (domainType === 'financial') {
+                const compliance = Array.from(document.getElementById('financial-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('financial-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Financial Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with financial regulations.
+                    </div>
+                `;
+            } else if (domainType === 'military') {
+                const compliance = Array.from(document.getElementById('military-compliance').selectedOptions).map(option => option.value);
+                const tools = Array.from(document.getElementById('military-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Military Domain Plan</h3>
+                    <p><strong>Compliance Frameworks:</strong> ${compliance.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> All pipeline steps generate valid attestations and comply with military security standards.
+                    </div>
+                `;
+            } else if (domainType === 'legacy') {
+                const systems = Array.from(document.querySelectorAll('#legacy-content input[type="checkbox"]:checked')).map(checkbox => checkbox.nextElementSibling.textContent);
+                const tools = Array.from(document.getElementById('legacy-tools').selectedOptions).map(option => option.value);
+                
+                html = `
+                    <h3>Legacy Systems Plan</h3>
+                    <p><strong>Legacy Systems:</strong> ${systems.join(', ')}</p>
+                    <p><strong>CI/CD Tools:</strong> ${tools.join(', ')}</p>
+                    <div class="success-indicator">
+                        <strong>Success Criteria:</strong> Legacy systems are integrated into modern CI/CD pipeline without compromising security.
+                    </div>
+                `;
+            }
+            
+            document.getElementById('domain-plan-output').innerHTML = html;
+        }
+
+        // Initialize with default values
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePipelineVisualization();
+            generateDigitalTwin();
+            showKeyManagementContent();
+        });
+    </script>
+</body>
+</html>
