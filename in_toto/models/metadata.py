@@ -422,8 +422,8 @@ class Metablock(Metadata, ValidationMixin):
 
         if not isinstance(self.signed, (Layout, Link)):
             raise securesystemslib.exceptions.FormatError(
-                "The Metblock's 'signed'"
-                " property has has to be of type 'Link' or 'Layout'."
+                "The Metablock's 'signed'"
+                " property has to be of type 'Link' or 'Layout'."
             )
 
         # If the signed object is a Link or Layout object validate it.
