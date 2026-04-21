@@ -29,7 +29,13 @@ from unittest import mock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock, Metadata
-from tests.common import PEMS, CliTestCase, GPGKeysMixin, TmpDirMixin
+from tests.common import (
+    PEMS,
+    CliTestCase,
+    GPGKeysMixin,
+    TmpDirMixin,
+    VersionedPython,
+)
 
 
 class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
@@ -71,7 +77,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--signing-key",
             self.rsa_key_path,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -92,7 +98,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.test_artifact,
             "--record-streams",
         ]
-        positional_args = ["--", "python", "--version"]
+        positional_args = ["--", VersionedPython, "--version"]
 
         # Test and assert recorded artifacts
         args1 = named_args + positional_args
@@ -152,7 +158,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--metadata-directory",
             tmp_dir,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -172,7 +178,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--gpg-home",
             self.gnupg_home,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -192,7 +198,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--gpg-home",
             self.gnupg_home,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -345,7 +351,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.rsa_key_path,
             "--use-dsse",
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -367,7 +373,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--record-streams",
             "--use-dsse",
         ]
-        positional_args = ["--", "python", "--version"]
+        positional_args = ["--", VersionedPython, "--version"]
 
         # Test and assert recorded artifacts
         args1 = named_args + positional_args
@@ -419,7 +425,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.gnupg_home,
             "--use-dsse",
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -451,7 +457,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--signing-key",
             self.rsa_key_path,
             "--",
-            "python",
+            VersionedPython,
             "--badParameter",
         ]
 

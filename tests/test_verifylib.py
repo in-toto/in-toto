@@ -73,7 +73,7 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
-from tests.common import GPGKeysMixin, SignerStore, TmpDirMixin
+from tests.common import GPGKeysMixin, SignerStore, TmpDirMixin, VersionedPython
 
 
 class TestRaiseOnBadRetval(unittest.TestCase):
@@ -123,7 +123,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
                     {
                         "name": "touch-bar",
                         "run": [
-                            "python",
+                            VersionedPython,
                             os.path.join(scripts_directory, "touch"),
                             "bar",
                         ],
@@ -168,7 +168,13 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
                 "inspect": [
                     {
                         "name": "non-zero-inspection",
-                        "run": ["python", "./scripts/expr", "1", "/", "0"],
+                        "run": [
+                            VersionedPython,
+                            "./scripts/expr",
+                            "1",
+                            "/",
+                            "0",
+                        ],
                     }
                 ],
             }
@@ -989,7 +995,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump layout with failing inspection retval
         layout = copy.deepcopy(layout_template)
         layout.signed.inspect[0].run = [
-            "python",
+            VersionedPython,
             "./scripts/expr",
             "1",
             "/",

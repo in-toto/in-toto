@@ -44,6 +44,8 @@ from in_toto.models._signer import load_public_key_from_file as load_pubkey
 
 PEMS = Path(__file__).parent / "pems"
 
+VersionedPython = sys.executable
+
 
 class SignerStore:
     """CryptoSigner and public key (dict) store for sign/verify tests."""
