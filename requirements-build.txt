@@ -1,2 +1,2 @@
-build==1.4.0
+build==1.4.2
 hatchling==1.28.0
