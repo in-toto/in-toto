@@ -396,6 +396,43 @@ class TestVerifyRule(unittest.TestCase):
                 f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
+    def test_verify_allow_rule_negation_character_class(self):
+        """Test verify_allow_rule with negation in character class pattern."""
+        # Pattern 'ba[!r]foo' should match 'baxfoo', 'bazfoo', but not 'barfoo'
+        pattern = "ba[!r]foo"
+        queue = {"baxfoo", "bazfoo", "barfoo", "other"}
+        expected = {"baxfoo", "bazfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
+
+        # Test how the alternative negation character is handled.
+        # The caret does not negate.
+        pattern = "ba[^xr]foo"
+        queue = {"ba^foo", "baxfoo", "bazfoo", "barfoo", "other"}
+        expected = {"ba^foo", "baxfoo", "barfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
+
+        # Test how caret is handled with a range inside character class.
+        # The range is respected and ^ is treated as an additional character.
+        pattern = "ba[^a-z]foo"
+        queue = {"ba^foo", "ba-foo", "barfoo", "bazfoo", "other"}
+        expected = {"ba^foo", "barfoo", "bazfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
+
     def test_verify_disallow_rule(self):
         """Test verifylib.verify_disallow_rule."""
         test_data_keys = ["rule pattern", "artifact queue"]
