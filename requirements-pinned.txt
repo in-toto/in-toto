@@ -8,11 +8,11 @@ attrs==26.1.0
     # via -r requirements.txt
 cffi==2.0.0
     # via cryptography
-cryptography==46.0.7
+cryptography==48.0.0
     # via securesystemslib
 iso8601==2.1.0
     # via -r requirements.txt
-pathspec==1.0.4
+pathspec==1.1.1
     # via -r requirements.txt
 pycparser==2.23
     # via cffi
