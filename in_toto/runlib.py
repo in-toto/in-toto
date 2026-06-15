@@ -194,7 +194,13 @@ def record_artifacts_as_dict(  # noqa: PLR0913, PLR0917, RUF100
     # because the left-prefix duplicate check in FileResolver only works for the
     # artifacts hashed in one batch.
     for resolver, uris in resolver_for_uris.items():
-        artifact_hashes.update(resolver.hash_artifacts(uris))
+        batch = resolver.hash_artifacts(uris)
+        duplicates = set(batch.keys()) & set(artifact_hashes.keys())
+        if duplicates:
+            raise in_toto.exceptions.ArtifactCollisionError(
+                f"Artifact URI collision detected across resolvers: {duplicates}"
+            )
+        artifact_hashes.update(batch)
 
     # Clear resolvers to not preserve global state change beyond this function.
     # FIXME: This also clears resolver registered elsewhere. For now we
@@ -496,7 +502,8 @@ def in_toto_run(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF
 
     securesystemslib.exceptions.StorageError: Cannot hash artifacts.
 
-    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+    ArtifactCollisionError: Artifact URIs collide, either as a result of
+    left-stripping artifact paths or across resolver batches.
 
     subprocess.TimeoutExpired: Link command times out.
 
@@ -691,7 +698,8 @@ def in_toto_record_start(  # noqa: PLR0913, PLR0917, RUF100
 
     securesystemslib.exceptions.StorageError: Cannot hash artifacts.
 
-    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+    ArtifactCollisionError: Artifact URIs collide, either as a result of
+    left-stripping artifact paths or across resolver batches.
 
     subprocess.TimeoutExpired: Link command times out.
 
@@ -879,7 +887,8 @@ def in_toto_record_stop(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0
 
     securesystemslib.exceptions.StorageError: Cannot hash artifacts.
 
-    PrefixError: Left-stripping artifact paths results in non-unique dict keys.
+    ArtifactCollisionError: Artifact URIs collide, either as a result of
+    left-stripping artifact paths or across resolver batches.
 
     subprocess.TimeoutExpired: Link command times out.
 

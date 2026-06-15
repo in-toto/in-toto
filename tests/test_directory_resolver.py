@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from in_toto.exceptions import PrefixError
+from in_toto.exceptions import ArtifactCollisionError
 from in_toto.resolver import DirectoryResolver
 
 
@@ -80,7 +80,7 @@ class TestDirectoryResolver(unittest.TestCase):
 
         resolver = DirectoryResolver(lstrip_paths=lstrip_paths)
 
-        with self.assertRaises(PrefixError):
+        with self.assertRaises(ArtifactCollisionError):
             resolver.hash_artifacts(uris)
 
     def test_directory_with_exclude(self):

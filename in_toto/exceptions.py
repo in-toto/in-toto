@@ -39,5 +39,10 @@ class PrefixError(Error):
     """Indicates that there is an error because of the prefixes passed."""
 
 
+class ArtifactCollisionError(Error):
+    """Raised when artifact URIs collide across resolver batches or as a
+    result of path manipulation (e.g. lstrip_paths)."""
+
+
 class InvalidMetadata(Error):  # noqa: N818
     """Indicates that the metadata is not valid."""
