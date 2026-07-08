@@ -140,66 +140,69 @@ class FileResolver(Resolver):
     def hash_artifacts(self, uris):  # noqa: C901
         hashes = {}
 
+        original_cwd = None
         if self._base_path:
             original_cwd = os.getcwd()
             os.chdir(self._base_path)
 
-        for path in uris:
-            # Remove scheme prefix, but preserver to re-add later (see _mangle)
-            path, prefix = self._strip_scheme_prefix(path)  # noqa: PLW2901
+        try:
+            for path in uris:
+                # Remove scheme prefix, but preserver to re-add later (_mangle)
+                path, prefix = self._strip_scheme_prefix(path)  # noqa: PLW2901
 
-            # Normalize URI before filtering and returning them
-            # FIXME: Is this expected behavior? Does this make exclude patterns
-            # with slashes platform-dependent? Check how 'gitwildmatch' treats
-            # dots and slashes!
-            path = normpath(path)  # noqa: PLW2901
+                # Normalize URI before filtering and returning them
+                # FIXME: Is this expected behavior? Does this make exclude
+                # patterns with slashes platform-dependent? Check how
+                # 'gitwildmatch' treats dots and slashes!
+                path = normpath(path)  # noqa: PLW2901
 
-            if self._exclude(path):
-                continue
+                if self._exclude(path):
+                    continue
 
-            if not exists(path):
-                logger.info("path: %s does not exist, skipping..", path)
-                continue
+                if not exists(path):
+                    logger.info("path: %s does not exist, skipping..", path)
+                    continue
 
-            if isfile(path):
-                name = self._mangle(path, hashes, prefix)
-                hashes[name] = self._hash(path)
+                if isfile(path):
+                    name = self._mangle(path, hashes, prefix)
+                    hashes[name] = self._hash(path)
 
-            if isdir(path):
-                for base, dirs, names in os.walk(
-                    path, followlinks=self._follow_symlink_dirs
-                ):
-                    # Filter directories to avoid unnecessary recursion below
-                    # NOTE: Normalize to filter on directory paths without
-                    # their dot-slash prefix, if path was dot.
-                    dirs[:] = [
-                        dirname
-                        for dirname in dirs
-                        if not self._exclude(normpath(join(base, dirname)))
-                    ]
+                if isdir(path):
+                    for base, dirs, names in os.walk(
+                        path, followlinks=self._follow_symlink_dirs
+                    ):
+                        # Filter directories to avoid unnecessary recursion
+                        # NOTE: Normalize to filter on directory paths without
+                        # their dot-slash prefix, if path was dot.
+                        dirs[:] = [
+                            dirname
+                            for dirname in dirs
+                            if not self._exclude(normpath(join(base, dirname)))
+                        ]
 
-                    for filename in names:
-                        # NOTE: Normalize to filter on and return file paths
-                        # without their dot-slash prefix, if path was dot.
-                        filepath = normpath(join(base, filename))
+                        for filename in names:
+                            # NOTE: Normalize to filter on and return file paths
+                            # without their dot-slash prefix, if path was dot.
+                            filepath = normpath(join(base, filename))
 
-                        if self._exclude(filepath):
-                            continue
+                            if self._exclude(filepath):
+                                continue
 
-                        if not isfile(filepath):
-                            logger.info(
-                                "File '%s' appears to be a broken symlink. "
-                                "Skipping...",
-                                filepath,
-                            )
-                            continue
+                            if not isfile(filepath):
+                                logger.info(
+                                    "File '%s' appears to be a broken symlink. "
+                                    "Skipping...",
+                                    filepath,
+                                )
+                                continue
 
-                        name = self._mangle(filepath, hashes, prefix)
-                        hashes[name] = self._hash(filepath)
+                            name = self._mangle(filepath, hashes, prefix)
+                            hashes[name] = self._hash(filepath)
 
-        # Change back to original current working dir
-        if self._base_path:
-            os.chdir(original_cwd)
+        finally:
+            # Change back to original current working dir
+            if original_cwd is not None:
+                os.chdir(original_cwd)
 
         return hashes
 
@@ -246,18 +249,21 @@ class OSTreeResolver(Resolver):
     def hash_artifacts(self, uris):
         hashes = {}
 
+        original_cwd = None
         if self._base_path:
             original_cwd = os.getcwd()
             os.chdir(self._base_path)
 
-        for path in uris:
-            # Remove scheme prefix, but preserver to re-add later
-            path = self._strip_scheme_prefix(path)  # noqa: PLW2901
-            hashes[self._add_scheme_prefix(path)] = self._hash(path)
+        try:
+            for path in uris:
+                # Remove scheme prefix, but preserver to re-add later
+                path = self._strip_scheme_prefix(path)  # noqa: PLW2901
+                hashes[self._add_scheme_prefix(path)] = self._hash(path)
 
-        # Change back to original current working dir
-        if self._base_path:
-            os.chdir(original_cwd)
+        finally:
+            # Change back to original current working dir
+            if original_cwd is not None:
+                os.chdir(original_cwd)
 
         return hashes
 

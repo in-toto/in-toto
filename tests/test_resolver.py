@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from in_toto.exceptions import PrefixError
 from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
 from in_toto.resolver._resolver import _hash_file
 from tests.common import TmpDirMixin
@@ -105,6 +106,16 @@ class TestFileResolver(TmpDirMixin, unittest.TestCase):
             resolver = FileResolver(**kwargs)
             result = resolver.hash_artifacts(uris)
             self.assertEqual(result.keys(), expected_keys)
+
+    def test_hash_artifacts_base_path_cwd_restored_on_error(self):
+        """cwd must be restored even if hashing raises with a base_path set."""
+        # lstrip_paths that map two distinct artifacts to the same name make
+        # _mangle raise PrefixError partway through hashing.
+        resolver = FileResolver(base_path="bar", lstrip_paths=["baz", "foo"])
+        original_cwd = os.getcwd()
+        with self.assertRaises(PrefixError):
+            resolver.hash_artifacts({"baz", "foo"})
+        self.assertEqual(os.getcwd(), original_cwd)
 
 
 if __name__ == "__main__":
