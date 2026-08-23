@@ -334,8 +334,15 @@ class DirectoryResolver(Resolver):
         text_repr = ""
         keys = list(file_hashes.keys())
         if keys:
-            locale.setlocale(locale.LC_ALL, "C")
-            keys.sort(key=cmp_to_key(locale.strcoll))
+            # Sort under the C locale to match the documented shell
+            # equivalent, then put the caller's locale back: setlocale is
+            # process wide and in-toto is also used as a library.
+            previous_locale = locale.setlocale(locale.LC_ALL)
+            try:
+                locale.setlocale(locale.LC_ALL, "C")
+                keys.sort(key=cmp_to_key(locale.strcoll))
+            finally:
+                locale.setlocale(locale.LC_ALL, previous_locale)
 
             text_repr = "\n".join(
                 [f"{file_hashes[k][_HASH_ALGORITHM]}  {k}" for k in keys]
