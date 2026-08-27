@@ -83,7 +83,7 @@ class Metadata:
           A Metadata containing a Link or Layout object.
 
         """
-        with open(path, "r", encoding="utf8") as fp:
+        with open(path, encoding="utf8") as fp:
             data = json.load(fp)
 
         return cls.from_dict(data)
@@ -266,7 +266,7 @@ class Metablock(Metadata, ValidationMixin):
 
         """
         with open(path, "wb") as fp:
-            fp.write("{}".format(self).encode("utf-8"))
+            fp.write(f"{self}".encode())
 
     @classmethod
     def from_dict(cls, data):
@@ -336,7 +336,7 @@ class Metablock(Metadata, ValidationMixin):
       The signature.
 
     """
-        signature = securesystemslib._gpg.functions.create_signature(  # pylint: disable=protected-access
+        signature = securesystemslib._gpg.functions.create_signature(  # noqa: SLF001
             self.signed.signable_bytes, gpg_keyid, gpg_home
         )
 
@@ -385,12 +385,12 @@ class Metablock(Metadata, ValidationMixin):
 
         else:
             raise SignatureVerificationError(
-                "No signature found for key '{}'".format(verification_keyid)
+                f"No signature found for key '{verification_keyid}'"
             )
 
         valid = False
         if "signature" in signature and "other_headers" in signature:
-            valid = securesystemslib._gpg.functions.verify_signature(  # pylint: disable=protected-access
+            valid = securesystemslib._gpg.functions.verify_signature(  # noqa: SLF001
                 signature, verification_key, self.signed.signable_bytes
             )
 
@@ -413,7 +413,7 @@ class Metablock(Metadata, ValidationMixin):
 
         if not valid:
             raise SignatureVerificationError(
-                "Invalid signature for keyid '{}'".format(verification_keyid)
+                f"Invalid signature for keyid '{verification_keyid}'"
             )
 
     def _validate_signed(self):

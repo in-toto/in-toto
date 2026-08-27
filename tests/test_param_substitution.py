@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -22,6 +20,7 @@
   layer is to be removed.
 
 """
+
 import unittest
 
 from securesystemslib.exceptions import FormatError

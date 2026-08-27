@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -20,7 +18,6 @@
   Test verifylib functions.
 
 """
-# pylint: disable=protected-access
 
 import copy
 import glob
@@ -76,7 +73,7 @@ from in_toto.verifylib import (
     verify_sublayouts,
     verify_threshold_constraints,
 )
-from tests.common import GPGKeysMixin, SignerStore, TmpDirMixin
+from tests.common import GPGKeysMixin, SignerStore, TmpDirMixin, VersionedPython
 
 
 class TestRaiseOnBadRetval(unittest.TestCase):
@@ -109,7 +106,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
     @classmethod
     def setUpClass(cls):
         """
-        Create layout with dummy inpsection.
+        Create layout with dummy inspection.
         Create and change into temp test directory with dummy artifact."""
 
         # find where the scripts directory is located.
@@ -126,7 +123,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
                     {
                         "name": "touch-bar",
                         "run": [
-                            "python",
+                            VersionedPython,
                             os.path.join(scripts_directory, "touch"),
                             "bar",
                         ],
@@ -156,7 +153,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         link = Metablock.load("touch-bar.link")
         self.assertListEqual(list(link.signed.materials.keys()), ["foo"])
         self.assertListEqual(
-            sorted(list(link.signed.products.keys())), sorted(["foo", "bar"])
+            sorted(link.signed.products.keys()), sorted(["foo", "bar"])
         )
 
         in_toto.settings.ARTIFACT_BASE_PATH = None
@@ -171,7 +168,13 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
                 "inspect": [
                     {
                         "name": "non-zero-inspection",
-                        "run": ["python", "./scripts/expr", "1", "/", "0"],
+                        "run": [
+                            VersionedPython,
+                            "./scripts/expr",
+                            "1",
+                            "/",
+                            "0",
+                        ],
                     }
                 ],
             }
@@ -186,7 +189,7 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         run_all_inspections(self.layout, False)
         self.assertFalse(os.path.exists("touch-bar.link"))
 
-    def test_inspeciton_persistence_true(self):
+    def test_inspection_persistence_true(self):
         run_all_inspections(self.layout, True)
         self.assertTrue(os.path.exists("touch-bar.link"))
 
@@ -261,7 +264,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_create_rule(self):
@@ -295,7 +298,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_modify_rule(self):
@@ -366,7 +369,7 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
 
     def test_verify_allow_rule(self):
@@ -390,8 +393,45 @@ class TestVerifyRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "test {}: {}".format(i, dict(zip(test_data_keys, test_data))),
+                f"test {i}: {dict(zip(test_data_keys, test_data))}",
             )
+
+    def test_verify_allow_rule_negation_character_class(self):
+        """Test verify_allow_rule with negation in character class pattern."""
+        # Pattern 'ba[!r]foo' should match 'baxfoo', 'bazfoo', but not 'barfoo'
+        pattern = "ba[!r]foo"
+        queue = {"baxfoo", "bazfoo", "barfoo", "other"}
+        expected = {"baxfoo", "bazfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
+
+        # Test how the alternative negation character is handled.
+        # The caret does not negate.
+        pattern = "ba[^xr]foo"
+        queue = {"ba^foo", "baxfoo", "bazfoo", "barfoo", "other"}
+        expected = {"ba^foo", "baxfoo", "barfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
+
+        # Test how caret is handled with a range inside character class.
+        # The range is respected and ^ is treated as an additional character.
+        pattern = "ba[^a-z]foo"
+        queue = {"ba^foo", "ba-foo", "barfoo", "bazfoo", "other"}
+        expected = {"ba^foo", "barfoo", "bazfoo"}
+        result = verify_allow_rule(pattern, queue)
+        self.assertSetEqual(
+            result,
+            expected,
+            f"Negation character class pattern failed: pattern={pattern}, queue={queue}",
+        )
 
     def test_verify_disallow_rule(self):
         """Test verifylib.verify_disallow_rule."""
@@ -410,7 +450,7 @@ class TestVerifyRule(unittest.TestCase):
         for i, test_data in enumerate(test_cases):
             pattern, queue, should_raise = test_data
 
-            msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+            msg = f"test {i}: {dict(zip(test_data_keys, test_data))}"
             exception = None
 
             try:
@@ -419,10 +459,10 @@ class TestVerifyRule(unittest.TestCase):
                 exception = e
 
             if should_raise and not exception:
-                self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+                self.fail(f"Expected 'RuleVerificationError'\n{msg}")
 
             if exception and not should_raise:
-                self.fail("Unexpected {}\n{}".format(exception, msg))
+                self.fail(f"Unexpected {exception}\n{msg}")
 
     def test_verify_require_rule(self):
         """Test verifylib.verify_require_rule."""
@@ -435,13 +475,12 @@ class TestVerifyRule(unittest.TestCase):
             # A pattern is passed, which should be interpreted *literally*
             ["*", {"*"}, False],
             ["*", {"foo"}, True],
-            #
         ]
 
         for i, test_data in enumerate(test_cases):
             pattern, queue, should_raise = test_data
 
-            msg = "test {}: {}".format(i, dict(zip(test_data_keys, test_data)))
+            msg = f"test {i}: {dict(zip(test_data_keys, test_data))}"
             exception = None
 
             try:
@@ -450,10 +489,10 @@ class TestVerifyRule(unittest.TestCase):
                 exception = e
 
             if should_raise and not exception:
-                self.fail("Expected 'RuleVerificationError'\n{}".format(msg))
+                self.fail(f"Expected 'RuleVerificationError'\n{msg}")
 
             if exception and not should_raise:
-                self.fail("Unexpected {}\n{}".format(exception, msg))
+                self.fail(f"Unexpected {exception}\n{msg}")
 
 
 class TestVerifyMatchRule(unittest.TestCase):
@@ -705,9 +744,7 @@ class TestVerifyMatchRule(unittest.TestCase):
             self.assertSetEqual(
                 result,
                 expected,
-                "'result': {}\n test {}: {}, 'links':{}".format(
-                    result, i, dict(zip(test_data_keys, test_data)), self.links
-                ),
+                f"'result': {result}\n test {i}: {dict(zip(test_data_keys, test_data))}, 'links':{self.links}",
             )
 
 
@@ -889,7 +926,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # noqa: PLR0915
         """Creates and changes into temporary directory.
         Copies demo files to temp dir...
           - owner/functionary key pairs
@@ -899,7 +936,6 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
 
         ...and dumps various layouts for different test scenarios
         """
-        # pylint: disable=too-many-statements
 
         # Find demo files
         demo_files = os.path.join(
@@ -974,7 +1010,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump expired layout
         layout = copy.deepcopy(layout_template)
         layout.signed.expires = (
-            datetime.today() + relativedelta(months=-1)
+            datetime.today() + relativedelta(months=-1)  # noqa: DTZ002
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
         layout.create_signature(alice)
         layout.dump(cls.layout_expired_path)
@@ -996,7 +1032,7 @@ class TestInTotoVerify(unittest.TestCase, TmpDirMixin):
         # dump layout with failing inspection retval
         layout = copy.deepcopy(layout_template)
         layout.signed.inspect[0].run = [
-            "python",
+            VersionedPython,
             "./scripts/expr",
             "1",
             "/",
@@ -1625,7 +1661,7 @@ class TestInTotoVerifyMultiLevelSublayouts(unittest.TestCase, TmpDirMixin):
         root_layout.create_signature(keys["alice_priv"])
 
         # Sublayout (first level)
-        # The first level sublayout wil be treated as a link from the
+        # The first level sublayout will be treated as a link from the
         # superlayout's perspective and loaded from the current working directory.
         # The link for the only step of this sublayout will be placed in a
         # namespaced subdir, that link itself is a sublayout (subsublayout).

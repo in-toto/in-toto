@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -31,7 +29,13 @@ from unittest import mock
 from in_toto.in_toto_run import main as in_toto_run_main
 from in_toto.models.link import FILENAME_FORMAT
 from in_toto.models.metadata import Metablock, Metadata
-from tests.common import PEMS, CliTestCase, GPGKeysMixin, TmpDirMixin
+from tests.common import (
+    PEMS,
+    CliTestCase,
+    GPGKeysMixin,
+    TmpDirMixin,
+    VersionedPython,
+)
 
 
 class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
@@ -73,7 +77,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--signing-key",
             self.rsa_key_path,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -94,7 +98,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.test_artifact,
             "--record-streams",
         ]
-        positional_args = ["--", "python", "--version"]
+        positional_args = ["--", VersionedPython, "--version"]
 
         # Test and assert recorded artifacts
         args1 = named_args + positional_args
@@ -107,7 +111,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.test_artifact in list(link_metadata.signed.products.keys())
         )
 
-        # Test and assert exlcuded artifacts
+        # Test and assert excluded artifacts
         args2 = named_args + ["--exclude", "*test*"] + positional_args
         self.assert_cli_sys_exit(args2, 0)
         link_metadata = Metablock.load(self.test_link_rsa)
@@ -154,7 +158,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--metadata-directory",
             tmp_dir,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -174,7 +178,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--gpg-home",
             self.gnupg_home,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -194,7 +198,7 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--gpg-home",
             self.gnupg_home,
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -347,7 +351,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.rsa_key_path,
             "--use-dsse",
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -369,7 +373,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             "--record-streams",
             "--use-dsse",
         ]
-        positional_args = ["--", "python", "--version"]
+        positional_args = ["--", VersionedPython, "--version"]
 
         # Test and assert recorded artifacts
         args1 = named_args + positional_args
@@ -379,7 +383,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
         self.assertTrue(self.test_artifact in list(link.materials.keys()))
         self.assertTrue(self.test_artifact in list(link.products.keys()))
 
-        # Test and assert exlcuded artifacts
+        # Test and assert excluded artifacts
         args2 = named_args + ["--exclude", "*test*"] + positional_args
         self.assert_cli_sys_exit(args2, 0)
         link = Metadata.load(self.test_link_rsa).get_payload()
@@ -421,7 +425,7 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.gnupg_home,
             "--use-dsse",
             "--",
-            "python",
+            VersionedPython,
             "--version",
         ]
 
@@ -444,8 +448,24 @@ class TestInTotoRunToolWithDSSE(CliTestCase, TmpDirMixin, GPGKeysMixin):
 
         self.assertTrue(os.path.exists(self.test_link_rsa))
 
+    def test_main_failed_command(self):
+        """Test CLI command that returns a failure passes the code back."""
+
+        args = [
+            "--step-name",
+            self.test_step,
+            "--signing-key",
+            self.rsa_key_path,
+            "--",
+            VersionedPython,
+            "--badParameter",
+        ]
+
+        self.assert_cli_sys_exit(args, 2)
+        self.assertTrue(os.path.exists(self.test_link_rsa))
+
     def test_pkcs8_signing_key(self):
-        """Test in-totqo-run, sign link with pkcs8 key file for each algo."""
+        """Test in-toto-run, sign link with pkcs8 key file for each algo."""
         args = ["-n", "foo", "-x", "--use-dsse", "--signing-key"]
         for algo, short_keyid in [
             ("rsa", "2f685fa7"),

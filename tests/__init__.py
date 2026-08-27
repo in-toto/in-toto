@@ -1,13 +1,11 @@
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
-"""Test in-toto. """
+"""Test in-toto."""
 
 import logging
 import sys
 
 import in_toto
-
-# pylint: disable=protected-access
 
 
 class CapturableStreamHandler(logging.StreamHandler):

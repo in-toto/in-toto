@@ -19,6 +19,7 @@
   Helpers to validate API inputs and metadata model objects.
 
 """
+
 from copy import deepcopy
 from re import fullmatch
 

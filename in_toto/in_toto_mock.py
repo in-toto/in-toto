@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -25,6 +23,7 @@
   0 if no exception occurred
 
 """
+
 import argparse
 import logging
 import sys
@@ -62,22 +61,20 @@ quickly generate link metadata, inspect it and sign it retroactively.
 
     parser.usage = "%(prog)s [-h] --name <name> -- <command> [args]"
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Generate unsigned link metadata 'foo.link' for the activity of creating file
 'bar', inspect it, and sign it with 'mykey'
 
   # Generate unsigned link
-  {prog} --name foo -- touch bar
+  {parser.prog} --name foo -- touch bar
   # Inspect and/or update unsigned link metadata
   vi foo.link
   # Sign the link, attesting to its validity, and write it to
   # 'foo.<mykey keyid prefix>.link'.
   in-toto-sign -k mykey -f foo.link
 
-""".format(
-        prog=parser.prog
-    )
+"""
 
     named_args = parser.add_argument_group("required named arguments")
 
@@ -112,7 +109,7 @@ Generate unsigned link metadata 'foo.link' for the activity of creating file
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     title_case_action_groups(parser)
@@ -133,12 +130,8 @@ def main():
     try:
         in_toto.runlib.in_toto_mock(args.name, args.link_cmd, args.use_dsse)
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # noqa: BLE001
         LOG.error("(in-toto-mock) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
     sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

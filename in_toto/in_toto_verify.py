@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -25,6 +23,7 @@
   0 if no exception occurred (verification passed)
 
 """
+
 import argparse
 import logging
 import sys
@@ -92,34 +91,32 @@ The command returns 2 if it is called with wrong arguments, 1 if in-toto
 verification fails and 0 if verification passes. """,
     )
 
-    parser.usage = "%(prog)s <named arguments> [{}]".format(OPTS_TITLE.lower())
+    parser.usage = f"%(prog)s <named arguments> [{OPTS_TITLE.lower()}]"
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Verify supply chain in 'root.layout', signed with private part of
 'key_file.pub'.
 
-  {prog} --layout root.layout --verification-keys key_file.pub
+  {parser.prog} --layout root.layout --verification-keys key_file.pub
 
 
 Verify supply chain as above but load links corresponding to steps of
 'root.layout' from 'link_dir'.
 
-  {prog} --layout root.layout --verification-keys key_file.pub \\
+  {parser.prog} --layout root.layout --verification-keys key_file.pub \\
       --link-dir link_dir
 
 
 Verify supply chain in 'root.layout', signed with GPG key '...7E0C8A17',
 for which the public part can be found in the GPG keyring at '~/.gnupg'.
 
-  {prog} --layout root.layout \\
+  {parser.prog} --layout root.layout \\
       --gpg 8465A1E2E0FB2B40ADB2478E18FB3F537E0C8A17 \\
       --gpg-home ~/.gnupg
 
 
-""".format(
-        prog=parser.prog
-    )
+"""
 
     named_args = parser.add_argument_group("required named arguments")
 
@@ -185,9 +182,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
         help=(
             "integer that represents the max timeout in seconds for the "
             "   in-toto-verify command for inspect subprocess."
-            "   Default is '{timeout}' seconds.".format(
-                timeout=LINK_CMD_EXEC_TIMEOUT
-            )
+            f"   Default is '{LINK_CMD_EXEC_TIMEOUT}' seconds."
         ),
     )
 
@@ -198,7 +193,7 @@ for which the public part can be found in the GPG keyring at '~/.gnupg'.
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     title_case_action_groups(parser)
@@ -245,12 +240,8 @@ def main():
             inspect_timeout=args.inspect_timeout,
         )
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # noqa: BLE001
         LOG.error("(in-toto-verify) %s: %s", type(e).__name__, e)
         sys.exit(1)
 
     sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

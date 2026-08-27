@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding=utf-8
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -21,8 +18,8 @@
   Test runlib functions.
 
 """
-# pylint: disable=protected-access
 
+import contextlib
 import os
 import shutil
 import stat
@@ -54,7 +51,7 @@ from in_toto.runlib import (
     in_toto_run,
     record_artifacts_as_dict,
 )
-from tests.common import SignerStore, TmpDirMixin
+from tests.common import SignerStore, TmpDirMixin, VersionedPython
 
 
 def _apply_exclude_patterns(names, patterns):
@@ -116,10 +113,8 @@ class TestApplyExcludePatterns(unittest.TestCase):
         self.assertListEqual(result, expected)
 
 
-class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
+class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):  # noqa: PLR0904, RUF100
     """Test record_artifacts_as_dict(artifacts)."""
-
-    # pylint: disable=too-many-public-methods
 
     @classmethod
     def setUpClass(cls):
@@ -166,7 +161,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         in_toto.settings.ARTIFACT_BASE_PATH = cls.artifact_base_path_orig
 
     def tearDown(self):
-        """Clear the ARTIFACT_EXLCUDES after every test."""
+        """Clear the ARTIFACT_EXCLUDES after every test."""
         in_toto.settings.ARTIFACT_EXCLUDE_PATTERNS = []
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
@@ -190,15 +185,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
         in_toto.settings.ARTIFACT_BASE_PATH = base_path
         artifacts_dict = record_artifacts_as_dict(["."])
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
         artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_base_path_is_parent_dir(self):
         """Test path of recorded artifacts and cd back with parent as base."""
@@ -210,15 +201,11 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
         in_toto.settings.ARTIFACT_BASE_PATH = base_path
         artifacts_dict = record_artifacts_as_dict(["."])
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
         in_toto.settings.ARTIFACT_BASE_PATH = None
 
         artifacts_dict = record_artifacts_as_dict(["."], base_path=base_path)
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
         os.chdir(self.test_dir)
 
@@ -237,9 +224,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["."], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_substring_prefix_directory(self):
         lstrip_paths = ["subdir/subsubdir/", "subdir/"]
@@ -271,9 +256,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["."], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_valid_prefix_file(self):
         lstrip_paths = ["subdir/subsubdir/"]
@@ -281,9 +264,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         artifacts_dict = record_artifacts_as_dict(
             ["./subdir/subsubdir/foosubsub"], lstrip_paths=lstrip_paths
         )
-        self.assertListEqual(
-            sorted(list(artifacts_dict.keys())), expected_artifacts
-        )
+        self.assertListEqual(sorted(artifacts_dict.keys()), expected_artifacts)
 
     def test_lstrip_paths_non_unique_key_file(self):
         os.mkdir("subdir/subsubdir_new")
@@ -315,7 +296,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ["./ಠ/"], lstrip_paths=lstrip_paths
             )
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())), expected_artifacts
+                sorted(artifacts_dict.keys()), expected_artifacts
             )
             os.remove(path)
             os.rmdir("ಠ")
@@ -339,7 +320,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             _check_hash_dict(val)
 
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list),
         )
 
@@ -348,7 +329,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         """If the platform is Windows, raises an error that asks the user if
         developer mode is activated."""
         if os.name == "nt":
-            raise IOError(
+            raise OSError(
                 "Developer mode is required to work with symlinks on "
                 "Windows. Is it enabled?"
             )
@@ -372,7 +353,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             # level as the link (target)
             try:
                 os.symlink(os.path.basename(pair[0]), pair[1])
-            except IOError:
+            except OSError:
                 TestRecordArtifactsAsDict._raise_win_dev_mode_error()
                 raise
 
@@ -385,7 +366,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
             # Test that everything was recorded ...
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())),
+                sorted(artifacts_dict.keys()),
                 sorted(
                     self.full_file_path_list + [pair[1] for pair in link_pairs]
                 ),
@@ -418,7 +399,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         for link in links:
             try:
                 os.symlink("does/not/exist", link)
-            except IOError:
+            except OSError:
                 TestRecordArtifactsAsDict._raise_win_dev_mode_error()
                 raise
 
@@ -431,7 +412,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
             # Test only the files were recorded ...
             self.assertListEqual(
-                sorted(list(artifacts_dict.keys())),
+                sorted(artifacts_dict.keys()),
                 sorted(self.full_file_path_list),
             )
 
@@ -448,7 +429,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         try:
             # Link to subdir
             os.symlink("subdir", "subdir_link")
-        except IOError:
+        except OSError:
             TestRecordArtifactsAsDict._raise_win_dev_mode_error()
             raise
 
@@ -464,7 +445,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         )
         # Test that all files were recorded including files in linked subdir ...
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list + [pair[1] for pair in link_pairs]),
         )
 
@@ -477,7 +458,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
         # Record with follow_symlink_dirs FALSE (default)
         artifacts_dict = record_artifacts_as_dict(["."])
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(self.full_file_path_list),
         )
 
@@ -491,7 +472,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             _check_hash_dict(val)
 
         self.assertListEqual(
-            sorted(list(artifacts_dict.keys())),
+            sorted(artifacts_dict.keys()),
             sorted(
                 [
                     "foo",
@@ -561,7 +542,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ["foo", "bar", "#esc!", "subdir/foosub1", "subdir/foosub2"],
             ),
             (
-                ["\#esc*"],  # pylint: disable=W1401
+                ["\\#esc*"],
                 [
                     "foo",
                     "bar",
@@ -571,7 +552,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
                 ],
             ),
             (
-                ["*esc\!"],  # pylint: disable=W1401
+                ["*esc\\!"],
                 [
                     "foo",
                     "bar",
@@ -605,8 +586,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
             )
 
             self.assertTrue(
-                sorted(list(artifacts1))
-                == sorted(list(artifacts2))
+                sorted(artifacts1)
+                == sorted(artifacts2)
                 == sorted(expected_results)
             )
 
@@ -655,12 +636,12 @@ class TestSubprocess(unittest.TestCase):
         stdout_fd, stdout_fn = tempfile.mkstemp()
         stderr_fd, stderr_fn = tempfile.mkstemp()
         with (
-            open(  # pylint: disable=unspecified-encoding
-                stdout_fn, "r"
+            open(  # noqa: PLW1514, RUF100
+                stdout_fn
             ) as fake_stdout_reader,
             os.fdopen(stdout_fd, "w") as fake_stdout_writer,
-            open(  # pylint: disable=unspecified-encoding
-                stderr_fn, "r"
+            open(  # noqa: PLW1514, RUF100
+                stderr_fn
             ) as fake_stderr_reader,
             os.fdopen(stderr_fd, "w") as fake_stderr_writer,
         ):
@@ -710,7 +691,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
     """ "
     Tests runlib.in_toto_run() with different arguments
 
-    Calls in_toto_run library funtion inside of a temporary directory that
+    Calls in_toto_run library function inside of a temporary directory that
     contains a test artifact and a test keypair
 
     If the function does not fail it will dump a test step link metadata file
@@ -737,14 +718,12 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     def tearDown(self):
         """Remove link file if it was created."""
-        try:
+        with contextlib.suppress(OSError):
             os.remove(
                 FILENAME_FORMAT.format(
                     step_name=self.step_name, keyid=self.key["keyid"]
                 )
             )
-        except OSError:
-            pass
 
     def test_in_toto_run_verify_signature(self):
         """Successfully run, verify signed metadata."""
@@ -752,7 +731,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -760,7 +739,9 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
 
     def test_in_toto_run_no_signature(self):
         """Successfully run, verify empty signature field."""
-        link = in_toto_run(self.step_name, None, None, ["python", "--version"])
+        link = in_toto_run(
+            self.step_name, None, None, [VersionedPython, "--version"]
+        )
         self.assertFalse(len(link.signatures))
 
     def test_in_toto_run_with_byproduct(self):
@@ -769,7 +750,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_streams=True,
         )
 
@@ -780,9 +761,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
         stdout_contents = link.signed.byproducts.get("stdout")
         self.assertTrue(
             "Python" in stderr_contents or "Python" in stdout_contents,
-            msg="\nSTDERR:\n{}\nSTDOUT:\n{}".format(
-                stderr_contents, stdout_contents
-            ),
+            msg=f"\nSTDERR:\n{stderr_contents}\nSTDOUT:\n{stdout_contents}",
         )
 
     def test_in_toto_run_without_byproduct(self):
@@ -791,7 +770,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_streams=False,
         )
         self.assertFalse(len(link.signed.byproducts.get("stdout")))
@@ -802,7 +781,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -821,7 +800,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             metadata_directory=tmp_dir,
@@ -843,7 +822,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             metadata_directory=tmp_dir,
@@ -860,7 +839,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
         )
@@ -879,7 +858,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [self.test_artifact],
             [self.test_artifact],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
         )
         self.assertEqual(
             list(link.signed.materials.keys()),
@@ -893,7 +872,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             [],
             [],
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             record_environment=True,
         )
         self.assertEqual(
@@ -917,7 +896,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 paths,
                 paths,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 normalize_line_endings=True,
             ).signed
 
@@ -938,7 +917,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 "this-is-not-a-key",
             )
@@ -950,7 +929,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory="nonexistentDir",
@@ -967,7 +946,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory=path,
@@ -985,7 +964,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
                 self.step_name,
                 None,
                 None,
-                ["python", "--version"],
+                [VersionedPython, "--version"],
                 True,
                 signer=self.signer,
                 metadata_directory=tmp_dir,
@@ -999,7 +978,7 @@ class TestInTotoRun(unittest.TestCase, TmpDirMixin):
             self.step_name,
             None,
             None,
-            ["python", "--version"],
+            [VersionedPython, "--version"],
             True,
             signer=self.signer,
             use_dsse=True,
@@ -1033,7 +1012,7 @@ class TestInTotoRecordStart(unittest.TestCase, TmpDirMixin):
         cls.tear_down_test_dir()
 
     def test_UNFINISHED_FILENAME_FORMAT(self):
-        """Test if the unfinished filname format."""
+        """Test if the unfinished filename format."""
         self.assertTrue(
             self.link_name_unfinished
             == ".{}.{:.8}.link-unfinished".format(
@@ -1171,8 +1150,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         in_toto_record_start(self.step_name, [], signer=self.signer)
         in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name_unfinished, "r", encoding="utf8")
+            open(self.link_name_unfinished, encoding="utf8")  # noqa: SIM115
         self.assertTrue(os.path.isfile(self.link_name))
         os.remove(self.link_name)
 
@@ -1181,8 +1159,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         with self.assertRaises(IOError):
             in_toto_record_stop(self.step_name, [], signer=self.signer)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name, "r", encoding="utf8")
+            open(self.link_name, encoding="utf8")  # noqa: SIM115
 
     def test_wrong_signature_in_unfinished_metadata(self):
         """Test record stop exits on wrong signature, no link recorded."""
@@ -1197,8 +1174,7 @@ class TestInTotoRecordStop(unittest.TestCase, TmpDirMixin):
         with self.assertRaises(SignatureVerificationError):
             in_toto_record_stop(self.step_name, [], signer=self.signer2)
         with self.assertRaises(IOError):
-            # pylint: disable-next=consider-using-with
-            open(self.link_name, "r", encoding="utf8")
+            open(self.link_name, encoding="utf8")  # noqa: SIM115
         os.rename(changed_link_name, link_name)
         os.remove(self.link_name_unfinished)
 
@@ -1392,7 +1368,7 @@ class TestInTotoMatchProducts(TmpDirMixin, unittest.TestCase):
                     "lstrip_paths": [
                         # NOTE: normalize lstrip path to match normalized artifact path
                         # (see in-toto/in-toto#565)
-                        f'{Path("baz").absolute().parent}/'.replace("\\", "/")
+                        f"{Path('baz').absolute().parent}/".replace("\\", "/")
                     ],
                 },
                 ({"foo", "bar"}, set(), set()),

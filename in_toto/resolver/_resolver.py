@@ -1,16 +1,16 @@
 """Resolver interface and implementations for files, OSTree, and directory
 artifacts."""
 
+import hashlib
 import locale
 import logging
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from functools import cmp_to_key
 from itertools import combinations
 from os.path import exists, isdir, isfile, join, normpath
 
 from pathspec import GitIgnoreSpec
-from securesystemslib.hash import digest, digest_filename
 
 from in_toto.exceptions import PrefixError
 
@@ -21,7 +21,7 @@ _HASH_ALGORITHM = "sha256"
 RESOLVER_FOR_URI_SCHEME = {}
 
 
-class Resolver(metaclass=ABCMeta):
+class Resolver(ABC):
     """Resolver interface and factory."""
 
     @classmethod
@@ -64,9 +64,8 @@ class FileResolver(Resolver):
         if not lstrip_paths:
             lstrip_paths = []
 
-        if base_path is not None:
-            if not isinstance(base_path, str):
-                raise ValueError("'base_path' must be string")
+        if base_path is not None and not isinstance(base_path, str):
+            raise ValueError("'base_path' must be string")
 
         for name, val in [
             ("exclude_patterns", exclude_patterns),
@@ -98,12 +97,12 @@ class FileResolver(Resolver):
 
     def _hash(self, path):
         """Helper to generate hash dictionary for path."""
-        digest_obj = digest_filename(
+        hexdigest = _hash_file(
             path,
-            algorithm=_HASH_ALGORITHM,
-            normalize_line_endings=self._normalize_line_endings,
+            _HASH_ALGORITHM,
+            self._normalize_line_endings,
         )
-        return {_HASH_ALGORITHM: digest_obj.hexdigest()}
+        return {_HASH_ALGORITHM: hexdigest}
 
     def _mangle(self, path, existing_paths, scheme_prefix):
         """Helper for path mangling."""
@@ -125,9 +124,7 @@ class FileResolver(Resolver):
             )
 
         # Prepend passed scheme prefix
-        path = scheme_prefix + path
-
-        return path
+        return scheme_prefix + path
 
     def _strip_scheme_prefix(self, path):
         """Helper to strip file resolver scheme prefix from path."""
@@ -140,7 +137,7 @@ class FileResolver(Resolver):
 
         return path, prefix
 
-    def hash_artifacts(self, uris):
+    def hash_artifacts(self, uris):  # noqa: C901
         hashes = {}
 
         if self._base_path:
@@ -149,13 +146,13 @@ class FileResolver(Resolver):
 
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later (see _mangle)
-            path, prefix = self._strip_scheme_prefix(path)
+            path, prefix = self._strip_scheme_prefix(path)  # noqa: PLW2901
 
             # Normalize URI before filtering and returning them
             # FIXME: Is this expected behavior? Does this make exclude patterns
             # with slashes platform-dependent? Check how 'gitwildmatch' treats
             # dots and slashes!
-            path = normpath(path)
+            path = normpath(path)  # noqa: PLW2901
 
             if self._exclude(path):
                 continue
@@ -234,7 +231,7 @@ class OSTreeResolver(Resolver):
 
         ref_path = os.path.join("refs", "heads", path)
 
-        with open(ref_path, "r") as ref:  # pylint: disable=unspecified-encoding
+        with open(ref_path) as ref:  # noqa: PLW1514, RUF100
             ref_contents = ref.read()
         ref_contents = ref_contents.strip("\n")
 
@@ -242,12 +239,9 @@ class OSTreeResolver(Resolver):
             "objects", ref_contents[:2], f"{ref_contents[2:]}.commit"
         )
 
-        digest_obj = digest_filename(
-            object_path,
-            algorithm=self._HASH_ALGORITHM,
-        )
+        hexdigest = _hash_file(object_path, self._HASH_ALGORITHM, False)
 
-        return {self._HASH_ALGORITHM: digest_obj.hexdigest()}
+        return {self._HASH_ALGORITHM: hexdigest}
 
     def hash_artifacts(self, uris):
         hashes = {}
@@ -258,7 +252,7 @@ class OSTreeResolver(Resolver):
 
         for path in uris:
             # Remove scheme prefix, but preserver to re-add later
-            path = self._strip_scheme_prefix(path)
+            path = self._strip_scheme_prefix(path)  # noqa: PLW2901
             hashes[self._add_scheme_prefix(path)] = self._hash(path)
 
         # Change back to original current working dir
@@ -348,7 +342,7 @@ class DirectoryResolver(Resolver):
             )
             text_repr += "\n"  # trailing new line
 
-        digest_obj = digest(_HASH_ALGORITHM)
+        digest_obj = hashlib.new(_HASH_ALGORITHM)
         digest_obj.update(text_repr.encode("utf-8"))
 
         return {_HASH_ALGORITHM: digest_obj.hexdigest()}
@@ -357,7 +351,7 @@ class DirectoryResolver(Resolver):
         hashes = {}
 
         for path in uris:
-            path = self._strip_scheme_prefix(path)
+            path = self._strip_scheme_prefix(path)  # noqa: PLW2901
 
             if not os.path.isdir(path):
                 raise ValueError(f"path '{path}' is not a directory")
@@ -379,3 +373,36 @@ class DirectoryResolver(Resolver):
             hashes[name] = self._hash(file_hashes)
 
         return hashes
+
+
+def _hash_file(path, algo, normalize_line_endings):
+    """Returns hashed file."""
+
+    digest = hashlib.new(algo)
+    with open(path, "rb") as f:
+        while True:
+            # Chunk size is taken from the previously used and now deprecated
+            # `securesystemslib.hash.digest_fileobject`.
+            data = f.read(4096)
+            if not data:
+                break
+
+            if normalize_line_endings:
+                while data[-1:] == b"\r":
+                    c = f.read(1)
+                    if not c:
+                        break
+
+                    data += c
+
+                data = (
+                    data
+                    # First Windows
+                    .replace(b"\r\n", b"\n")
+                    # Then Mac
+                    .replace(b"\r", b"\n")
+                )
+
+            digest.update(data)
+
+    return digest.hexdigest()

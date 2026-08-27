@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -21,6 +19,7 @@
   Test artifact rule packing and unpacking.
 
 """
+
 import unittest
 
 import securesystemslib.exceptions
@@ -127,6 +126,16 @@ class TestArtifactRuleUnpack(unittest.TestCase):
 
         self.assertEqual(rule, pack_rule_data(rule_data))
         self.assertEqual(rule, pack_require_rule("foo"))
+
+    def test_artifact_rule_with_negation_in_character_class(self):
+        """Test artifact rule with negation in character class pattern."""
+        # This pattern should match any file starting with 'ba', followed by any character except 'r', and ending with 'foo'
+        rule = ["ALLOW", "ba[!r]foo"]
+        rule_data = unpack_rule(rule)
+        self.assertEqual(rule_data["rule_type"], "allow")
+        self.assertEqual(rule_data["pattern"], "ba[!r]foo")
+        self.assertEqual(rule, pack_rule_data(rule_data))
+        self.assertEqual(rule, pack_allow_rule("ba[!r]foo"))
 
     def test_unpack_and_pack_match_rule(self):
         """Check match rule proper packing and unpacking."""

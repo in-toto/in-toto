@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -26,6 +24,7 @@
   0 if no exception occurred
 
 """
+
 import argparse
 import logging
 import sys
@@ -79,33 +78,31 @@ command (for which 'in-toto-run' should be used). It returns a non-zero value
 on failure and zero otherwise.""",
     )
 
-    parser.epilog = """EXAMPLE USAGE
+    parser.epilog = f"""EXAMPLE USAGE
 
 Create link metadata file in two commands, signing it with the private key
 loaded from 'key_file', recording all files in the CWD as materials (on
 start), and as products (on stop).
 
-  {prog} start -n edit-files --signing-key path/to/key_file -m .
-  {prog} stop -n edit-files --signing-key path/to/key_file -p .
+  {parser.prog} start -n edit-files --signing-key path/to/key_file -m .
+  {parser.prog} stop -n edit-files --signing-key path/to/key_file -p .
 
 
 Create link metadata file signed with the default GPG key from the default
 GPG home directory and record a file named 'foo' as material and product.
 
-  {prog} start -n edit-foo --gpg -m path/to/foo
-  {prog} stop -n edit-foo --gpg -p path/to/foo
+  {parser.prog} start -n edit-foo --gpg -m path/to/foo
+  {parser.prog} stop -n edit-foo --gpg -p path/to/foo
 
 
 Create link metadata file signed with the private key loaded from 'key_file',
 record all files in the CWD as material and product, and dump finished link
 file to the target directory (on stop).
 
-  {prog} start -n edit-files --signing-key path/to/key_file -m .
-  {prog} stop -d path/to/target/dir -n edit-files --signing-key path/to/key_file -p .
+  {parser.prog} start -n edit-files --signing-key path/to/key_file -m .
+  {parser.prog} stop -d path/to/target/dir -n edit-files --signing-key path/to/key_file -p .
 
-""".format(
-        prog=parser.prog
-    )
+"""
 
     # The subparsers inherit the arguments from the parent parser
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -206,7 +203,7 @@ file to the target directory (on stop).
     parser.add_argument(
         "--version",
         action="version",
-        version="{} {}".format(parser.prog, __version__),
+        version=f"{parser.prog} {__version__}",
     )
 
     for parser_, order in [
@@ -290,14 +287,10 @@ def main():
                 signer=signer,
             )
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:  # noqa: BLE001
         LOG.error(
             "(in-toto-record %s) %s: %s", args.command, type(e).__name__, e
         )
         sys.exit(1)
 
     sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

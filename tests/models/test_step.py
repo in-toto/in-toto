@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -20,8 +18,6 @@
   Test step class functions.
 
 """
-# pylint: disable=protected-access
-
 
 import unittest
 

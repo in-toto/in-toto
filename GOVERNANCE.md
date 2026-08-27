@@ -14,8 +14,7 @@ Pull requests must be submitted to the `develop` branch where they undergo
 review and automated testing, including, but not limited to:
 * Unit and build testing via [Tox](https://tox.readthedocs.io/en/latest/) on
   [GitHub Actions](https://github.com/in-toto/in-toto/actions)
-* Static code analysis via [Pylint](https://www.pylint.org/) and
-  [Bandit](https://wiki.openstack.org/wiki/Security/Projects/Bandit)
+* Static code analysis via [ruff](https://astral.sh/ruff)
 * Checks for *Signed-off-by* commits via
   [Probot: DCO](https://probot.github.io/apps/dco/)
 * Review by one or more [maintainers](MAINTAINERS.txt)

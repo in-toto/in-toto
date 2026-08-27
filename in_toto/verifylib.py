@@ -81,11 +81,11 @@ def _raise_on_bad_retval(return_value, command=None):
       None.
     """
 
-    msg = "Got non-{what} " + "return value '{}'".format(return_value)
-    if command:
-        msg = "{0} from command '{1}'.".format(msg, command)
+    msg = "Got non-{what} " + f"return value '{return_value}'"
+    if command:  # noqa: SIM108
+        msg = f"{msg} from command '{command}'."
     else:
-        msg = "{0}.".format(msg)
+        msg = f"{msg}."
 
     if not isinstance(return_value, int):
         raise BadReturnValueError(msg.format(what="int"))
@@ -158,7 +158,7 @@ def load_links_for_layout(layout, link_dir_path):
                     metadata = Metadata.load(filepath)
                     links_per_step[keyid] = metadata
 
-                except IOError:
+                except OSError:
                     pass
 
         # This is only a preliminary threshold check, based on (authorized)
@@ -166,10 +166,8 @@ def load_links_for_layout(layout, link_dir_path):
         # check is indispensable.
         if len(links_per_step) < step.threshold:
             raise in_toto.exceptions.LinkNotFoundError(
-                "Step '{0}' requires '{1}'"
-                " link metadata file(s), found '{2}'.".format(
-                    step.name, step.threshold, len(links_per_step)
-                )
+                f"Step '{step.name}' requires '{step.threshold}'"
+                f" link metadata file(s), found '{len(links_per_step)}'."
             )
 
         steps_metadata[step.name] = links_per_step
@@ -314,9 +312,9 @@ def substitute_parameters(layout, parameter_dictionary):
     for step in layout.steps:
         new_material_rules = []
         for rule in step.expected_materials:
-            new_rule = []
-            for stanza in rule:
-                new_rule.append(stanza.format(**parameter_dictionary))
+            new_rule = [
+                stanza.format(**parameter_dictionary) for stanza in rule
+            ]
             new_material_rules.append(new_rule)
 
         new_product_rules = []
@@ -326,9 +324,10 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_expected_command = []
-        for argv in step.expected_command:
-            new_expected_command.append(argv.format(**parameter_dictionary))
+        new_expected_command = [
+            argv.format(**parameter_dictionary)
+            for argv in step.expected_command
+        ]
 
         step.expected_command = new_expected_command
         step.expected_materials = new_material_rules
@@ -349,9 +348,9 @@ def substitute_parameters(layout, parameter_dictionary):
                 new_rule.append(stanza.format(**parameter_dictionary))
             new_product_rules.append(new_rule)
 
-        new_run = []
-        for argv in inspection.run:
-            new_run.append(argv.format(**parameter_dictionary))
+        new_run = [
+            argv.format(**parameter_dictionary) for argv in inspection.run
+        ]
 
         inspection.run = new_run
         inspection.expected_materials = new_material_rules
@@ -396,11 +395,11 @@ def verify_metadata_signatures(metadata, keys_dict):
         )
 
     # Fail if any of the passed keys can't verify a signature on the Layout
-    for _, verify_key in keys_dict.items():
+    for verify_key in keys_dict.values():
         metadata.verify_signature(verify_key)
 
 
-def verify_link_signature_thresholds(layout, steps_metadata):
+def verify_link_signature_thresholds(layout, steps_metadata):  # noqa: C901, PLR0912
     """
     <Purpose>
       Verify that for each step of the layout there are at least `threshold`
@@ -439,7 +438,7 @@ def verify_link_signature_thresholds(layout, steps_metadata):
       authorized functionaries.
 
     """
-    # pylint: disable=too-many-branches, too-many-locals
+    # pylint: disable=too-many-locals
 
     # Create an inverse keys-subkeys dictionary, with subkey keyids as
     # dictionary keys and main keys as dictionary values. This will be
@@ -489,9 +488,8 @@ def verify_link_signature_thresholds(layout, steps_metadata):
                     break
 
                 # ... or the signing key is a subkey of an authorized key
-                if (
-                    authorized_key
-                    and link_keyid in authorized_key.get("subkeys", {}).keys()
+                if authorized_key and link_keyid in authorized_key.get(
+                    "subkeys", {}
                 ):
                     verification_key = authorized_key
                     break
@@ -547,11 +545,9 @@ def verify_link_signature_thresholds(layout, steps_metadata):
         # Maybe we should add such a check to the layout validation? Or here?
         if valid_authorized_links_cnt < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{}' requires at least '{}' links"
+                f"Step '{step.name}' requires at least '{step.threshold}' links"
                 " validly signed by different authorized functionaries. Only"
-                " found '{}'".format(
-                    step.name, step.threshold, valid_authorized_links_cnt
-                )
+                f" found '{valid_authorized_links_cnt}'"
             )
 
         # Add all good links of this step to the dictionary of links of all steps
@@ -705,17 +701,16 @@ def verify_match_rule(rule_data, artifacts_queue, source_artifacts, links):
     # prefix before filtering with rule pattern (see filter part 2) to prevent
     # globbing in the prefix.
     if rule_data["source_prefix"]:
-        filtered_source_paths = []
         # Add trailing slash to source prefix if it does not exist
         normalized_source_prefix = os.path.join(
             rule_data["source_prefix"], ""
         ).replace("\\", "/")
 
-        for artifact_path in artifacts_queue:
-            if artifact_path.startswith(normalized_source_prefix):
-                filtered_source_paths.append(
-                    artifact_path[len(normalized_source_prefix) :]
-                )
+        filtered_source_paths = [
+            artifact_path[len(normalized_source_prefix) :]
+            for artifact_path in artifacts_queue
+            if artifact_path.startswith(normalized_source_prefix)
+        ]
 
     else:
         filtered_source_paths = artifacts_queue
@@ -804,9 +799,7 @@ def verify_create_rule(rule_pattern, artifacts_queue, materials, products):
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
     # Consume filtered artifacts that are products but not materials
-    consumed = set(filtered_artifacts) & (products - materials)
-
-    return consumed
+    return set(filtered_artifacts) & (products - materials)
 
 
 def verify_delete_rule(rule_pattern, artifacts_queue, materials, products):
@@ -843,9 +836,7 @@ def verify_delete_rule(rule_pattern, artifacts_queue, materials, products):
     filtered_artifacts = fnmatch.filter(artifacts_queue, rule_pattern)
 
     # Consume filtered artifacts that are materials but not products
-    consumed = set(filtered_artifacts) & (materials - products)
-
-    return consumed
+    return set(filtered_artifacts) & (materials - products)
 
 
 def verify_modify_rule(rule_pattern, artifacts_queue, materials, products):
@@ -956,10 +947,7 @@ def verify_disallow_rule(rule_pattern, artifacts_queue):
 
     if filtered_artifacts:
         raise RuleVerificationError(
-            "'DISALLOW {}' matched the following "
-            "artifacts: {}\n{}".format(
-                rule_pattern, filtered_artifacts, _get_artifact_rule_traceback()
-            )
+            f"'DISALLOW {rule_pattern}' matched the following artifacts: {filtered_artifacts}\n{_get_artifact_rule_traceback()}"
         )
 
 
@@ -991,12 +979,8 @@ def verify_require_rule(filename, artifacts_queue):
     """
     if filename not in artifacts_queue:
         raise RuleVerificationError(
-            "'REQUIRE {filename}' did not find {filename} "
-            "in: {queue}\n{traceback}".format(
-                filename=filename,
-                queue=artifacts_queue,
-                traceback=_get_artifact_rule_traceback(),
-            )
+            f"'REQUIRE {filename}' did not find {filename} "
+            f"in: {artifacts_queue}\n{_get_artifact_rule_traceback()}"
         )
 
 
@@ -1005,7 +989,7 @@ def _get_artifact_rule_traceback():
     error message for RuleVerificationError.
 
     """
-    traceback_str = "Full trace for 'expected_{0}' of item '{1}':\n".format(
+    traceback_str = "Full trace for 'expected_{}' of item '{}':\n".format(
         RULE_TRACE["source_type"], RULE_TRACE["source_name"]
     )
 
@@ -1019,7 +1003,7 @@ def _get_artifact_rule_traceback():
         )
 
     for trace_entry in RULE_TRACE["trace"]:
-        traceback_str += "Queue after '{0}':\n".format(
+        traceback_str += "Queue after '{}':\n".format(
             " ".join(trace_entry["rule"])
         )
         traceback_str += "{}\n".format(trace_entry["queue"])
@@ -1083,10 +1067,10 @@ def verify_item_rules(source_name, source_type, rules, links):
       Clears and populates the global RULE_TRACE data structure.
 
     """
-    if source_type not in ["materials", "products"]:
+    if source_type not in {"materials", "products"}:
         raise securesystemslib.exceptions.FormatError(
             "Argument 'source_type' of function 'verify_item_rules' has to be "
-            "one of 'materials' or 'products'. Got: '{}'".format(source_type)
+            f"one of 'materials' or 'products'. Got: '{source_type}'"
         )
 
     # Create shortcuts to item's materials and products (including hashes),
@@ -1100,7 +1084,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
     # Depending on the source type we create the artifact queue from the item's
     # materials or products and use it to keep track of (not) consumed artifacts.
-    # The queue also only contains aritfact keys (without hashes)
+    # The queue also only contains artifact keys (without hashes)
     artifacts = getattr(links[source_name], source_type)
     artifacts_queue = set(artifacts.keys())
 
@@ -1158,7 +1142,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
         else:  # pragma: no cover (unreachable)
             raise securesystemslib.exceptions.FormatError(
-                "Invaldid rule type '{}'.".format(_type)
+                f"Invaldid rule type '{_type}'."
             )
 
         artifacts_queue -= consumed
@@ -1266,12 +1250,11 @@ def verify_threshold_constraints(layout, chain_link_dict):
         # Should we remove the check?
         if len(key_link_dict) < step.threshold:
             raise ThresholdVerificationError(
-                "Step '{0}' not performed"
-                " by enough functionaries!".format(step.name)
+                f"Step '{step.name}' not performed by enough functionaries!"
             )
 
         # Take a reference link (e.g. the first in the step_link_dict)
-        reference_keyid = list(key_link_dict.keys())[0]
+        reference_keyid = next(iter(key_link_dict.keys()))
         reference_link = key_link_dict[reference_keyid]
 
         # Iterate over all links to compare their properties with a reference_link
@@ -1283,8 +1266,7 @@ def verify_threshold_constraints(layout, chain_link_dict):
                 or reference_link.products != link.products
             ):
                 raise ThresholdVerificationError(
-                    "Links '{0}' and '{1}' have different"
-                    " artifacts!".format(
+                    "Links '{}' and '{}' have different artifacts!".format(
                         in_toto.models.link.FILENAME_FORMAT.format(
                             step_name=step.name, keyid=reference_keyid
                         ),
@@ -1336,7 +1318,7 @@ def reduce_chain_links(chain_link_dict):
         # Extract the key_link_dict for this step from the passed chain_link_dict
         # take one exemplary link (e.g. the first in the step_link_dict)
         # form the reduced_chain_link_dict to return
-        reduced_chain_link_dict[step_name] = list(key_link_dict.values())[0]
+        reduced_chain_link_dict[step_name] = next(iter(key_link_dict.values()))
 
     return reduced_chain_link_dict
 
@@ -1499,7 +1481,7 @@ def get_summary_link(layout, reduced_chain_link_dict, name):
     return summary_link
 
 
-def in_toto_verify(
+def in_toto_verify(  # noqa: PLR0913, PLR0917, RUF100
     metadata,
     layout_key_dict,
     link_dir_path=".",

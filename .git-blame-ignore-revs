@@ -1,4 +1,4 @@
-# Ignore inital black and isort commits
+# Ignore initial black, isort and ruff commits
 #
 # configure globally, e.g. with:
 #    git config blame.ignoreRevsFile .git-blame-ignore-revs
@@ -6,3 +6,4 @@
 # for details see
 #    https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html
 614113e2a3932064b738702a630a5a8587babdc5
+ce2eafd1a8d6e19abb07e913944f5d5472a736f1

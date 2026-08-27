@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -21,7 +19,6 @@
   SupplyChainItem is a super class for Steps and Inspections.
 
 """
-# pylint: disable=protected-access
 
 import json
 import unittest

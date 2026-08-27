@@ -28,6 +28,7 @@
   ```
 
 """
+
 import sys
 
 from in_toto.settings import LINK_CMD_EXEC_TIMEOUT
@@ -162,7 +163,7 @@ METADATA_DIRECTORY_KWARGS = {
     "metavar": "<directory>",
     "help": (
         "path to a directory to dump metadata. If '--metadata-directory'"
-        " is not passed, the current working direcotry is used."
+        " is not passed, the current working directory is used."
     ),
 }
 
@@ -182,9 +183,7 @@ RUN_TIMEOUT_KWARGS = {
     "help": (
         "integer that represents the max timeout in seconds for the "
         "   in-toto-run command."
-        "   Default is '{timeout}' seconds.".format(
-            timeout=LINK_CMD_EXEC_TIMEOUT
-        )
+        f"   Default is '{LINK_CMD_EXEC_TIMEOUT}' seconds."
     ),
 }
 
@@ -197,9 +196,7 @@ def title_case_action_groups(parser):
     which title-cases default action groups only.
 
     """
-    for (
-        action_group
-    ) in parser._action_groups:  # pylint: disable=protected-access
+    for action_group in parser._action_groups:  # noqa: SLF001
         action_group.title = action_group.title.title()
 
 
@@ -216,15 +213,11 @@ def sort_action_groups(parser, title_order=None):
         ]
 
     action_group_dict = {}
-    for (
-        action_group
-    ) in parser._action_groups:  # pylint: disable=protected-access
+    for action_group in parser._action_groups:  # noqa: SLF001
         action_group_dict[action_group.title] = action_group
 
-    ordered_action_groups = []
-    for title in title_order:
-        ordered_action_groups.append(action_group_dict[title])
+    ordered_action_groups = [action_group_dict[title] for title in title_order]
 
-    parser._action_groups = (  # pylint: disable=protected-access
+    parser._action_groups = (  # noqa: SLF001
         ordered_action_groups
     )

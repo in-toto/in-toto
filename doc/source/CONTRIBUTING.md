@@ -59,14 +59,14 @@ python runtests.py
 
 #### Code Formatting
 
-Ensure that your code follows the required formatting standards by using black and isort:
+Ensure that your code follows the required formatting standards by using ruff:
 
 ```sh
-# Auto-format code with black
-black .
+# Apply ruff linter rules, isort rules will sort imports
+ruff check
 
-# Sort imports with isort
-isort .
+# Auto-format code with ruff
+ruff format
 ```
 
 #### Build Documentation

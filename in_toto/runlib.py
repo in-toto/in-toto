@@ -27,11 +27,12 @@
     - Return Metadata containing a Link object which can be can be signed
       and stored to disk
 """
+
 import glob
 import io
 import logging
 import os
-import subprocess  # nosec
+import subprocess
 import sys
 import tempfile
 import time
@@ -40,7 +41,6 @@ from collections import defaultdict
 import securesystemslib._gpg
 import securesystemslib.exceptions
 import securesystemslib.formats
-import securesystemslib.hash
 from securesystemslib.signer import Signer
 
 import in_toto.exceptions
@@ -66,7 +66,7 @@ from in_toto.resolver import (
 LOG = logging.getLogger(__name__)
 
 
-def record_artifacts_as_dict(
+def record_artifacts_as_dict(  # noqa: PLR0913, PLR0917, RUF100
     artifacts,
     exclude_patterns=None,
     base_path=None,
@@ -114,7 +114,7 @@ def record_artifacts_as_dict(
               Artifacts matched by the pattern are excluded from the result.
               Exclude patterns can be passed as argument or specified via
               ARTIFACT_EXCLUDE_PATTERNS setting (see `in_toto.settings`).
-              If passed, patterns specified via settings are overriden.
+              If passed, patterns specified via settings are overridden.
 
       base_path: (optional)
               Change to base_path and record artifacts relative from there.
@@ -221,14 +221,12 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
     stderr_fd, stderr_name = tempfile.mkstemp()
     try:
         with (
-            io.open(  # pylint: disable=unspecified-encoding
-                stdout_name, "r"
+            open(  # noqa: PLW1514, RUF100
+                stdout_name
             ) as stdout_reader,
-            os.fdopen(  # pylint: disable=unspecified-encoding
-                stdout_fd, "w"
-            ) as stdout_writer,
-            io.open(  # pylint: disable=unspecified-encoding
-                stderr_name, "r"
+            os.fdopen(stdout_fd, "w") as stdout_writer,
+            open(  # noqa: PLW1514, RUF100
+                stderr_name
             ) as stderr_reader,
             os.fdopen(stderr_fd, "w") as stderr_writer,
         ):
@@ -253,7 +251,7 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 streams["err"] += stderr_part
 
             # Start child process, writing its standard streams to temporary files
-            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # nosec
+            proc = subprocess.Popen(  # pylint: disable=consider-using-with  # noqa: S603
                 cmd,
                 stdout=stdout_writer,
                 stderr=stderr_writer,
@@ -332,9 +330,9 @@ def execute_link(link_cmd_args, record_streams, timeout):
         )
 
     else:
-        process = subprocess.run(
+        process = subprocess.run(  # noqa: S603
             link_cmd_args,
-            check=False,  # nosec
+            check=False,
             timeout=timeout,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -405,7 +403,7 @@ def _require_signing_arg(signer, gpg_keyid, gpg_use_default):
         )
 
 
-def in_toto_run(
+def in_toto_run(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     name,
     material_list,
     product_list,
@@ -523,8 +521,6 @@ def in_toto_run(
     A Metadata object that contains the resulting link object.
 
   """
-    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
-
     LOG.info("Running '%s'...", name)
 
     # Check key formats to fail early
@@ -623,7 +619,7 @@ def in_toto_run(
     return link_metadata
 
 
-def in_toto_record_start(
+def in_toto_record_start(  # noqa: PLR0913, PLR0917, RUF100
     step_name,
     material_list,
     gpg_keyid=None,
@@ -716,7 +712,7 @@ def in_toto_record_start(
     Writes preliminary link metadata file to disk.
 
   """
-    # pylint: disable=too-many-locals,too-many-branches
+    # pylint: disable=too-many-locals
 
     LOG.info("Start recording '%s'...", step_name)
 
@@ -792,7 +788,7 @@ def in_toto_record_start(
     link_metadata.dump(unfinished_fn)
 
 
-def in_toto_record_stop(
+def in_toto_record_stop(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917, RUF100
     step_name,
     product_list,
     gpg_keyid=None,
@@ -906,7 +902,6 @@ def in_toto_record_stop(
     Removes preliminary link metadata file from disk.
 
   """
-    # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     LOG.info("Stop recording '%s'...", step_name)
 
     # Check that we have something to sign and if the formats are right
@@ -945,9 +940,7 @@ def in_toto_record_stop(
         if not unfinished_fn_list:
             raise in_toto.exceptions.LinkNotFoundError(
                 "Could not find a preliminary"
-                " link for step '{}' in the current working directory.".format(
-                    step_name
-                )
+                f" link for step '{step_name}' in the current working directory."
             )
 
         if len(unfinished_fn_list) > 1:
@@ -974,7 +967,7 @@ def in_toto_record_stop(
 
     elif gpg_keyid:
         LOG.info("Verifying preliminary link signature using passed gpg key...")
-        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             gpg_keyid, gpg_home
         )
         keyid = gpg_pubkey["keyid"]
@@ -1000,7 +993,7 @@ def in_toto_record_stop(
         else:
             keyid = link_metadata.signatures[0]["keyid"]
 
-        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        gpg_pubkey = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             keyid, gpg_home
         )
         verification_key = gpg_pubkey
@@ -1041,15 +1034,14 @@ def in_toto_record_stop(
 
     if signer:
         LOG.info(
-            "Updating signature with signer '{:.8}...'...".format(
-                signer.public_key.keyid
-            )
+            "Updating signature with signer '%.8s...'...",
+            signer.public_key.keyid,
         )
 
     else:  # gpg_keyid or gpg_use_default
         # In both cases we use the keyid we got from verifying the preliminary
         # link signature above.
-        LOG.info("Updating signature with gpg key '{:.8}...'...".format(keyid))
+        LOG.info("Updating signature with gpg key '%.8s...'...", keyid)
         signer = GPGSigner(keyid=keyid, homedir=gpg_home)
 
     link_metadata.create_signature(signer)

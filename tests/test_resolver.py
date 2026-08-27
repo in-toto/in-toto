@@ -1,13 +1,36 @@
 """Test cases for resolver.py."""
 
+import hashlib
+import os
+import tempfile
+import unittest
 from pathlib import Path
-from unittest import TestCase, main
 
 from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
+from in_toto.resolver._resolver import _hash_file
 from tests.common import TmpDirMixin
 
 
-class TestResolver(TestCase):
+class TestResolverHelper(unittest.TestCase):
+    def test_hash_file(self):
+        """Test normalize file endings."""
+        data = b"ab\r\nd\nf\r" * 4096
+        fd, filename = tempfile.mkstemp()
+        try:
+            os.write(fd, data)
+            os.close(fd)
+
+            result = _hash_file(filename, "sha256", True)
+
+            normalized = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+            expected = hashlib.sha256(normalized).hexdigest()
+            self.assertEqual(result, expected)
+
+        finally:
+            os.remove(filename)
+
+
+class TestResolver(unittest.TestCase):
     """Test default and custom resolver registration and dispatch."""
 
     def test_register(self):
@@ -42,7 +65,7 @@ class TestResolver(TestCase):
         RESOLVER_FOR_URI_SCHEME.clear()
 
 
-class TestFileResolver(TmpDirMixin, TestCase):
+class TestFileResolver(TmpDirMixin, unittest.TestCase):
     """Test hash_artifacts with and without scheme.
 
     See 'test_runlib' for comprehensive tests of file hash recording.
@@ -85,4 +108,4 @@ class TestFileResolver(TmpDirMixin, TestCase):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

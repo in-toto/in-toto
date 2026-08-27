@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -26,6 +24,7 @@
   `python tests/runtests.py`.
 
 """
+
 import inspect
 import os
 import shutil
@@ -33,7 +32,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 from securesystemslib.signer import CryptoSigner
@@ -45,18 +44,20 @@ from in_toto.models._signer import load_public_key_from_file as load_pubkey
 
 PEMS = Path(__file__).parent / "pems"
 
+VersionedPython = sys.executable
+
 
 class SignerStore:
     """CryptoSigner and public key (dict) store for sign/verify tests."""
 
     rsa: CryptoSigner = load_signer(PEMS / "rsa_private_unencrypted.pem")
-    rsa_pub: Dict[str, Any] = load_pubkey(PEMS / "rsa_public.pem")
+    rsa_pub: dict[str, Any] = load_pubkey(PEMS / "rsa_public.pem")
     ecdsa: CryptoSigner = load_signer(PEMS / "ecdsa_private_unencrypted.pem")
-    ecdsa_pub: Dict[str, Any] = load_pubkey(PEMS / "ecdsa_public.pem")
+    ecdsa_pub: dict[str, Any] = load_pubkey(PEMS / "ecdsa_public.pem")
     ed25519: CryptoSigner = load_signer(
         PEMS / "ed25519_private_unencrypted.pem"
     )
-    ed25519_pub: Dict[str, Any] = load_pubkey(PEMS / "ed25519_public.pem")
+    ed25519_pub: dict[str, Any] = load_pubkey(PEMS / "ed25519_public.pem")
 
 
 class TmpDirMixin:

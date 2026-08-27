@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -32,6 +30,7 @@
   Inspection:
       represents a hook that is run at verification
 """
+
 import json
 import shlex
 from datetime import datetime
@@ -118,7 +117,7 @@ class Layout(Signable):
 
     @property
     def type_(self):
-        """The string "layout" to indentify the in-toto metadata type."""
+        """The string "layout" to identify the in-toto metadata type."""
         # NOTE: We expose the type_ property in the API documentation instead of
         # _type to protect it against modification.
         # NOTE: Trailing underscore is used by convention (pep8) to avoid conflict
@@ -139,15 +138,14 @@ class Layout(Signable):
           The created Layout object.
 
         """
-        steps = []
 
-        for step_data in data.get("steps"):
-            steps.append(Step.read(step_data))
+        steps = [Step.read(step_data) for step_data in data.get("steps")]
         data["steps"] = steps
 
-        inspections = []
-        for inspect_data in data.get("inspect"):
-            inspections.append(Inspection.read(inspect_data))
+        inspections = [
+            Inspection.read(inspect_data)
+            for inspect_data in data.get("inspect")
+        ]
         data["inspect"] = inspections
 
         return Layout(**data)
@@ -155,7 +153,7 @@ class Layout(Signable):
     def set_relative_expiration(self, days=0, months=0, years=0):
         """Sets layout expiration relative to today.
 
-        If not argument is passed the set exipration date is now.
+        If not argument is passed the set expiration date is now.
 
         Arguments:
           days (optional): Days from today.
@@ -171,7 +169,7 @@ class Layout(Signable):
         _check_int(years)
 
         self.expires = (
-            datetime.today()
+            datetime.today()  # noqa: DTZ002
             + relativedelta(days=days, months=months, years=years)
         ).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -182,11 +180,7 @@ class Layout(Signable):
           A list of step names.
 
         """
-        step_names = []
-        for step in self.steps:
-            step_names.append(step.name)
-
-        return step_names
+        return [step.name for step in self.steps]
 
     def get_step_by_name(self, step_name):
         """Returns step identified by step_name from the layout.
@@ -226,9 +220,7 @@ class Layout(Signable):
         """
         _check_str(step_name)
 
-        for step in self.steps:
-            if step.name == step_name:
-                self.steps.remove(step)
+        self.steps[:] = [x for x in self.steps if x.name != step_name]
 
     def get_inspection_name_list(self):
         """Returns ordered list of inspection names as they appear in the layout.
@@ -237,11 +229,7 @@ class Layout(Signable):
           A list of inspection names.
 
         """
-        inspection_names = []
-        for inspection in self.inspect:
-            inspection_names.append(inspection.name)
-
-        return inspection_names
+        return [inspection.name for inspection in self.inspect]
 
     def get_inspection_by_name(self, inspection_name):
         """Returns inspection identified by inspection_names from the layout.
@@ -281,9 +269,7 @@ class Layout(Signable):
         """
         _check_str(inspection_name)
 
-        for inspection in self.inspect:
-            if inspection.name == inspection_name:
-                self.inspect.remove(inspection)
+        self.inspect[:] = [x for x in self.inspect if x.name != inspection_name]
 
     def get_functionary_key_id_list(self):
         """Returns list of functionary keyids from the layout.
@@ -340,7 +326,7 @@ class Layout(Signable):
 
         Raises:
           securesystemslib.exceptions.FormatError: Arguments are malformed.
-          securesystemslib._gpg.execeptions.KeyNotFoundError: Key cannot be found.
+          securesystemslib._gpg.exceptions.KeyNotFoundError: Key cannot be found.
 
         Side Effects:
           Calls system gpg command in a subprocess.
@@ -353,7 +339,7 @@ class Layout(Signable):
         if gpg_home:  # pragma: no branch
             _check_str(gpg_home)
 
-        key = securesystemslib._gpg.functions.export_pubkey(  # pylint: disable=protected-access
+        key = securesystemslib._gpg.functions.export_pubkey(  # noqa: SLF001
             gpg_keyid, homedir=gpg_home
         )
         return self.add_functionary_key(key)
@@ -392,7 +378,7 @@ class Layout(Signable):
 
         Raises:
           securesystemslib.exceptions.FormatError: Arguments are malformed.
-          securesystemslib._gpg.execeptions.KeyNotFoundError: A key cannot be found.
+          securesystemslib._gpg.exceptions.KeyNotFoundError: A key cannot be found.
 
         Side Effects:
           Calls system gpg command in a subprocess.
@@ -426,18 +412,16 @@ class Layout(Signable):
             parse(self.expires)
             _check_iso8601(self.expires)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise securesystemslib.exceptions.FormatError(
-                "Malformed date string in layout. Exception: {}".format(e)
+                f"Malformed date string in layout. Exception: {e}"
             )
 
     def _validate_readme(self):
         """Private method to check that the readme field is a string."""
         if not isinstance(self.readme, str):
             raise securesystemslib.exceptions.FormatError(
-                "Invalid readme '{}', value must be a string.".format(
-                    self.readme
-                )
+                f"Invalid readme '{self.readme}', value must be a string."
             )
 
     def _validate_keys(self):
@@ -463,8 +447,8 @@ class Layout(Signable):
 
             if step.name in names_seen:
                 raise securesystemslib.exceptions.FormatError(
-                    "There is already a step with name '{}'. Step names must be"
-                    " unique within a layout.".format(step.name)
+                    f"There is already a step with name '{step.name}'. Step names must be"
+                    " unique within a layout."
                 )
             names_seen.add(step.name)
 
@@ -483,8 +467,8 @@ class Layout(Signable):
 
             if inspection.name in names_seen:
                 raise securesystemslib.exceptions.FormatError(
-                    "There is already an inspection with name '{}'. Inspection names"
-                    " must be unique within a layout.".format(inspection.name)
+                    f"There is already an inspection with name '{inspection.name}'. Inspection names"
+                    " must be unique within a layout."
                 )
             names_seen.add(inspection.name)
 
@@ -652,9 +636,7 @@ class Step(SupplyChainItem):
         """Private method to check that the threshold field is set to an int."""
         if not isinstance(self.threshold, int):
             raise securesystemslib.exceptions.FormatError(
-                "Invalid threshold '{}', value must be an int.".format(
-                    self.threshold
-                )
+                f"Invalid threshold '{self.threshold}', value must be an int."
             )
 
     def _validate_pubkeys(self):

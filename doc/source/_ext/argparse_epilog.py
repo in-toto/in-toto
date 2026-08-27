@@ -5,8 +5,6 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives import unchanged
 from docutils.statemachine import StringList
 
-from in_toto import in_toto_run
-
 
 class ArgparseUsageEpilog(Directive):
     """Sphinx directive to modify argparse epilog to render nicely.
@@ -61,11 +59,13 @@ class ArgparseUsageEpilog(Directive):
 
         # Parse and mark-up epilog
         epilog_lines = parser.epilog.split("\n")
-        assert epilog_lines, "moot '.. argparse-epilog::' with empty 'epilog'"
+        assert (  # noqa: S101
+            epilog_lines
+        ), "moot '.. argparse-epilog::' with empty 'epilog'"
 
         # The first line is expected to be the title
         title = epilog_lines.pop(0)
-        assert title == "EXAMPLE USAGE", "missing 'epilog' title"
+        assert title == "EXAMPLE USAGE", "missing 'epilog' title"  # noqa: S101
         title_node = nodes.title(text=title.title())
 
         # Copy remaining lines (body) as they are and ...
@@ -76,12 +76,10 @@ class ArgparseUsageEpilog(Directive):
 
             # ... inject ReST markup for code snippets, if the current line is empty
             # and there is a next line, which starts with two spaces.
-            if line.strip() == "":
-                if epilog_lines_len > idx + 1:
-                    next_line = epilog_lines[idx + 1]
-                    if next_line.startswith("  "):
-                        epilog_lines_dest.append(".. code-block:: sh")
-                        epilog_lines_dest.append("")
+            if line.strip() == "" and epilog_lines_len > idx + 1:
+                next_line = epilog_lines[idx + 1]
+                if next_line.startswith("  "):
+                    epilog_lines_dest.extend((".. code-block:: sh", ""))
 
         # Parse epilog body as ReST
         text_node = nodes.paragraph()

@@ -18,7 +18,6 @@
   Test in_toto/common_args.py
 
 """
-# pylint: disable=protected-access
 
 import argparse
 import unittest
@@ -52,13 +51,11 @@ class TestCommonArgs(unittest.TestCase):
 
         for idx, (params, expected) in enumerate(tests):
             result = parse_password_and_prompt_args(parser.parse_args(params))
-            self.assertTupleEqual(result, expected, "(row {})".format(idx))
+            self.assertTupleEqual(result, expected, f"(row {idx})")
 
 
 class TestArgparseActionGroupHelpers(unittest.TestCase):
     """Test functions to hack cli output."""
-
-    # pylint: disable=protected-access
 
     def setUp(self):
         """Create an empty parser and perform some basic assertions prior to

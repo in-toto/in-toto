@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -20,7 +18,6 @@
   Test layout class functions.
 
 """
-# pylint: disable=protected-access
 
 import os
 import unittest

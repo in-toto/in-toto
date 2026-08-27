@@ -14,11 +14,8 @@ updates:
     test-and-lint-dependencies:
       # Python dependencies that are only pinned to ensure test reproducibility
       patterns:
-        - "bandit"
-        - "black"
         - "coverage"
-        - "isort"
-        - "pylint"
+        - "ruff"
     dependencies:
       # Python (developer) runtime dependencies. Also any new dependencies not
       # caught by earlier groups

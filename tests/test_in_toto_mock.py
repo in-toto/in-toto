@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright New York University and the in-toto contributors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -20,13 +18,15 @@
   Test in_toto_mock command line tool.
 
 """
+
+import contextlib
 import logging
 import os
 import unittest
 from pathlib import Path
 
 from in_toto.in_toto_mock import main as in_toto_mock_main
-from tests.common import CliTestCase, TmpDirMixin
+from tests.common import CliTestCase, TmpDirMixin, VersionedPython
 
 # Required to cache and restore default log level
 logger = logging.getLogger("in_toto")
@@ -62,15 +62,13 @@ class TestInTotoMockTool(CliTestCase, TmpDirMixin):
         logger.setLevel(cls._base_log_level)
 
     def tearDown(self):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(self.test_link)
-        except OSError:
-            pass
 
     def test_main_required_args(self):
         """Test CLI command with required arguments."""
 
-        args = ["--name", self.test_step, "--", "python", "--version"]
+        args = ["--name", self.test_step, "--", VersionedPython, "--version"]
         self.assert_cli_sys_exit(args, 0)
 
         self.assertTrue(os.path.exists(self.test_link))
