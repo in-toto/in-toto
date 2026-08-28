@@ -2,10 +2,12 @@
 
 import hashlib
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
+from in_toto.exceptions import PrefixError
 from in_toto.resolver import RESOLVER_FOR_URI_SCHEME, FileResolver, Resolver
 from in_toto.resolver._resolver import _hash_file
 from tests.common import TmpDirMixin
@@ -105,6 +107,29 @@ class TestFileResolver(TmpDirMixin, unittest.TestCase):
             resolver = FileResolver(**kwargs)
             result = resolver.hash_artifacts(uris)
             self.assertEqual(result.keys(), expected_keys)
+
+    def test_hash_artifacts_error_restores_cwd(self):
+        """Assert that the cwd is restored if hashing below base_path fails."""
+        base_path = tempfile.mkdtemp()
+        try:
+            for name in ["a", "b"]:
+                os.mkdir(os.path.join(base_path, name))
+                Path(base_path, name, "same-name").touch()
+
+            # Stripping the two prefixes makes both files collide on the same
+            # dictionary key, so hash_artifacts raises part-way through.
+            resolver = FileResolver(
+                base_path=base_path, lstrip_paths=["a/", "b/"]
+            )
+            original_cwd = os.getcwd()
+
+            with self.assertRaises(PrefixError):
+                resolver.hash_artifacts(["a", "b"])
+
+            self.assertEqual(os.getcwd(), original_cwd)
+
+        finally:
+            shutil.rmtree(base_path)
 
 
 if __name__ == "__main__":
