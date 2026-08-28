@@ -3,6 +3,7 @@
 
 """Test cases for DirectoryResolver."""
 
+import locale
 import os
 import tempfile
 import unittest
@@ -35,6 +36,24 @@ class TestDirectoryResolver(unittest.TestCase):
 
         artifact_dict = resolver.hash_artifacts([uri])
         self.assertEqual(artifact_dict, expected_artifact_dict)
+
+    def test_hashing_preserves_locale(self):
+        """Hashing a directory must not leave the process locale changed."""
+        path = str(Path(__file__).parent / "resolver" / "dir_resolver")
+
+        original = locale.setlocale(locale.LC_ALL)
+        try:
+            try:
+                locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+            except locale.Error:
+                self.skipTest("en_US.UTF-8 not available on this system")
+
+            before = locale.setlocale(locale.LC_ALL)
+            DirectoryResolver().hash_artifacts([f"dir:{path}"])
+            self.assertEqual(locale.setlocale(locale.LC_ALL), before)
+
+        finally:
+            locale.setlocale(locale.LC_ALL, original)
 
     def test_regular_directory_with_lstrip(self):
         lstrip_path = (
