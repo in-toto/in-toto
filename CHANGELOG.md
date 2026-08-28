@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+* `ArtifactCollisionError` exception for consistent duplicate artifact URI
+  detection across resolver batches and via `lstrip_paths` path manipulation.
+  Replaces `PrefixError` in `FileResolver` and `DirectoryResolver` for URI
+  collision cases (#601)
+
 ## v3.1.0
 
 This release includes version bumpbs, as well as upgraded debian support , and

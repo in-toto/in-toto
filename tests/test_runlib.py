@@ -28,6 +28,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import securesystemslib.exceptions
 import securesystemslib.formats
@@ -42,7 +43,7 @@ from in_toto.models.link import (
     Link,
 )
 from in_toto.models.metadata import Envelope, Metablock
-from in_toto.resolver import FileResolver
+from in_toto.resolver import DirectoryResolver, FileResolver
 from in_toto.runlib import (
     _subprocess_run_duplicate_streams,
     in_toto_match_products,
@@ -236,10 +237,31 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):  # noqa: PLR090
         path = "subdir_new/foosub1"
         shutil.copy("subdir/foosub1", path)
         lstrip_paths = ["subdir/", "subdir_new/"]
-        with self.assertRaises(in_toto.exceptions.PrefixError):
+        with self.assertRaises(in_toto.exceptions.ArtifactCollisionError):
             record_artifacts_as_dict(["."], lstrip_paths=lstrip_paths)
         os.remove(path)
         os.rmdir("subdir_new")
+
+    def test_collision_across_resolvers(self):
+        """Two resolvers returning overlapping URIs raises
+        ArtifactCollisionError."""
+        # The file resolver records "foo" for real; force the directory
+        # resolver to return the same URI to trigger the cross-resolver check.
+        with (
+            mock.patch.object(
+                DirectoryResolver,
+                "hash_artifacts",
+                return_value={"foo": {"sha256": "0" * 64}},
+            ),
+            self.assertRaises(in_toto.exceptions.ArtifactCollisionError),
+        ):
+            record_artifacts_as_dict(["foo", "dir:subdir"])
+
+    def test_non_overlapping_batches(self):
+        """Non-overlapping resolver batches are merged without error."""
+        artifacts_dict = record_artifacts_as_dict(["foo", "dir:subdir"])
+        self.assertIn("foo", artifacts_dict)
+        self.assertIn("dir:subdir", artifacts_dict)
 
     def test_lstrip_paths_invalid_prefix_directory(self):
         lstrip_paths = ["not/a/directory/"]
@@ -271,7 +293,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):  # noqa: PLR090
         path = "subdir/subsubdir_new/foosubsub"
         shutil.copy("subdir/subsubdir/foosubsub", path)
         lstrip_paths = ["subdir/subsubdir/", "subdir/subsubdir_new/"]
-        with self.assertRaises(in_toto.exceptions.PrefixError):
+        with self.assertRaises(in_toto.exceptions.ArtifactCollisionError):
             record_artifacts_as_dict(
                 [
                     "subdir/subsubdir/foosubsub",

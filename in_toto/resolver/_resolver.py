@@ -12,7 +12,7 @@ from os.path import exists, isdir, isfile, join, normpath
 
 from pathspec import GitIgnoreSpec
 
-from in_toto.exceptions import PrefixError
+from in_toto.exceptions import ArtifactCollisionError, PrefixError
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class FileResolver(Resolver):
 
         # Fail if left-stripping above results in duplicates
         if self._lstrip_paths and path in existing_paths:
-            raise PrefixError(
+            raise ArtifactCollisionError(
                 "Prefix selection has resulted in non unique dictionary key "
                 f"'{path}'"
             )
@@ -321,7 +321,7 @@ class DirectoryResolver(Resolver):
 
         # Fail if left-stripping above results in duplicates
         if self._lstrip_paths and path in existing_paths:
-            raise PrefixError(
+            raise ArtifactCollisionError(
                 "Prefix selection has resulted in non unique dictionary key "
                 f"'{path}'"
             )
