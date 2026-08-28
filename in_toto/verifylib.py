@@ -1142,7 +1142,7 @@ def verify_item_rules(source_name, source_type, rules, links):
 
         else:  # pragma: no cover (unreachable)
             raise securesystemslib.exceptions.FormatError(
-                f"Invaldid rule type '{_type}'."
+                f"Invalid rule type '{_type}'."
             )
 
         artifacts_queue -= consumed

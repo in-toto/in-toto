@@ -454,7 +454,7 @@ class Layout(Signable):
 
         if not isinstance(self.inspect, list):
             raise securesystemslib.exceptions.FormatError(
-                "The inspect field should a be a list!"
+                "The inspect field should be a list!"
             )
 
         for inspection in self.inspect:
