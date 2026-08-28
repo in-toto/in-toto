@@ -228,7 +228,7 @@ def main():
     LOG.setLevelVerboseOrQuiet(args.verbose, args.quiet)
 
     # Use exactly one of gpg or pkcs8 signing key
-    if sum([bool(args.gpg), bool(args.signing_key)]) != 1:
+    if bool(args.gpg) == bool(args.signing_key):
         parser.print_usage()
         parser.error(
             "Specify either '--signing-key <path>' or '--gpg [<keyid>]'"

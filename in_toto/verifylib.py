@@ -1006,7 +1006,7 @@ def _get_artifact_rule_traceback():
         traceback_str += "Queue after '{}':\n".format(
             " ".join(trace_entry["rule"])
         )
-        traceback_str += "{}\n".format(trace_entry["queue"])
+        traceback_str += f"{trace_entry['queue']}\n"
 
     return traceback_str
 
