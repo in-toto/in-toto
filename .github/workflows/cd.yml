@@ -20,8 +20,6 @@ jobs:
     steps:
       - name: Checkout release tag
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -61,14 +59,17 @@ jobs:
       - id: gh-release
         name: Publish GitHub release draft
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RELEASE_NAME: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref }}
         with:
           script: |
             fs = require('fs')
             res = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              name: '${{ github.ref_name }}-rc',
-              tag_name: '${{ github.ref }}',
+              name: process.env.RELEASE_NAME + '-rc',
+              tag_name: process.env.RELEASE_TAG,
               body: 'Release waiting for review...',
             });
 
@@ -105,14 +106,17 @@ jobs:
 
       - name: Finalize GitHub release
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RELEASE_ID: ${{ needs.candidate_release.outputs.release_id }}
+          RELEASE_NAME: ${{ github.ref_name }}
         with:
           script: |
             github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              release_id: '${{ needs.candidate_release.outputs.release_id }}',
-              name: '${{ github.ref_name }}',
+              release_id: process.env.RELEASE_ID,
+              name: process.env.RELEASE_NAME,
               body: 'See [CHANGELOG.md](https://github.com/' +
                      context.repo.owner + '/' + context.repo.repo +
-                    '/blob/${{ github.ref_name }}/CHANGELOG.md) for details.'
+                    '/blob/' + process.env.RELEASE_NAME + '/CHANGELOG.md) for details.'
             })
