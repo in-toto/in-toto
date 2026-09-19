@@ -217,6 +217,13 @@ def run_all_inspections(
     """
     inspection_links_dict = {}
     for inspection in layout.inspect:
+        if not inspection.run:
+            raise BadReturnValueError(
+                f"Inspection '{inspection.name}' does not have a 'run' "
+                "command configured, so it cannot produce a return value "
+                "to verify."
+            )
+
         LOG.info("Executing command for inspection '%s'...", inspection.name)
 
         # FIXME: We don't want to use the base path for runlib so we patch this

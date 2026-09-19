@@ -182,6 +182,21 @@ class TestRunAllInspections(unittest.TestCase, TmpDirMixin):
         with self.assertRaises(BadReturnValueError):
             run_all_inspections(layout, True)
 
+    def test_inspection_fail_without_run_command(self):
+        """Fail with a clear message when an inspection has no 'run' command,
+        instead of a confusing BadReturnValueError about a None return value
+        (see #730)."""
+        layout = Layout.read(
+            {
+                "_type": "layout",
+                "steps": [],
+                "inspect": [{"name": "no-run-command"}],
+            }
+        )
+        with self.assertRaises(BadReturnValueError) as ctx:
+            run_all_inspections(layout, True)
+        self.assertIn("no-run-command", str(ctx.exception))
+
     def test_inspection_persistence_false(self):
         """Test metadata link file non-persistence"""
         if os.path.exists("touch-bar.link"):
