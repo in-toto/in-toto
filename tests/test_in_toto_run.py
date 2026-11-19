@@ -292,6 +292,12 @@ class TestInTotoRunTool(CliTestCase, TmpDirMixin, GPGKeysMixin):
             self.assertTrue(link_path.exists())
             link_path.unlink()
 
+            # Use unencrypted key, mocking empty pw on prompt (just Enter)
+            with mock.patch("in_toto.in_toto_run.getpass", return_value=""):
+                self.assert_cli_sys_exit(args + [str(pem_path), "-P"], 0)
+            self.assertTrue(link_path.exists())
+            link_path.unlink()
+
             # Fail with encrypted key, but no pw
             pem_path = PEMS / f"{algo}_private_encrypted.pem"
             self.assert_cli_sys_exit(args + [str(pem_path)], 1)

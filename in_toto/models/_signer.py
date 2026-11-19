@@ -42,11 +42,16 @@ from securesystemslib.signer import (
 def load_crypto_signer_from_pkcs8_file(
     path: str, password: Optional[bytes] = None
 ) -> CryptoSigner:
-    """Internal helper to load CryptoSigner from PKCS8/PEM file."""
+    """Internal helper to load CryptoSigner from PKCS8/PEM file.
+
+    An empty password (e.g. Enter pressed on a password prompt) is treated like
+    no password, i.e. the key is expected to be unencrypted.
+    """
     with open(path, "rb") as f:
         data = f.read()
 
-    private_key = load_pem_private_key(data, password)
+    # `load_pem_private_key` rejects an empty password for unencrypted keys
+    private_key = load_pem_private_key(data, password or None)
     return CryptoSigner(private_key)
 
 
