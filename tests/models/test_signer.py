@@ -184,6 +184,15 @@ class TestCryptoSigner(unittest.TestCase):
                 signer.public_key.to_dict(), signer2.public_key.to_dict()
             )
 
+    def test_load_unencrypted_keys_with_empty_password(self):
+        """An empty password means 'no password', e.g. Enter on a prompt."""
+        pems_dir = Path(__file__).parent.parent / "pems"
+
+        for algo in ["rsa", "ecdsa", "ed25519"]:
+            path = pems_dir / f"{algo}_private_unencrypted.pem"
+            signer = load_crypto_signer_from_pkcs8_file(path, b"")
+            self.assertEqual(signer.public_key.keytype, algo)
+
 
 if __name__ == "__main__":
     unittest.main()
