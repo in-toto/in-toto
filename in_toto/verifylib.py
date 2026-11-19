@@ -988,7 +988,14 @@ def _get_artifact_rule_traceback():
     """Build and return string form global `RULE_TRACE` which may be used as
     error message for RuleVerificationError.
 
+    RULE_TRACE is only populated by `verify_item_rules`. If a rule verification
+    function is called on its own, there is no trace and an empty string is
+    returned.
+
     """
+    if not RULE_TRACE:
+        return ""
+
     traceback_str = "Full trace for 'expected_{}' of item '{}':\n".format(
         RULE_TRACE["source_type"], RULE_TRACE["source_name"]
     )
