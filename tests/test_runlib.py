@@ -20,6 +20,7 @@
 """
 
 import contextlib
+import io
 import os
 import shutil
 import stat
@@ -28,6 +29,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import securesystemslib.exceptions
 import securesystemslib.formats
@@ -673,6 +675,36 @@ class TestSubprocess(unittest.TestCase):
         # Remove fake standard streams
         os.remove(stdout_fn)
         os.remove(stderr_fn)
+
+    def test_run_duplicate_streams_large_output(self):
+        """Test output larger than one read chunk is not truncated."""
+        # Command that writes much more than `io.DEFAULT_BUFFER_SIZE` to each
+        # stream and then exits right away.
+        size = 256 * io.DEFAULT_BUFFER_SIZE
+        cmd = [
+            sys.executable,
+            "-c",
+            "import sys;"
+            f" sys.stdout.write('o' * {size});"
+            f" sys.stderr.write('e' * {size});",
+        ]
+
+        with (
+            patch.object(sys, "stdout", io.StringIO()) as fake_stdout,
+            patch.object(sys, "stderr", io.StringIO()) as fake_stderr,
+        ):
+            ret_code, ret_out, ret_err = _subprocess_run_duplicate_streams(
+                cmd, 30
+            )
+            printed_out = fake_stdout.getvalue()
+            printed_err = fake_stderr.getvalue()
+
+        # Assert that everything was printed and returned
+        self.assertEqual(ret_code, 0)
+        self.assertEqual(len(ret_out), size)
+        self.assertEqual(len(ret_err), size)
+        self.assertEqual(len(printed_out), size)
+        self.assertEqual(len(printed_err), size)
 
     def test_run_duplicate_streams_return_value(self):
         """Test return code."""
