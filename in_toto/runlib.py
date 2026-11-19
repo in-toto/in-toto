@@ -250,6 +250,9 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
                 streams["out"] += stdout_part
                 streams["err"] += stderr_part
 
+                # Tell the caller if there was anything left to read
+                return bool(stdout_part or stderr_part)
+
             # Start child process, writing its standard streams to temporary files
             proc = subprocess.Popen(  # pylint: disable=consider-using-with  # noqa: S603
                 cmd,
@@ -272,9 +275,13 @@ def _subprocess_run_duplicate_streams(cmd, timeout):
 
                 _duplicate_streams()
 
-            # Read/write once more to grab everything that the process wrote between
-            # our last read in the loop and exiting, i.e. breaking the loop.
-            _duplicate_streams()
+            # Read/write until EOF to grab everything that the process wrote
+            # between our last read in the loop and exiting, i.e. breaking the
+            # loop. A single chunk is not enough if the process wrote more than
+            # `io.DEFAULT_BUFFER_SIZE` bytes in that time. The process has exited,
+            # so there is no timeout to worry about.
+            while _duplicate_streams():
+                pass
 
     finally:
         # The work is done or was interrupted, the temp files can be removed
