@@ -54,6 +54,7 @@ from in_toto.models.link import FILENAME_FORMAT, Link
 from in_toto.models.metadata import Metablock
 from in_toto.rulelib import unpack_rule
 from in_toto.verifylib import (
+    RULE_TRACE,
     _raise_on_bad_retval,
     get_summary_link,
     in_toto_verify,
@@ -493,6 +494,18 @@ class TestVerifyRule(unittest.TestCase):
 
             if exception and not should_raise:
                 self.fail(f"Unexpected {exception}\n{msg}")
+
+    def test_verify_disallow_and_require_rule_without_rule_trace(self):
+        """Test that disallow and require rules raise RuleVerificationError
+        when called directly, i.e. if verify_item_rules did not record a
+        RULE_TRACE."""
+        RULE_TRACE.clear()
+
+        with self.assertRaises(RuleVerificationError):
+            verify_disallow_rule("foo", {"foo"})
+
+        with self.assertRaises(RuleVerificationError):
+            verify_require_rule("foo", {"bar"})
 
 
 class TestVerifyMatchRule(unittest.TestCase):
