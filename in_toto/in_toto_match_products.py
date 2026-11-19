@@ -71,7 +71,7 @@ def main():
 
     metadata = Metadata.load(args.link)
     only_products, not_in_products, differ = match_products(
-        metadata.signed,
+        metadata.get_payload(),
         paths=args.paths,
         exclude_patterns=args.exclude,
         lstrip_paths=args.lstrip_paths,

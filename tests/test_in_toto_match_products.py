@@ -54,6 +54,32 @@ class TestInTotoMatchProducts(unittest.TestCase):
 
         api.assert_called_with(expected_arg, **expected_kwargs)
 
+    def test_check_args_dsse_link(self):
+        """Assert cli passes the link payload to api for DSSE link metadata."""
+        dsse_link = str(
+            Path(__file__).parent
+            / "demo_dsse_files"
+            / "write-code.776a00e2.link"
+        )
+        expected_arg = Metadata.load(dsse_link).get_payload()
+
+        with (
+            patch.object(cli.sys, "argv", ["<cmd>", "--link", dsse_link]),
+            patch.object(
+                cli, "match_products", return_value=(set(),) * 3
+            ) as api,
+            self.assertRaises(SystemExit) as error_ctx,
+        ):
+            cli.main()
+
+        self.assertEqual(error_ctx.exception.code, 0)
+        api.assert_called_with(
+            expected_arg,
+            paths=None,
+            exclude_patterns=None,
+            lstrip_paths=None,
+        )
+
     def test_check_exit(self):
         """Assert cli exit codes for api return values."""
         test_data = [
