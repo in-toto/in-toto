@@ -633,10 +633,17 @@ class Step(SupplyChainItem):
             )
 
     def _validate_threshold(self):
-        """Private method to check that the threshold field is set to an int."""
+        """Private method to check that the threshold field is set to an int
+        that is at least one."""
         if not isinstance(self.threshold, int):
             raise securesystemslib.exceptions.FormatError(
                 f"Invalid threshold '{self.threshold}', value must be an int."
+            )
+
+        if self.threshold < 1:
+            raise securesystemslib.exceptions.FormatError(
+                f"Invalid threshold '{self.threshold}', value must be at least"
+                " 1."
             )
 
     def _validate_pubkeys(self):

@@ -61,6 +61,22 @@ class TestStepValidator(unittest.TestCase):
         self.step._validate_threshold()
         self.step.validate()
 
+    def test_threshold_below_one(self):
+        """Test that a threshold below one is rejected, because every step needs
+        at least one link."""
+
+        for threshold in [0, -1]:
+            self.step.threshold = threshold
+            with self.assertRaises(securesystemslib.exceptions.FormatError):
+                self.step._validate_threshold()
+
+            with self.assertRaises(securesystemslib.exceptions.FormatError):
+                self.step.validate()
+
+        self.step.threshold = 1
+        self.step._validate_threshold()
+        self.step.validate()
+
     def test_wrong_pubkeys(self):
         self.step.pubkeys = ["bad-keyid"]
 
